@@ -17,6 +17,8 @@ function DashGuiPropertyBox (
     this.text_areas = {};
     this.num_headers = 0;
     this.disabled = false;
+    this.custom_html = [];
+    this.color_pickers = {};
     this.bottom_divider = null;
     this.property_set_data = null; // Managed Dash data
     this.get_formatted_data_cb = null;
@@ -64,6 +66,12 @@ function DashGuiPropertyBox (
             }
 
             input_row.SetText(this.get_update_value(data_key));
+        }
+    };
+
+    this.update_color_pickers = function () {
+        for (var data_key in this.color_pickers) {
+            this.color_pickers[data_key].input.val(this.get_update_value(data_key));
         }
     };
 

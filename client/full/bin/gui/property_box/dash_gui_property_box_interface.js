@@ -7,6 +7,7 @@ function DashGuiPropertyBoxInterface () {
         this.update_text_areas();
         this.update_combos();
         this.update_tool_rows();
+        this.update_color_pickers();
     };
 
     this.Disable = function (opacity=0.5) {
@@ -135,6 +136,8 @@ function DashGuiPropertyBoxInterface () {
 
     this.AddHTML = function (html) {
         this.html.append(html);
+
+        this.custom_html.push(html);
 
         return html;
     };
@@ -588,8 +591,8 @@ function DashGuiPropertyBoxInterface () {
     //  connected to this property box's set_data function
     this.AddCheckbox = function (
         local_storage_key="", default_state=true, color=null, hover_hint="Toggle",
-        binder=null, callback=null, label_text="", label_first=true,
-        include_border=false, read_only=false, icon_redraw_styling=null, highlight_row=true
+        binder=null, callback=null, label_text="", label_first=true, include_border=false,
+        read_only=false, icon_redraw_styling=null, highlight_row=true, end_tag_text=""
     ) {
         label_text = label_text.trim();
 
@@ -641,6 +644,26 @@ function DashGuiPropertyBoxInterface () {
         }
 
         checkbox.AddIconButtonRedrawStyling(icon_redraw_styling);
+
+        if (end_tag_text) {
+            checkbox.AddExtraElement(Dash.Gui.GetFlexSpacer());
+
+            var tag = $("<div>" + end_tag_text + "</div>");
+
+            tag.css({
+                "color": this.color.Stroke,
+                "font-family": "sans_serif_italic",
+                "height": checkbox.icon_container_size,
+                "line-height": checkbox.icon_container_size + "px",
+                "user-select": "none",
+                "pointer-events": "none",
+                "flex": "none"
+            });
+
+            checkbox.AddExtraElement(tag);
+
+            checkbox._end_tag = tag;
+        }
 
         if (highlight_row) {
             this.add_hover_highlight(checkbox.html);
@@ -697,6 +720,81 @@ function DashGuiPropertyBoxInterface () {
         });
 
         return this.on_input_added(key, can_edit);
+    };
+
+    this.AddColorPicker = function (
+        data_key, label_text="Color", can_edit=false, include_clear_button=true,
+        end_tag_text="", default_picker_hex_color="#00ff00"
+    ) {
+        this.data = this.get_data_cb ? this.get_data_cb() : {};
+
+        var value = this.get_formatted_data_cb ? this.get_formatted_data_cb(data_key) : this.data[data_key];
+
+        if (!(label_text.endsWith(":"))) {
+            label_text += ":";
+        }
+
+        var pad = Dash.Size.Padding * 0.2;
+
+        this.color_pickers[data_key] = Dash.Gui.GetColorPicker(
+            this.binder,
+            (value) => {
+                this.set_property(data_key, value);
+            },
+            label_text,
+            this.color,
+            default_picker_hex_color,
+            include_clear_button,
+            () => {
+                this.set_property(data_key, "");
+            },
+            Dash.Size.RowHeight - (pad * 2)
+        );
+
+        this.color_pickers[data_key].html.css({
+            "margin-left": this.indent_px,
+            "border-bottom": this.bottom_border,
+            "padding-top": pad,
+            "padding-bottom": pad
+        });
+
+        this.color_pickers[data_key].label.css({
+            "top": 1
+        });
+
+        if (end_tag_text) {
+            this.color_pickers[data_key].html.css({
+                "display": "flex"
+            });
+
+            this.color_pickers[data_key].html.append(Dash.Gui.GetFlexSpacer());
+
+            var tag = $("<div>" + end_tag_text + "</div>");
+
+            tag.css({
+                "color": this.color.Stroke,
+                "font-family": "sans_serif_italic",
+                "height": this.color_pickers[data_key].height,
+                "line-height": this.color_pickers[data_key].height + "px",
+                "user-select": "none",
+                "pointer-events": "none",
+                "flex": "none"
+            });
+
+            this.color_pickers[data_key].html.append(tag);
+
+            this.color_pickers[data_key]["end_tag"] = tag;
+        }
+
+        if (!can_edit) {
+            this.color_pickers[data_key]["input"].attr("disabled", true);
+        }
+
+        this.html.append(this.color_pickers[data_key].html);
+
+        this.track_row(this.color_pickers[data_key]);
+
+        return this.color_pickers[data_key];
     };
 
     // To visually break up rows when readability is getting tough due to too much stuff on the screen etc

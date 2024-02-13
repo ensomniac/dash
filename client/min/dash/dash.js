@@ -18063,14 +18063,16 @@ function DashGui () {
     // TODO: This needs to be its own class/element
     this.GetColorPicker = function (
         binder, callback, label_text="Color Picker", dash_color=null,
-        default_picker_hex_color="#00ff00", include_clear_button=false, clear_button_cb=null
+        default_picker_hex_color="#00ff00", include_clear_button=false, clear_button_cb=null, height=null
     ) {
         if (!dash_color) {
             dash_color = Dash.Color.Light;
         }
         callback = callback.bind(binder);
+        height = height || Dash.Size.ButtonHeight;
         var include_label = label_text && label_text.replace(":", "") !== "none";
         var color_picker = {
+            "height": height,
             "html": $("<div></div>"),
             "input": $("<input type='color' id='colorpicker' value='" + default_picker_hex_color + "'>")
         };
@@ -18087,17 +18089,17 @@ function DashGui () {
                 label_css = {
                     ...label_css,
                     "white-space": "pre",
-                    "height": Dash.Size.ButtonHeight,
+                    "height": height,
                     "display": "block",
                     "float": "left",
                     "text-align": "right",
-                    "line-height": (Dash.Size.ButtonHeight * 0.5) + "px"
+                    "line-height": (height * 0.5) + "px"
                 };
             }
             color_picker.label.css(label_css);
         }
         color_picker.input.css({
-            "height": Dash.Size.ButtonHeight,
+            "height": height,
             "margin-left": Dash.Size.Padding * 0.5,
             "background": "none",
             "cursor": "pointer",
@@ -18127,7 +18129,7 @@ function DashGui () {
                     self,
                     self.color,
                     {
-                        "container_size": Dash.Size.ButtonHeight,
+                        "container_size": height,
                         "size_mult": 0.5
                     }
                 );
@@ -19321,7 +19323,7 @@ function DashUtils () {
             return;
         }
         if (!Dash.TabIsVisible) {
-            Dash.Log.Warn("Warning: Tab is not visible, skipping timer/interval callback(s)");
+            // Dash.Log.Warn("Warning: Tab is not visible, skipping timer/interval callback(s)");
             return;
         }
         timer["callback"]();
@@ -23789,7 +23791,10 @@ function DashGuiCheckbox (
     this.false_color = null;
     this.icon_shadow = null;
     this.icon_button = null;
+    this.extra_elements = [];
     this.is_read_only = false;
+    this._true_hover_hint = "";
+    this._false_hover_hint = "";
     this.static_icon_name = null;
     this.able_to_toggle_cb = null;
     this.include_highlight = false;
@@ -23853,16 +23858,20 @@ function DashGuiCheckbox (
     this.SetConfirmationMsg = function (msg) {
         this.toggle_confirmation_msg = msg;
     };
-    // This turns this style into more a DashGuiIconToggle than a DashGuiCheckbox, but no need to abstract it - at least, not yet
-    this.SetTrueIconName = function (icon_name) {
+    // This turns this style into more a DashGuiIconToggle than a
+    // DashGuiCheckbox, but no need to abstract it - at least, not yet
+    this.SetTrueIconName = function (icon_name, hover_hint="") {
         this.true_icon_name = icon_name;
+        this._true_hover_hint = hover_hint;
         if (this.checked) {
             this.redraw();
         }
     };
-    // This turns this style into more a DashGuiIconToggle than a DashGuiCheckbox, but no need to abstract it - at least, not yet
-    this.SetFalseIconName = function (icon_name) {
+    // This turns this style into more a DashGuiIconToggle than a
+    // DashGuiCheckbox, but no need to abstract it - at least, not yet
+    this.SetFalseIconName = function (icon_name, hover_hint="") {
         this.false_icon_name = icon_name;
+        this._false_hover_hint = hover_hint;
         if (!this.checked) {
             this.redraw();
         }
@@ -23995,6 +24004,10 @@ function DashGuiCheckbox (
             this.Toggle(skip_callback, ignore_able_to_toggle_check);
         }
     };
+    this.AddExtraElement = function (html) {
+        this.extra_elements.push(html);
+        this.html.append(html);
+    };
     this.redraw = function () {
         this.html.empty();
         (function (self) {
@@ -24011,6 +24024,11 @@ function DashGuiCheckbox (
                 {"container_size": self.icon_container_size}
             );
         })(this);
+        this.hover_hint = (
+              this._false_hover_hint && !this.checked ? this._false_hover_hint
+            : this._true_hover_hint && this.checked ? this._true_hover_hint
+            : this.hover_hint
+        );
         this.icon_button.SetHoverHint(this.hover_hint);
         if (this.static_icon_name) {
             this.icon_button.SetIconColor(this.checked ? this.true_color : this.false_color);
@@ -24038,6 +24056,9 @@ function DashGuiCheckbox (
             if (this.label) {
                 this.html.append(this.label.html);
             }
+        }
+        for (var element of this.extra_elements) {
+            this.html.append(element);
         }
         this.restyle_icon_button();
         if (this.is_read_only) {
@@ -29626,13 +29647,16 @@ function DashGuiContext2D (
                         delete response["error"];
                     }
                     self.ComboOptions = response;
-                    Dash.Log.Log("Context2D combo options:", self.ComboOptions);
+                    if (!self.preview_mode) {
+                        Dash.Log.Log("Context2D combo options:", self.ComboOptions);
+                    }
                     self.on_combo_options(callback);
                 },
                 self.api,
                 {
                     "f": "get_combo_options",
                     "c2d_id": self.c2d_id,
+                    "preview_mode": self.preview_mode,
                     ...extra_params
                 }
             );
@@ -32119,6 +32143,7 @@ function DashGuiContext2DEditorPanel (editor) {
     this.aspect_tool_row_inputs = {};
     this.c2d_id = this.editor.c2d_id;
     this.can_edit = this.editor.can_edit;
+    this.duplicate_context_button = null;
     this.preview_mode = this.editor.preview_mode;
     this.override_mode = this.editor.override_mode;
     this.min_width = (Dash.Size.ColumnWidth * 2.4) + (this.editor.min_width_extensions["editor_panel"] || 0);
@@ -32465,7 +32490,7 @@ function DashGuiContext2DEditorPanel (editor) {
             "margin-top": Dash.Size.Padding,
             "margin-left": Dash.Size.Padding
         });
-        button_bar.AddButton("Duplicate Context", this.duplicate_context);
+        this.duplicate_context_button = button_bar.AddButton("Duplicate Context", this.duplicate_context);
         button_bar.AddButton("Fit Layer To Canvas", this.fit_layer_to_canvas);
         this.button_bars.push(button_bar);
     };
@@ -42504,6 +42529,8 @@ function DashGuiPropertyBox (
     this.text_areas = {};
     this.num_headers = 0;
     this.disabled = false;
+    this.custom_html = [];
+    this.color_pickers = {};
     this.bottom_divider = null;
     this.property_set_data = null; // Managed Dash data
     this.get_formatted_data_cb = null;
@@ -42542,6 +42569,11 @@ function DashGuiPropertyBox (
                 continue;
             }
             input_row.SetText(this.get_update_value(data_key));
+        }
+    };
+    this.update_color_pickers = function () {
+        for (var data_key in this.color_pickers) {
+            this.color_pickers[data_key].input.val(this.get_update_value(data_key));
         }
     };
     this.update_text_areas = function () {
@@ -42864,6 +42896,7 @@ function DashGuiPropertyBoxInterface () {
         this.update_text_areas();
         this.update_combos();
         this.update_tool_rows();
+        this.update_color_pickers();
     };
     this.Disable = function (opacity=0.5) {
         if (this.disabled) {
@@ -42963,6 +42996,7 @@ function DashGuiPropertyBoxInterface () {
     };
     this.AddHTML = function (html) {
         this.html.append(html);
+        this.custom_html.push(html);
         return html;
     };
     this.AddLineBreak = function () {
@@ -43304,8 +43338,8 @@ function DashGuiPropertyBoxInterface () {
     //  connected to this property box's set_data function
     this.AddCheckbox = function (
         local_storage_key="", default_state=true, color=null, hover_hint="Toggle",
-        binder=null, callback=null, label_text="", label_first=true,
-        include_border=false, read_only=false, icon_redraw_styling=null, highlight_row=true
+        binder=null, callback=null, label_text="", label_first=true, include_border=false,
+        read_only=false, icon_redraw_styling=null, highlight_row=true, end_tag_text=""
     ) {
         label_text = label_text.trim();
         if (label_text && !label_text.endsWith(":")) {
@@ -43346,6 +43380,21 @@ function DashGuiPropertyBoxInterface () {
             icon_redraw_styling = {"margin-top": 0.1};
         }
         checkbox.AddIconButtonRedrawStyling(icon_redraw_styling);
+        if (end_tag_text) {
+            checkbox.AddExtraElement(Dash.Gui.GetFlexSpacer());
+            var tag = $("<div>" + end_tag_text + "</div>");
+            tag.css({
+                "color": this.color.Stroke,
+                "font-family": "sans_serif_italic",
+                "height": checkbox.icon_container_size,
+                "line-height": checkbox.icon_container_size + "px",
+                "user-select": "none",
+                "pointer-events": "none",
+                "flex": "none"
+            });
+            checkbox.AddExtraElement(tag);
+            checkbox._end_tag = tag;
+        }
         if (highlight_row) {
             this.add_hover_highlight(checkbox.html);
         }
@@ -43393,6 +43442,64 @@ function DashGuiPropertyBoxInterface () {
             "border-bottom": this.bottom_border
         });
         return this.on_input_added(key, can_edit);
+    };
+    this.AddColorPicker = function (
+        data_key, label_text="Color", can_edit=false, include_clear_button=true,
+        end_tag_text="", default_picker_hex_color="#00ff00"
+    ) {
+        this.data = this.get_data_cb ? this.get_data_cb() : {};
+        var value = this.get_formatted_data_cb ? this.get_formatted_data_cb(data_key) : this.data[data_key];
+        if (!(label_text.endsWith(":"))) {
+            label_text += ":";
+        }
+        var pad = Dash.Size.Padding * 0.2;
+        this.color_pickers[data_key] = Dash.Gui.GetColorPicker(
+            this.binder,
+            (value) => {
+                this.set_property(data_key, value);
+            },
+            label_text,
+            this.color,
+            default_picker_hex_color,
+            include_clear_button,
+            () => {
+                this.set_property(data_key, "");
+            },
+            Dash.Size.RowHeight - (pad * 2)
+        );
+        this.color_pickers[data_key].html.css({
+            "margin-left": this.indent_px,
+            "border-bottom": this.bottom_border,
+            "padding-top": pad,
+            "padding-bottom": pad
+        });
+        this.color_pickers[data_key].label.css({
+            "top": 1
+        });
+        if (end_tag_text) {
+            this.color_pickers[data_key].html.css({
+                "display": "flex"
+            });
+            this.color_pickers[data_key].html.append(Dash.Gui.GetFlexSpacer());
+            var tag = $("<div>" + end_tag_text + "</div>");
+            tag.css({
+                "color": this.color.Stroke,
+                "font-family": "sans_serif_italic",
+                "height": this.color_pickers[data_key].height,
+                "line-height": this.color_pickers[data_key].height + "px",
+                "user-select": "none",
+                "pointer-events": "none",
+                "flex": "none"
+            });
+            this.color_pickers[data_key].html.append(tag);
+            this.color_pickers[data_key]["end_tag"] = tag;
+        }
+        if (!can_edit) {
+            this.color_pickers[data_key]["input"].attr("disabled", true);
+        }
+        this.html.append(this.color_pickers[data_key].html);
+        this.track_row(this.color_pickers[data_key]);
+        return this.color_pickers[data_key];
     };
     // To visually break up rows when readability is getting tough due to too much stuff on the screen etc
     this.HighlightEveryOtherRow = function (odd_rows=false, color="") {
@@ -43666,9 +43773,9 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="", color=null) {
         this.all_content[index]["last_inst_class"] = inst_class;
         return inst_class;
     };
-    this.AddHTML = function (html, remove_on_tab_change=false) {
+    this.AddHTML = function (html, remove_on_tab_change=false, bottom_margin=1) {
         html.css({
-            "margin-bottom": 1
+            "margin-bottom": bottom_margin
         });
         this.tab_top.append(html);
         if (remove_on_tab_change) {
@@ -43680,21 +43787,21 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="", color=null) {
     this.AppendHTML = function (html) {
         return this.AddHTML(html);
     };
-    this.MidpendHTML = function (html) {
+    this.MidpendHTML = function (html, top_margin=1, bottom_margin=1) {
         if (!this.side_tabs) {
             console.error("MidpendHTML only works for side tabs right now");
             return;
         }
         html.css({
-            "margin-top": 1,
-            "margin-bottom": 1
+            "margin-top": top_margin,
+            "margin-bottom": bottom_margin
         });
         this.tab_middle.append(html);
         return html;
     };
-    this.PrependHTML = function (html) {
+    this.PrependHTML = function (html, top_margin=1) {
         html.css({
-            "margin-top": 1
+            "margin-top": top_margin
         });
         this.tab_bottom.append(html);
         return html;

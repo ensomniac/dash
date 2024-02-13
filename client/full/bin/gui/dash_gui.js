@@ -210,7 +210,7 @@ function DashGui () {
     // TODO: This needs to be its own class/element
     this.GetColorPicker = function (
         binder, callback, label_text="Color Picker", dash_color=null,
-        default_picker_hex_color="#00ff00", include_clear_button=false, clear_button_cb=null
+        default_picker_hex_color="#00ff00", include_clear_button=false, clear_button_cb=null, height=null
     ) {
         if (!dash_color) {
             dash_color = Dash.Color.Light;
@@ -218,9 +218,12 @@ function DashGui () {
 
         callback = callback.bind(binder);
 
+        height = height || Dash.Size.ButtonHeight;
+
         var include_label = label_text && label_text.replace(":", "") !== "none";
 
         var color_picker = {
+            "height": height,
             "html": $("<div></div>"),
             "input": $("<input type='color' id='colorpicker' value='" + default_picker_hex_color + "'>")
         };
@@ -241,11 +244,11 @@ function DashGui () {
                 label_css = {
                     ...label_css,
                     "white-space": "pre",
-                    "height": Dash.Size.ButtonHeight,
+                    "height": height,
                     "display": "block",
                     "float": "left",
                     "text-align": "right",
-                    "line-height": (Dash.Size.ButtonHeight * 0.5) + "px"
+                    "line-height": (height * 0.5) + "px"
                 };
             }
 
@@ -253,7 +256,7 @@ function DashGui () {
         }
 
         color_picker.input.css({
-            "height": Dash.Size.ButtonHeight,
+            "height": height,
             "margin-left": Dash.Size.Padding * 0.5,
             "background": "none",
             "cursor": "pointer",
@@ -289,7 +292,7 @@ function DashGui () {
                     self,
                     self.color,
                     {
-                        "container_size": Dash.Size.ButtonHeight,
+                        "container_size": height,
                         "size_mult": 0.5
                     }
                 );

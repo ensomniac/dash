@@ -23,7 +23,10 @@ function DashGuiCheckbox (
     this.false_color = null;
     this.icon_shadow = null;
     this.icon_button = null;
+    this.extra_elements = [];
     this.is_read_only = false;
+    this._true_hover_hint = "";
+    this._false_hover_hint = "";
     this.static_icon_name = null;
     this.able_to_toggle_cb = null;
     this.include_highlight = false;
@@ -109,18 +112,22 @@ function DashGuiCheckbox (
         this.toggle_confirmation_msg = msg;
     };
 
-    // This turns this style into more a DashGuiIconToggle than a DashGuiCheckbox, but no need to abstract it - at least, not yet
-    this.SetTrueIconName = function (icon_name) {
+    // This turns this style into more a DashGuiIconToggle than a
+    // DashGuiCheckbox, but no need to abstract it - at least, not yet
+    this.SetTrueIconName = function (icon_name, hover_hint="") {
         this.true_icon_name = icon_name;
+        this._true_hover_hint = hover_hint;
 
         if (this.checked) {
             this.redraw();
         }
     };
 
-    // This turns this style into more a DashGuiIconToggle than a DashGuiCheckbox, but no need to abstract it - at least, not yet
-    this.SetFalseIconName = function (icon_name) {
+    // This turns this style into more a DashGuiIconToggle than a
+    // DashGuiCheckbox, but no need to abstract it - at least, not yet
+    this.SetFalseIconName = function (icon_name, hover_hint="") {
         this.false_icon_name = icon_name;
+        this._false_hover_hint = hover_hint;
 
         if (!this.checked) {
             this.redraw();
@@ -299,6 +306,12 @@ function DashGuiCheckbox (
         }
     };
 
+    this.AddExtraElement = function (html) {
+        this.extra_elements.push(html);
+
+        this.html.append(html);
+    };
+
     this.redraw = function () {
         this.html.empty();
 
@@ -316,6 +329,12 @@ function DashGuiCheckbox (
                 {"container_size": self.icon_container_size}
             );
         })(this);
+
+        this.hover_hint = (
+              this._false_hover_hint && !this.checked ? this._false_hover_hint
+            : this._true_hover_hint && this.checked ? this._true_hover_hint
+            : this.hover_hint
+        );
 
         this.icon_button.SetHoverHint(this.hover_hint);
 
@@ -353,6 +372,10 @@ function DashGuiCheckbox (
             if (this.label) {
                 this.html.append(this.label.html);
             }
+        }
+
+        for (var element of this.extra_elements) {
+            this.html.append(element);
         }
 
         this.restyle_icon_button();

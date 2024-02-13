@@ -550,7 +550,9 @@ function DashGuiContext2D (
 
                     self.ComboOptions = response;
 
-                    Dash.Log.Log("Context2D combo options:", self.ComboOptions);
+                    if (!self.preview_mode) {
+                        Dash.Log.Log("Context2D combo options:", self.ComboOptions);
+                    }
 
                     self.on_combo_options(callback);
                 },
@@ -558,6 +560,7 @@ function DashGuiContext2D (
                 {
                     "f": "get_combo_options",
                     "c2d_id": self.c2d_id,
+                    "preview_mode": self.preview_mode,
                     ...extra_params
                 }
             );

@@ -233,7 +233,7 @@ function DashUtils () {
         }
 
         if (!Dash.TabIsVisible) {
-            Dash.Log.Warn("Warning: Tab is not visible, skipping timer/interval callback(s)");
+            // Dash.Log.Warn("Warning: Tab is not visible, skipping timer/interval callback(s)");
 
             return;
         }

@@ -16,6 +16,7 @@ function DashGuiContext2DEditorPanel (editor) {
     this.aspect_tool_row_inputs = {};
     this.c2d_id = this.editor.c2d_id;
     this.can_edit = this.editor.can_edit;
+    this.duplicate_context_button = null;
     this.preview_mode = this.editor.preview_mode;
     this.override_mode = this.editor.override_mode;
     this.min_width = (Dash.Size.ColumnWidth * 2.4) + (this.editor.min_width_extensions["editor_panel"] || 0);
@@ -448,7 +449,8 @@ function DashGuiContext2DEditorPanel (editor) {
             "margin-left": Dash.Size.Padding
         });
 
-        button_bar.AddButton("Duplicate Context", this.duplicate_context);
+        this.duplicate_context_button = button_bar.AddButton("Duplicate Context", this.duplicate_context);
+
         button_bar.AddButton("Fit Layer To Canvas", this.fit_layer_to_canvas);
 
         this.button_bars.push(button_bar);

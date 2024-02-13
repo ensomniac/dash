@@ -292,9 +292,9 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="", color=null) {
         return inst_class;
     };
 
-    this.AddHTML = function (html, remove_on_tab_change=false) {
+    this.AddHTML = function (html, remove_on_tab_change=false, bottom_margin=1) {
         html.css({
-            "margin-bottom": 1
+            "margin-bottom": bottom_margin
         });
 
         this.tab_top.append(html);
@@ -311,7 +311,7 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="", color=null) {
         return this.AddHTML(html);
     };
 
-    this.MidpendHTML = function (html) {
+    this.MidpendHTML = function (html, top_margin=1, bottom_margin=1) {
         if (!this.side_tabs) {
             console.error("MidpendHTML only works for side tabs right now");
 
@@ -319,8 +319,8 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="", color=null) {
         }
 
         html.css({
-            "margin-top": 1,
-            "margin-bottom": 1
+            "margin-top": top_margin,
+            "margin-bottom": bottom_margin
         });
 
         this.tab_middle.append(html);
@@ -328,9 +328,9 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="", color=null) {
         return html;
     };
 
-    this.PrependHTML = function (html) {
+    this.PrependHTML = function (html, top_margin=1) {
         html.css({
-            "margin-top": 1
+            "margin-top": top_margin
         });
 
         this.tab_bottom.append(html);
