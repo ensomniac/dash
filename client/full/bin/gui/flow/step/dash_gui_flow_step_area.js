@@ -105,10 +105,19 @@ class DashGuiFlowStepArea {
     // Standard/basic implementation
     InitOptionsStep (
         header_text, key, add_options_bound_cb, on_selected_extra_bound_cb=null,
-        can_continue_bound_cb=null, cont_step_id_override="", continue_on_selection=false,
+        can_continue_bound_cb=null, cont_step_id_override="",
+        continue_on_selection=false, tip_text="", tip_more_text="",
         missing_button=true, missing_bound_cb=null, missing_text="Don't see what you're looking for?"
     ) {
         this.step.AddHeader(header_text);
+
+        if (tip_text) {
+            this.step.AddTipText(
+                tip_text,
+                true,
+                tip_more_text
+            );
+        }
 
         var options = this.step.AddOptions((selected_id) => {
             this.OnOptionSelected(
