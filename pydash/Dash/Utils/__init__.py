@@ -203,10 +203,10 @@ def GetOrdinalSuffix(num):
 
 
 # ------------------------------------------------- STRING --------------------------------------------------
-def FormatTime(datetime_object, time_format=1, tz="utc"):
+def FormatTime(datetime_object, time_format=1, tz="utc", update_tz=True):
     from .string import FormatTime
 
-    return FormatTime(datetime_object, time_format, tz)
+    return FormatTime(datetime_object, time_format, tz, update_tz)
 
 
 def GetAssetPath(name):

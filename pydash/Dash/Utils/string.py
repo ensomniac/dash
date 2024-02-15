@@ -7,18 +7,28 @@ import os
 import sys
 
 
-def FormatTime(dt_obj, time_format=1, tz="utc"):
+def FormatTime(dt_obj, time_format=1, tz="utc", update_tz=True):
     """
     Format a timestamp string using a datetime object.
 
     :param datetime.datetime dt_obj: source datetime object
     :param int time_format: (default=1)
     :param str tz: (default="utc")
+    :param bool update_tz: If tz is not "utc", update the dt_obj's timezone (default=True)
+
     :return: strftime-formatted timestamp
     :rtype: string
     """
 
-    if tz != "utc":
+    if "/" in tz:  # Get the abbreviation instead of the full name
+        from pytz import timezone
+        from datetime import datetime
+
+        # Instantiating a dt object is the only way to get the abbreviation
+        # because of daylight savings time considerations (ex: EST vs EDT)
+        tz = datetime.now(timezone(tz)).strftime("%Z").lower()
+
+    if update_tz and tz != "utc":
         dt_obj = change_dt_tz(dt_obj, tz)
 
     time_markup = dt_obj.strftime("%I:%M %p").lower()
@@ -52,7 +62,7 @@ def FormatTime(dt_obj, time_format=1, tz="utc"):
     if time_format == 3:
         return f"{dt_obj.month}/{dt_obj.day}/{dt_obj.year}"
 
-    # Format: 12:15 PM
+    # Format: 6:15 PM
     if time_format == 4:
         formatted_time = dt_obj.strftime("%I:%M %p")
 
@@ -119,7 +129,10 @@ def FormatTime(dt_obj, time_format=1, tz="utc"):
 
     # Format: July 17th, 2011 at 7:15PM (non-zero-padded hour)
     if time_format == 14:
-        return f"{dt_obj.strftime(f'%B {day}{suffix}, %Y')} at {dt_obj.strftime('%I').lstrip('0')}:{dt_obj.strftime('%M%p')}"
+        return (
+            f"{dt_obj.strftime(f'%B {day}{suffix}, %Y')} at "
+            f"{dt_obj.strftime('%I').lstrip('0')}:{dt_obj.strftime('%M%p')}"
+        )
 
     # Format: 020422_2153
     if time_format == 15:
@@ -128,6 +141,31 @@ def FormatTime(dt_obj, time_format=1, tz="utc"):
     # Format: July 17, 2011
     if time_format == 16:
         return dt_obj.strftime(f"%B {day}, %Y")
+
+    # Format: 6:15 PM/EST
+    if time_format == 17:
+        formatted_time = dt_obj.strftime("%I:%M %p")
+        tz_name = (tz if not update_tz else (dt_obj.strftime("%Z") or tz)).upper()
+
+        if formatted_time[0] == "0":
+            formatted_time = formatted_time[1:]
+
+        return f"{formatted_time}/{tz_name}"
+
+    # Format: 06:15 PM/EST
+    if time_format == 18:
+        formatted_time = dt_obj.strftime("%I:%M %p")
+        tz_name = (tz if not update_tz else (dt_obj.strftime("%Z") or tz)).upper()
+
+        return f"{formatted_time}/{tz_name}"
+
+    # Format: 06:15 PM
+    if time_format == 19:
+        return dt_obj.strftime("%I:%M %p")
+
+    # Format: 02/04/22
+    if time_format == 20:
+        return dt_obj.strftime("%m/%d/%y")
 
     # Format: Monday, October 9th, 2023 at 2:51 pm
     return f"{date_markup} at {time_markup}"
