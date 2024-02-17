@@ -151,9 +151,15 @@ class GUtils:
                 msg = "The file is too big to be exported from Google's API as the desired format."
 
                 if parent_id:
-                    msg += f"\n\nYou can find the file in this folder:\nhttps://drive.google.com/drive/u/2/folders/{parent_id}\n\n"
+                    msg += (
+                        f"\n\nYou can find the file in this folder:\nhttps://"
+                        f"drive.google.com/drive/u/2/folders/{parent_id}\n\n"
+                    )
                 else:
-                    msg += "\n\nIf you know which drive the source file was uploaded to, you can open it directly there.\n"
+                    msg += (
+                        "\n\nIf you know which drive the source file was "
+                        "uploaded to, you can open it directly there.\n"
+                    )
 
                 msg += "After opening the file, you can download it as the desired format using:\n[File]>[Download]"
 
