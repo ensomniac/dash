@@ -167,8 +167,46 @@ def FormatTime(dt_obj, time_format=1, tz="utc", update_tz=True):
     if time_format == 20:
         return dt_obj.strftime("%m/%d/%y")
 
+    # Format: Monday, Feb 17
+    if time_format == 21:
+        month = dt_obj.strftime("%B")[0:3]
+
+        return dt_obj.strftime(f"%A, {month} {day}")
+
     # Format: Monday, October 9th, 2023 at 2:51 pm
     return f"{date_markup} at {time_markup}"
+
+
+def GetReadableHoursMins(secs, include_secs=False):
+    mins = secs // 60
+    hours = mins // 60
+
+    secs %= 60
+    mins %= 60
+
+    secs = max(secs, 0)
+    mins = max(mins, 0)
+    hours = max(hours, 0)
+
+    if not include_secs:
+        if secs >= 30:
+            mins += 1
+
+        if mins == 0 and secs:
+            mins += 1
+
+    # Adjust for overflow
+    if mins == 60:
+        mins = 0
+
+        hours += 1
+
+    readable = f"{int(hours)}h {int(mins)}m"
+
+    if include_secs:
+        readable += f" {int(secs)}s"
+
+    return readable
 
 
 def GetAssetPath(string):

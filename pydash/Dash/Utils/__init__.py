@@ -209,6 +209,12 @@ def FormatTime(datetime_object, time_format=1, tz="utc", update_tz=True):
     return FormatTime(datetime_object, time_format, tz, update_tz)
 
 
+def GetReadableHoursMins(secs, include_secs=False):
+    from .string import GetReadableHoursMins
+
+    return GetReadableHoursMins(secs, include_secs)
+
+
 def GetAssetPath(name):
     from .string import GetAssetPath
 
