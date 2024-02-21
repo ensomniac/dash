@@ -50736,7 +50736,10 @@ function DashMobileSearchableCombo (
             "class": this.color.PlaceholderClass,
             "placeholder": this.placeholder_text,
             "inputmode": "search",
-            "autocomplete": "off"
+            "autocomplete": "off",
+            "autocorrect": "off",
+            "autocapitalize": "off",
+            "spellcheck": false
         }
     );
     this.setup_styles = function () {
@@ -50753,6 +50756,7 @@ function DashMobileSearchableCombo (
             ...shared_css
         });
         this.input.css({
+            "background": "pink",  // TODO: TEST
             "height": Dash.Size.RowHeight - 2,  // Account for border
             ...shared_css
         });
