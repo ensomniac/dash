@@ -24,7 +24,8 @@ function DashMobileSearchableCombo (
             "list": this.id,
             "class": this.color.PlaceholderClass,
             "placeholder": this.placeholder_text,
-            "inputmode": "search"
+            "inputmode": "search",
+            "autocomplete": "off"
         }
     );
 
