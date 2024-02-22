@@ -48,7 +48,6 @@ function DashMobileSearchableCombo (
         });
 
         this.input.css({
-            "background": "pink",  // TODO: TEST
             "height": Dash.Size.RowHeight - 2,  // Account for border
             ...shared_css
         });
