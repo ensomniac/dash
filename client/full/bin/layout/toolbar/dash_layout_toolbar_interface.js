@@ -371,6 +371,8 @@ function DashLayoutToolbarInterface () {
 
         if (options["on_enter"]) {
             obj["on_enter"] = options["on_enter"].bind(this.binder);
+
+            obj["on_enter_include_source_bools"] = options["on_enter_include_source_bools"] || false;
         }
 
         if (options["on_autosave"]) {
@@ -389,10 +391,13 @@ function DashLayoutToolbarInterface () {
 
             if (obj["on_enter"]) {
                 input.SetOnSubmit(
-                    function () {
+                    options["on_enter_include_source_bools"] ? function (from_autosave, from_blur, from_enter) {
+                        self.on_input_submitted(obj_index, from_autosave, from_blur, from_enter);
+                    } : function () {
                         self.on_input_submitted(obj_index);
                     },
-                    self
+                    self,
+                    obj["on_enter_include_source_bools"] || false
                 );
             }
 

@@ -36,10 +36,16 @@ function DashLayoutToolbar (binder, color=null) {
         obj["callback"](obj["html"].Text(), obj["html"]);
     };
 
-    this.on_input_submitted = function (obj_index) {
+    this.on_input_submitted = function (obj_index, from_autosave=false, from_blur=false, from_enter=false) {
         var obj = this.objects[obj_index];
 
-        obj["on_enter"](obj["html"].Text(), obj["html"], obj["additional_data"]);
+        if (obj["on_enter_include_source_bools"]) {
+            obj["on_enter"](obj["html"].Text(), obj["html"], obj["additional_data"], from_autosave, from_blur, from_enter);
+        }
+
+        else {
+            obj["on_enter"](obj["html"].Text(), obj["html"], obj["additional_data"]);
+        }
     };
 
     this.on_input_autosaved = function (obj_index) {

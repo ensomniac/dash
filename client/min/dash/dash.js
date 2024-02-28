@@ -49160,9 +49160,14 @@ function DashLayoutToolbar (binder, color=null) {
         var obj = this.objects[obj_index];
         obj["callback"](obj["html"].Text(), obj["html"]);
     };
-    this.on_input_submitted = function (obj_index) {
+    this.on_input_submitted = function (obj_index, from_autosave=false, from_blur=false, from_enter=false) {
         var obj = this.objects[obj_index];
-        obj["on_enter"](obj["html"].Text(), obj["html"], obj["additional_data"]);
+        if (obj["on_enter_include_source_bools"]) {
+            obj["on_enter"](obj["html"].Text(), obj["html"], obj["additional_data"], from_autosave, from_blur, from_enter);
+        }
+        else {
+            obj["on_enter"](obj["html"].Text(), obj["html"], obj["additional_data"]);
+        }
     };
     this.on_input_autosaved = function (obj_index) {
         var obj = this.objects[obj_index];
@@ -49503,6 +49508,7 @@ function DashLayoutToolbarInterface () {
         };
         if (options["on_enter"]) {
             obj["on_enter"] = options["on_enter"].bind(this.binder);
+            obj["on_enter_include_source_bools"] = options["on_enter_include_source_bools"] || false;
         }
         if (options["on_autosave"]) {
             obj["on_autosave"] = options["on_autosave"].bind(this.binder);
@@ -49517,10 +49523,13 @@ function DashLayoutToolbarInterface () {
             );
             if (obj["on_enter"]) {
                 input.SetOnSubmit(
-                    function () {
+                    options["on_enter_include_source_bools"] ? function (from_autosave, from_blur, from_enter) {
+                        self.on_input_submitted(obj_index, from_autosave, from_blur, from_enter);
+                    } : function () {
                         self.on_input_submitted(obj_index);
                     },
-                    self
+                    self,
+                    obj["on_enter_include_source_bools"] || false
                 );
             }
             if (obj["on_autosave"]) {
