@@ -587,7 +587,7 @@ function DashGuiPropertyBoxInterface () {
         return label;
     };
 
-    // TODO: this should've originally been setup to be directly
+    // TODO: this should've originally been set up to be directly
     //  connected to this property box's set_data function
     this.AddCheckbox = function (
         local_storage_key="", default_state=true, color=null, hover_hint="Toggle",

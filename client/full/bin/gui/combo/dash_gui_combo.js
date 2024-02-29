@@ -479,14 +479,18 @@ function DashGuiCombo (
         }
 
         var html_width = this.inner_html ? (
-            this.style === "default_bubbled" ? (this.inner_html.innerWidth() || this.inner_html.width()) : this.inner_html.width()
+            this.style === "default_bubbled" ? (
+                this.inner_html.innerWidth() || this.inner_html.width()
+            ) : this.inner_html.width()
         ) : (
-            this.style === "default_bubbled" ? (this.html.innerWidth() || this.html.width()) : this.html.width()
+            this.style === "default_bubbled" ? (
+                this.html.innerWidth() || this.html.width()
+            ) : this.html.width()
         );
 
         if (html_width > this.rows.width()) {
             this.rows.css({
-                "width": html_width
+                "width": html_width + (this.multi_select ? Dash.Size.Padding : 0)
             });
 
             for (i in this.row_buttons) {
