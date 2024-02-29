@@ -33942,12 +33942,28 @@ function DashGuiContext2DEditorPanelContentNew (content) {
             true
         );
     };
+    this.get_button_container = function () {
+        var button_container = $("<div></div>");
+        button_container.css({
+            "display": "flex",
+            "gap": Dash.Size.Padding * 0.5,
+            "margin-bottom": Dash.Size.Padding * 0.5
+        });
+        this.html.append(button_container);
+        return button_container;
+    };
     this.draw_types = function () {
+        var button_tally = 0;
+        var button_container = this.get_button_container();
         for (var primitive_type of this.content.PrimitiveTypes) {
+            if (button_tally >= 2) {
+                button_tally = 0;
+                button_container = this.get_button_container();
+            }
             if (["text", "color"].includes(primitive_type)) {
                 (function (self, primitive_type) {
-                    self.html.append(self.get_button(
-                        "New " + primitive_type.Title() + " Layer",
+                    button_container.append(self.get_button(
+                        primitive_type.Title() + " Layer",
                         function (event, button) {
                             // Should never happen, but just in case
                             if (self.editor.preview_mode || self.editor.override_mode) {
@@ -33971,23 +33987,41 @@ function DashGuiContext2DEditorPanelContentNew (content) {
                 })(this, primitive_type);
             }
             else if (["image", "video"].includes(primitive_type)) {
-                this.html.append(this.get_upload_button(primitive_type, "New " + primitive_type.Title() + " Layer").html);
+                button_container.append(this.get_upload_button(primitive_type, primitive_type.Title() + " Layer").html);
             }
             else {
                 Dash.Log.Warn("Warning: Unhandled primitive type in 'New' tab:", primitive_type);
+                continue;
             }
+            button_tally += 1;
         }
+        button_tally = 0;
+        button_container = null;
         for (var element_config of this.content.new_tab_custom_element_configs) {
             if (element_config["callback"]) {
                 this.html.append(element_config["callback"]());
             }
             else {
+                if (element_config["function_name"] === "get_button" && (button_tally >= 2 || !button_container)) {
+                    button_container = this.get_button_container();
+                }
                 var element = this[element_config["function_name"]](...element_config["function_params"]);
                 if (element_config["return_element_callback"]) {
                     element_config["return_element_callback"](element);
                 }
-                this.html.append(element.hasOwnProperty("html") ? element.html : element);
+                if (element_config["function_name"] === "get_button" && button_container) {
+                    button_container.append(element.hasOwnProperty("html") ? element.html : element);
+                    button_tally += 1;
+                }
+                else {
+                    this.html.append(element.hasOwnProperty("html") ? element.html : element);
+                }
             }
+        }
+        if (button_container) {
+            button_container.css({
+                "margin-bottom": Dash.Size.Padding
+            });
         }
     };
     this.get_button = function (label_text, callback) {
@@ -33995,7 +34029,7 @@ function DashGuiContext2DEditorPanelContentNew (content) {
         button.html.css({
             "margin-top": 0,
             "margin-right": 0,
-            "margin-bottom": Dash.Size.Padding
+            "flex": 2
         });
         if (!this.can_edit) {
             button.Disable();
@@ -42346,7 +42380,7 @@ function DashGuiLoadingOverlay (
     color=null, progress=0, label_prefix="Loading", html_to_append_to=null, simple=false
 ) {
     this.color = color || Dash.Color.Light;
-    this.progress = progress;
+    this.progress = progress;  // Set to "none" if progress indicator not desired
     this.label_prefix = label_prefix;
     this.html_to_append_to = html_to_append_to;
     // Simple shows a static "..." instead of the animated loading dots.
@@ -42429,7 +42463,10 @@ function DashGuiLoadingOverlay (
             return;
         }
         if (!this.html_to_append_to) {
-            Dash.Log.Warn("DashGuiLoadingOverlay Show() requires the 'html_to_append_to' param to be provided on init:", this.html_to_append_to);
+            Dash.Log.Warn(
+                "DashGuiLoadingOverlay Show() requires the 'html_to_append_to' param to be provided on init:",
+                this.html_to_append_to
+            );
             return;
         }
         if (this.removed) {
@@ -42484,6 +42521,9 @@ function DashGuiLoadingOverlay (
             this.bubble_label.SetText(this.get_loading_label_text(this.progress));
         }
         this.bubble_dots.html.hide();
+    };
+    this.IsShowing = function () {
+        return this.is_showing;
     };
     this.setup_dots = function () {
         this.bubble_dots = new Dash.Gui.LoadDots(Dash.Size.RowHeight * 0.75);

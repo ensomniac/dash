@@ -2,7 +2,7 @@ function DashGuiLoadingOverlay (
     color=null, progress=0, label_prefix="Loading", html_to_append_to=null, simple=false
 ) {
     this.color = color || Dash.Color.Light;
-    this.progress = progress;
+    this.progress = progress;  // Set to "none" if progress indicator not desired
     this.label_prefix = label_prefix;
     this.html_to_append_to = html_to_append_to;
 
@@ -107,7 +107,10 @@ function DashGuiLoadingOverlay (
         }
 
         if (!this.html_to_append_to) {
-            Dash.Log.Warn("DashGuiLoadingOverlay Show() requires the 'html_to_append_to' param to be provided on init:", this.html_to_append_to);
+            Dash.Log.Warn(
+                "DashGuiLoadingOverlay Show() requires the 'html_to_append_to' param to be provided on init:",
+                this.html_to_append_to
+            );
 
             return;
         }
@@ -188,6 +191,10 @@ function DashGuiLoadingOverlay (
         }
 
         this.bubble_dots.html.hide();
+    };
+
+    this.IsShowing = function () {
+        return this.is_showing;
     };
 
     this.setup_dots = function () {
