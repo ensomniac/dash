@@ -56,37 +56,9 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="", color=null) {
             this.set_styles_for_top_tabs();
         }
 
-        (function (self) {
-            requestAnimationFrame(function () {
-                if (!Dash.User.Data || Dash.User.Data["first_name"]) {
-                    self.load_last_selection();
-
-                    return;
-                }
-
-                // If the user is new and hasn't yet at least entered their first name, gently
-                // nudge them to do so every time they load the main view by loading their user view
-                for (var i in self.all_content) {
-                    if (self.all_content[i]["content_div_html_class"] !== DashUserView) {
-                        continue;
-                    }
-
-                    try {
-                        self.LoadIndex(i);
-
-                        requestAnimationFrame(function () {
-                            self.on_autoload_user_settings();
-                        });
-                    }
-
-                    catch {
-                        self.load_last_selection();
-                    }
-                }
-
-                self.init();
-            });
-        })(this);
+        requestAnimationFrame(() => {
+            this.init();
+        });
     };
 
     // This is a very specific function that is only intended to be called for new
@@ -95,7 +67,7 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="", color=null) {
     // field and highlight it so it's clear what the user is supposed to do.
     this.on_autoload_user_settings = function () {
         if (
-               this.all_content[this.current_index]["content_div_html_class"] != DashUserView
+               this.all_content[this.current_index]["content_div_html_class"] !== DashUserView
             || !this.active_content.user_profile
         ) {
             return;
@@ -478,7 +450,7 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="", color=null) {
 
     this.init = function () {
         if (!this.all_content.length) {
-            if (this.init_attempts > 10) {
+            if (this.init_attempts > 25) {
                 return;
             }
 
@@ -517,6 +489,10 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="", color=null) {
 
             try {
                 this.LoadIndex(i);
+
+                requestAnimationFrame(() => {
+                    this.on_autoload_user_settings();
+                });
             }
 
             catch {

@@ -176,6 +176,13 @@ class ApiCore:
         return self._response
 
     @property
+    def IsMobileRequest(self):
+        # if self._execute_as_module:
+        #     return False
+
+        return os.environ.get("HTTP_SEC_CH_UA_MOBILE") == "?1"
+
+    @property
     def dash_global(self):
         if not hasattr(self, "_dash_global"):
             from Dash import __name__ as DashName

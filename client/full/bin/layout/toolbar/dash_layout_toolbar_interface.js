@@ -9,6 +9,8 @@ function DashLayoutToolbarInterface () {
         this.html.css({
             "height": this.height
         });
+
+        this.stroke_sep_removed = true;
     };
 
     this.DisablePaddingRefactoring = function () {
@@ -25,6 +27,7 @@ function DashLayoutToolbarInterface () {
         this.html.append(expander);
 
         var obj_index = this.objects.length;
+
         this.objects.push({
             "html_elem": expander,
             "index": obj_index
@@ -37,6 +40,18 @@ function DashLayoutToolbarInterface () {
 
     this.GetHeight = function () {
         return this.height;
+    };
+
+    this.SetHeight = function (height) {
+        this.height = height;
+
+        if (this.stroke_sep_removed) {
+            this.height -= this.stroke_height;
+        }
+
+        this.html.css({
+            "height": height
+        });
     };
 
     this.AddSpace = function (width) {

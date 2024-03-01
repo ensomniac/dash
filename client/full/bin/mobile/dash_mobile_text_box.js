@@ -8,6 +8,7 @@ function DashMobileTextBox (
     this.delay_change_cb = delay_change_cb;
 
     this.label = null;
+    this.locked = false;
     this.border_size = 1;
     this.avg_char_width = 0;
     this.auto_height = false;
@@ -85,6 +86,8 @@ function DashMobileTextBox (
             })(this);
         }
 
+        this.last_change_value = text;
+
         return text;
     };
 
@@ -112,6 +115,8 @@ function DashMobileTextBox (
         }
 
         this.textarea.prop("readOnly", true);
+
+        this.locked = true;
     };
 
     this.Unlock = function (restore_style=true) {
@@ -130,6 +135,8 @@ function DashMobileTextBox (
         }
 
         this.textarea.prop("readOnly", false);
+
+        this.locked = false;
     };
 
     this.StyleAsRow = function (bottom_border_only=false, _backup_line_break_replacement=" ") {
@@ -259,7 +266,7 @@ function DashMobileTextBox (
     };
 
     this.Flash = function () {
-        if (this.flash_disabled) {
+        if (this.flash_disabled || this.locked) {
             return;
         }
 
@@ -429,7 +436,7 @@ function DashMobileTextBox (
             });
 
             self.textarea.on("blur", function () {
-                self.fire_change_cb(true);
+                self.fire_change_cb();
             });
 
             self.textarea.on("keydown",function (e) {

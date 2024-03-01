@@ -40860,6 +40860,7 @@ function DashGuiIcons (icon) {
         "add_person":              new DashGuiIconDefinition(this.icon, "Add Person", this.weight["regular"], "user-plus"),
         "add_phone":               new DashGuiIconDefinition(this.icon, "Add Phone", this.weight["regular"], "phone-plus"),
         "add_square":              new DashGuiIconDefinition(this.icon, "Add (Square)", this.weight["regular"], "plus-square"),
+        "add_square_light":        new DashGuiIconDefinition(this.icon, "Add (Square)", this.weight["light"], "plus-square"),
         "add_to_cart":             new DashGuiIconDefinition(this.icon, "Add To Cart", this.weight["regular"], "cart-plus"),
         "admin_tools":             new DashGuiIconDefinition(this.icon, "Admin Tools", this.weight["regular"], "shield-alt"),
         "alert":                   new DashGuiIconDefinition(this.icon, "Alert", this.weight["solid"], "exclamation"),
@@ -43647,31 +43648,9 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="", color=null) {
         else {
             this.set_styles_for_top_tabs();
         }
-        (function (self) {
-            requestAnimationFrame(function () {
-                if (!Dash.User.Data || Dash.User.Data["first_name"]) {
-                    self.load_last_selection();
-                    return;
-                }
-                // If the user is new and hasn't yet at least entered their first name, gently
-                // nudge them to do so every time they load the main view by loading their user view
-                for (var i in self.all_content) {
-                    if (self.all_content[i]["content_div_html_class"] !== DashUserView) {
-                        continue;
-                    }
-                    try {
-                        self.LoadIndex(i);
-                        requestAnimationFrame(function () {
-                            self.on_autoload_user_settings();
-                        });
-                    }
-                    catch {
-                        self.load_last_selection();
-                    }
-                }
-                self.init();
-            });
-        })(this);
+        requestAnimationFrame(() => {
+            this.init();
+        });
     };
     // This is a very specific function that is only intended to be called for new
     // users that have not filled in their name yet. When this function is called,
@@ -43679,7 +43658,7 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="", color=null) {
     // field and highlight it so it's clear what the user is supposed to do.
     this.on_autoload_user_settings = function () {
         if (
-               this.all_content[this.current_index]["content_div_html_class"] != DashUserView
+               this.all_content[this.current_index]["content_div_html_class"] !== DashUserView
             || !this.active_content.user_profile
         ) {
             return;
@@ -43968,7 +43947,7 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="", color=null) {
     };
     this.init = function () {
         if (!this.all_content.length) {
-            if (this.init_attempts > 10) {
+            if (this.init_attempts > 25) {
                 return;
             }
             (function (self) {
@@ -43998,6 +43977,9 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="", color=null) {
             }
             try {
                 this.LoadIndex(i);
+                requestAnimationFrame(() => {
+                    this.on_autoload_user_settings();
+                });
             }
             catch {
                 this.load_last_selection();
@@ -49179,6 +49161,7 @@ function DashLayoutToolbar (binder, color=null) {
     this.color = color || this.binder.color || Dash.Color.Dark;
     this.objects = [];
     this.stroke_height = 1;
+    this.stroke_sep_removed = false;
     this.html = Dash.Gui.GetHTMLContext();
     this.allow_padding_refactoring = true;
     this.refactor_itom_padding_requested = false;
@@ -49272,6 +49255,7 @@ function DashLayoutToolbarInterface () {
         this.html.css({
             "height": this.height
         });
+        this.stroke_sep_removed = true;
     };
     this.DisablePaddingRefactoring = function () {
         this.allow_padding_refactoring = false;
@@ -49292,6 +49276,15 @@ function DashLayoutToolbarInterface () {
     };
     this.GetHeight = function () {
         return this.height;
+    };
+    this.SetHeight = function (height) {
+        this.height = height;
+        if (this.stroke_sep_removed) {
+            this.height -= this.stroke_height;
+        }
+        this.html.css({
+            "height": height
+        });
     };
     this.AddSpace = function (width) {
         var space = $("<div></div>");
@@ -49851,6 +49844,7 @@ function DashMobileTextBox (
     this.on_change_cb = binder && on_change_cb ? on_change_cb.bind(binder) : on_change_cb;
     this.delay_change_cb = delay_change_cb;
     this.label = null;
+    this.locked = false;
     this.border_size = 1;
     this.avg_char_width = 0;
     this.auto_height = false;
@@ -49916,6 +49910,7 @@ function DashMobileTextBox (
                 });
             })(this);
         }
+        this.last_change_value = text;
         return text;
     };
     this.SetLineBreakReplacement = function (value="") {
@@ -49936,6 +49931,7 @@ function DashMobileTextBox (
             this.textarea.css(css);
         }
         this.textarea.prop("readOnly", true);
+        this.locked = true;
     };
     this.Unlock = function (restore_style=true) {
         if (restore_style) {
@@ -49949,6 +49945,7 @@ function DashMobileTextBox (
             this.textarea.css(css);
         }
         this.textarea.prop("readOnly", false);
+        this.locked = false;
     };
     this.StyleAsRow = function (bottom_border_only=false, _backup_line_break_replacement=" ") {
         this.min_height = Dash.Size.RowHeight;
@@ -50050,7 +50047,7 @@ function DashMobileTextBox (
         this.submit_override_only = true;
     };
     this.Flash = function () {
-        if (this.flash_disabled) {
+        if (this.flash_disabled || this.locked) {
             return;
         }
         if (!this.flash_highlight) {
@@ -50183,7 +50180,7 @@ function DashMobileTextBox (
                 self.fire_change_cb();
             });
             self.textarea.on("blur", function () {
-                self.fire_change_cb(true);
+                self.fire_change_cb();
             });
             self.textarea.on("keydown",function (e) {
                 if (self.on_change_cb && (e.key === "ArrowLeft" || e.key === "ArrowRight")) {

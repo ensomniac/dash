@@ -4,6 +4,7 @@ function DashLayoutToolbar (binder, color=null) {
 
     this.objects = [];
     this.stroke_height = 1;
+    this.stroke_sep_removed = false;
     this.html = Dash.Gui.GetHTMLContext();
     this.allow_padding_refactoring = true;
     this.refactor_itom_padding_requested = false;
