@@ -23070,19 +23070,20 @@ function DashGuiModal (
     this.setup_styles();
 }
 
-function DashGuiSlider (color, label_text, callback, start_range, end_range, current_value, width=null, height=null) {
+function DashGuiSlider (
+    color, label_text, callback, start_range, end_range, initial_value, width=null, height=null
+) {
     this.color = color;
     this.label_text = label_text;
     this.callback = callback;
     this.start_range = start_range;
     this.end_range = end_range;
+    this.initial_value = initial_value;
     this.width = width;
     this.height = height;
-    this.value = Dash.Math.InverseLerp(this.start_range, this.end_range, current_value);
     this.fire_callback_on_up_instead_of_move = false;
     this.callback_delay_ms = 0;
     this.callback_timer = null;
-    this.initial_value = this.value;
     this.html = Dash.Gui.GetHTMLContext();
     this.label = $("<div></div>");
     this.value_label = $("<div></div>");
@@ -23196,14 +23197,19 @@ function DashGuiSlider (color, label_text, callback, start_range, end_range, cur
     };
     // The value is manually set, externally
     this.SetValue = function (value) {
-        var value_px = Dash.Math.Lerp(0, this.slider_width, value);
+        // Ensure the input value is within the provided range
+        value = Math.max(this.start_range, Math.min(this.end_range, value));
+        // Normalize the input value from [start_range, end_range] to [0, 1]
+        var normalized_value = Dash.Math.InverseLerp(this.start_range, this.end_range, value);
+        // Use the normalized value to get the correct position in pixels
+        var value_px = Dash.Math.Lerp(0, this.slider_width, normalized_value);
         this.value = value;
         this.manual_value = true;
         this.set_thumb(value_px, false);
         this.update_value_label();
     };
     this.GetValue = function () {
-        return Dash.Math.Lerp(this.start_range, this.end_range, this.value);
+        return this.value;
     };
     this.SetExtraData = function (data) {
         this.extra_data = data;
@@ -23217,8 +23223,10 @@ function DashGuiSlider (color, label_text, callback, start_range, end_range, cur
     this.SetValueLabelVisibility = function (visible) {
         this.value_label_visible = visible;
     };
-    // This is a much more flexible approach and should be the default, but don't want to break any pre-existing usages
-    // TODO: This is not fully worked out, need to figure out how the slider and all of its components will flex and redraw on resize
+    // This is a much more flexible approach and should be the
+    // default, but don't want to break any pre-existing usages
+    // TODO: This is not fully worked out, need to figure out how the
+    //  slider and all of its components will flex and redraw on resize
     // this.FlexInsteadOfAbsolute = function () {
     //     this.html.css({
     //         "width": "calc(100% - " + (Dash.Size.Padding * 2) + "px)"
@@ -23350,7 +23358,13 @@ function DashGuiSlider (color, label_text, callback, start_range, end_range, cur
             "position": "absolute",
             "top": 0,
             "margin": 0,
-            "left": this.label_width + this.extra_slider_left_padding + this.slider_width + value_label_width + (Dash.Size.Padding * 4)
+            "left": (
+                  this.label_width
+                + this.extra_slider_left_padding
+                + this.slider_width
+                + value_label_width
+                + (Dash.Size.Padding * 4)
+            )
         });
         this.html.append(this.reset_button.html);
     };
@@ -23529,7 +23543,7 @@ function DashGuiSlider (color, label_text, callback, start_range, end_range, cur
         });
     };
     this.update_value_label = function () {
-        var label_text = Dash.Math.Lerp(this.start_range, this.end_range, this.value).toString();
+        var label_text = this.value.toString();
         if (label_text.length > this.max_value_label_length) {
             label_text = label_text.slice(0, this.max_value_label_length);
         }
@@ -23551,7 +23565,12 @@ function DashGuiSlider (color, label_text, callback, start_range, end_range, cur
         }
     };
     this.get_touch_w_offset = function (event) {
-        return event.pageX - $(this.slider).parent().offset().left - (this.label_width + Dash.Size.Padding) - this.extra_slider_left_padding;
+        return (
+              event.pageX
+            - $(this.slider).parent().offset().left
+            - (this.label_width + Dash.Size.Padding)
+            - this.extra_slider_left_padding
+        );
     };
     this.on_mouse_down = function (event) {
         if (this.is_active) {
@@ -23611,9 +23630,12 @@ function DashGuiSlider (color, label_text, callback, start_range, end_range, cur
             this.bar_fill.css({"width": x_pos_px + (this.thumb_size * 0.5)});
         }
         if (this.setup_complete) {
-            var value = Dash.Math.InverseLerp(0, this.slider_max_px, x_pos_px);
-            if (this.manual_value) {
-                value = this.value;
+            var value = this.value;
+            if (!this.manual_value) {
+                // Calculate the normalized position of the thumb within the slider
+                var norm_pos = Dash.Math.InverseLerp(0, this.slider_max_px, x_pos_px);
+                // Calculate the value within the slider's range based on the normalized position
+                value = Dash.Math.Lerp(this.start_range, this.end_range, norm_pos);
             }
             if (!animate) {
                 this.value = value;
@@ -23652,10 +23674,12 @@ function DashGuiSlider (color, label_text, callback, start_range, end_range, cur
                 self.bar_fill.stop();
                 event.preventDefault();
             });
+            // TODO: this needs an identified added and needs to be killed when html is not visible
             $(document).on("mousemove", self.slider, function (event) {
                 self.on_mouse_move(event);
                 event.preventDefault();
             });
+            // TODO: this needs an identified added and needs to be killed when html is not visible
             $(document).on("mouseup", self.slider, function (event) {
                 self.on_mouse_up(event);
             });
@@ -34902,7 +34926,7 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             "kerning",
             1.05,
             "",
-            0.5,
+            0,
             1.0,
             -1.0
         );
