@@ -18655,7 +18655,8 @@ function DashView () {
 class DashLog {
     constructor () {
         this.remote_debug_ls_key = "_dash_remote_debug_mode_enabled";
-        this.remote_debug_mode_enabled = !Dash.LocalDev ? false : null;
+        this.remote_debug_mode_enabled = Dash.LocalDev ? false : null;
+        this.assert_debug_mode();
     }
     Log (...msg) {
         this.log("log", ...msg);
@@ -18687,22 +18688,25 @@ class DashLog {
         location.reload();
     }
     log (type, ...msg) {
-        if (this.remote_debug_mode_enabled === null) {  // This pull only happens once
-            this.remote_debug_mode_enabled = Dash.Local.Get(this.remote_debug_ls_key, false);
-            if (this.remote_debug_mode_enabled) {
-                console.warn(
-                    "**********************************************************\n" +
-                    "WARNING: REMOTE DEBUG MODE ENABLED\n\n" +
-                    "Don't forget to disable this when done debugging by " +
-                    "calling\n'Dash.Log.ToggleRemoteDebugMode()' in the console." +
-                    "\n**********************************************************"
-                );
-            }
-        }
         if (!this.remote_debug_mode_enabled && !Dash.LocalDev) {
             return;
         }
         console[type](...msg);
+    }
+    assert_debug_mode () {
+        if (this.remote_debug_mode_enabled !== null) {
+            return;  // Only need to assert once
+        }
+        this.remote_debug_mode_enabled = Dash.Local.Get(this.remote_debug_ls_key, false);
+        if (this.remote_debug_mode_enabled) {
+            console.warn(
+                "**********************************************************\n" +
+                "WARNING: REMOTE DEBUG MODE ENABLED\n\n" +
+                "Don't forget to disable this when done debugging by " +
+                "calling\n'Dash.Log.ToggleRemoteDebugMode()' in the console." +
+                "\n**********************************************************"
+            );
+        }
     }
 }
 

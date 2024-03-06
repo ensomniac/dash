@@ -602,15 +602,29 @@ def update_data_with_saved_file(file_data, file_root, file_ext, file_bytes_or_ex
             file_data["glb_url"] = GetURLFromPath(dash_context, glb_path)
 
     elif file_ext in FontExtensions:
-        if file_ext.startswith("woff"):  # Unity supports either ttf or otf, so in the case of otf upload, this conversion is not needed
-            from fontTools.ttLib.woff2 import decompress
-
+        # Always create a ttf version (Unity supports either ttf or otf, PIL requires ttf)
+        if file_ext != "ttf":
             ttf_path = os.path.join(file_root, f"{file_data['id']}.ttf")
 
-            decompress(file_path, ttf_path)
+            if file_ext.startswith("woff"):
+                from fontTools.ttLib.woff2 import decompress
+
+                decompress(file_path, ttf_path)
+
+            elif file_ext == "otf":
+                from fontTools.ttLib import TTFont
+
+                font = TTFont(file_path)
+
+                font.save(ttf_path)
+
+            else:
+                raise ValueError("Unhandled font extension for ttf conversion!")
 
             file_data["ttf_url"] = GetURLFromPath(dash_context, ttf_path)
-        else:  # Always create a woff version for web
+
+        # Always create a woff version for web
+        if not file_ext.startswith("woff"):
             from fontTools.ttLib.woff2 import compress
 
             woff2_path = os.path.join(file_root, f"{file_data['id']}.woff2")
