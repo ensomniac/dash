@@ -50,11 +50,11 @@ class DashLog {
     }
 
     log (type, ...msg) {
+        this.assert_debug_mode();
+
         if (!this.remote_debug_mode_enabled && !Dash.LocalDev) {
             return;
         }
-
-        this.assert_debug_mode();
 
         console[type](...msg);
     }
