@@ -18698,6 +18698,11 @@ class DashLog {
         if (this.remote_debug_mode_enabled !== null) {
             return;  // Only need to assert once
         }
+        // In case it wasn't ready on init
+        if (Dash.LocalDev) {
+            this.remote_debug_mode_enabled = false;
+            return;
+        }
         this.remote_debug_mode_enabled = Dash.Local.Get(this.remote_debug_ls_key, false);
         if (this.remote_debug_mode_enabled) {
             console.warn(
