@@ -18656,7 +18656,6 @@ class DashLog {
     constructor () {
         this.remote_debug_ls_key = "_dash_remote_debug_mode_enabled";
         this.remote_debug_mode_enabled = Dash.LocalDev ? false : null;
-        this.assert_debug_mode();
     }
     Log (...msg) {
         this.log("log", ...msg);
@@ -18683,6 +18682,7 @@ class DashLog {
             console.warn("Warning: Remote debug mode cannot (and doesn't need to) be toggled during local dev.");
             return;
         }
+        this.assert_debug_mode();
         this.remote_debug_mode_enabled = !this.remote_debug_mode_enabled;
         Dash.Local.Set(this.remote_debug_ls_key, this.remote_debug_mode_enabled);
         location.reload();
@@ -18691,6 +18691,7 @@ class DashLog {
         if (!this.remote_debug_mode_enabled && !Dash.LocalDev) {
             return;
         }
+        this.assert_debug_mode();
         console[type](...msg);
     }
     assert_debug_mode () {

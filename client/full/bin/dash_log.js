@@ -6,8 +6,6 @@ class DashLog {
     constructor () {
         this.remote_debug_ls_key = "_dash_remote_debug_mode_enabled";
         this.remote_debug_mode_enabled = Dash.LocalDev ? false : null;
-
-        this.assert_debug_mode();
     }
 
     Log (...msg) {
@@ -42,6 +40,8 @@ class DashLog {
             return;
         }
 
+        this.assert_debug_mode();
+
         this.remote_debug_mode_enabled = !this.remote_debug_mode_enabled;
 
         Dash.Local.Set(this.remote_debug_ls_key, this.remote_debug_mode_enabled);
@@ -53,6 +53,8 @@ class DashLog {
         if (!this.remote_debug_mode_enabled && !Dash.LocalDev) {
             return;
         }
+
+        this.assert_debug_mode();
 
         console[type](...msg);
     }
