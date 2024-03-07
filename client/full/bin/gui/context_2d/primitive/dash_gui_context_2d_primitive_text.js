@@ -98,7 +98,19 @@ function DashGuiContext2DPrimitiveText () {
         this.update_textarea_width();
     };
 
-    this.update_textarea_width = function (skip_if_no_scroll_width=true, retry=true) {
+    this.update_textarea_width = function (skip_if_no_scroll_width=true, retry=0, stroke_px=null, slant_px=null) {
+        if (stroke_px === null || slant_px === null) {
+            var text_height = this.height_px;
+            var font_option = this.get_font_option();
+
+            if (font_option && font_option["override_scale_mult"] !== 1.0) {
+                text_height *= font_option["override_scale_mult"];
+            }
+
+            stroke_px = text_height * (this.get_value("stroke_thickness") || 0);
+            slant_px = font_option && font_option["slant_comp_mult"] ? (font_option["slant_comp_mult"] * text_height) : 0;
+        }
+
         (function (self) {
             if (self.textarea_width_timer) {
                 clearTimeout(self.textarea_width_timer);
@@ -107,17 +119,18 @@ function DashGuiContext2DPrimitiveText () {
             self.textarea_width_timer = setTimeout(
                 function () {
                     var html = self.text_area.textarea[0];
-                    var has_overflow = html.offsetWidth < html.scrollWidth;
+                    var scroll_width = html.scrollWidth + (stroke_px ? (stroke_px * 2) : 0) + (slant_px ? slant_px : 0);
+                    var has_overflow = html.offsetWidth < scroll_width;
 
-                    if (!has_overflow && retry) {
-                        self.update_textarea_width(skip_if_no_scroll_width, false);
+                    if (!has_overflow && retry < 4) {
+                        self.update_textarea_width(skip_if_no_scroll_width, retry + 1, stroke_px);
 
                         return;
                     }
 
-                    var scroll_width = has_overflow ? (html.scrollWidth + 1) : 0;
+                    var true_width = has_overflow ? (scroll_width + 1) : 0;
 
-                    if (scroll_width) {
+                    if (true_width) {
                         self.using_scroll_width = true;
                     }
 
@@ -130,7 +143,7 @@ function DashGuiContext2DPrimitiveText () {
                     }
 
                     self.text_area.textarea.css({
-                        "width": scroll_width ? (scroll_width + "px") : "fit-content"
+                        "width": true_width ? (true_width + "px") : "fit-content"
                     });
                 },
                 300

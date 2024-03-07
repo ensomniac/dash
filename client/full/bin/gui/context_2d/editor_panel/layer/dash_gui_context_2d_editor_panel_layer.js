@@ -9,6 +9,7 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
     this.locked_icon = null;
     this.linked_icon = null;
     this.icon_size_mult = 0.8;
+    this.overrides_icon = null;
     this.contained_icon = null;
     this.color_border_size = 3;
     this.html = $("<div></div>");
@@ -16,10 +17,11 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
     this.panel = this.layers.panel;
     this.editor = this.layers.editor;
     this.icon_area = $("<div></div>");
-    this.can_edit = this.layers.can_edit;
+    this.can_edit = this.editor.can_edit;
     this.icon_color = this.color.StrokeLight;
     this.child_left_margin = Dash.Size.Padding;
-    this.preview_mode = this.layers.preview_mode;
+    this.preview_mode = this.editor.preview_mode;
+    this.override_mode = this.editor.override_mode;
 
     this.setup_styles = function () {
         if (this.preview_mode) {
@@ -28,6 +30,7 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
 
         this.html.css({
             "padding": Dash.Size.Padding - (this.color_border_size * 2),
+            "padding-left": 0,
             "border-bottom": "1px solid " + this.color.PinstripeDark,
             "display": "flex",
             "cursor": "pointer",
@@ -39,6 +42,7 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
         this.UpdatePreCompColor();
         this.add_type_icon();
         this.add_input();
+        this.add_override_icon();
 
         this.html.append(Dash.Gui.GetFlexSpacer());
 
@@ -183,6 +187,20 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
 
         // TODO: Ryan didn't like this, re-enable after it's improved - what's wrong with it?
         // Dash.Gui.ScrollToElement(this.layers.layers_box, this.html);
+    };
+
+    this.SetOverrideIconVisibility = function () {
+        if (!this.overrides_icon) {
+            return;
+        }
+
+        if (this.get_value("has_overrides")) {
+            this.overrides_icon.html.show();
+        }
+
+        else {
+            this.overrides_icon.html.hide();
+        }
     };
 
     this.ToggleHidden = function (hidden) {
@@ -450,7 +468,7 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
 
         type_icon.html.attr("title", "Copy Layer ID");
 
-        var css = {"margin-right": Dash.Size.Padding * 0.5};
+        var css = {"margin-right": Dash.Size.Padding * 0.3};
 
         if (this.parent_id) {
             css["margin-left"] = this.child_left_margin;
@@ -479,7 +497,9 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
         });
 
         this.input.input.css({
-            "width": "calc(100% - " + Dash.Size.Padding + "px)"
+            "width": "calc(100% - " + Dash.Size.Padding + "px)",
+            "padding-left": Dash.Size.Padding * 0.5,
+            "padding-right": Dash.Size.Padding * 0.5
         });
 
         if (display_name) {
@@ -507,31 +527,46 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
         this.html.append(this.input.html);
     };
 
+    this.add_override_icon = function () {
+        if (!this.override_mode) {
+            return;
+        }
+
+        this.overrides_icon = this.get_icon(
+            "dot_solid",
+            "Layer has overrides at this level",
+            this.icon_size_mult * 0.4,
+            this.color.AccentBad
+        );
+
+        if (!this.get_value("has_overrides")) {
+            this.overrides_icon.html.hide();
+        }
+
+        this.html.append(this.overrides_icon.html);
+    };
+
     this.add_icon_area = function () {
         this.icon_area.css({
-            "display": "flex"
+            "display": "flex",
+            "gap": Dash.Size.Padding * 0.3
         });
 
-        this.hidden_icon = this.get_icon("hidden");
-        this.locked_icon = this.get_icon("lock");
-        this.contained_icon = this.get_icon("box_open");
-        this.linked_icon = this.get_icon("unlink");
+        this.hidden_icon = this.get_icon("hidden", "Layer is hidden");
+        this.locked_icon = this.get_icon("lock", "Layer is locked");
 
-        this.hidden_icon.html.css({
-            "margin-left": Dash.Size.Padding
-        });
+        this.contained_icon = this.get_icon(
+            "box_open",
+            "Layer is contained within the canvas bounds"
+        );
 
-        this.locked_icon.html.css({
-            "margin-left": Dash.Size.Padding
-        });
-
-        this.contained_icon.html.css({
-            "margin-left": Dash.Size.Padding
-        });
-
-        this.linked_icon.html.css({
-            "margin-left": Dash.Size.Padding
-        });
+        this.linked_icon = this.get_icon(
+            "unlink",
+            (
+                "Layer is unlinked and will ignore values from its parent" +
+                "\n\n(only applicable when layer is from an imported context)"
+            )
+        );
 
         if (!this.get_value("hidden")) {
             this.hidden_icon.html.hide();
@@ -557,13 +592,23 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
         this.html.append(this.icon_area);
     };
 
-    this.get_icon = function (icon_name) {
-        var icon = new Dash.Gui.Icon(this.color, icon_name, Dash.Size.RowHeight, this.icon_size_mult, this.icon_color);
+    this.get_icon = function (icon_name, hover_text="", size_mult=null, color=null) {
+        var icon = new Dash.Gui.Icon(
+            this.color,
+            icon_name,
+            Dash.Size.RowHeight,
+            size_mult || this.icon_size_mult,
+            color || this.icon_color
+        );
 
         icon.html.css({
             "margin-top": Dash.Size.Padding * 0.1,
-            "cursor": "default"
+            "cursor": hover_text ? "help" : "default"
         });
+
+        if (hover_text) {
+            icon.html.attr("title", hover_text);
+        }
 
         return icon;
     };
@@ -606,6 +651,7 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
                   key === "display_name" ? ""
                 : key === "hidden" || key === "locked" ? false
                 : key === "linked" ? true
+                : key === "has_overrides" ? false
                 : default_value
             );
         }

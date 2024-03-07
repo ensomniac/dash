@@ -31527,7 +31527,16 @@ function DashGuiContext2DPrimitiveText () {
         })(this);
         this.update_textarea_width();
     };
-    this.update_textarea_width = function (skip_if_no_scroll_width=true, retry=true) {
+    this.update_textarea_width = function (skip_if_no_scroll_width=true, retry=0, stroke_px=null, slant_px=null) {
+        if (stroke_px === null || slant_px === null) {
+            var text_height = this.height_px;
+            var font_option = this.get_font_option();
+            if (font_option && font_option["override_scale_mult"] !== 1.0) {
+                text_height *= font_option["override_scale_mult"];
+            }
+            stroke_px = text_height * (this.get_value("stroke_thickness") || 0);
+            slant_px = font_option && font_option["slant_comp_mult"] ? (font_option["slant_comp_mult"] * text_height) : 0;
+        }
         (function (self) {
             if (self.textarea_width_timer) {
                 clearTimeout(self.textarea_width_timer);
@@ -31535,13 +31544,14 @@ function DashGuiContext2DPrimitiveText () {
             self.textarea_width_timer = setTimeout(
                 function () {
                     var html = self.text_area.textarea[0];
-                    var has_overflow = html.offsetWidth < html.scrollWidth;
-                    if (!has_overflow && retry) {
-                        self.update_textarea_width(skip_if_no_scroll_width, false);
+                    var scroll_width = html.scrollWidth + (stroke_px ? (stroke_px * 2) : 0) + (slant_px ? slant_px : 0);
+                    var has_overflow = html.offsetWidth < scroll_width;
+                    if (!has_overflow && retry < 4) {
+                        self.update_textarea_width(skip_if_no_scroll_width, retry + 1, stroke_px);
                         return;
                     }
-                    var scroll_width = has_overflow ? (html.scrollWidth + 1) : 0;
-                    if (scroll_width) {
+                    var true_width = has_overflow ? (scroll_width + 1) : 0;
+                    if (true_width) {
                         self.using_scroll_width = true;
                     }
                     else {
@@ -31551,7 +31561,7 @@ function DashGuiContext2DPrimitiveText () {
                         self.using_scroll_width = false;
                     }
                     self.text_area.textarea.css({
-                        "width": scroll_width ? (scroll_width + "px") : "fit-content"
+                        "width": true_width ? (true_width + "px") : "fit-content"
                     });
                 },
                 300
@@ -32664,6 +32674,7 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
     this.locked_icon = null;
     this.linked_icon = null;
     this.icon_size_mult = 0.8;
+    this.overrides_icon = null;
     this.contained_icon = null;
     this.color_border_size = 3;
     this.html = $("<div></div>");
@@ -32671,16 +32682,18 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
     this.panel = this.layers.panel;
     this.editor = this.layers.editor;
     this.icon_area = $("<div></div>");
-    this.can_edit = this.layers.can_edit;
+    this.can_edit = this.editor.can_edit;
     this.icon_color = this.color.StrokeLight;
     this.child_left_margin = Dash.Size.Padding;
-    this.preview_mode = this.layers.preview_mode;
+    this.preview_mode = this.editor.preview_mode;
+    this.override_mode = this.editor.override_mode;
     this.setup_styles = function () {
         if (this.preview_mode) {
             return;
         }
         this.html.css({
             "padding": Dash.Size.Padding - (this.color_border_size * 2),
+            "padding-left": 0,
             "border-bottom": "1px solid " + this.color.PinstripeDark,
             "display": "flex",
             "cursor": "pointer",
@@ -32691,6 +32704,7 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
         this.UpdatePreCompColor();
         this.add_type_icon();
         this.add_input();
+        this.add_override_icon();
         this.html.append(Dash.Gui.GetFlexSpacer());
         this.add_icon_area();
         this.RefreshConnections();
@@ -32795,6 +32809,17 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
         this.panel.SwitchContentToEditTab();
         // TODO: Ryan didn't like this, re-enable after it's improved - what's wrong with it?
         // Dash.Gui.ScrollToElement(this.layers.layers_box, this.html);
+    };
+    this.SetOverrideIconVisibility = function () {
+        if (!this.overrides_icon) {
+            return;
+        }
+        if (this.get_value("has_overrides")) {
+            this.overrides_icon.html.show();
+        }
+        else {
+            this.overrides_icon.html.hide();
+        }
     };
     this.ToggleHidden = function (hidden) {
         if (hidden) {
@@ -33001,7 +33026,7 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
             "margin-top": Dash.Size.Padding * 0.1
         });
         type_icon.html.attr("title", "Copy Layer ID");
-        var css = {"margin-right": Dash.Size.Padding * 0.5};
+        var css = {"margin-right": Dash.Size.Padding * 0.3};
         if (this.parent_id) {
             css["margin-left"] = this.child_left_margin;
             css["border-left"] = "1px solid " + this.color.PinstripeDark;
@@ -33022,7 +33047,9 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
             "border": "1px solid " + this.color.PinstripeDark
         });
         this.input.input.css({
-            "width": "calc(100% - " + Dash.Size.Padding + "px)"
+            "width": "calc(100% - " + Dash.Size.Padding + "px)",
+            "padding-left": Dash.Size.Padding * 0.5,
+            "padding-right": Dash.Size.Padding * 0.5
         });
         if (display_name) {
             this.input.SetText(display_name);
@@ -33044,26 +33071,39 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
         })(this);
         this.html.append(this.input.html);
     };
+    this.add_override_icon = function () {
+        if (!this.override_mode) {
+            return;
+        }
+        this.overrides_icon = this.get_icon(
+            "dot_solid",
+            "Layer has overrides at this level",
+            this.icon_size_mult * 0.4,
+            this.color.AccentBad
+        );
+        if (!this.get_value("has_overrides")) {
+            this.overrides_icon.html.hide();
+        }
+        this.html.append(this.overrides_icon.html);
+    };
     this.add_icon_area = function () {
         this.icon_area.css({
-            "display": "flex"
+            "display": "flex",
+            "gap": Dash.Size.Padding * 0.3
         });
-        this.hidden_icon = this.get_icon("hidden");
-        this.locked_icon = this.get_icon("lock");
-        this.contained_icon = this.get_icon("box_open");
-        this.linked_icon = this.get_icon("unlink");
-        this.hidden_icon.html.css({
-            "margin-left": Dash.Size.Padding
-        });
-        this.locked_icon.html.css({
-            "margin-left": Dash.Size.Padding
-        });
-        this.contained_icon.html.css({
-            "margin-left": Dash.Size.Padding
-        });
-        this.linked_icon.html.css({
-            "margin-left": Dash.Size.Padding
-        });
+        this.hidden_icon = this.get_icon("hidden", "Layer is hidden");
+        this.locked_icon = this.get_icon("lock", "Layer is locked");
+        this.contained_icon = this.get_icon(
+            "box_open",
+            "Layer is contained within the canvas bounds"
+        );
+        this.linked_icon = this.get_icon(
+            "unlink",
+            (
+                "Layer is unlinked and will ignore values from its parent" +
+                "\n\n(only applicable when layer is from an imported context)"
+            )
+        );
         if (!this.get_value("hidden")) {
             this.hidden_icon.html.hide();
         }
@@ -33082,12 +33122,21 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
         this.icon_area.append(this.linked_icon.html);
         this.html.append(this.icon_area);
     };
-    this.get_icon = function (icon_name) {
-        var icon = new Dash.Gui.Icon(this.color, icon_name, Dash.Size.RowHeight, this.icon_size_mult, this.icon_color);
+    this.get_icon = function (icon_name, hover_text="", size_mult=null, color=null) {
+        var icon = new Dash.Gui.Icon(
+            this.color,
+            icon_name,
+            Dash.Size.RowHeight,
+            size_mult || this.icon_size_mult,
+            color || this.icon_color
+        );
         icon.html.css({
             "margin-top": Dash.Size.Padding * 0.1,
-            "cursor": "default"
+            "cursor": hover_text ? "help" : "default"
         });
+        if (hover_text) {
+            icon.html.attr("title", hover_text);
+        }
         return icon;
     };
     this.get_type_icon_name = function () {
@@ -33119,6 +33168,7 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
                   key === "display_name" ? ""
                 : key === "hidden" || key === "locked" ? false
                 : key === "linked" ? true
+                : key === "has_overrides" ? false
                 : default_value
             );
         }
@@ -33582,6 +33632,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
                 this.layers[layer_id].UpdatePreCompColor();
             }
         }
+        this.layers[id].SetOverrideIconVisibility();
         var display_name;
         if (parent_id) {
             var imported_context = this.editor.data["layers"]["data"][parent_id]["imported_context"];
@@ -33611,14 +33662,14 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         }
         this.layers = {};
         this.layers_box.empty();
-        var precomps_log = [];
+        // var precomps_log = [];
         for (var id of this.get_data()["order"]) {
             this.AddLayer(id, select);
-            precomps_log.push(
-                  this.layers[id].get_value("display_name")
-                + ": "
-                + this.layers[id].get_value("precomp_tag")
-            );
+            // precomps_log.push(
+            //       this.layers[id].get_value("display_name")
+            //     + ": "
+            //     + this.layers[id].get_value("precomp_tag")
+            // );
         }
         // Dash.Log.Log("Pre-Comps:", precomps_log.reverse());
         this.redrawing = false;

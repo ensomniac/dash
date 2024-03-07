@@ -572,6 +572,8 @@ function DashGuiContext2DEditorPanelLayers (panel) {
             }
         }
 
+        this.layers[id].SetOverrideIconVisibility();
+
         var display_name;
 
         if (parent_id) {
@@ -612,16 +614,16 @@ function DashGuiContext2DEditorPanelLayers (panel) {
 
         this.layers_box.empty();
 
-        var precomps_log = [];
+        // var precomps_log = [];
 
         for (var id of this.get_data()["order"]) {
             this.AddLayer(id, select);
 
-            precomps_log.push(
-                  this.layers[id].get_value("display_name")
-                + ": "
-                + this.layers[id].get_value("precomp_tag")
-            );
+            // precomps_log.push(
+            //       this.layers[id].get_value("display_name")
+            //     + ": "
+            //     + this.layers[id].get_value("precomp_tag")
+            // );
         }
 
         // Dash.Log.Log("Pre-Comps:", precomps_log.reverse());
