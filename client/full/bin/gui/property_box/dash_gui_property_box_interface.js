@@ -728,7 +728,7 @@ function DashGuiPropertyBoxInterface () {
     ) {
         this.data = this.get_data_cb ? this.get_data_cb() : {};
 
-        var value = this.get_formatted_data_cb ? this.get_formatted_data_cb(data_key) : this.data[data_key];
+        // var value = this.get_formatted_data_cb ? this.get_formatted_data_cb(data_key) : this.data[data_key];
 
         if (!(label_text.endsWith(":"))) {
             label_text += ":";
@@ -739,14 +739,14 @@ function DashGuiPropertyBoxInterface () {
         this.color_pickers[data_key] = Dash.Gui.GetColorPicker(
             this.binder,
             (value) => {
-                this.set_property(data_key, value);
+                (this.set_data_cb || this.set_property)(data_key, value);
             },
             label_text,
             this.color,
             default_picker_hex_color,
             include_clear_button,
             () => {
-                this.set_property(data_key, "");
+                (this.set_data_cb || this.set_property)(data_key, "");
             },
             Dash.Size.RowHeight - (pad * 2)
         );
