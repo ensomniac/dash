@@ -33554,28 +33554,34 @@ function DashGuiContext2DEditorPanelLayers (panel) {
             ...this.editor.extra_request_params,
             ...additional_params
         };
-        if (key === "font_id") {
-            var font_url = "";
-            if (value) {
-                for (var option of this.editor.ComboOptions["fonts"]) {
-                    if (option["id"] !== value) {
-                        continue;
-                    }
-                    font_url = option["url"];
-                    break;
-                }
-            }
-            params["f"] = "set_layer_properties";
-            params["properties"] = {
-                "font_id": value,
-                "font_url": font_url
-            };
-        }
-        else {
-            params["f"] = "set_layer_property";
-            params["key"] = key;
-            params["value"] = value;
-        }
+        // if (key === "font_id") {
+        //     var font_url = "";
+        //
+        //     if (value) {
+        //         for (var option of this.editor.ComboOptions["fonts"]) {
+        //             if (option["id"] !== value) {
+        //                 continue;
+        //             }
+        //
+        //             font_url = option["url"];
+        //
+        //             break;
+        //         }
+        //     }
+        //
+        //     params["f"] = "set_layer_properties";
+        //
+        //     params["properties"] = {
+        //         "font_id": value,
+        //         "font_url": font_url
+        //     };
+        // }
+        //
+        // else {
+        params["f"] = "set_layer_property";
+        params["key"] = key;
+        params["value"] = value;
+        // }
         if (parent_id && key !== "layer_order") {
             params["imported_context_layer_id"] = id;
         }
