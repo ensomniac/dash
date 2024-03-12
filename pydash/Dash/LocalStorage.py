@@ -464,31 +464,28 @@ class DashLocalStorage:
 
     def GetRecordPath(self, obj_id):
         obj_id = str(obj_id)  # IDs usually consist purely of numbers, so this is an extra safeguard
+        root = self.GetRecordRoot(obj_id)
 
         if self.store_path == "users":
-            return os.path.join(
-                self.GetRecordRoot(obj_id),
-                "usr.data"
-            )
-        else:
-            if self.nested:
-                obj_id_root = os.path.join(
-                    self.GetRecordRoot(obj_id),
-                    obj_id
-                )
+            return os.path.join(root, "usr.data")
 
-                if not os.path.isdir(obj_id_root):
-                    return ""
+        if self.nested:
+            obj_id_root = os.path.join(root, obj_id)
 
-                return os.path.join(
-                    obj_id_root,
-                    "data.json"
-                )
-            else:
-                return os.path.join(
-                    self.GetRecordRoot(obj_id),
-                    obj_id
-                )
+            if not os.path.isdir(obj_id_root):
+                return ""
+
+            path = os.path.join(obj_id_root, "data.json")
+
+            if not os.path.exists(path) and "users" in obj_id_root:
+                user_path = os.path.join(obj_id_root, "usr.data")
+
+                if os.path.exists(user_path):
+                    return user_path
+
+            return path
+
+        return os.path.join(root, obj_id)
 
     def GetRecordRoot(self, obj_id="", from_get_all=False):
         """
@@ -818,8 +815,8 @@ def GetData(dash_context, store_path, obj_id, nested=False, filter_out_keys=[]):
 
 
 def GetAll(
-        dash_context, store_path, nested=False, sort_by_key="", filter_out_keys=[],
-        extensionless=False, filter_params={}, default_data_to_assert={}
+    dash_context, store_path, nested=False, sort_by_key="", filter_out_keys=[],
+    extensionless=False, filter_params={}, default_data_to_assert={}
 ):
     return DashLocalStorage(
         dash_context, store_path, nested, sort_by_key, filter_out_keys
