@@ -40024,6 +40024,7 @@ class DashGuiFlow {
         if (this.initialized) {
             return;
         }
+        Dash.Log.Log("Flow data:", this.data);
         this.step_area = new DashGuiFlowStepArea(this);
         this.timeline = new DashGuiFlowTimeline(this);
         this.timeline.html.css({

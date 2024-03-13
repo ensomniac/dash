@@ -346,8 +346,9 @@ def Abbreviate(string, length=3, excluded_abbreviations=[], _retry=0):
     if _retry < 1:
         remaining = [c for c in cleaned if c.isupper()]  # Prioritize upper-case letters
 
-        # Get lower-case letters only after the last upper-case letter
-        remaining.extend([c for c in cleaned[(cleaned.rfind(remaining[-1]) + 1):] if c.islower()])
+        if remaining:
+            # Get lower-case letters only after the last upper-case letter
+            remaining.extend([c for c in cleaned[(cleaned.rfind(remaining[-1]) + 1):] if c.islower()])
 
         if len(remaining) < length:
             remaining.extend([c for c in cleaned if c.islower()])
