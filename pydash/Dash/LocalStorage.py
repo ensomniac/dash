@@ -64,10 +64,12 @@ class DashLocalStorage:
         """
 
         record_id = obj_id or GetRandomID()
-
         data = self.get_default_data(record_id)
 
         if additional_data:
+            if self.store_path == "users" and not obj_id and additional_data.get("email"):
+                record_id = additional_data["email"].lower()
+
             data.update(additional_data)
 
         root = self.get_data_root(record_id)
@@ -182,7 +184,7 @@ class DashLocalStorage:
             # is simply missing its data.json, we can safely skip it and send a warning email instead of failing
             except Exception as e:
                 if "does not exist" in str(e):
-                    if not obj_id.startswith("_"):
+                    if not obj_id.startswith("_") and not record_path.endswith("usr.data"):
                         missing.append(f"{obj_id}: {record_path}")
 
                     continue
@@ -478,10 +480,7 @@ class DashLocalStorage:
             path = os.path.join(obj_id_root, "data.json")
 
             if not os.path.exists(path) and "users" in obj_id_root:
-                user_path = os.path.join(obj_id_root, "usr.data")
-
-                if os.path.exists(user_path):
-                    return user_path
+                return os.path.join(obj_id_root, "usr.data")
 
             return path
 
@@ -617,7 +616,7 @@ class DashLocalStorage:
 
         return order
 
-    def get_data_root(self, obj_id):
+    def get_data_root(self, obj_id=""):
         """
         Nearly identical to self.get_store_root, but returns slightly
         different paths depending on whether the record is nested
@@ -625,8 +624,9 @@ class DashLocalStorage:
 
         if self.nested:
             return os.path.join(self.GetRecordRoot(obj_id), obj_id + "/")  # /local/store_path/
-        else:
-            return self.GetRecordRoot()  # /local/store_path/
+
+        # /local/store_path/
+        return self.GetRecordRoot(obj_id if (self.store_path == "users" and "@" in obj_id) else "")
 
     def write_binary(self, full_path, data, conform_permissions=True):
         open(full_path, "wb").write(data)

@@ -37,7 +37,7 @@ class Users:
 
         return self._dash_context
 
-    def Reset(self, user_email_domain_bypass_emails=[]):
+    def Reset(self, user_email_domain_bypass_emails=[], send_reset_email=True):
         email = str(self.request_params.get("email")).strip().lower()
 
         if "@" not in email:
@@ -82,32 +82,36 @@ class Users:
 
         open(os.path.join(user_reset_root, uri_data_64), "w").write("")  # Why not Dash.LocalStorage.Write?
 
-        user_data = self.get_user_info(email)  # Calling this will ensure we create default data for new user right off the bat
-        link = f"https://{self.dash_context['domain']}/Users?f=r&t={uri_data_64}"
-        body_text = f"Use <a href='{link}'>this link</a> to "
+        # Calling this will ensure we create default data for new user right off the bat
+        user_data = self.get_user_info(email)
 
-        if account_exists:
-            subject = f"Reset Your {self.dash_context['display_name']} Account: {email}"
+        if send_reset_email:
+            link = f"https://{self.dash_context['domain']}/Users?f=r&t={uri_data_64}"
+            body_text = f"Use <a href='{link}'>this link</a> to "
 
-            body_text += "reset the password for your account and get a new, temporary password."
-        else:
-            subject = f"Create Your {self.dash_context['display_name']} Account: {email}"
+            if account_exists:
+                subject = f"Reset Your {self.dash_context['display_name']} Account: {email}"
 
-            body_text += "get a temporary password for your account."
+                body_text += "reset the password for your account and get a new, temporary password."
+            else:
+                subject = f"Create Your {self.dash_context['display_name']} Account: {email}"
 
-        body_text += "\nOnce signed in, please change your password."
+                body_text += "get a temporary password for your account."
 
-        self.send_email(
-            subject=subject,
-            msg=body_text,
-            notify_email_list=[email]
-        )
+            body_text += "\nOnce signed in, please change your password."
+
+            self.send_email(
+                subject=subject,
+                msg=body_text,
+                notify_email_list=[email]
+            )
 
         return {
             "email": email,
             "t": uri_data_64,
             "user": user_data,
-            "success": True
+            "success": True,
+            "reset_email_sent": send_reset_email
         }
 
     def ResetResponse(self):
@@ -506,8 +510,12 @@ class Users:
         )
 
     def validate_reset(self, email, user_email_domain_bypass_emails=[]):
-        # If an email domain has been specified, don't allow any emails outside of that domain to create an account
-        if self.dash_context.get("user_email_domain") and email.split("@")[-1] != self.dash_context["user_email_domain"]:
+        # If an email domain has been specified, don't allow
+        # any emails outside of that domain to create an account
+        if (
+            self.dash_context.get("user_email_domain")
+            and email.split("@")[-1] != self.dash_context["user_email_domain"]
+        ):
             # Unless they're added to the bypass list
             if email not in user_email_domain_bypass_emails:
                 from Dash import AdminEmails
@@ -516,7 +524,7 @@ class Users:
                 if email not in AdminEmails:
                     from Dash.Utils import ClientAlert
 
-                    raise ClientAlert("Unauthorized")  # Keep it vague intentionally
+                    raise ClientAlert(f"Unauthorized: {email}")  # Keep it vague intentionally
 
         user_data = self.get_user_info(email, create_if_missing=False)
 
@@ -795,8 +803,8 @@ def GetUserData(user_email_to_get, request_params={}, dash_context={}, create_if
     return Users(request_params, dash_context).GetUserData(user_email_to_get, create_if_missing)
 
 
-def Reset(request_params={}, dash_context={}, user_email_domain_bypass_emails=[]):
-    return Users(request_params, dash_context).Reset(user_email_domain_bypass_emails)
+def Reset(request_params={}, dash_context={}, user_email_domain_bypass_emails=[], send_reset_email=True):
+    return Users(request_params, dash_context).Reset(user_email_domain_bypass_emails, send_reset_email)
 
 
 def ResetResponse(request_params={}, dash_context={}):
