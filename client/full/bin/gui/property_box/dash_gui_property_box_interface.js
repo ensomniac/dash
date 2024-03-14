@@ -143,7 +143,13 @@ function DashGuiPropertyBoxInterface () {
     };
 
     this.AddLineBreak = function () {
-        return this.AddHTML($("<br>"));
+        var html = $("<div></div>");
+
+        html.css({
+            "height": Dash.Size.RowHeight
+        });
+
+        return this.AddHTML(html);
     };
 
     this.AddExpander = function () {

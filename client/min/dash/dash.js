@@ -43145,7 +43145,11 @@ function DashGuiPropertyBoxInterface () {
         return html;
     };
     this.AddLineBreak = function () {
-        return this.AddHTML($("<br>"));
+        var html = $("<div></div>");
+        html.css({
+            "height": Dash.Size.RowHeight
+        });
+        return this.AddHTML(html);
     };
     this.AddExpander = function () {
         var expander = Dash.Gui.GetFlexSpacer();
@@ -44546,7 +44550,9 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
     this.modal_of = this.options["modal_of"] || null;
     this.color = this.options["color"] || Dash.Color.Light;
     this.html = Dash.Gui.GetHTMLBoxContext({}, this.color);
-    this.img_box_size = this.options["img_box_size"] || (this.view_mode === "preview" ? Dash.Size.ColumnWidth * 1.2 : Dash.Size.ColumnWidth);
+    this.img_box_size = this.options["img_box_size"] || (
+        this.view_mode === "preview" ? Dash.Size.ColumnWidth * 1.2 : Dash.Size.ColumnWidth
+    );
     this.height = this.img_box_size + Dash.Size.Padding + Dash.Size.RowHeight;
     // True by default, but ideally, options["is_admin"] should be provided for added
     // security between non-admins. This is referenced by this.has_privileges when this element
@@ -44666,11 +44672,19 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
             this.modal.Show();
             return;
         }
+        // This isn't technically correct, but it's working - moving on
+        var height = this.img_box_size + Dash.Size.Padding;
+        if (this.view_mode === "preview" && this.options["property_box"] && this.options["property_box"]["properties"]) {
+            height += (
+                  Dash.Size.RowHeight
+                * (this.options["property_box"]["properties"].length - (this.has_privileges ? 2 : 4))
+            );
+        }
         this.modal = new Dash.Gui.Modal(
             this.color,
             this.html.parent(),
             Dash.Size.ColumnWidth * 3.25,
-            this.img_box_size + Dash.Size.Padding  // This isn't technically correct, but it's working - moving on
+            height
         );
         if (this.modal_profile) {
             return;
@@ -44752,9 +44766,6 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
             this.property_box.AddInput("email", "Email Address", "", null, false);
             this.first_name_field = this.property_box.AddInput("first_name", "First Name", "", null, this.modal_of ? false : this.has_privileges);
             this.property_box.AddInput("last_name", "Last Name", "", null, this.modal_of ? false : this.has_privileges);
-            if (this.has_privileges) {
-                this.property_box.AddInput("password", "Update Password", "", null, !this.modal_of);
-            }
         }
         if (this.options["property_box"] && this.options["property_box"]["properties"]) {
             var additional_props = this.options["property_box"]["properties"];
@@ -44764,13 +44775,20 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
                     property_details["label_text"] || property_details["display_name"],
                     "",
                     null,
-                    this.modal_of ? false : "editable" in property_details ? property_details["editable"] : this.has_privileges
+                    this.modal_of ? false : "editable" in property_details ? property_details["editable"] : this.has_privileges,
+                    property_details["options"] || {}
                 );
                 // Extra callback if something else needs to happen in addition to the standard/basic set_data behavior
                 if (property_details["callback"]) {
                     this.callbacks[property_details["key"]] = property_details["callback"];
                 }
             }
+        }
+        if (!this.options["property_box"] || !this.options["property_box"]["replace"] && this.has_privileges) {
+            this.property_box.AddLineBreak();
+            this.property_box.AddInput("password", "Update Password", "", null, !this.modal_of, {"placeholder_text": "New Password"}).html.css({
+                "background": Dash.Color.GetTransparent(this.color.AccentBad, 0.1)
+            });
         }
     };
     this.add_user_image_box = function () {
