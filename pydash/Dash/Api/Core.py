@@ -180,7 +180,31 @@ class ApiCore:
         # if self._execute_as_module:
         #     return False
 
-        return os.environ.get("HTTP_SEC_CH_UA_MOBILE") == "?1"
+        if os.environ.get("HTTP_SEC_CH_UA_MOBILE") == "?1":
+            return True
+
+        user_agent = os.environ.get("HTTP_USER_AGENT")
+
+        if not user_agent:
+            return False
+
+        for kw in [
+            "iPhone",
+            "iPad",
+            "iPod",
+            "Mobi",
+            "Android",
+            "webOS",
+            "BlackBerry",
+            "IEMobile",
+            "CriOS",
+            "OPiOS",
+            "Opera Mini"
+        ]:
+            if kw in user_agent:
+                return True
+
+        return False
 
     @property
     def dash_global(self):
