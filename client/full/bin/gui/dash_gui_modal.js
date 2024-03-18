@@ -21,6 +21,7 @@ function DashGuiModal (
 
     this.modal = null;
     this.background = null;
+    this.appended_html = [];
     this.close_button = null;
     this.on_close_callback = null;
     this.esc_shortcut_active = false;
@@ -45,6 +46,8 @@ function DashGuiModal (
         }
 
         this.on_close_callback = callback.bind(binder);
+
+        return this;
     };
 
     this.SetParentHTML = function (parent_html) {
@@ -60,10 +63,26 @@ function DashGuiModal (
 
         this.parent_html.append(this.modal);
         this.parent_html.append(this.background);
+
+        return this;
+    };
+
+    this.Empty = function () {
+        for (var html of this.appended_html) {
+            html.remove();
+        }
+
+        this.appended_html = [];
+
+        return this;
     };
 
     this.AddHTML = function (html) {
+        this.appended_html.push(html);
+
         this.modal.append(html);
+
+        return this;
     };
 
     this.Hide = function () {
@@ -72,6 +91,8 @@ function DashGuiModal (
         if (this.background) {
             this.background.hide();
         }
+
+        return this;
     };
 
     this.Show = function () {
@@ -82,6 +103,8 @@ function DashGuiModal (
         }
 
         this.add_esc_shortcut();
+
+        return this;
     };
 
     this.Remove = function () {
@@ -108,6 +131,8 @@ function DashGuiModal (
                 );
             })(this);
         }
+
+        return this;
     };
 
     // If you have multiple modals, or a modal alongside other elements that use
@@ -131,6 +156,8 @@ function DashGuiModal (
                 "z-index": z_index + 2
             });
         }
+
+        return this;
     };
 
     this.UpdateSize = function (width=null, height=null) {
@@ -160,6 +187,8 @@ function DashGuiModal (
         }
 
         this.modal.css(css);
+
+        return this;
     };
 
     this.add_modal = function () {

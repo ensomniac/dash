@@ -198,6 +198,7 @@ function DashLayoutToolbarInterface () {
     };
 
     this.AddDivider = function () {
+        // This is really old and inefficient
         var divider_line = this.AddLabel("", false);
 
         divider_line.html.css({
@@ -205,6 +206,11 @@ function DashLayoutToolbarInterface () {
             "margin-left": Dash.Size.Padding * 0.7,
             "margin-top": Dash.Size.Padding * 0.5,
             "margin-right": Dash.Size.Padding * 0.2,
+            "margin-bottom": 0
+        });
+
+        divider_line.border.css({
+            "width": Dash.Size.Padding * 0.3
         });
 
         var obj_index = this.objects.length;

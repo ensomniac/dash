@@ -224,8 +224,16 @@ function DashGuiFileExplorerGUI () {
 
         if (this.include_list_header_row) {
             this.list.AddHeaderRow(
-                {"margin-left": Dash.Size.Padding * 2},
-                {"background": this.color.Pinstripe}
+                {
+                    "margin-left": Dash.Size.Padding * 2,
+                    "border-top-left-radius": Dash.Size.BorderRadius,
+                    "border-top-right-radius": Dash.Size.BorderRadius
+                },
+                {
+                    "background": this.color.Pinstripe,
+                    "border-top-left-radius": Dash.Size.BorderRadius,
+                    "border-top-right-radius": Dash.Size.BorderRadius
+                }
             );
         }
 

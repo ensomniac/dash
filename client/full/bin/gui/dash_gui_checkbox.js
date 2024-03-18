@@ -251,7 +251,7 @@ function DashGuiCheckbox (
 
         if (
                !Dash.Validate.Object(redraw_css)
-            && Dash.Validate.Object(this.icon_button_redraw_styling["highlight_css"])
+            && Dash.Validate.Object(this.icon_button_redraw_styling?.["highlight_css"])
         ) {
             redraw_css = this.icon_button_redraw_styling["highlight_css"];
         }

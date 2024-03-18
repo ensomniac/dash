@@ -22823,6 +22823,7 @@ function DashGuiModal (
     // to 'this.parent_html' to ensure the elements get appended appropriately.
     this.modal = null;
     this.background = null;
+    this.appended_html = [];
     this.close_button = null;
     this.on_close_callback = null;
     this.esc_shortcut_active = false;
@@ -22842,6 +22843,7 @@ function DashGuiModal (
             return;
         }
         this.on_close_callback = callback.bind(binder);
+        return this;
     };
     this.SetParentHTML = function (parent_html) {
         if (this.parent_html) {
@@ -22853,15 +22855,26 @@ function DashGuiModal (
         this.parent_html = parent_html;
         this.parent_html.append(this.modal);
         this.parent_html.append(this.background);
+        return this;
+    };
+    this.Empty = function () {
+        for (var html of this.appended_html) {
+            html.remove();
+        }
+        this.appended_html = [];
+        return this;
     };
     this.AddHTML = function (html) {
+        this.appended_html.push(html);
         this.modal.append(html);
+        return this;
     };
     this.Hide = function () {
         this.modal.hide();
         if (this.background) {
             this.background.hide();
         }
+        return this;
     };
     this.Show = function () {
         this.modal.show();
@@ -22869,6 +22882,7 @@ function DashGuiModal (
             this.background.show();
         }
         this.add_esc_shortcut();
+        return this;
     };
     this.Remove = function () {
         (function (self) {
@@ -22893,6 +22907,7 @@ function DashGuiModal (
                 );
             })(this);
         }
+        return this;
     };
     // If you have multiple modals, or a modal alongside other elements that use
     // modals or  modal backgrounds, such as loading labels and loading overlays,
@@ -22912,6 +22927,7 @@ function DashGuiModal (
                 "z-index": z_index + 2
             });
         }
+        return this;
     };
     this.UpdateSize = function (width=null, height=null) {
         if (!width && !height) {
@@ -22933,6 +22949,7 @@ function DashGuiModal (
             css["margin-left"] = this.parent_html ? this.get_left_margin(this.width) : 0;
         }
         this.modal.css(css);
+        return this;
     };
     this.add_modal = function () {
         var parent_width = this.get_parent_width();
@@ -24001,7 +24018,7 @@ function DashGuiCheckbox (
         }
         if (
                !Dash.Validate.Object(redraw_css)
-            && Dash.Validate.Object(this.icon_button_redraw_styling["highlight_css"])
+            && Dash.Validate.Object(this.icon_button_redraw_styling?.["highlight_css"])
         ) {
             redraw_css = this.icon_button_redraw_styling["highlight_css"];
         }
@@ -36476,8 +36493,16 @@ function DashGuiFileExplorerGUI () {
         this.list.DisableDividerColorChangeOnHover();
         if (this.include_list_header_row) {
             this.list.AddHeaderRow(
-                {"margin-left": Dash.Size.Padding * 2},
-                {"background": this.color.Pinstripe}
+                {
+                    "margin-left": Dash.Size.Padding * 2,
+                    "border-top-left-radius": Dash.Size.BorderRadius,
+                    "border-top-right-radius": Dash.Size.BorderRadius
+                },
+                {
+                    "background": this.color.Pinstripe,
+                    "border-top-left-radius": Dash.Size.BorderRadius,
+                    "border-top-right-radius": Dash.Size.BorderRadius
+                }
             );
         }
         this.list.html.css({
@@ -36629,7 +36654,10 @@ function DashGuiFileExplorerData () {
         }
         Dash.Requests.ResetRequestFailuresForID(this.request_failure_id);
         if (!response["data"] || !response["order"]) {
-            console.error("Error: Get files data response was invalid. Both 'data' and 'order' keys are required to update the list:", response);
+            console.error(
+                "Error: Get files data response was invalid. Both 'data' " +
+                "and 'order' keys are required to update the list:", response
+            );
             return;
         }
         if (!this.initialized) {
@@ -41043,6 +41071,7 @@ function DashGuiIcons (icon) {
         "browser_window":          new DashGuiIconDefinition(this.icon, "Browser Window", this.weight["solid"], "window"),
         "bug":                     new DashGuiIconDefinition(this.icon, "Bug", this.weight["regular"], "bug"),
         "building":                new DashGuiIconDefinition(this.icon, "Building", this.weight["regular"], "building"),
+        "building_solid":          new DashGuiIconDefinition(this.icon, "Building (Solid)", this.weight["solid"], "building"),
         "business_time":           new DashGuiIconDefinition(this.icon, "Business Time", this.weight["regular"], "business-time"),
         "calendar":                new DashGuiIconDefinition(this.icon, "Calendar", this.weight["regular"], "calendar-alt"),
         "camera":                  new DashGuiIconDefinition(this.icon, "Camera", this.weight["regular"], "camera"),
@@ -41116,6 +41145,7 @@ function DashGuiIcons (icon) {
         "empty":                   new DashGuiIconDefinition(this.icon, "Empty", this.weight["regular"], "empty-set"),
         "empty_folder":            new DashGuiIconDefinition(this.icon, "Empty Folder", this.weight["regular"], "folder-times"),
         "envelope":                new DashGuiIconDefinition(this.icon, "Email Envelope", this.weight["regular"], "envelope"),
+        "envelope_solid":          new DashGuiIconDefinition(this.icon, "Email Envelope (Solid)", this.weight["solid"], "envelope"),
         "eraser":                  new DashGuiIconDefinition(this.icon, "Eraser", this.weight["solid"], "eraser"),
         "exec":                    new DashGuiIconDefinition(this.icon, "Executive", this.weight["light"], "business-time"),
         "expand":                  new DashGuiIconDefinition(this.icon, "Expand View", this.weight["regular"], "expand-alt"),
@@ -41174,6 +41204,7 @@ function DashGuiIcons (icon) {
         "level_up":                new DashGuiIconDefinition(this.icon, "Level Up", this.weight["regular"], "level-up"),
         "level_down":              new DashGuiIconDefinition(this.icon, "Level Down", this.weight["regular"], "level-down"),
         "link":                    new DashGuiIconDefinition(this.icon, "Link", this.weight["regular"], "external-link"),
+        "link_heavy":              new DashGuiIconDefinition(this.icon, "Link (Solid)", this.weight["solid"], "external-link"),
         "linked":                  new DashGuiIconDefinition(this.icon, "Linked", this.weight["regular"], "link"),
         "list":                    new DashGuiIconDefinition(this.icon, "List", this.weight["regular"], "bars"),
         "list_boxed":              new DashGuiIconDefinition(this.icon, "List Boxed", this.weight["regular"], "list-alt"),
@@ -41202,6 +41233,7 @@ function DashGuiIcons (icon) {
         "pencil_paintbrush":       new DashGuiIconDefinition(this.icon, "Pencil and Paintbrush", this.weight["regular"], "pencil-paintbrush"),
         "pencil_ruler":            new DashGuiIconDefinition(this.icon, "Pencil and Ruler", this.weight["regular"], "pencil-ruler"),
         "phone":                   new DashGuiIconDefinition(this.icon, "Phone", this.weight["regular"], "phone"),
+        "phone_solid":             new DashGuiIconDefinition(this.icon, "Phone (Solid)", this.weight["solid"], "phone"),
         "play":                    new DashGuiIconDefinition(this.icon, "Play", this.weight["solid"], "play"),
         "portal_editor":           new DashGuiIconDefinition(this.icon, "Content Builder", this.weight["regular"], "toolbox"),
         "print":                   new DashGuiIconDefinition(this.icon, "Print", this.weight["regular"], "print"),
@@ -41280,6 +41312,7 @@ function DashGuiIcons (icon) {
         "upload":                  new DashGuiIconDefinition(this.icon, "Upload", this.weight["regular"], "upload"),
         "upload_file":             new DashGuiIconDefinition(this.icon, "Upload File", this.weight["regular"], "file-upload"),
         "user":                    new DashGuiIconDefinition(this.icon, "User", this.weight["regular"], "user"),
+        "user_solid":              new DashGuiIconDefinition(this.icon, "User (Solid)", this.weight["solid"], "user"),
         "users":                   new DashGuiIconDefinition(this.icon, "Users", this.weight["regular"], "users"),
         "user_settings":           new DashGuiIconDefinition(this.icon, "User Settings", this.weight["regular"], "user-cog"),
         "video":                   new DashGuiIconDefinition(this.icon, "Video", this.weight["regular"], "video"),
@@ -49571,12 +49604,17 @@ function DashLayoutToolbarInterface () {
         return button;
     };
     this.AddDivider = function () {
+        // This is really old and inefficient
         var divider_line = this.AddLabel("", false);
         divider_line.html.css({
             "padding-left": 0,
             "margin-left": Dash.Size.Padding * 0.7,
             "margin-top": Dash.Size.Padding * 0.5,
             "margin-right": Dash.Size.Padding * 0.2,
+            "margin-bottom": 0
+        });
+        divider_line.border.css({
+            "width": Dash.Size.Padding * 0.3
         });
         var obj_index = this.objects.length;
         this.objects.push({

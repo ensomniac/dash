@@ -173,7 +173,10 @@ function DashGuiFileExplorerData () {
         Dash.Requests.ResetRequestFailuresForID(this.request_failure_id);
 
         if (!response["data"] || !response["order"]) {
-            console.error("Error: Get files data response was invalid. Both 'data' and 'order' keys are required to update the list:", response);
+            console.error(
+                "Error: Get files data response was invalid. Both 'data' " +
+                "and 'order' keys are required to update the list:", response
+            );
 
             return;
         }
