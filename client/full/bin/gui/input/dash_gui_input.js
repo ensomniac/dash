@@ -6,9 +6,11 @@ function DashGuiInput (placeholder_text="", color=null) {
     DashGuiInputBase.call(this, color, true, true);
 
     this.input = $(
-        "<input class='" + this.color.PlaceholderClass + "' " +
-        (this.placeholder.toString().toLowerCase().includes("password") ? "type=password " : "") +
-        "placeholder='" + this.placeholder + "'>"
+          "<input class='"
+        + this.color.PlaceholderClass
+        + "' placeholder='"
+        + this.placeholder
+        + "'>"
     );
 
     this.setup_styles = function () {
@@ -41,7 +43,38 @@ function DashGuiInput (placeholder_text="", color=null) {
 
         this.html.append(this.input);
 
+        this.parse_input_type();
         this.setup_connections();
+    };
+
+    this.parse_input_type = function () {
+        var placeholder = this.placeholder.toString().toLowerCase();
+
+        var type = (
+              placeholder.includes("password") ? "password"
+            : placeholder.includes("email") ? "email"
+            : ""
+        );
+
+        if (type === "numeric") {
+            if (Dash.IsMobile) {
+                this.input.attr({
+                    "type": "number",
+                    "pattern": "[0-9]*",
+                    "step": "1",
+                    "min": "0"
+                });
+            }
+        }
+
+        else if (type) {
+            this.input.attr("type", type);
+        }
+
+        if (type === "email") {
+            // This is supposed to happen when the mode is set to "email", but isn't happening automatically
+            this.input.attr("autocapitalize", "off");
+        }
     };
 
     this.SetDarkMode = function (dark_mode_on) {

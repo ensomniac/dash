@@ -224,7 +224,9 @@ function DashGuiCheckbox (
     };
 
     this.AddIconButtonRedrawStyling = function (button_container_css=null, icon_container_css=null, icon_css=null) {
-        this.icon_button_redraw_styling = {};
+        if (!this.icon_button_redraw_styling) {
+            this.icon_button_redraw_styling = {};
+        }
 
         if (Dash.Validate.Object(button_container_css)) {
             this.icon_button_redraw_styling["button_container_css"] = button_container_css;
@@ -242,14 +244,45 @@ function DashGuiCheckbox (
     };
 
     // Should this just be the default?
-    this.AddHighlight = function (bottom=null, force_in_container=false) {
+    this.AddHighlight = function (bottom=null, force_in_container=false, redraw_css={}) {
+        if (Dash.IsMobile) {
+            return;
+        }
+
+        if (
+               !Dash.Validate.Object(redraw_css)
+            && Dash.Validate.Object(this.icon_button_redraw_styling["highlight_css"])
+        ) {
+            redraw_css = this.icon_button_redraw_styling["highlight_css"];
+        }
+
+        if (bottom === null) {
+            bottom = redraw_css?.["bottom"];
+
+            if (!bottom && bottom !== 0) {
+                bottom = -(Dash.Size.Padding * 0.5);
+            }
+        }
+
         this.include_highlight = true;
 
         this.icon_button.AddHighlight(force_in_container);
 
-        this.icon_button.highlight.css({
-            "bottom": bottom !== null ? bottom : -(Dash.Size.Padding * 0.5)
-        });
+        if (bottom !== null && !("bottom" in redraw_css)) {
+            redraw_css["bottom"] = bottom;
+        }
+
+        if (Dash.Validate.Object(redraw_css)) {
+            if (!this.icon_button_redraw_styling) {
+                this.icon_button_redraw_styling = {};
+            }
+
+            this.icon_button_redraw_styling["highlight_css"] = redraw_css;
+
+            this.icon_button.highlight.css(redraw_css);
+        }
+
+        return this.icon_button.highlight;
     };
 
     this.ToggleColorNotIcon = function (static_icon_name, true_color, false_color) {
@@ -408,6 +441,10 @@ function DashGuiCheckbox (
 
         if (Dash.Validate.Object(this.icon_button_redraw_styling["icon_css"])) {
             this.icon_button.icon.icon_html.css(this.icon_button_redraw_styling["icon_css"]);
+        }
+
+        if (this.include_highlight && Dash.Validate.Object(this.icon_button_redraw_styling["highlight_css"])) {
+            this.icon_button.highlight.css(this.icon_button_redraw_styling["highlight_css"]);
         }
     };
 
