@@ -722,13 +722,13 @@ class DashLocalStorage:
 
         return log
 
-    def recursively_replace_id_in_data(self, data, old_id, new_id, log):
+    def recursively_replace_id_in_data(self, data, old_id, new_id, log, _modified=False):
         modified = False
 
         log.append(f"json: {data}")
 
         if not data:
-            return data, modified, log
+            return data, _modified or modified, log
 
         key_changes = []
 
@@ -753,7 +753,7 @@ class DashLocalStorage:
             if t is dict:
                 log.append("recurse")
 
-                value, modified, log = self.recursively_replace_id_in_data(value, old_id, new_id, log)
+                value, modified, log = self.recursively_replace_id_in_data(value, old_id, new_id, log, modified)
 
                 data[key] = value
 
@@ -787,7 +787,7 @@ class DashLocalStorage:
 
         log.append(f"key changes: {key_changes}")
 
-        return data, modified, log
+        return data, _modified or modified, log
 
 
 def New(dash_context, store_path, additional_data={}, obj_id=None, nested=False, conform_permissions=True):
