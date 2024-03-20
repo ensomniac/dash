@@ -29,6 +29,7 @@ function DashGuiInputType (
         };
 
         var input_css = {
+            "flex": 2,
             "color": this.color.Text,
             "white-space": "nowrap",
             "overflow": "hidden",

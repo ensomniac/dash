@@ -1,4 +1,5 @@
 function DashGui () {
+    this.Address                   = DashGuiAddress;
     this.Alert                     = DashGuiAlert;
     this.Button                    = DashGuiButton;
     this.ButtonBar                 = DashGuiButtonBar;

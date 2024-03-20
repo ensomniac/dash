@@ -81,8 +81,30 @@ function DashMobileSearchableCombo (
         return this.input.val();
     };
 
+    // Sometimes, setting the value like this causes the dropdown icon to disappear,
+    // so attempting a delayed value set, then a delayed focus and delayed blur
+    // to attempt to refresh the state of the input after value is set
     this.SetLabel = function (text) {
-        this.input.val(text);
+        setTimeout(
+            () => {
+                this.input.val(text);
+
+                setTimeout(
+                    () => {
+                        this.input.trigger("focus");
+
+                        setTimeout(
+                            () => {
+                                this.input.trigger("blur");
+                            },
+                            100
+                        );
+                    },
+                    100
+                );
+            },
+            100
+        );
     };
 
     this.SetLabelByID = function (id) {
