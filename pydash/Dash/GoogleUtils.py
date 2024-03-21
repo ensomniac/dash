@@ -366,6 +366,8 @@ class _DriveUtils:
             return self.Client.files().create(**_params).execute()
 
         except HttpError as http_error:
+            _params["media_body"] = "(MediaFileUpload object) truncated..."
+
             ParseHTTPError(http_error, _params)
 
         except UnicodeEncodeError as e:
