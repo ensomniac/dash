@@ -9,7 +9,7 @@ import sys
 from googleapiclient.errors import HttpError
 
 
-def ParseHTTPError(http_error):
+def ParseHTTPError(http_error, params={}):
     """
     Attempt to decode Google's "unprintable" error (googleapiclient.errors.HttpError).
     """
@@ -23,15 +23,16 @@ def ParseHTTPError(http_error):
     errors = []
 
     try:
-        message = str(loads(http_error.content).get("error", {}).get("message", ""))
+        msg = str(loads(http_error.content).get("error", {}).get("message", ""))
 
     except Exception as e:
-        message = ""
+        msg = ""
 
         errors.append(str(e))
 
-    if message:
-        raise Exception(message)
+    # This was causing vague errors to be raised, needed more detail
+    # if msg:
+    #     raise Exception(msg)
 
     error = str(http_error).strip().strip("\n").strip()
 
@@ -59,18 +60,28 @@ def ParseHTTPError(http_error):
             else:
                 message = (
                     "The Google API returned an error that was either empty, had no information, "
-                    "or was unable to be parsed. Unfortunately, Google does this on purpose for "
+                    "or was unable to be parsed. Unfortunately, Google does this deliberately for "
                     "security reasons.\n\nThis means the operation failed on Google's end, but we "
                     "don't know why.\nPlease try again.\n\nIf this persists, even after waiting 10 "
-                    "minutes or so, reach out to an admin for assistance."
+                    "minutes or so, reach out to an administrator for assistance."
                 )
 
-    message += f"\n\n\n\n***Google Error***:\n{error}"
+    message += "\n\n\n\n***Google Error***:"
+
+    if msg:
+        message += f"\n(Message): {msg}"
+
+    message += f"\n{error}"
 
     if len(errors):
         errors = "\n>>".join(errors)
 
         message += f"\n\n***Parser Errors***:\n{errors}"
+
+    if params:
+        from json import dumps
+
+        message += f"\n\n***Params***:\n{dumps(params, indent=4, sort_keys=True)}"
 
     raise Exception(message)
 
@@ -119,15 +130,14 @@ class GUtils:
         error = None
         file = BytesIO()
 
+        params = {
+            "fileId": file_id,
+            "fields": fields,
+            "mimeType": mime_type
+        }
+
         try:
-            downloader = MediaIoBaseDownload(
-                file,
-                self.DriveClient.files().export(
-                    fileId=file_id,
-                    fields=fields,
-                    mimeType=mime_type
-                )
-            )
+            downloader = MediaIoBaseDownload(file, self.DriveClient.files().export(**params))
 
             while done is False:
                 status, done = downloader.next_chunk()
@@ -136,7 +146,7 @@ class GUtils:
 
         except HttpError as http_error:
             try:
-                error = ParseHTTPError(http_error)
+                error = ParseHTTPError(http_error, params)
 
             except Exception as e:
                 error = e
@@ -330,7 +340,7 @@ class _DriveUtils:
         :rtype: dict
         """
 
-        if not params.get("mimeType"):
+        if not params.get("mimeType") and file_path:
             from Dash.Utils import GetDraftingExtensions
 
             ext = file_path.split(".")[-1].strip().lower()
@@ -345,16 +355,18 @@ class _DriveUtils:
 
             file = MediaFileUpload(file_path)
 
+        _params = {
+            "supportsAllDrives": in_shared_drive,
+            "fields": fields or self.Fields,
+            "body": params,
+            "media_body": file
+        }
+
         try:
-            return self.Client.files().create(
-                supportsAllDrives=in_shared_drive,
-                fields=fields or self.Fields,
-                body=params,
-                media_body=file
-            ).execute()
+            return self.Client.files().create(**_params).execute()
 
         except HttpError as http_error:
-            ParseHTTPError(http_error)
+            ParseHTTPError(http_error, _params)
 
         except UnicodeEncodeError as e:
             if file_path:
@@ -370,38 +382,33 @@ class _DriveUtils:
 
             raise UnicodeEncodeError(e.encoding, e.object, e.start, e.end, e.reason)
 
-        except Exception as e:
-            raise Exception(e)
-
     def DeleteFile(self, file_id, in_shared_drive=False, fields=""):
+        params = {
+            "supportsAllDrives": in_shared_drive,
+            "fields": fields or self.Fields,
+            "fileId": file_id
+        }
+
         try:
-            return self.Client.files().delete(
-                supportsAllDrives=in_shared_drive,
-                fields=fields or self.Fields,
-                fileId=file_id
-            ).execute()
+            return self.Client.files().delete(**params).execute()
 
         except HttpError as http_error:
-            ParseHTTPError(http_error)
-
-        except Exception as e:
-            raise Exception(e)
+            ParseHTTPError(http_error, params)
 
     def MoveFile(self, file_id, old_parent_id, new_parent_id, in_shared_drive=False, fields=""):
+        params = {
+            "supportsAllDrives": in_shared_drive,
+            "fields": fields or self.Fields,
+            "fileId": file_id,
+            "removeParents": old_parent_id,
+            "addParents": new_parent_id
+        }
+
         try:
-            return self.Client.files().update(
-                supportsAllDrives=in_shared_drive,
-                fields=fields or self.Fields,
-                fileId=file_id,
-                removeParents=old_parent_id,
-                addParents=new_parent_id
-            ).execute()
+            return self.Client.files().update(**params).execute()
 
         except HttpError as http_error:
-            ParseHTTPError(http_error)
-
-        except Exception as e:
-            raise Exception(e)
+            ParseHTTPError(http_error, params)
 
     def UpdateFileByKeys(self, file_id, params, fields="", in_shared_drive=False):
         """
@@ -418,19 +425,18 @@ class _DriveUtils:
         :rtype: dict
         """
 
+        _params = {
+            "supportsAllDrives": in_shared_drive,
+            "fields": fields or self.Fields,
+            "fileId": file_id,
+            "body": params
+        }
+
         try:
-            return self.Client.files().update(
-                supportsAllDrives=in_shared_drive,
-                fields=fields or self.Fields,
-                fileId=file_id,
-                body=params
-            ).execute()
+            return self.Client.files().update(**_params).execute()
 
         except HttpError as http_error:
-            ParseHTTPError(http_error)
-
-        except Exception as e:
-            raise Exception(e)
+            ParseHTTPError(http_error, _params)
 
     def GetFileDataByID(self, file_id, in_shared_drive=False, fields_override=""):
         """
@@ -445,15 +451,17 @@ class _DriveUtils:
         :rtype: dict
         """
 
+        params = {
+            "fileId": file_id,
+            "fields": (fields_override or self.Fields),
+            "supportsAllDrives": in_shared_drive
+        }
+
         try:
-            return self.Client.files().get(
-                fileId=file_id,
-                fields=(fields_override or self.Fields),
-                supportsAllDrives=in_shared_drive
-            ).execute()
+            return self.Client.files().get(**params).execute()
 
         except HttpError as http_error:
-            ParseHTTPError(http_error)
+            ParseHTTPError(http_error, params)
 
         except:
             return None  # Why is this not being handled?
@@ -524,29 +532,33 @@ class _DriveUtils:
             if extra_query:
                 query += f" and {extra_query}"
 
+        params = {
+            "driveId": drive_id,
+            "corpora": "drive",
+            "q": query,
+            "fields": f"files({(fields_override or self.Fields)})",
+            "supportsAllDrives": is_shared_drive,
+            "includeItemsFromAllDrives": is_shared_drive
+        }
+
         try:
-            return self.Client.files().list(
-                driveId=drive_id,
-                corpora="drive",
-                q=query,
-                fields=f"files({(fields_override or self.Fields)})",
-                supportsAllDrives=is_shared_drive,
-                includeItemsFromAllDrives=is_shared_drive
-            ).execute()["files"]
+            return self.Client.files().list(**params).execute()["files"]
 
         except HttpError as http_error:
-            ParseHTTPError(http_error)
+            ParseHTTPError(http_error, params)
 
     def GetFilePermissions(self, file_id, in_shared_drive=False, fields="id, emailAddress, role"):
+        params = {
+            "supportsAllDrives": in_shared_drive,
+            "fields": f"permissions({fields})",
+            "fileId": file_id
+        }
+
         try:
-            return self.Client.permissions().list(
-                supportsAllDrives=in_shared_drive,
-                fields=f"permissions({fields})",
-                fileId=file_id,
-            ).execute()["permissions"]
+            return self.Client.permissions().list(**params).execute()["permissions"]
 
         except HttpError as http_error:
-            ParseHTTPError(http_error)
+            ParseHTTPError(http_error, params)
 
     def AddPermissionToFile(self, user_email, file_id, permission_level="writer", notify_user=False, in_shared_drive=False):
         """
@@ -565,22 +577,24 @@ class _DriveUtils:
             transfer_ownership = True
             notify_user = True
 
+        params = {
+            "supportsAllDrives": in_shared_drive,
+            "transferOwnership": transfer_ownership,
+            "fields": "emailAddress, role, displayName, id",
+            "fileId": file_id,
+            "sendNotificationEmail": notify_user,
+            "body": {
+                "type": "user",
+                "emailAddress": user_email,
+                "role": permission_level
+            }
+        }
+
         try:
-            return self.Client.permissions().create(
-                supportsAllDrives=in_shared_drive,
-                transferOwnership=transfer_ownership,
-                fields="emailAddress, role, displayName, id",
-                fileId=file_id,
-                sendNotificationEmail=notify_user,
-                body={
-                    "type": "user",
-                    "emailAddress": user_email,
-                    "role": permission_level
-                }
-            ).execute()
+            return self.Client.permissions().create(**params).execute()
 
         except HttpError as http_error:
-            ParseHTTPError(http_error)
+            ParseHTTPError(http_error, params)
 
     def RemovePermissionFromFile(self, user_email, file_id, in_shared_drive=False, permission_id=""):
         if not permission_id:
@@ -595,15 +609,17 @@ class _DriveUtils:
         if not permission_id:
             return None
 
+        params = {
+            "supportsAllDrives": in_shared_drive,
+            "fileId": file_id,
+            "permissionId": permission_id
+        }
+
         try:
-            return self.Client.permissions().delete(
-                supportsAllDrives=in_shared_drive,
-                fileId=file_id,
-                permissionId=permission_id
-            ).execute()
+            return self.Client.permissions().delete(**params).execute()
 
         except HttpError as http_error:
-            ParseHTTPError(http_error)
+            ParseHTTPError(http_error, params)
 
 
 class _SheetsUtils:
@@ -646,14 +662,16 @@ class _SheetsUtils:
 
         data = {}
 
+        params = {
+            "spreadsheetId": sheet_id,
+            "includeGridData": True
+        }
+
         try:
-            data = self.Client.spreadsheets().get(
-                spreadsheetId=sheet_id,
-                includeGridData=True
-            ).execute()["sheets"][0]
+            data = self.Client.spreadsheets().get(**params).execute()["sheets"][0]
 
         except HttpError as http_error:
-            ParseHTTPError(http_error)
+            ParseHTTPError(http_error, params)
 
         if row_data_only and data.get("data"):
             return data["data"][0]["rowData"]

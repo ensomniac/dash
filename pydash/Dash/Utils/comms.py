@@ -82,19 +82,8 @@ def SendEmail(
 
     message.set_subject(subject)
     message.set_body_html(msg)
-    
-    try:
-        message.send()
 
-    except HttpError as http_error:
-        from Dash.GoogleUtils import ParseHTTPError
-
-        ParseHTTPError(http_error)
-        
-    except Exception as e:
-        raise Exception(e)
-
-    return {
+    response = {
         "recipients": message.recipients,
         "subject": subject,
         "body": msg,
@@ -103,3 +92,13 @@ def SendEmail(
         "reply_to": reply_to_email,
         "bcc_recipients": message.bcc_recipients
     }
+    
+    try:
+        message.send()
+
+    except HttpError as http_error:
+        from Dash.GoogleUtils import ParseHTTPError
+
+        ParseHTTPError(http_error, response)
+
+    return response
