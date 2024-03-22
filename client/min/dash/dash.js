@@ -19855,6 +19855,7 @@ class DashGuiAddress extends DashGuiInputType {
         // being function "classes". This is the only way I could get it to work.
         this.SetValue = this._set_value;
         this.parse_value = this._parse_value;
+        this.on_set_locked = this._on_set_locked;
         this._setup_styles();
     }
     _setup_styles () {
@@ -19945,7 +19946,7 @@ class DashGuiAddress extends DashGuiInputType {
             "map_marked",
             () => {
                 if (!this.map_link_url) {
-                    alert("Address is empty or invalid, can't open in Google Maps:\n" + this.formatted_address);
+                    alert("Address is empty, invalid, or has too many matches - can't open in Google Maps:\n" + this.formatted_address);
                     return;
                 }
                 window.open(this.map_link_url, "_blank");
@@ -20047,7 +20048,13 @@ class DashGuiAddress extends DashGuiInputType {
                     return null;
                 }
                 if (results.length > 1) {
-                    Dash.Log.Warn("Geocode found too many results for '" + address + "'");
+                    Dash.Log.Warn(
+                        "Geocode found too many results for '"
+                        + address
+                        + "'"
+                        // + ": "
+                        // + JSON.stringify(results)
+                    );
                     return null;
                 }
                 callback(results[0]);
@@ -20112,6 +20119,10 @@ class DashGuiAddress extends DashGuiInputType {
         this.update_place_attrs(this.google_places_autocomplete.getPlace() || {}, value);
         return this.formatted_address;
     }
+    // Overrides on_set_locked
+    _on_set_locked (locked) {
+        this.input.prop("disabled", locked);
+    };
 }
 
 function DashRequest () {
@@ -42003,6 +42014,7 @@ function DashGuiInputBase (
         }
         this.input.prop("readOnly", locked);
         this.input[0].tabIndex = locked ? -1 : this.tab_index;
+        this.on_set_locked(locked);
     };
     this.Text = function () {
         return this.input.val();
@@ -42185,6 +42197,9 @@ function DashGuiInputBase (
         else {
             this.on_submit();
         }
+    };
+    // Intended to be overridden
+    this.on_set_locked = function (locked) {
     };
     this.setup_connections = function () {
         (function (self) {
@@ -43155,6 +43170,7 @@ function DashGuiPropertyBox (
     this.combos= {};
     this.inputs = {};
     this.headers = [];
+    this.addresses = {};
     this.tool_rows = [];
     this.text_areas = {};
     this.num_headers = 0;
@@ -44134,6 +44150,45 @@ function DashGuiPropertyBoxInterface () {
         this.html.append(this.color_pickers[data_key].html);
         this.track_row(this.color_pickers[data_key]);
         return this.color_pickers[data_key];
+    };
+    this.AddAddress = function (
+        data_key, can_edit=false, on_submit_cb=null, label_text="Address",
+        placeholder_text="Start typing an address to search...", international=false
+    ) {
+        this.addresses[data_key] = new Dash.Gui.Address(
+            label_text,
+            null,
+            (
+                on_submit_cb ? on_submit_cb.bind(this.binder) : (
+                    function (formatted_address) {
+                        (this.set_data_cb || this.set_property)(data_key, formatted_address);
+                    }
+                ).bind(this)
+            ),
+            this.color,
+            international,
+            placeholder_text,
+            false
+        );
+        if (!can_edit) {
+            this.addresses[data_key].SetLocked(true);
+        }
+        var value = this.get_formatted_data_cb ? this.get_formatted_data_cb(data_key) : this.data[data_key];
+        if (value) {
+            this.addresses[data_key].SetValue(value);
+        }
+        this.addresses[data_key].html.css({
+            "border-bottom": this.bottom_border
+        });
+        this.addresses[data_key].input.css({
+            "border": "",
+            "padding-left": 0
+        });
+        this.addresses[data_key].map_link_button.SetIconSize(110);
+        this.html.append(this.addresses[data_key].html);
+        this.indent_row(this.addresses[data_key]);
+        this.track_row(this.addresses[data_key]);
+        return this.addresses[data_key];
     };
     // To visually break up rows when readability is getting tough due to too much stuff on the screen etc
     this.HighlightEveryOtherRow = function (odd_rows=false, color="") {

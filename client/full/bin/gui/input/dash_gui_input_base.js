@@ -131,6 +131,8 @@ function DashGuiInputBase (
         this.input.prop("readOnly", locked);
 
         this.input[0].tabIndex = locked ? -1 : this.tab_index;
+
+        this.on_set_locked(locked);
     };
 
     this.Text = function () {
@@ -366,6 +368,11 @@ function DashGuiInputBase (
         else {
             this.on_submit();
         }
+    };
+
+    // Intended to be overridden
+    this.on_set_locked = function (locked) {
+
     };
 
     this.setup_connections = function () {

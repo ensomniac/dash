@@ -803,6 +803,55 @@ function DashGuiPropertyBoxInterface () {
         return this.color_pickers[data_key];
     };
 
+    this.AddAddress = function (
+        data_key, can_edit=false, on_submit_cb=null, label_text="Address",
+        placeholder_text="Start typing an address to search...", international=false
+    ) {
+        this.addresses[data_key] = new Dash.Gui.Address(
+            label_text,
+            null,
+            (
+                on_submit_cb ? on_submit_cb.bind(this.binder) : (
+                    function (formatted_address) {
+                        (this.set_data_cb || this.set_property)(data_key, formatted_address);
+                    }
+                ).bind(this)
+            ),
+            this.color,
+            international,
+            placeholder_text,
+            false
+        );
+
+        if (!can_edit) {
+            this.addresses[data_key].SetLocked(true);
+        }
+
+        var value = this.get_formatted_data_cb ? this.get_formatted_data_cb(data_key) : this.data[data_key];
+
+        if (value) {
+            this.addresses[data_key].SetValue(value);
+        }
+
+        this.addresses[data_key].html.css({
+            "border-bottom": this.bottom_border
+        });
+
+        this.addresses[data_key].input.css({
+            "border": "",
+            "padding-left": 0
+        });
+
+        this.addresses[data_key].map_link_button.SetIconSize(110);
+
+        this.html.append(this.addresses[data_key].html);
+
+        this.indent_row(this.addresses[data_key]);
+        this.track_row(this.addresses[data_key]);
+
+        return this.addresses[data_key];
+    };
+
     // To visually break up rows when readability is getting tough due to too much stuff on the screen etc
     this.HighlightEveryOtherRow = function (odd_rows=false, color="") {
         this.every_other_row_hightlight = {

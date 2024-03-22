@@ -13,6 +13,7 @@ function DashGuiPropertyBox (
     this.combos= {};
     this.inputs = {};
     this.headers = [];
+    this.addresses = {};
     this.tool_rows = [];
     this.text_areas = {};
     this.num_headers = 0;

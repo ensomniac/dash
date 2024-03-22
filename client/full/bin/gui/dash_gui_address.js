@@ -74,6 +74,7 @@ class DashGuiAddress extends DashGuiInputType {
         // being function "classes". This is the only way I could get it to work.
         this.SetValue = this._set_value;
         this.parse_value = this._parse_value;
+        this.on_set_locked = this._on_set_locked;
 
         this._setup_styles();
     }
@@ -187,7 +188,7 @@ class DashGuiAddress extends DashGuiInputType {
             "map_marked",
             () => {
                 if (!this.map_link_url) {
-                    alert("Address is empty or invalid, can't open in Google Maps:\n" + this.formatted_address);
+                    alert("Address is empty, invalid, or has too many matches - can't open in Google Maps:\n" + this.formatted_address);
 
                     return;
                 }
@@ -322,7 +323,13 @@ class DashGuiAddress extends DashGuiInputType {
                 }
 
                 if (results.length > 1) {
-                    Dash.Log.Warn("Geocode found too many results for '" + address + "'");
+                    Dash.Log.Warn(
+                        "Geocode found too many results for '"
+                        + address
+                        + "'"
+                        // + ": "
+                        // + JSON.stringify(results)
+                    );
 
                     return null;
                 }
@@ -409,4 +416,9 @@ class DashGuiAddress extends DashGuiInputType {
 
         return this.formatted_address;
     }
+
+    // Overrides on_set_locked
+    _on_set_locked (locked) {
+        this.input.prop("disabled", locked);
+    };
 }
