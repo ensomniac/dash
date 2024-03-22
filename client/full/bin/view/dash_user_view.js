@@ -5,13 +5,4 @@ function DashUserView (user_data=null, options={}, view_mode="settings") {
     this.property_box = this.user_profile.property_box;
 
     this.html.append(this.user_profile.html);
-
-    // TODO: TEST -------------
-    // var box = Dash.Gui.GetHTMLBoxContext();
-    // var address = new Dash.Gui.Address();
-    // console.warn("TEST", address);
-    //
-    // box.append(address.html);
-    //
-    // this.html.append(box);
 }

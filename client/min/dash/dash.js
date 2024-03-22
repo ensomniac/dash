@@ -53147,13 +53147,6 @@ function DashUserView (user_data=null, options={}, view_mode="settings") {
     this.user_profile = new Dash.Layout.UserProfile(user_data, options, view_mode);
     this.property_box = this.user_profile.property_box;
     this.html.append(this.user_profile.html);
-    // TODO: TEST -------------
-    var box = Dash.Gui.GetHTMLBoxContext();
-    var address = new Dash.Gui.Address();
-    // console.warn("TEST", address);
-    box.append(address.html);
-    address.SetValue("2649 Cava Tirreni St, Suite 100, Henderson, NV 89044");
-    this.html.append(box);
 }
 
 // Profile page layout for the currently logged-in user
