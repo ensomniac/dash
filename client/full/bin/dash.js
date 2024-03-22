@@ -292,7 +292,7 @@ function Dash () {
             catch {
                 console.warn("String.prototype.Title() failed:", typeof this, this);
 
-                return this;
+                return this.toString();
             }
         };
 
@@ -308,7 +308,7 @@ function Dash () {
             catch {
                 console.warn("String.prototype.Trim() failed:", typeof this, this);
 
-                return this;
+                return this.toString();
             }
         };
 
@@ -324,13 +324,13 @@ function Dash () {
                     return trimmed.LTrim(char);
                 }
 
-                return this;
+                return this.toString();
             }
 
             catch {
                 console.warn("String.prototype.LTrim() failed:", typeof this, this);
 
-                return this;
+                return this.toString();
             }
         };
 
@@ -346,13 +346,13 @@ function Dash () {
                     return trimmed.RTrim(char);
                 }
 
-                return this;
+                return this.toString();
             }
 
             catch {
                 console.warn("String.prototype.RTrim() failed:", typeof this, this);
 
-                return this;
+                return this.toString();
             }
         };
 
@@ -364,7 +364,7 @@ function Dash () {
             catch {
                 console.warn("String.prototype.Count() failed:", typeof this, this);
 
-                return this;
+                return this.toString();
             }
         };
 
@@ -376,18 +376,18 @@ function Dash () {
             catch {
                 console.warn("String.prototype.IsDigit() failed:", typeof this, this);
 
-                return this;
+                return this.toString();
             }
         };
 
         String.prototype.ZFill = function (len) {
             if (!len || this.length === len) {
-                return this;
+                return this.toString();
             }
 
             var string = "";
 
-            string += this;
+            string += this.toString();
 
             for (var _ of Dash.Math.Range(len)) {
                 if (string.length >= len) {

@@ -1,6 +1,5 @@
 class DashColorStateSet {
-
-    constructor(base, selected, base_hover, selected_hover) {
+    constructor (base, selected, base_hover, selected_hover) {
         this._base           = base;
         this._selected       = selected;
         this._base_hover     = base_hover;

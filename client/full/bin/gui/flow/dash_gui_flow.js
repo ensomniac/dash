@@ -1,33 +1,32 @@
+/**
+ * Flow element to guide a user through steps in a user-friendly manner.
+ * --------------------------
+ *
+ * IMPORTANT NOTE: <br>
+ *     For consistency across Dash, this takes an API name with an optional flow ID, and uses
+ *     predetermined names for function calls. For each context this is used in, make sure
+ *     to add the correct function names to the respective API file as follows:
+ *
+ *         - "save":               Save flow data, usually on each step change, but sometimes on a field change
+ *         - "get_data":           Get flow data (using flow ID, if provided)
+ *         - "reset":              Reset flow data and start over
+ *         - "finish":             Finish flow (backend should also reset data after, in most cases)
+ *         - "new_option_request": Prompts the user to type in some details, then emails those details to the admins
+ *
+ *     Equally important: DO NOT nest the data on the server. The data that comes in from the "get_data"
+ *     call needs to not be nested in order for this module to be able to remain generic and flexible.
+ *
+ * @param {string} api - API name for requests
+ * @param {Array} steps - List of dicts with ID and other optional values such as display_name, type, and key
+ * @param {function} step_init_bound_cb - Callback that's called when step is changed and should utilize the public
+ *                                        methods in DashGuiFlowStep and DashGuiFlowStepArea to draw each step's gui
+ * @param {string} flow_id - If provided, will be sent as the ID for the flow's data container in requests
+ *                           (Some flows may not need this because they default on the backend
+ *                            to something like a user's email instead of an ID, for example)
+ * @param {DashColorSet} color - DashColorSet instance
+ */
 class DashGuiFlow {
     constructor (api, steps, step_init_bound_cb, flow_id="", color=null) {
-        /**
-         * Flow element.
-         * --------------------------
-         *
-         * IMPORTANT NOTE: <br>
-         *     For consistency across Dash, this takes an API name with an optional flow ID, and uses
-         *     predetermined names for function calls. For each context this is used in, make sure
-         *     to add the correct function names to the respective API file as follows:
-         *
-         *         - "save":               Save flow data, usually on each step change, but sometimes on a field change
-         *         - "get_data":           Get flow data (using flow ID, if provided)
-         *         - "reset":              Reset flow data and start over
-         *         - "finish":             Finish flow (backend should also reset data after, in most cases)
-         *         - "new_option_request": Prompts the user to type in some details, then emails those details to the admins
-         *
-         *     Equally important: DO NOT nest the data on the server. The data that comes in from the "get_data"
-         *     call needs to not be nested in order for this module to be able to remain generic and flexible.
-         *
-         * @param {string} api - API name for requests
-         * @param {Array} steps - List of dicts with ID and other optional values such as display_name, type, and key
-         * @param {function} step_init_bound_cb - Callback that's called when step is changed and should utilize the public
-         *                                        methods in DashGuiFlowStep and DashGuiFlowStepArea to draw each step's gui
-         * @param {string} flow_id - If provided, will be sent as the ID for the flow's data container in requests
-         *                           (Some flows may not need this because they default on the backend
-         *                            to something like a user's email instead of an ID, for example)
-         * @param {DashColorSet} color - DashColorSet instance
-         */
-
         this.api = api;
         this.steps = steps;
         this.step_init_cb = step_init_bound_cb;

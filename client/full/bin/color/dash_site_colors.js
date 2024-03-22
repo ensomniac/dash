@@ -1,6 +1,5 @@
 class DashSiteColors {
-
-    constructor(color_obj, dash_color) {
+    constructor (color_obj, dash_color) {
         this._col  = color_obj;
         this._dash_color = dash_color;
     };

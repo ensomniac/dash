@@ -1,9 +1,32 @@
+/**
+ * Address input element that uses the Google Places API for autocomplete and address lookup via geocoding.
+ * --------------------------
+ *
+ * REQUIREMENTS IN GOOGLE CLOUD CONSOLE: <br>
+ *  - Enable Places API
+ *  - Enable Maps JavaScript API
+ *  - Enable Geocoding API
+ *  - Create an API key, restrict it to this specific website
+ *    (ex: https://altona.io), and restrict it to the three APIs above
+ *
+ * TO ENABLE: <br>
+ *  - Add script to index.html, replacing API_KEY with your API key:
+ *    <script src="https://maps.googleapis.com/maps/api/js?key={API_KEY}
+ *     &libraries=places&loading=async" async defer></script>
+ *
+ * @param {string} label_text - Text for label preceding input (default="")
+ * @param {function} binder - Binder for on_submit_cb (default=null)
+ * @param {function} on_submit_cb - Callback for non-autocomplete submission (default=null)
+ * @param {DashColorSet} color - DashColorSet instance (default=null)
+ * @param {boolean} international - Include and allow international addresses (default=false)
+ * @param {string} placeholder_text - Placeholder text for input (default="Start typing an address to search...")
+ */
 class DashGuiAddress extends DashGuiInputType {
-    constructor(
-        label_text = "",
-        binder = null,
-        on_submit_cb = null,
-        color = null,
+    constructor (
+        label_text="",
+        binder=null,
+        on_submit_cb=null,
+        color=null,
         international=false,
         placeholder_text="Start typing an address to search..."
     ) {
@@ -11,12 +34,13 @@ class DashGuiAddress extends DashGuiInputType {
             $("<input placeholder='" + placeholder_text + "'>"),
             label_text,
             null,
-            (components) => {
-                this._on_submit(components);
-
-                if (on_submit_cb) {
-                    (on_submit_cb && binder ? on_submit_cb.bind(binder) : on_submit_cb)(components);
-                }
+            () => {
+                this.on_submit_timer = setTimeout(
+                    () => {
+                        this._on_submit();
+                    },
+                    500
+                );
             },
             null,
             null,
@@ -24,11 +48,24 @@ class DashGuiAddress extends DashGuiInputType {
             false
         );
 
+        this._on_submit_cb = (on_submit_cb && binder ? on_submit_cb.bind(binder) : on_submit_cb);
         this.international = international;
 
+        this.geocoder = null;
         this.map_link_url = "";
+        this.on_submit_timer = null;
+        this.formatted_address = "";
         this.map_link_button = null;
+        this.address_components = {};
+        this.last_submitted_value = "";
         this.google_places_autocomplete = null;
+
+        // For some reason, traditional function overriding is not working.
+        // I can't figure it out, but it seems to have something to do with
+        // this class being a proper class and DashGuiInputType and DashGuiInputBase
+        // being function "classes". This is the only way I could get it to work.
+        this.SetValue = this._set_value;
+        this.parse_value = this._parse_value;
 
         this._setup_styles();
     }
@@ -37,37 +74,47 @@ class DashGuiAddress extends DashGuiInputType {
         this.input.css({
             "padding-left": Dash.Size.Padding * 0.5,
             "padding-right": Dash.Size.Padding * 0.5,
-            "border": "1px solid " + this.color.Stroke
+            "border-bottom": "1px solid " + this.color.PinstripeDark
         });
 
+        this.add_icon();
         this.setup_autocomplete();
         this.add_map_link_button();
     }
 
-    GetAsString (components=null) {
-        if (!components) {
-            components = this.parse_value();
-        }
-
-        var text = "";
-
-        // TODO
-
-        return text;
+    GetString () {
+        return this.formatted_address;
     }
 
-    // SetValue () {
-    //     this.SetText();
-    // }
-
-    // Override the parse_value method
-    parse_value () {
-        var place = this.google_places_autocomplete.getPlace() || {};
-
-        this.map_link_url = place["url"] || "";
-
-        return this.parse_address_components(place["address_components"]);
+    GetComponents () {
+        return this.address_components;
     }
+
+    add_icon = function () {
+        var icon = new Dash.Gui.Icon(
+            this.color,
+            "map_marker",
+            this.height,
+            0.9,
+            this.color.Stroke
+        );
+
+        icon.html.attr(
+            "title",
+            (
+                "Start typing an address to search,\nthen select the corresponding address.\n\n" +
+                "You can also freely enter any address if it's\nnot listed, though this will be uncommon.\n\n" +
+                'More granular address details,\nsuch as "Suite 100", can be manually\nadded after selecting the address.'
+            )
+        );
+
+        icon.html.css({
+            "cursor": "help",
+            "margin-right": Dash.Size.Padding * 0.3
+        });
+
+        this.html.prepend(icon.html);
+    };
 
     setup_autocomplete () {
         // Ref: https://developers.google.com/maps/documentation/javascript/reference/places-widget#AutocompleteOptions
@@ -81,6 +128,7 @@ class DashGuiAddress extends DashGuiInputType {
             // Ref: https://developers.google.com/maps/documentation/javascript/reference/places-service#PlaceResult
             "fields": [
                 "address_components",
+                "formatted_address",
                 "url"
             ]
         };
@@ -90,7 +138,7 @@ class DashGuiAddress extends DashGuiInputType {
         }
 
         else {
-            // TODO: A few things need to be worked out first, such as parsing of the address components
+            // TODO: Resolve the other international TODOs in this code first
             console.warn("Warning: International address support has not yet been implemented.");
 
             return;
@@ -99,18 +147,44 @@ class DashGuiAddress extends DashGuiInputType {
         this.google_places_autocomplete = new google.maps.places.Autocomplete(this.input[0], options);
 
         this.google_places_autocomplete.addListener("place_changed", () => {
-            var components = this.parse_value();
-
-            this._on_submit(components);
+            this.parse_value();
+            this._on_submit(true);
         });
     }
 
     add_map_link_button () {
-        // TODO
+        this.map_link_button = new Dash.Gui.IconButton(
+            "map_marked",
+            () => {
+                if (!this.map_link_url) {
+                    alert("Address is empty or invalid, can't open in Google Maps.");
+
+                    return;
+                }
+
+                window.open(this.map_link_url, "_blank");
+            },
+            this,
+            this.color,
+            {
+                "container_size": this.height,
+                "size_mult": 0.9
+            }
+        );
+
+        this.map_link_button.html.css({
+            "margin-left": Dash.Size.Padding
+        });
+
+        this.map_link_button.SetHoverHint("Open address in Google Maps");
+
+        this.html.append(this.map_link_button.html);
     }
 
     // Ref: https://developers.google.com/maps/documentation/javascript/geocoding#GeocodingAddressTypes
-    parse_address_components (components) {
+    parse_address_components (
+        components, use_long_names=false, full_zip_code=false, include_county=false, include_country=true
+    ) {
         var parsed = {};
 
         if (!components) {
@@ -123,15 +197,175 @@ class DashGuiAddress extends DashGuiInputType {
         }
 
         else {
-            // TODO
+            var zip_code_suffix = "";
+
+            for (var component of components) {
+                if (full_zip_code && component["types"].includes("postal_code_suffix")) {
+                    zip_code_suffix = use_long_names ? component["long_name"] : component["short_name"];
+
+                    continue;
+                }
+
+                var key = "";
+
+                if (component["types"].includes("street_number")) {
+                    key = "street_number";
+                }
+
+                else if (component["types"].includes("route")) {
+                    key = "street_name";
+                }
+
+                else if (component["types"].includes("postal_code")) {
+                    key = "zip_code";
+                }
+
+                else if (component["types"].includes("locality")) {
+                    key = "city";
+                }
+
+                else if (component["types"].includes("administrative_area_level_1")) {
+                    key = "state";
+                }
+
+                else if (include_county && component["types"].includes("administrative_area_level_2")) {
+                    key = "county";
+                }
+
+                else if (include_country && component["types"].includes("country")) {
+                    key = "country";
+                }
+
+                if (key) {
+                    parsed[key] = use_long_names ? component["long_name"] : component["short_name"];
+
+                    if (key === "county") {
+                        parsed[key] = parsed[key].replace("County", "").Trim();
+                    }
+                }
+            }
+
+            if (zip_code_suffix && parsed["zip_code"]) {
+                parsed["zip_code"] += "_" + zip_code_suffix;
+            }
         }
 
         return parsed;
     }
 
-    _on_submit (components) {
-        var text = this.GetAsString(components);
+    get_place_info (address, callback) {
+        if (!this.geocoder) {
+            this.geocoder = new google.maps.Geocoder();
+        }
 
-        // TODO: format text and update input with it to display it in the desired format
+        var options = {"address": address};
+
+        if (!this.international) {
+            options["componentRestrictions"] = {"country": "us"};
+        }
+
+        // noinspection JSIgnoredPromiseFromCall
+        this.geocoder.geocode(
+            options,
+            (results, status) => {
+                if (status !== "OK") {
+                    Dash.Log.Warn("Geocode failed to find results for '" + address + "', status:\n" + status);
+
+                    return null;
+                }
+
+                if (!results || results.length < 1) {
+                    Dash.Log.Warn("Geocode couldn't any find results for '" + address + "':\n" + results);
+
+                    return null;
+                }
+
+                if (results.length > 1) {
+                    Dash.Log.Warn("Geocode found too many results for '" + address + "':\n" + results);
+
+                    return null;
+                }
+
+                callback(results[0]);
+            }
+        );
+    }
+
+    update_place_attrs (place={}, value="") {
+        this.formatted_address = place["formatted_address"] || "";
+
+        if (!place["url"]) {
+            if (this.formatted_address) {
+                place["url"] = "https://maps.google.com/?q=" + encodeURIComponent(this.formatted_address);
+            }
+
+            else {
+                var location = place?.geometry?.location;
+
+                if (location) {
+                    place["url"] = "https://www.google.com/maps/?q=" + location.lat() + "," + location.lng();
+                }
+            }
+        }
+
+        this.map_link_url = place["url"] || "";
+
+        if (this.formatted_address && !this.international) {
+            this.formatted_address = this.formatted_address.RTrim(", USA");
+        }
+
+        if (!this.formatted_address && value) {
+            this.formatted_address = value;
+        }
+
+        this.address_components = Dash.Validate.Object(place["address_components"]) ? this.parse_address_components(
+            place["address_components"]
+        ) : {};
+
+        if (Dash.Validate.Object(this.address_components)) {
+            this.address_components["url"] = place["url"] || "";
+        }
+    }
+
+    _on_submit (from_autocomplete=false) {
+        if (this.formatted_address === this.last_submitted_value) {
+            return;
+        }
+
+        if (from_autocomplete) {
+            if (this.on_submit_timer) {
+                clearTimeout(this.on_submit_timer);
+
+                this.on_submit_timer = null;
+            }
+
+            this.input.val(this.formatted_address);
+        }
+
+        if (this._on_submit_cb) {
+            this._on_submit_cb(this.formatted_address, this.address_components);
+        }
+
+        this.last_submitted_value = this.formatted_address;
+    }
+
+    // Overrides SetValue
+    _set_value (value="") {
+        this.map_link_url = "";
+        this.formatted_address = "";
+        this.address_components = {};
+
+        this.get_place_info(value, (place) => {
+            this.update_place_attrs(place, value);
+        });
+
+        this.SetText(value);
+    }
+
+    // Overrides parse_value
+    _parse_value (value="") {
+        this.update_place_attrs(this.google_places_autocomplete.getPlace() || {}, value);
+
+        return this.formatted_address;
     }
 }

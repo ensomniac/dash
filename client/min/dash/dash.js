@@ -17728,7 +17728,7 @@ function Dash () {
             }
             catch {
                 console.warn("String.prototype.Title() failed:", typeof this, this);
-                return this;
+                return this.toString();
             }
         };
         String.prototype.Trim = function (char) {
@@ -17740,7 +17740,7 @@ function Dash () {
             }
             catch {
                 console.warn("String.prototype.Trim() failed:", typeof this, this);
-                return this;
+                return this.toString();
             }
         };
         String.prototype.LTrim = function (char) {
@@ -17752,11 +17752,11 @@ function Dash () {
                 if (this.startsWith(char)) {
                     return trimmed.LTrim(char);
                 }
-                return this;
+                return this.toString();
             }
             catch {
                 console.warn("String.prototype.LTrim() failed:", typeof this, this);
-                return this;
+                return this.toString();
             }
         };
         String.prototype.RTrim = function (char) {
@@ -17768,11 +17768,11 @@ function Dash () {
                 if (this.endsWith(char)) {
                     return trimmed.RTrim(char);
                 }
-                return this;
+                return this.toString();
             }
             catch {
                 console.warn("String.prototype.RTrim() failed:", typeof this, this);
-                return this;
+                return this.toString();
             }
         };
         String.prototype.Count = function (char) {
@@ -17781,7 +17781,7 @@ function Dash () {
             }
             catch {
                 console.warn("String.prototype.Count() failed:", typeof this, this);
-                return this;
+                return this.toString();
             }
         };
         String.prototype.IsDigit = function () {
@@ -17790,15 +17790,15 @@ function Dash () {
             }
             catch {
                 console.warn("String.prototype.IsDigit() failed:", typeof this, this);
-                return this;
+                return this.toString();
             }
         };
         String.prototype.ZFill = function (len) {
             if (!len || this.length === len) {
-                return this;
+                return this.toString();
             }
             var string = "";
-            string += this;
+            string += this.toString();
             for (var _ of Dash.Math.Range(len)) {
                 if (string.length >= len) {
                     break;
@@ -19783,12 +19783,35 @@ function DashGuiAlert (
     delete this.RemoveContinueButton;
 }
 
+/**
+ * Address input element that uses the Google Places API for autocomplete and address lookup via geocoding.
+ * --------------------------
+ *
+ * REQUIREMENTS IN GOOGLE CLOUD CONSOLE: <br>
+ *  - Enable Places API
+ *  - Enable Maps JavaScript API
+ *  - Enable Geocoding API
+ *  - Create an API key, restrict it to this specific website
+ *    (ex: https://altona.io), and restrict it to the three APIs above
+ *
+ * TO ENABLE: <br>
+ *  - Add script to index.html, replacing API_KEY with your API key:
+ *    <script src="https://maps.googleapis.com/maps/api/js?key={API_KEY}
+ *     &libraries=places&loading=async" async defer></script>
+ *
+ * @param {string} label_text - Text for label preceding input (default="")
+ * @param {function} binder - Binder for on_submit_cb (default=null)
+ * @param {function} on_submit_cb - Callback for non-autocomplete submission (default=null)
+ * @param {DashColorSet} color - DashColorSet instance (default=null)
+ * @param {boolean} international - Include and allow international addresses (default=false)
+ * @param {string} placeholder_text - Placeholder text for input (default="Start typing an address to search...")
+ */
 class DashGuiAddress extends DashGuiInputType {
-    constructor(
-        label_text = "",
-        binder = null,
-        on_submit_cb = null,
-        color = null,
+    constructor (
+        label_text="",
+        binder=null,
+        on_submit_cb=null,
+        color=null,
         international=false,
         placeholder_text="Start typing an address to search..."
     ) {
@@ -19796,49 +19819,75 @@ class DashGuiAddress extends DashGuiInputType {
             $("<input placeholder='" + placeholder_text + "'>"),
             label_text,
             null,
-            (components) => {
-                this._on_submit(components);
-                if (on_submit_cb) {
-                    (on_submit_cb && binder ? on_submit_cb.bind(binder) : on_submit_cb)(components);
-                }
+            () => {
+                this.on_submit_timer = setTimeout(
+                    () => {
+                        this._on_submit();
+                    },
+                    500
+                );
             },
             null,
             null,
             color,
             false
         );
+        this._on_submit_cb = (on_submit_cb && binder ? on_submit_cb.bind(binder) : on_submit_cb);
         this.international = international;
+        this.geocoder = null;
         this.map_link_url = "";
+        this.on_submit_timer = null;
+        this.formatted_address = "";
         this.map_link_button = null;
+        this.address_components = {};
+        this.last_submitted_value = "";
         this.google_places_autocomplete = null;
+        // For some reason, traditional function overriding is not working.
+        // I can't figure it out, but it seems to have something to do with
+        // this class being a proper class and DashGuiInputType and DashGuiInputBase
+        // being function "classes". This is the only way I could get it to work.
+        this.SetValue = this._set_value;
+        this.parse_value = this._parse_value;
         this._setup_styles();
     }
     _setup_styles () {
         this.input.css({
             "padding-left": Dash.Size.Padding * 0.5,
             "padding-right": Dash.Size.Padding * 0.5,
-            "border": "1px solid " + this.color.Stroke
+            "border-bottom": "1px solid " + this.color.PinstripeDark
         });
+        this.add_icon();
         this.setup_autocomplete();
         this.add_map_link_button();
     }
-    GetAsString (components=null) {
-        if (!components) {
-            components = this.parse_value();
-        }
-        var text = "";
-        // TODO
-        return text;
+    GetString () {
+        return this.formatted_address;
     }
-    // SetValue () {
-    //     this.SetText();
-    // }
-    // Override the parse_value method
-    parse_value () {
-        var place = this.google_places_autocomplete.getPlace() || {};
-        this.map_link_url = place["url"] || "";
-        return this.parse_address_components(place["address_components"]);
+    GetComponents () {
+        return this.address_components;
     }
+    add_icon = function () {
+        var icon = new Dash.Gui.Icon(
+            this.color,
+            "map_marker",
+            this.height,
+            0.9,
+            this.color.Stroke
+        );
+        icon.html.attr(
+            "title",
+            (
+                "Start typing an address to search,\nthen select the corresponding address.\n\n" +
+                "You can also freely enter any address if it's\nnot listed, though this will be uncommon.\n\n" +
+                'More granular address details,\nsuch as "Suite 100", can be manually\nadded after selecting the address.'
+            )
+        );
+        icon.html.css({
+            "cursor": "help",
+            "margin-right": Dash.Size.Padding * 0.3
+        });
+        this.html.prepend(icon.html);
+    };
     setup_autocomplete () {
         // Ref: https://developers.google.com/maps/documentation/javascript/reference/places-widget#AutocompleteOptions
         var options = {
@@ -19850,6 +19899,7 @@ class DashGuiAddress extends DashGuiInputType {
             // Ref: https://developers.google.com/maps/documentation/javascript/reference/places-service#PlaceResult
             "fields": [
                 "address_components",
+                "formatted_address",
                 "url"
             ]
         };
@@ -19857,21 +19907,43 @@ class DashGuiAddress extends DashGuiInputType {
             options["componentRestrictions"] = {"country": "us"};
         }
         else {
-            // TODO: A few things need to be worked out first, such as parsing of the address components
+            // TODO: Resolve the other international TODOs in this code first
             console.warn("Warning: International address support has not yet been implemented.");
             return;
         }
         this.google_places_autocomplete = new google.maps.places.Autocomplete(this.input[0], options);
         this.google_places_autocomplete.addListener("place_changed", () => {
-            var components = this.parse_value();
-            this._on_submit(components);
+            this.parse_value();
+            this._on_submit(true);
         });
     }
     add_map_link_button () {
-        // TODO
+        this.map_link_button = new Dash.Gui.IconButton(
+            "map_marked",
+            () => {
+                if (!this.map_link_url) {
+                    alert("Address is empty or invalid, can't open in Google Maps.");
+                    return;
+                }
+                window.open(this.map_link_url, "_blank");
+            },
+            this,
+            this.color,
+            {
+                "container_size": this.height,
+                "size_mult": 0.9
+            }
+        );
+        this.map_link_button.html.css({
+            "margin-left": Dash.Size.Padding
+        });
+        this.map_link_button.SetHoverHint("Open address in Google Maps");
+        this.html.append(this.map_link_button.html);
     }
     // Ref: https://developers.google.com/maps/documentation/javascript/geocoding#GeocodingAddressTypes
-    parse_address_components (components) {
+    parse_address_components (
+        components, use_long_names=false, full_zip_code=false, include_county=false, include_country=true
+    ) {
         var parsed = {};
         if (!components) {
             return parsed;
@@ -19881,13 +19953,132 @@ class DashGuiAddress extends DashGuiInputType {
             console.error("Error: International address component parsing has not yet been implemented");
         }
         else {
-            // TODO
+            var zip_code_suffix = "";
+            for (var component of components) {
+                if (full_zip_code && component["types"].includes("postal_code_suffix")) {
+                    zip_code_suffix = use_long_names ? component["long_name"] : component["short_name"];
+                    continue;
+                }
+                var key = "";
+                if (component["types"].includes("street_number")) {
+                    key = "street_number";
+                }
+                else if (component["types"].includes("route")) {
+                    key = "street_name";
+                }
+                else if (component["types"].includes("postal_code")) {
+                    key = "zip_code";
+                }
+                else if (component["types"].includes("locality")) {
+                    key = "city";
+                }
+                else if (component["types"].includes("administrative_area_level_1")) {
+                    key = "state";
+                }
+                else if (include_county && component["types"].includes("administrative_area_level_2")) {
+                    key = "county";
+                }
+                else if (include_country && component["types"].includes("country")) {
+                    key = "country";
+                }
+                if (key) {
+                    parsed[key] = use_long_names ? component["long_name"] : component["short_name"];
+                    if (key === "county") {
+                        parsed[key] = parsed[key].replace("County", "").Trim();
+                    }
+                }
+            }
+            if (zip_code_suffix && parsed["zip_code"]) {
+                parsed["zip_code"] += "_" + zip_code_suffix;
+            }
         }
         return parsed;
     }
-    _on_submit (components) {
-        var text = this.GetAsString(components);
-        // TODO: format text and update input with it to display it in the desired format
+    get_place_info (address, callback) {
+        if (!this.geocoder) {
+            this.geocoder = new google.maps.Geocoder();
+        }
+        var options = {"address": address};
+        if (!this.international) {
+            options["componentRestrictions"] = {"country": "us"};
+        }
+        // noinspection JSIgnoredPromiseFromCall
+        this.geocoder.geocode(
+            options,
+            (results, status) => {
+                if (status !== "OK") {
+                    Dash.Log.Warn("Geocode failed to find results for '" + address + "', status:\n" + status);
+                    return null;
+                }
+                if (!results || results.length < 1) {
+                    Dash.Log.Warn("Geocode couldn't any find results for '" + address + "':\n" + results);
+                    return null;
+                }
+                if (results.length > 1) {
+                    Dash.Log.Warn("Geocode found too many results for '" + address + "':\n" + results);
+                    return null;
+                }
+                callback(results[0]);
+            }
+        );
+    }
+    update_place_attrs (place={}, value="") {
+        this.formatted_address = place["formatted_address"] || "";
+        if (!place["url"]) {
+            if (this.formatted_address) {
+                place["url"] = "https://maps.google.com/?q=" + encodeURIComponent(this.formatted_address);
+            }
+            else {
+                var location = place?.geometry?.location;
+                if (location) {
+                    place["url"] = "https://www.google.com/maps/?q=" + location.lat() + "," + location.lng();
+                }
+            }
+        }
+        this.map_link_url = place["url"] || "";
+        if (this.formatted_address && !this.international) {
+            this.formatted_address = this.formatted_address.RTrim(", USA");
+        }
+        if (!this.formatted_address && value) {
+            this.formatted_address = value;
+        }
+        this.address_components = Dash.Validate.Object(place["address_components"]) ? this.parse_address_components(
+            place["address_components"]
+        ) : {};
+        if (Dash.Validate.Object(this.address_components)) {
+            this.address_components["url"] = place["url"] || "";
+        }
+    }
+    _on_submit (from_autocomplete=false) {
+        if (this.formatted_address === this.last_submitted_value) {
+            return;
+        }
+        if (from_autocomplete) {
+            if (this.on_submit_timer) {
+                clearTimeout(this.on_submit_timer);
+                this.on_submit_timer = null;
+            }
+            this.input.val(this.formatted_address);
+        }
+        if (this._on_submit_cb) {
+            this._on_submit_cb(this.formatted_address, this.address_components);
+        }
+        this.last_submitted_value = this.formatted_address;
+    }
+    // Overrides SetValue
+    _set_value (value="") {
+        this.map_link_url = "";
+        this.formatted_address = "";
+        this.address_components = {};
+        this.get_place_info(value, (place) => {
+            this.update_place_attrs(place, value);
+        });
+        this.SetText(value);
+    }
+    // Overrides parse_value
+    _parse_value (value="") {
+        this.update_place_attrs(this.google_places_autocomplete.getPlace() || {}, value);
+        return this.formatted_address;
     }
 }
 
@@ -21520,7 +21711,7 @@ function DashColor (dark_mode_active=false) {
 }
 
 class DashColorSet {
-    constructor(background, background_raised, text, text_header, accent_good, accent_bad, button, tab, input) {
+    constructor (background, background_raised, text, text_header, accent_good, accent_bad, button, tab, input) {
         this._background  = background;               // HTML Color
         this._background_raised  = background_raised; // HTML Color
         this._text        = text;                     // HTML Color
@@ -21678,7 +21869,7 @@ class DashColorSet {
 }
 
 class DashSiteColors {
-    constructor(color_obj, dash_color) {
+    constructor (color_obj, dash_color) {
         this._col  = color_obj;
         this._dash_color = dash_color;
     };
@@ -21709,7 +21900,7 @@ class DashSiteColors {
 }
 
 class DashColorButtonSet {
-    constructor(area_background, background, text) {
+    constructor (area_background, background, text) {
         this._area_background = area_background; // HTML Color
         this._background = background; // DashColorStateSet()
         this._text       = text;       // DashColorStateSet()
@@ -21743,7 +21934,7 @@ class DashColorButtonSet {
 }
 
 class DashColorStateSet {
-    constructor(base, selected, base_hover, selected_hover) {
+    constructor (base, selected, base_hover, selected_hover) {
         this._base           = base;
         this._selected       = selected;
         this._base_hover     = base_hover;
@@ -39833,35 +40024,35 @@ class DashGuiFlowTipImage {
     }
 }
 
+/**
+ * Flow element to guide a user through steps in a user-friendly manner.
+ * --------------------------
+ *
+ * IMPORTANT NOTE: <br>
+ *     For consistency across Dash, this takes an API name with an optional flow ID, and uses
+ *     predetermined names for function calls. For each context this is used in, make sure
+ *     to add the correct function names to the respective API file as follows:
+ *
+ *         - "save":               Save flow data, usually on each step change, but sometimes on a field change
+ *         - "get_data":           Get flow data (using flow ID, if provided)
+ *         - "reset":              Reset flow data and start over
+ *         - "finish":             Finish flow (backend should also reset data after, in most cases)
+ *         - "new_option_request": Prompts the user to type in some details, then emails those details to the admins
+ *
+ *     Equally important: DO NOT nest the data on the server. The data that comes in from the "get_data"
+ *     call needs to not be nested in order for this module to be able to remain generic and flexible.
+ *
+ * @param {string} api - API name for requests
+ * @param {Array} steps - List of dicts with ID and other optional values such as display_name, type, and key
+ * @param {function} step_init_bound_cb - Callback that's called when step is changed and should utilize the public
+ *                                        methods in DashGuiFlowStep and DashGuiFlowStepArea to draw each step's gui
+ * @param {string} flow_id - If provided, will be sent as the ID for the flow's data container in requests
+ *                           (Some flows may not need this because they default on the backend
+ *                            to something like a user's email instead of an ID, for example)
+ * @param {DashColorSet} color - DashColorSet instance
+ */
 class DashGuiFlow {
     constructor (api, steps, step_init_bound_cb, flow_id="", color=null) {
-        /**
-         * Flow element.
-         * --------------------------
-         *
-         * IMPORTANT NOTE: <br>
-         *     For consistency across Dash, this takes an API name with an optional flow ID, and uses
-         *     predetermined names for function calls. For each context this is used in, make sure
-         *     to add the correct function names to the respective API file as follows:
-         *
-         *         - "save":               Save flow data, usually on each step change, but sometimes on a field change
-         *         - "get_data":           Get flow data (using flow ID, if provided)
-         *         - "reset":              Reset flow data and start over
-         *         - "finish":             Finish flow (backend should also reset data after, in most cases)
-         *         - "new_option_request": Prompts the user to type in some details, then emails those details to the admins
-         *
-         *     Equally important: DO NOT nest the data on the server. The data that comes in from the "get_data"
-         *     call needs to not be nested in order for this module to be able to remain generic and flexible.
-         *
-         * @param {string} api - API name for requests
-         * @param {Array} steps - List of dicts with ID and other optional values such as display_name, type, and key
-         * @param {function} step_init_bound_cb - Callback that's called when step is changed and should utilize the public
-         *                                        methods in DashGuiFlowStep and DashGuiFlowStepArea to draw each step's gui
-         * @param {string} flow_id - If provided, will be sent as the ID for the flow's data container in requests
-         *                           (Some flows may not need this because they default on the backend
-         *                            to something like a user's email instead of an ID, for example)
-         * @param {DashColorSet} color - DashColorSet instance
-         */
         this.api = api;
         this.steps = steps;
         this.step_init_cb = step_init_bound_cb;
@@ -41320,10 +41511,14 @@ function DashGuiIcons (icon) {
         "list_bulleted":           new DashGuiIconDefinition(this.icon, "Bulleted List", this.weight["regular"], "list"),
         "list_offset":             new DashGuiIconDefinition(this.icon, "List Offset", this.weight["regular"], "stream"),
         "lock":                    new DashGuiIconDefinition(this.icon, "Lock", this.weight["regular"], "lock"),
+        "location_circled":        new DashGuiIconDefinition(this.icon, "Location - Circled", this.weight["regular"], "location-circle"),
         "log_in":                  new DashGuiIconDefinition(this.icon, "Log In", this.weight["regular"], "sign-in"),
         "log_out":                 new DashGuiIconDefinition(this.icon, "Log Out", this.weight["regular"], "sign-out"),
         "magic_wand":              new DashGuiIconDefinition(this.icon, "Magic Wand", this.weight["solid"], "magic"),
+        "map_marked":              new DashGuiIconDefinition(this.icon, "Map - Marked", this.weight["regular"],"map-marked-alt"),
+        "map_marked_solid":        new DashGuiIconDefinition(this.icon, "Map - Marked", this.weight["solid"],"map-marked-alt"),
         "map_marker":              new DashGuiIconDefinition(this.icon, "Map Marker", this.weight["regular"], "map-marker-alt"),
+        "map_marker_solid":        new DashGuiIconDefinition(this.icon, "Map Marker", this.weight["solid"], "map-marker-alt"),
         "minimize":                new DashGuiIconDefinition(this.icon, "Minimize", this.weight["regular"], "compress-alt"),
         "minus_circle":            new DashGuiIconDefinition(this.icon, "Minus Circle", this.weight["regular"], "minus-circle"),
         "minus_sign":              new DashGuiIconDefinition(this.icon, "Minus Sign", this.weight["regular"], "minus"),
@@ -43891,12 +44086,12 @@ function DashLayout () {
     this.UserProfile             = DashLayoutUserProfile;
     this.Tabs = {
         Side: class DashLayoutTabsSide extends DashLayoutTabs {
-            constructor(binder, recall_id_suffix="", color=null) {
+            constructor (binder, recall_id_suffix="", color=null) {
                 super(binder, true, recall_id_suffix, color);
             };
         },
         Top:  class DashLayoutTabsTop extends DashLayoutTabs {
-            constructor(binder, recall_id_suffix="", color=null) {
+            constructor (binder, recall_id_suffix="", color=null) {
                 super(binder, false, recall_id_suffix, color);
             };
         }
@@ -52953,13 +53148,12 @@ function DashUserView (user_data=null, options={}, view_mode="settings") {
     this.property_box = this.user_profile.property_box;
     this.html.append(this.user_profile.html);
     // TODO: TEST -------------
-    // var box = Dash.Gui.GetHTMLBoxContext();
-    // var address = new Dash.Gui.Address();
+    var box = Dash.Gui.GetHTMLBoxContext();
+    var address = new Dash.Gui.Address();
     // console.warn("TEST", address);
-    //
-    // box.append(address.html);
-    //
-    // this.html.append(box);
+    box.append(address.html);
+    address.SetValue("2649 Cava Tirreni St, Suite 100, Henderson, NV 89044");
+    this.html.append(box);
 }
 
 // Profile page layout for the currently logged-in user

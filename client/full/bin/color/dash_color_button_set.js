@@ -1,6 +1,5 @@
 class DashColorButtonSet {
-
-    constructor(area_background, background, text) {
+    constructor (area_background, background, text) {
         this._area_background = area_background; // HTML Color
         this._background = background; // DashColorStateSet()
         this._text       = text;       // DashColorStateSet()

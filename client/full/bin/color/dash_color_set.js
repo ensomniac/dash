@@ -1,5 +1,5 @@
 class DashColorSet {
-    constructor(background, background_raised, text, text_header, accent_good, accent_bad, button, tab, input) {
+    constructor (background, background_raised, text, text_header, accent_good, accent_bad, button, tab, input) {
         this._background  = background;               // HTML Color
         this._background_raised  = background_raised; // HTML Color
         this._text        = text;                     // HTML Color
