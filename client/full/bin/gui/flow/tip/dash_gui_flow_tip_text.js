@@ -28,17 +28,13 @@ class DashGuiFlowTipText {
             },
             "toggle": {
                 "default": {
-                    "bg_color": this.color.PinstripeLight,
                     "icon_color": this.color.Pinstripe,
                     "font_color": this.color.PinstripeDark,
-                    "border_color": this.color.PinstripeDark,
                     "font_size": "85%"
                 },
                 "emphasized": {
-                    "bg_color": this.color.Pinstripe,
                     "icon_color": this.color.PinstripeDark,
                     "font_color": this.color.StrokeLight,
-                    "border_color": this.color.StrokeLight,
                     "font_size": "85%"
                 }
             },
@@ -61,7 +57,23 @@ class DashGuiFlowTipText {
                     "border_color": this.color.Pinstripe,
                     "font_size": "85%"
                 }
-            }
+            },
+            "italic": {
+                "default": {
+                    "font_size": "100%"
+                },
+                "emphasized": {
+                    "font_size": "100%"
+                }
+            },
+            "bold": {
+                "default": {
+                    "font_size": "100%"
+                },
+                "emphasized": {
+                    "font_size": "100%"
+                }
+            },
         };
 
         this.setup_styles();
@@ -371,8 +383,8 @@ class DashGuiFlowTipText {
                 else {
                     parsed += this.get_style_string({
                         "font-family": "sans_serif_italic",
-                        "font-size": this.get_style_value("font_size"),
-                        "color": this.get_style_value("font_color")
+                        "font-size": this.get_style_value("font_size", "italic"),
+                        "color": this.get_style_value("font_color", "italic")
                     });
 
                     italic_active = true;
@@ -393,8 +405,8 @@ class DashGuiFlowTipText {
                 else {
                     parsed += this.get_style_string({
                         "font-family": "sans_serif_bold",
-                        "font-size": this.get_style_value("font_size"),
-                        "color": this.get_style_value("font_color")
+                        "font-size": this.get_style_value("font_size", "bold"),
+                        "color": this.get_style_value("font_color", "bold")
                     });
 
                     bold_active = true;
@@ -410,9 +422,9 @@ class DashGuiFlowTipText {
     }
 
     get_style_value (key, type="default") {
-        var style = this.style[type][this.emphasized ? "emphasized" : "default"];
+        var style = this.style[type]?.[this.emphasized ? "emphasized" : "default"];
 
-        if (!(key in style)) {
+        if (!style || !(key in style)) {
             style = this.style["default"][this.emphasized ? "emphasized" : "default"];
         }
 

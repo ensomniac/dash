@@ -19856,8 +19856,8 @@ class DashGuiAddress extends DashGuiInputType {
             "padding-right": Dash.Size.Padding * 0.5,
             "border-bottom": "1px solid " + this.color.PinstripeDark
         });
-        this.add_icon();
         this.setup_autocomplete();
+        this.add_icon();
         this.add_map_link_button();
     }
     GetString () {
@@ -19874,16 +19874,18 @@ class DashGuiAddress extends DashGuiInputType {
             0.9,
             this.color.Stroke
         );
-        icon.html.attr(
-            "title",
-            (
-                "Start typing an address to search,\nthen select the corresponding address.\n\n" +
-                "You can also freely enter any address if it's\nnot listed, though this will be uncommon.\n\n" +
-                'More granular address details,\nsuch as "Suite 100", can be manually\nadded after selecting the address.'
-            )
-        );
+        if (this.google_places_autocomplete) {
+            icon.html.attr(
+                "title",
+                (
+                    "Start typing an address to search,\nthen select the corresponding address.\n\n" +
+                    "You can also freely enter any address if it's\nnot listed, though this will be uncommon.\n\n" +
+                    'More granular address details,\nsuch as "Suite 100", can be manually\nadded after selecting the address.'
+                )
+            );
+        }
         icon.html.css({
-            "cursor": "help",
+            "cursor": this.google_places_autocomplete ? "help" : "default",
             "margin-right": Dash.Size.Padding * 0.3
         });
         this.html.prepend(icon.html);
@@ -19911,13 +19913,25 @@ class DashGuiAddress extends DashGuiInputType {
             console.warn("Warning: International address support has not yet been implemented.");
             return;
         }
-        this.google_places_autocomplete = new google.maps.places.Autocomplete(this.input[0], options);
+        try {
+            this.google_places_autocomplete = new google.maps.places.Autocomplete(this.input[0], options);
+        }
+        catch {
+            console.error(
+                "Error (google.maps.places.Autocomplete):\nDashGuiAddress cannot initialize because the required " +
+                "script was not added to index.html, please reference the docstring to make the required change."
+            );
+            return;
+        }
         this.google_places_autocomplete.addListener("place_changed", () => {
             this.parse_value();
             this._on_submit(true);
         });
     }
     add_map_link_button () {
+        if (!this.google_places_autocomplete) {
+            return;
+        }
         this.map_link_button = new Dash.Gui.IconButton(
             "map_marked",
             () => {
@@ -19996,7 +20010,16 @@ class DashGuiAddress extends DashGuiInputType {
     }
     get_place_info (address, callback) {
         if (!this.geocoder) {
-            this.geocoder = new google.maps.Geocoder();
+            try {
+                this.geocoder = new google.maps.Geocoder();
+            }
+            catch {
+                console.error(
+                    "Error (google.maps.Geocoder):\nDashGuiAddress cannot initialize because the required script " +
+                    "was not added to index.html, please reference the docstring to make the required change."
+                );
+                return;
+            }
         }
         var options = {"address": address};
         if (!this.international) {
@@ -39673,17 +39696,13 @@ class DashGuiFlowTipText {
             },
             "toggle": {
                 "default": {
-                    "bg_color": this.color.PinstripeLight,
                     "icon_color": this.color.Pinstripe,
                     "font_color": this.color.PinstripeDark,
-                    "border_color": this.color.PinstripeDark,
                     "font_size": "85%"
                 },
                 "emphasized": {
-                    "bg_color": this.color.Pinstripe,
                     "icon_color": this.color.PinstripeDark,
                     "font_color": this.color.StrokeLight,
-                    "border_color": this.color.StrokeLight,
                     "font_size": "85%"
                 }
             },
@@ -39706,7 +39725,23 @@ class DashGuiFlowTipText {
                     "border_color": this.color.Pinstripe,
                     "font_size": "85%"
                 }
-            }
+            },
+            "italic": {
+                "default": {
+                    "font_size": "100%"
+                },
+                "emphasized": {
+                    "font_size": "100%"
+                }
+            },
+            "bold": {
+                "default": {
+                    "font_size": "100%"
+                },
+                "emphasized": {
+                    "font_size": "100%"
+                }
+            },
         };
         this.setup_styles();
     }
@@ -39946,8 +39981,8 @@ class DashGuiFlowTipText {
                 else {
                     parsed += this.get_style_string({
                         "font-family": "sans_serif_italic",
-                        "font-size": this.get_style_value("font_size"),
-                        "color": this.get_style_value("font_color")
+                        "font-size": this.get_style_value("font_size", "italic"),
+                        "color": this.get_style_value("font_color", "italic")
                     });
                     italic_active = true;
                 }
@@ -39964,8 +39999,8 @@ class DashGuiFlowTipText {
                 else {
                     parsed += this.get_style_string({
                         "font-family": "sans_serif_bold",
-                        "font-size": this.get_style_value("font_size"),
-                        "color": this.get_style_value("font_color")
+                        "font-size": this.get_style_value("font_size", "bold"),
+                        "color": this.get_style_value("font_color", "bold")
                     });
                     bold_active = true;
                 }
@@ -39977,8 +40012,8 @@ class DashGuiFlowTipText {
         return parsed;
     }
     get_style_value (key, type="default") {
-        var style = this.style[type][this.emphasized ? "emphasized" : "default"];
-        if (!(key in style)) {
+        var style = this.style[type]?.[this.emphasized ? "emphasized" : "default"];
+        if (!style || !(key in style)) {
             style = this.style["default"][this.emphasized ? "emphasized" : "default"];
         }
         if (!(key in style)) {

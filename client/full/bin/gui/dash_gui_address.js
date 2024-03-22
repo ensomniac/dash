@@ -77,8 +77,8 @@ class DashGuiAddress extends DashGuiInputType {
             "border-bottom": "1px solid " + this.color.PinstripeDark
         });
 
-        this.add_icon();
         this.setup_autocomplete();
+        this.add_icon();
         this.add_map_link_button();
     }
 
@@ -99,17 +99,19 @@ class DashGuiAddress extends DashGuiInputType {
             this.color.Stroke
         );
 
-        icon.html.attr(
-            "title",
-            (
-                "Start typing an address to search,\nthen select the corresponding address.\n\n" +
-                "You can also freely enter any address if it's\nnot listed, though this will be uncommon.\n\n" +
-                'More granular address details,\nsuch as "Suite 100", can be manually\nadded after selecting the address.'
-            )
-        );
+        if (this.google_places_autocomplete) {
+            icon.html.attr(
+                "title",
+                (
+                    "Start typing an address to search,\nthen select the corresponding address.\n\n" +
+                    "You can also freely enter any address if it's\nnot listed, though this will be uncommon.\n\n" +
+                    'More granular address details,\nsuch as "Suite 100", can be manually\nadded after selecting the address.'
+                )
+            );
+        }
 
         icon.html.css({
-            "cursor": "help",
+            "cursor": this.google_places_autocomplete ? "help" : "default",
             "margin-right": Dash.Size.Padding * 0.3
         });
 
@@ -144,7 +146,18 @@ class DashGuiAddress extends DashGuiInputType {
             return;
         }
 
-        this.google_places_autocomplete = new google.maps.places.Autocomplete(this.input[0], options);
+        try {
+            this.google_places_autocomplete = new google.maps.places.Autocomplete(this.input[0], options);
+        }
+
+        catch {
+            console.error(
+                "Error (google.maps.places.Autocomplete):\nDashGuiAddress cannot initialize because the required " +
+                "script was not added to index.html, please reference the docstring to make the required change."
+            );
+
+            return;
+        }
 
         this.google_places_autocomplete.addListener("place_changed", () => {
             this.parse_value();
@@ -153,6 +166,10 @@ class DashGuiAddress extends DashGuiInputType {
     }
 
     add_map_link_button () {
+        if (!this.google_places_autocomplete) {
+            return;
+        }
+
         this.map_link_button = new Dash.Gui.IconButton(
             "map_marked",
             () => {
@@ -255,7 +272,18 @@ class DashGuiAddress extends DashGuiInputType {
 
     get_place_info (address, callback) {
         if (!this.geocoder) {
-            this.geocoder = new google.maps.Geocoder();
+            try {
+                this.geocoder = new google.maps.Geocoder();
+            }
+
+            catch {
+                console.error(
+                    "Error (google.maps.Geocoder):\nDashGuiAddress cannot initialize because the required script " +
+                    "was not added to index.html, please reference the docstring to make the required change."
+                );
+
+                return;
+            }
         }
 
         var options = {"address": address};
