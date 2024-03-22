@@ -28,7 +28,8 @@ class DashGuiAddress extends DashGuiInputType {
         on_submit_cb=null,
         color=null,
         international=false,
-        placeholder_text="Start typing an address to search..."
+        placeholder_text="Start typing an address to search...",
+        include_tip_icon=true
     ) {
         super(
             $("<input placeholder='" + placeholder_text + "'>"),
@@ -50,6 +51,7 @@ class DashGuiAddress extends DashGuiInputType {
 
         this._on_submit_cb = (on_submit_cb && binder ? on_submit_cb.bind(binder) : on_submit_cb);
         this.international = international;
+        this.include_tip_icon = include_tip_icon;
 
         this.geocoder = null;
         this.map_link_url = "";
@@ -59,6 +61,12 @@ class DashGuiAddress extends DashGuiInputType {
         this.address_components = {};
         this.last_submitted_value = "";
         this.google_places_autocomplete = null;
+
+        this.tip_text = (
+            "Start typing an address to search,\nthen select the corresponding address.\n\n" +
+            "You can also freely enter any address if it's\nnot listed, though this will be uncommon.\n\n" +
+            'More granular address details,\nsuch as "Suite 100", can be manually\nadded after selecting the address.'
+        );
 
         // For some reason, traditional function overriding is not working.
         // I can't figure it out, but it seems to have something to do with
@@ -91,6 +99,18 @@ class DashGuiAddress extends DashGuiInputType {
     }
 
     add_icon = function () {
+        if (!this.include_tip_icon) {
+            if (this.label && this.google_places_autocomplete) {
+                this.label.attr("title", this.tip_text);
+
+                this.label.css({
+                    "cursor": "help"
+                });
+            }
+
+            return;
+        }
+
         var icon = new Dash.Gui.Icon(
             this.color,
             "map_marker",
@@ -100,14 +120,7 @@ class DashGuiAddress extends DashGuiInputType {
         );
 
         if (this.google_places_autocomplete) {
-            icon.html.attr(
-                "title",
-                (
-                    "Start typing an address to search,\nthen select the corresponding address.\n\n" +
-                    "You can also freely enter any address if it's\nnot listed, though this will be uncommon.\n\n" +
-                    'More granular address details,\nsuch as "Suite 100", can be manually\nadded after selecting the address.'
-                )
-            );
+            icon.html.attr("title", this.tip_text);
         }
 
         icon.html.css({
@@ -141,7 +154,7 @@ class DashGuiAddress extends DashGuiInputType {
 
         else {
             // TODO: Resolve the other international TODOs in this code first
-            console.warn("Warning: International address support has not yet been implemented.");
+            console.error("Error: International address support has not yet been implemented.");
 
             return;
         }
@@ -151,8 +164,8 @@ class DashGuiAddress extends DashGuiInputType {
         }
 
         catch {
-            console.error(
-                "Error (google.maps.places.Autocomplete):\nDashGuiAddress cannot initialize because the required " +
+            console.warn(
+                "Warn (google.maps.places.Autocomplete):\nDashGuiAddress cannot initialize because the required " +
                 "script was not added to index.html, please reference the docstring to make the required change."
             );
 
@@ -174,7 +187,7 @@ class DashGuiAddress extends DashGuiInputType {
             "map_marked",
             () => {
                 if (!this.map_link_url) {
-                    alert("Address is empty or invalid, can't open in Google Maps.");
+                    alert("Address is empty or invalid, can't open in Google Maps:\n" + this.formatted_address);
 
                     return;
                 }
@@ -277,8 +290,8 @@ class DashGuiAddress extends DashGuiInputType {
             }
 
             catch {
-                console.error(
-                    "Error (google.maps.Geocoder):\nDashGuiAddress cannot initialize because the required script " +
+                console.warn(
+                    "Warn (google.maps.Geocoder):\nDashGuiAddress cannot initialize because the required script " +
                     "was not added to index.html, please reference the docstring to make the required change."
                 );
 
@@ -303,13 +316,13 @@ class DashGuiAddress extends DashGuiInputType {
                 }
 
                 if (!results || results.length < 1) {
-                    Dash.Log.Warn("Geocode couldn't any find results for '" + address + "':\n" + results);
+                    Dash.Log.Warn("Geocode couldn't any find results for '" + address + "'");
 
                     return null;
                 }
 
                 if (results.length > 1) {
-                    Dash.Log.Warn("Geocode found too many results for '" + address + "':\n" + results);
+                    Dash.Log.Warn("Geocode found too many results for '" + address + "'");
 
                     return null;
                 }

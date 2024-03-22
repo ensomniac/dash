@@ -520,6 +520,56 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
         return picker;
     };
 
+    // This can probably be moved to DashLayoutToolbar and be abstracted here
+    this.AddAddress = function (
+        data_key, can_edit=false, on_submit_cb=null, label_text="Address",
+        placeholder_text="Start typing an address to search...", international=false
+    ) {
+        var address = new Dash.Gui.Address(
+            label_text,
+            null,
+            (
+                on_submit_cb ? on_submit_cb.bind(this.binder) : (
+                    function (formatted_address) {
+                        if (!this.set_data_cb) {
+                            return;
+                        }
+
+                        this.set_data_cb(data_key, formatted_address);
+                    }
+                ).bind(this)
+            ),
+            this.color,
+            international,
+            placeholder_text,
+            false
+        );
+
+        if (!can_edit) {
+            address.SetLocked(true);
+        }
+
+        var value = this.get_formatted_data_cb ? this.get_formatted_data_cb(data_key) : this.get_data_cb()[data_key];
+
+        if (value) {
+            address.SetValue(value);
+        }
+
+        address.html.css({
+            "flex": 2
+        });
+
+        address.input.css({
+            "border": ""
+        });
+
+        address.map_link_button.SetIconSize(110);
+
+        this.AddHTML(address.html);
+
+        return address;
+    };
+
     this.on_input_keystroke = function () {
         // Placeholder
     };
