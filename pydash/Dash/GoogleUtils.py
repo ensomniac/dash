@@ -179,6 +179,8 @@ class GUtils:
                         "was uploaded to, please reach out to the dev team for assistance."
                     )
 
+                msg += f"\n\nFull error:\n{error}"
+
                 raise ClientAlert(msg)
 
             raise Exception(error)
