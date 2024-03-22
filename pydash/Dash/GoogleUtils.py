@@ -163,7 +163,7 @@ class GUtils:
                 if parent_id:
                     msg += (
                         f"\n\nYou can find the file in this folder:\nhttps://"
-                        f"drive.google.com/drive/u/1/folders/{parent_id}\n\n"
+                        f"drive.google.com/drive/folders/{parent_id}\n\n"
                     )
                 else:
                     msg += (
