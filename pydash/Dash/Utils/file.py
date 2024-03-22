@@ -343,6 +343,21 @@ def ValidateMaskImage(
     return valid
 
 
+def CombinePDFs(pdf_paths, output_path):
+    from PyPDF2 import PdfMerger
+
+    pdf_merger = PdfMerger()
+
+    for pdf in pdf_paths:
+        with open(pdf, "rb") as file:
+            pdf_merger.append(file)
+
+    with open(output_path, "wb") as output:
+        pdf_merger.write(output)
+
+    return output_path
+
+
 def get_tagless_filename(filename):
     if ")." not in filename:
         return filename

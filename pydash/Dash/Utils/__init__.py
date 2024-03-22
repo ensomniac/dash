@@ -134,6 +134,12 @@ def CreateZIP(dir_path):
     return CreateZIP(dir_path)
 
 
+def CombinePDFs(pdf_paths, output_path):
+    from .file import CombinePDFs
+
+    return CombinePDFs(pdf_paths, output_path)
+
+
 def ImageHasTransparency(pil_image_object=None, file_bytes_or_existing_path="", filename=""):
     from .file import ImageHasTransparency
 
