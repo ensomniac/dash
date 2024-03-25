@@ -96,8 +96,6 @@ class DashGuiPhoneNumber {
             "",
             this,
             (value) => {
-                console.warn("TEST on submit", value);
-
                 for (var seg_type of this.segment_order) {
                     var seg_input = this.segments[seg_type];
 
@@ -106,7 +104,7 @@ class DashGuiPhoneNumber {
                     }
                 }
 
-                // TODO
+                // TODO 
                 console.warn("TEST submit", value);
             },
             null,
@@ -118,17 +116,20 @@ class DashGuiPhoneNumber {
         var pad = Dash.Size.Padding * 0.2;
 
         input.html.css({
-            "background": "pink",
+            "background": "teal",
             "width": (Dash.Size.Padding * length) + (pad * 2)
         });
 
         input.input.css({
-            // "flex": "",
+            // "text-align": "center",
+            "background": "pink",
+            "border-bottom": "1px solid " + this.color.PinstripeDark,
+            // "flex": "none",
             // "width": "auto",
             // "margin-left": "auto",
             // "margin-right": "auto",
-            // "padding-left": pad,
-            // "padding-right": pad
+            "padding-left": pad,
+            "padding-right": pad
         });
 
         input.input.attr({

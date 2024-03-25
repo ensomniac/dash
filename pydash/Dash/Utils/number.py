@@ -118,3 +118,21 @@ def GetOrdinalSuffix(num):
         return "rd"
 
     return "th"
+
+
+def GetReadableByteSize(total_bytes):
+    """
+    Converts a size in bytes to a human-readable format using the decimal system.
+    This iterates through the units of measurement (Bytes, Kilobytes, Megabytes, etc.)
+    and divides the total number of bytes by 1000 to move to the next unit of measurement
+    until it finds the most suitable one (where the number is less than 1000). It then formats
+    the number to two decimal places and returns it as a string, along with the unit of measurement.
+    """
+
+    for unit in ["", "K", "M", "G", "T", "P", "E", "Z"]:
+        if abs(total_bytes) < 1000.0:
+            return f"{total_bytes:3.2f}{unit}B"
+
+        total_bytes /= 1000.0
+
+    return f"{total_bytes:.2f}YB"

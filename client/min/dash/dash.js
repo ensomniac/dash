@@ -20206,14 +20206,13 @@ class DashGuiPhoneNumber {
             "",
             this,
             (value) => {
-                console.warn("TEST on submit", value);
                 for (var seg_type of this.segment_order) {
                     var seg_input = this.segments[seg_type];
                     if (seg_input.Text().length !== parseInt(seg_input.input.attr("maxlength"))) {
                         return;
                     }
                 }
-                // TODO
+                // TODO 
                 console.warn("TEST submit", value);
             },
             null,
@@ -20223,16 +20222,19 @@ class DashGuiPhoneNumber {
         );
         var pad = Dash.Size.Padding * 0.2;
         input.html.css({
-            "background": "pink",
+            "background": "teal",
             "width": (Dash.Size.Padding * length) + (pad * 2)
         });
         input.input.css({
-            // "flex": "",
+            // "text-align": "center",
+            "background": "pink",
+            "border-bottom": "1px solid " + this.color.PinstripeDark,
+            // "flex": "none",
             // "width": "auto",
             // "margin-left": "auto",
             // "margin-right": "auto",
-            // "padding-left": pad,
-            // "padding-right": pad
+            "padding-left": pad,
+            "padding-right": pad
         });
         input.input.attr({
             "type": "tel",
@@ -53434,10 +53436,12 @@ function DashUserView (user_data=null, options={}, view_mode="settings") {
     this.property_box = this.user_profile.property_box;
     this.html.append(this.user_profile.html);
     // TODO: TEST -------------
-    var box = Dash.Gui.GetHTMLBoxContext();
-    var ph = new Dash.Gui.PhoneNumber();
-    box.append(ph.html);
-    this.html.append(box);
+    // var box = Dash.Gui.GetHTMLBoxContext();
+    // var ph = new Dash.Gui.PhoneNumber();
+    //
+    // box.append(ph.html);
+    //
+    // this.html.append(box);
 }
 
 // Profile page layout for the currently logged-in user
