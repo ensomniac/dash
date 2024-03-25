@@ -17914,6 +17914,7 @@ function DashGui () {
     this.LoadingOverlay            = DashGuiLoadingOverlay;
     this.Login                     = DashGuiLogin;
     this.Modal                     = DashGuiModal;
+    this.PhoneNumber               = DashGuiPhoneNumber;
     this.Prompt                    = DashGuiPrompt;
     this.PropertyBox               = DashGuiPropertyBox;
     this.Signature                 = DashGuiSignature;
@@ -19923,6 +19924,10 @@ class DashGuiAddress extends DashGuiInputType {
             console.error("Error: International address support has not yet been implemented.");
             return;
         }
+        // The API key won't be authorized for this scope, so it'll fail to initialize
+        if (Dash.LocalDev) {
+            return;
+        }
         try {
             this.google_places_autocomplete = new google.maps.places.Autocomplete(this.input[0], options);
         }
@@ -20123,6 +20128,144 @@ class DashGuiAddress extends DashGuiInputType {
     _on_set_locked (locked) {
         this.input.prop("disabled", locked);
     };
+}
+
+class DashGuiPhoneNumber {
+    constructor (color=null, international=false) {
+        this.color = color || Dash.Color.Light;
+        this.international = international;
+        this.segments = {};
+        this.segment_order = [];
+        this.html = $("<div></div>");
+        this.setup_styles();
+    }
+    setup_styles () {
+        this.html.css({
+            "display": "flex"
+        });
+        if (this.international) {
+            // TODO: Need a country-code dropdown, that once selected, draws the appropriate segments, and then
+            //  those inputs will each need their own validation, presumably slightly differently than US validation
+            console.error("Error: International address support has not yet been implemented.");
+            return;
+        }
+        else {
+            this.init_segments("us");
+        }
+        // TODO:
+        //    - set rules on each input, like numeric type, and max chars
+        //    - validate active segment on each change
+        //    - auto-tab to the next box when current box is successfully validated (or just full)
+        //    - smart delete, meaning, on backspace, if current box is empty, jump to the previous box and delete
+        //    - in the class, have an international param (bool), set to false, but leave a to-do note that if true,
+        //      there should be a country-code dropdown, that once selected, draws the appropriate segments (inputs)
+    }
+    get_segments (country_code) {
+        if (country_code === "us") {
+            return [
+                ["area_code", 3],
+                ["exchange", 3],
+                ["subscriber_number", 4]
+            ];
+        }
+        // TODO: Handle all other country codes here
+        console.error("Error: International segments have not yet been handled.");
+        return [];
+    }
+    init_segments (country_code) {
+        for (var seg of this.get_segments(country_code)) {
+            if (this.segment_order.length) {
+                this.add_separator(country_code);
+            }
+            this.segment_order.push(seg[0]);
+            this.segments[seg[0]] = this.add_input(seg[0], seg[1]);
+        }
+    }
+    add_separator (country_code) {
+        var char = "";
+        if (country_code === "us") {
+            char = "-";
+        }
+        else {
+            // TODO: Handle all other country codes here
+            console.error("Error: International separators have not yet been handled.");
+        }
+        var sep = $("<div>" + char + "</div>");
+        sep.css({
+            "color": this.color.Text,
+            "font-family": "sans_serif_bold",
+            "background": "red"
+        });
+        this.html.append(sep);
+        return sep;
+    }
+    add_input (type, length) {
+        var input;  // Declare early for use in callbacks below
+        input = new DashGuiInputType(
+            null,
+            "",
+            this,
+            (value) => {
+                console.warn("TEST on submit", value);
+                for (var seg_type of this.segment_order) {
+                    var seg_input = this.segments[seg_type];
+                    if (seg_input.Text().length !== parseInt(seg_input.input.attr("maxlength"))) {
+                        return;
+                    }
+                }
+                // TODO
+                console.warn("TEST submit", value);
+            },
+            null,
+            null,
+            this.color,
+            false
+        );
+        var pad = Dash.Size.Padding * 0.2;
+        input.html.css({
+            "background": "pink",
+            "width": (Dash.Size.Padding * length) + (pad * 2)
+        });
+        input.input.css({
+            // "flex": "",
+            // "width": "auto",
+            // "margin-left": "auto",
+            // "margin-right": "auto",
+            // "padding-left": pad,
+            // "padding-right": pad
+        });
+        input.input.attr({
+            "type": "tel",
+            "pattern": "[0-9]{" + length + "}",
+            "maxlength": length,
+            "size": length
+        });
+        input.input.on("input", (e) => {
+            if (input.Text().length === 0 && e?.originalEvent?.inputType === "deleteContentBackward") {
+                this.focus_neighboring_input(type, false);
+            }
+            else if (input.Text().length === length) {
+                this.focus_neighboring_input(type);
+            }
+        });
+        this.html.append(input.html);
+        return input;
+    }
+    focus_neighboring_input (type, next=true) {
+        var index = this.segment_order.indexOf(type);
+        if (index === -1) {
+            return;
+        }
+        try {
+            var input = this.segments[this.segment_order[index + (next ? 1 : -1)]];
+        }
+        catch {
+            return;
+        }
+        if (input) {
+            input.Focus();
+        }
+    }
 }
 
 function DashRequest () {
@@ -24997,7 +25140,9 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
         address.input.css({
             "border": ""
         });
-        address.map_link_button.SetIconSize(110);
+        if (address.map_link_button) {
+            address.map_link_button.SetIconSize(110);
+        }
         this.AddHTML(address.html);
         return address;
     };
@@ -42244,10 +42389,10 @@ function DashGuiInputBase (
 /**@member DashGuiInputBase*/
 // Abstract from this for input elements with specific "types", such as "date", "time", etc
 function DashGuiInputType (
-    input, label_text="", binder=null, on_submit_cb=null, on_autosave_cb=null,
+    input=null, label_text="", binder=null, on_submit_cb=null, on_autosave_cb=null,
     on_change_cb=null, color=null, include_paste_connection=true
 ) {
-    this.input = input;
+    this.input = input || $("<input>");
     this.label_text = label_text;
     this.on_submit_cb = on_submit_cb && binder ? on_submit_cb.bind(binder) : on_submit_cb;
     this.on_autosave_cb = on_autosave_cb && binder ? on_autosave_cb.bind(binder) : on_autosave_cb;
@@ -44184,7 +44329,9 @@ function DashGuiPropertyBoxInterface () {
             "border": "",
             "padding-left": 0
         });
-        this.addresses[data_key].map_link_button.SetIconSize(110);
+        if (this.addresses[data_key].map_link_button) {
+            this.addresses[data_key].map_link_button.SetIconSize(110);
+        }
         this.html.append(this.addresses[data_key].html);
         this.indent_row(this.addresses[data_key]);
         this.track_row(this.addresses[data_key]);
@@ -53286,6 +53433,11 @@ function DashUserView (user_data=null, options={}, view_mode="settings") {
     this.user_profile = new Dash.Layout.UserProfile(user_data, options, view_mode);
     this.property_box = this.user_profile.property_box;
     this.html.append(this.user_profile.html);
+    // TODO: TEST -------------
+    var box = Dash.Gui.GetHTMLBoxContext();
+    var ph = new Dash.Gui.PhoneNumber();
+    box.append(ph.html);
+    this.html.append(box);
 }
 
 // Profile page layout for the currently logged-in user

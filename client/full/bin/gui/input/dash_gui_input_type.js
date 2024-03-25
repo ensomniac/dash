@@ -2,10 +2,10 @@
 
 // Abstract from this for input elements with specific "types", such as "date", "time", etc
 function DashGuiInputType (
-    input, label_text="", binder=null, on_submit_cb=null, on_autosave_cb=null,
+    input=null, label_text="", binder=null, on_submit_cb=null, on_autosave_cb=null,
     on_change_cb=null, color=null, include_paste_connection=true
 ) {
-    this.input = input;
+    this.input = input || $("<input>");
     this.label_text = label_text;
     this.on_submit_cb = on_submit_cb && binder ? on_submit_cb.bind(binder) : on_submit_cb;
     this.on_autosave_cb = on_autosave_cb && binder ? on_autosave_cb.bind(binder) : on_autosave_cb;

@@ -160,6 +160,11 @@ class DashGuiAddress extends DashGuiInputType {
             return;
         }
 
+        // The API key won't be authorized for this scope, so it'll fail to initialize
+        if (Dash.LocalDev) {
+            return;
+        }
+
         try {
             this.google_places_autocomplete = new google.maps.places.Autocomplete(this.input[0], options);
         }

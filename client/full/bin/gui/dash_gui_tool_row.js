@@ -563,7 +563,9 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
             "border": ""
         });
 
-        address.map_link_button.SetIconSize(110);
+        if (address.map_link_button) {
+            address.map_link_button.SetIconSize(110);
+        }
 
         this.AddHTML(address.html);
 

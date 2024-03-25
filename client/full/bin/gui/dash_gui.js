@@ -22,6 +22,7 @@ function DashGui () {
     this.LoadingOverlay            = DashGuiLoadingOverlay;
     this.Login                     = DashGuiLogin;
     this.Modal                     = DashGuiModal;
+    this.PhoneNumber               = DashGuiPhoneNumber;
     this.Prompt                    = DashGuiPrompt;
     this.PropertyBox               = DashGuiPropertyBox;
     this.Signature                 = DashGuiSignature;

@@ -842,7 +842,9 @@ function DashGuiPropertyBoxInterface () {
             "padding-left": 0
         });
 
-        this.addresses[data_key].map_link_button.SetIconSize(110);
+        if (this.addresses[data_key].map_link_button) {
+            this.addresses[data_key].map_link_button.SetIconSize(110);
+        }
 
         this.html.append(this.addresses[data_key].html);
 
