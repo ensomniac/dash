@@ -521,7 +521,21 @@ class DashLocalStorage:
         else:
             return 0
 
-    def ConformPermissions(self, full_path):
+    def ConformPermissions(self, full_path, recursive=False):
+        if recursive:
+            if not os.path.isdir(full_path):
+                raise NotADirectoryError(f"When recursive is true, {full_path} must be a directory")
+
+            try:  # There doesn't appear to be a more simple way to do this using python's os module like there is for non-recursive
+                from subprocess import check_output
+
+                check_output(f"sudo chmod 755 -R {full_path}; sudo chown ensomniac -R {full_path}; sudo chgrp psacln -R {full_path}", shell=True)
+
+            except FileNotFoundError:
+                pass
+
+            return
+
         try:
             os.chown(full_path, 10000, 1004)  # chmod 755, chown ensomniac, chgrp psacln
 
@@ -859,8 +873,8 @@ def GetPrivKey(filename, subfolders=[], is_json=True):
     return DashLocalStorage().GetPrivKey(filename, subfolders, is_json)
 
 
-def ConformPermissions(full_path):
-    return DashLocalStorage().ConformPermissions(full_path)
+def ConformPermissions(full_path, recursive=False):
+    return DashLocalStorage().ConformPermissions(full_path, recursive)
 
 
 def ConvertToNested(dash_context, store_path):
