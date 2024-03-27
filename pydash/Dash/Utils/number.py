@@ -8,6 +8,15 @@ import sys
 
 
 def GetRandomID(date_based=True):
+    """
+    Get a random (date-based or not) number to use as an ID.
+
+    :param date_based: Use datetime.today() as a basis instead of a fully-random number (default=True)
+
+    :rtype: str
+    :return: A 19-digit number, formatted as a string.
+    """
+
     from random import randint
 
     if not date_based:
@@ -17,9 +26,16 @@ def GetRandomID(date_based=True):
 
     now = str(datetime.today())
 
-    return f"{now.split('.')[0].strip().replace('-', '').replace(' ', '').replace(':', '').strip()}" \
-           f"{now.split('.')[-1].strip()[:3]}" \
-           f"{randint(10, 99)}"
+    return (
+        # 2-digit year, 2-digit month, 2-digit day, 2-digit hour, 2-digit minute, 2-digit second
+        f"{now.split('.')[0].strip().replace('-', '').replace(' ', '').replace(':', '').strip()}"
+        
+        # 3-digit millisecond/microsecond (must zfill because this can technically, but very rarely, be less than three chars long)
+        f"{now.split('.')[-1].strip()[:3].zfill(3)}"
+        
+        # 2-digit random number (must keep this range to ensure it's always exactly two digits)
+        f"{randint(10, 99)}"
+    )
 
 
 def Lerp(val_a, val_b, t):
