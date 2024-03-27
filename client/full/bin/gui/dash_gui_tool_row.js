@@ -572,6 +572,71 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
         return address;
     };
 
+    // This can probably be moved to DashLayoutToolbar and be abstracted here
+    this.AddPhoneNumber = function (
+        data_key, can_edit=false, on_submit_cb=null, label_text="Phone",
+        return_with_separators=false, international=false, allow_incomplete=false
+    ) {
+        if (label_text) {
+            if (!label_text.endsWith(":")) {
+                label_text += ":";
+            }
+
+            this.AddLabel(
+                label_text, Dash.Size.Padding * 0.5, "", null, false
+            );
+        }
+        var phone = new Dash.Gui.PhoneNumber(
+            (
+                on_submit_cb ? on_submit_cb.bind(this.binder) : (
+                    function (phone_number) {
+                        if (!this.set_data_cb) {
+                            return;
+                        }
+
+                        this.set_data_cb(data_key, phone_number);
+                    }
+                ).bind(this)
+            ),
+            this.color,
+            return_with_separators,
+            international,
+            allow_incomplete
+        );
+
+        if (!can_edit) {
+            phone.SetLocked(true);
+        }
+
+        var value = this.get_formatted_data_cb ? this.get_formatted_data_cb(data_key) : this.get_data_cb()[data_key];
+
+        if (value) {
+            phone.SetValue(value);
+        }
+
+        // phone.html.css({
+        //     "flex": 2
+        // });
+
+        phone.bottom_border = "";
+
+        for (var seg_type of phone.segment_order) {
+            phone.segments[seg_type].input.css({
+                "border": phone.bottom_border
+            });
+        }
+
+        for (var sep of phone.separators) {
+            sep.css({
+                "border": phone.bottom_border
+            });
+        }
+
+        this.AddHTML(phone.html);
+
+        return phone;
+    };
+
     this.on_input_keystroke = function () {
         // Placeholder
     };

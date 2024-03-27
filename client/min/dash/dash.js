@@ -20131,12 +20131,21 @@ class DashGuiAddress extends DashGuiInputType {
 }
 
 class DashGuiPhoneNumber {
-    constructor (color=null, international=false) {
+    constructor (
+        on_submit_cb=null, color=null, return_with_separators=false, international=false, allow_incomplete=false
+    ) {
+        this.on_submit_cb = on_submit_cb;
         this.color = color || Dash.Color.Light;
+        this.return_with_separators = international;
         this.international = international;
+        this.allow_incomplete = allow_incomplete;
+        this.height = null;
         this.segments = {};
+        this.separators = [];
         this.segment_order = [];
+        this.copy_button = null;
         this.html = $("<div></div>");
+        this.bottom_border = "1px solid " + this.color.PinstripeDark;
         this.setup_styles();
     }
     setup_styles () {
@@ -20152,19 +20161,69 @@ class DashGuiPhoneNumber {
         else {
             this.init_segments("us");
         }
-        // TODO:
-        //    - set rules on each input, like numeric type, and max chars
-        //    - validate active segment on each change
-        //    - auto-tab to the next box when current box is successfully validated (or just full)
-        //    - smart delete, meaning, on backspace, if current box is empty, jump to the previous box and delete
-        //    - in the class, have an international param (bool), set to false, but leave a to-do note that if true,
-        //      there should be a country-code dropdown, that once selected, draws the appropriate segments (inputs)
+        this.add_copy_button();
+        this.setup_paste_connection();
+    }
+    SetValue (value) {
+        value = this.sanitize_value(value);
+        var index = 0;
+        for (var seg_type of this.segment_order) {
+            var seg_input = this.segments[seg_type];
+            var max_length = parseInt(seg_input.input.attr("maxlength"));
+            seg_input.SetText(value.slice(index, index + max_length));
+            index += max_length;
+        }
+    }
+    GetValue (_for_copy=false) {
+        var value = "";
+        var expected_length = 0;
+        var value_with_seps = "";
+        for (var seg_type of this.segment_order) {
+            var seg_input = this.segments[seg_type];
+            expected_length += parseInt(seg_input.input.attr("maxlength"));
+            value += seg_input.Text();
+            if (this.return_with_separators || _for_copy) {
+                value_with_seps += seg_input.Text();
+                if (seg_type !== this.segment_order.Last()) {
+                    if (this.international) {
+                        // TODO: Handle all other country codes here
+                        console.error("Error: International separators have not yet been handled.");
+                    }
+                    else {
+                        value_with_seps += this.get_sep_char("us");
+                    }
+                }
+            }
+        }
+        if (!_for_copy && !this.allow_incomplete && value.length && value.length !== expected_length) {
+            return null;
+        }
+        return value_with_seps || value;
+    }
+    SetLocked (locked) {
+        for (var seg_type of this.segment_order) {
+            this.segments[seg_type].SetLocked(locked);
+        }
+    }
+    add_copy_button () {
+        this.copy_button = new Dash.Gui.CopyButton(
+            this,
+            () => {
+                return this.GetValue(true);
+            },
+            0.6,
+            this.height
+        );
+        this.html.append(this.copy_button.html);
     }
     get_segments (country_code) {
         if (country_code === "us") {
             return [
+                ["sep", "("],
                 ["area_code", 3],
+                ["sep", ")"],
                 ["exchange", 3],
+                ["sep"],
                 ["subscriber_number", 4]
             ];
         }
@@ -20174,29 +20233,33 @@ class DashGuiPhoneNumber {
     }
     init_segments (country_code) {
         for (var seg of this.get_segments(country_code)) {
-            if (this.segment_order.length) {
-                this.add_separator(country_code);
+            if (seg[0] === "sep") {
+                this.add_separator(country_code, seg[1] || "");
+                continue;
             }
             this.segment_order.push(seg[0]);
             this.segments[seg[0]] = this.add_input(seg[0], seg[1]);
         }
     }
-    add_separator (country_code) {
-        var char = "";
+    get_sep_char (country_code) {
         if (country_code === "us") {
-            char = "-";
+            return "-";
         }
-        else {
-            // TODO: Handle all other country codes here
-            console.error("Error: International separators have not yet been handled.");
+        // TODO: Handle all other country codes here
+        console.error("Error: International separators have not yet been handled.");
+        return "";
+    }
+    add_separator (country_code, char="") {
+        if (!char) {
+            char = this.get_sep_char(country_code);
         }
         var sep = $("<div>" + char + "</div>");
         sep.css({
-            "color": this.color.Text,
-            "font-family": "sans_serif_bold",
-            "background": "red"
+            "color": this.color.Stroke,
+            "border-bottom": this.bottom_border
         });
         this.html.append(sep);
+        this.separators.push(sep);
         return sep;
     }
     add_input (type, length) {
@@ -20205,34 +20268,19 @@ class DashGuiPhoneNumber {
             null,
             "",
             this,
-            (value) => {
-                for (var seg_type of this.segment_order) {
-                    var seg_input = this.segments[seg_type];
-                    if (seg_input.Text().length !== parseInt(seg_input.input.attr("maxlength"))) {
-                        return;
-                    }
-                }
-                // TODO 
-                console.warn("TEST submit", value);
-            },
+            this.allow_incomplete ? this._on_submit.bind(this) : null,
             null,
             null,
             this.color,
             false
         );
-        var pad = Dash.Size.Padding * 0.2;
+        var pad = 0;  // Dash.Size.Padding * 0.1;
         input.html.css({
-            "background": "teal",
             "width": (Dash.Size.Padding * length) + (pad * 2)
         });
         input.input.css({
-            // "text-align": "center",
-            "background": "pink",
-            "border-bottom": "1px solid " + this.color.PinstripeDark,
-            // "flex": "none",
-            // "width": "auto",
-            // "margin-left": "auto",
-            // "margin-right": "auto",
+            "text-align": "center",
+            "border-bottom": this.bottom_border,
             "padding-left": pad,
             "padding-right": pad
         });
@@ -20243,15 +20291,23 @@ class DashGuiPhoneNumber {
             "size": length
         });
         input.input.on("input", (e) => {
+            input.SetText(this.sanitize_value(input.Text()));
             if (input.Text().length === 0 && e?.originalEvent?.inputType === "deleteContentBackward") {
                 this.focus_neighboring_input(type, false);
             }
             else if (input.Text().length === length) {
                 this.focus_neighboring_input(type);
             }
+            if (!this.allow_incomplete) {
+                this._on_submit();
+            }
         });
         this.html.append(input.html);
+        this.height = input.height;
         return input;
+    }
+    sanitize_value (value) {
+        return value.replace(/\D/g, "");  // Ensure only numbers
     }
     focus_neighboring_input (type, next=true) {
         var index = this.segment_order.indexOf(type);
@@ -20267,6 +20323,30 @@ class DashGuiPhoneNumber {
         if (input) {
             input.Focus();
         }
+    }
+    setup_paste_connection () {
+        if (!Dash.Validate.Object(this.segments)) {
+            return;
+        }
+        this.segments[this.segment_order[0]].input.on("paste", (e) => {
+            e.preventDefault();
+            var clipboard_data = (e.clipboardData || e.originalEvent.clipboardData || window.clipboardData);
+            if (!clipboard_data) {
+                return;
+            }
+            this.SetValue(clipboard_data.getData("text") || "");
+            this._on_submit();
+        });
+    }
+    _on_submit () {
+        if (!this.on_submit_cb) {
+            return;
+        }
+        var value = this.GetValue();
+        if (!this.allow_incomplete && value === null) {
+            return;
+        }
+        this.on_submit_cb(value);
     }
 }
 
@@ -25147,6 +25227,59 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
         }
         this.AddHTML(address.html);
         return address;
+    };
+    // This can probably be moved to DashLayoutToolbar and be abstracted here
+    this.AddPhoneNumber = function (
+        data_key, can_edit=false, on_submit_cb=null, label_text="Phone",
+        return_with_separators=false, international=false, allow_incomplete=false
+    ) {
+        if (label_text) {
+            if (!label_text.endsWith(":")) {
+                label_text += ":";
+            }
+            this.AddLabel(
+                label_text, Dash.Size.Padding * 0.5, "", null, false
+            );
+        }
+        var phone = new Dash.Gui.PhoneNumber(
+            (
+                on_submit_cb ? on_submit_cb.bind(this.binder) : (
+                    function (phone_number) {
+                        if (!this.set_data_cb) {
+                            return;
+                        }
+                        this.set_data_cb(data_key, phone_number);
+                    }
+                ).bind(this)
+            ),
+            this.color,
+            return_with_separators,
+            international,
+            allow_incomplete
+        );
+        if (!can_edit) {
+            phone.SetLocked(true);
+        }
+        var value = this.get_formatted_data_cb ? this.get_formatted_data_cb(data_key) : this.get_data_cb()[data_key];
+        if (value) {
+            phone.SetValue(value);
+        }
+        // phone.html.css({
+        //     "flex": 2
+        // });
+        phone.bottom_border = "";
+        for (var seg_type of phone.segment_order) {
+            phone.segments[seg_type].input.css({
+                "border": phone.bottom_border
+            });
+        }
+        for (var sep of phone.separators) {
+            sep.css({
+                "border": phone.bottom_border
+            });
+        }
+        this.AddHTML(phone.html);
+        return phone;
     };
     this.on_input_keystroke = function () {
         // Placeholder
@@ -42065,6 +42198,7 @@ function DashGuiInputBase (
     this.tab_index = 0;
     this.locked = false;
     this.autosave = false;
+    this.force_blur = false;
     this.blur_enabled = null;
     this.last_submit_ts = null;
     this.skip_next_blur = false;
@@ -42114,7 +42248,7 @@ function DashGuiInputBase (
                     self.skip_next_blur = false;
                     return;
                 }
-                if (self.Text().toString() !== self.last_submitted_text.toString()) {
+                if (self.force_blur || self.Text().toString() !== self.last_submitted_text.toString()) {
                     self.skip_next_autosave = true;  // Autosave was happening at the same time as blur
                     self.on_submit(false, true);
                 }
@@ -53435,13 +53569,6 @@ function DashUserView (user_data=null, options={}, view_mode="settings") {
     this.user_profile = new Dash.Layout.UserProfile(user_data, options, view_mode);
     this.property_box = this.user_profile.property_box;
     this.html.append(this.user_profile.html);
-    // TODO: TEST -------------
-    // var box = Dash.Gui.GetHTMLBoxContext();
-    // var ph = new Dash.Gui.PhoneNumber();
-    //
-    // box.append(ph.html);
-    //
-    // this.html.append(box);
 }
 
 // Profile page layout for the currently logged-in user

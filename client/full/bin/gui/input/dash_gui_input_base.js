@@ -10,6 +10,7 @@ function DashGuiInputBase (
     this.tab_index = 0;
     this.locked = false;
     this.autosave = false;
+    this.force_blur = false;
     this.blur_enabled = null;
     this.last_submit_ts = null;
     this.skip_next_blur = false;
@@ -70,7 +71,7 @@ function DashGuiInputBase (
                     return;
                 }
 
-                if (self.Text().toString() !== self.last_submitted_text.toString()) {
+                if (self.force_blur || self.Text().toString() !== self.last_submitted_text.toString()) {
                     self.skip_next_autosave = true;  // Autosave was happening at the same time as blur
 
                     self.on_submit(false, true);
