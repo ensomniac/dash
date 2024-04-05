@@ -14,6 +14,7 @@ function DashGuiComboInterface () {
     };
 
     // Limit the height and make it scroll inside the container instead of expanding to its contents
+    // (Ideally this would be used by default, but I'm hesitant to break anything)
     this.SetMaxRowsBeforeScroll = function (num_rows=0) {
         this.max_rows_before_scroll = num_rows;
     };

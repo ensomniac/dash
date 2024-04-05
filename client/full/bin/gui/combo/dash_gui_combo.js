@@ -319,9 +319,11 @@ function DashGuiCombo (
             "opacity": 1,
             "left": this.border_size,
             "top": 0,
+            "width": "auto",  // This is important so it can auto-size
             "max-height": this.max_rows_before_scroll ? this.max_rows_before_scroll * this.height : "",
-            "overflow": this.max_rows_before_scroll ? "auto" : "hidden",
-            "width": "auto"  // This is important so it can auto-size
+            "overflow": this.max_rows_before_scroll ? (
+                this.option_list.length <= this.max_rows_before_scroll ? "hidden" : "auto"
+            ) : "hidden"
         });
 
         // TODO: Make this.rows grab focus while active?

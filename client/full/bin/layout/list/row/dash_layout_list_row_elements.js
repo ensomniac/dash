@@ -187,6 +187,10 @@ function DashLayoutListRowElements () {
             }
         );
 
+        if (options["max_rows_before_scroll"]) {
+            combo.SetMaxRowsBeforeScroll(options["max_rows_before_scroll"]);
+        }
+
         var css = {
             "height": this.height,
             "width": column_config_data["width"]

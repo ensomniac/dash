@@ -28396,9 +28396,11 @@ function DashGuiCombo (
             "opacity": 1,
             "left": this.border_size,
             "top": 0,
+            "width": "auto",  // This is important so it can auto-size
             "max-height": this.max_rows_before_scroll ? this.max_rows_before_scroll * this.height : "",
-            "overflow": this.max_rows_before_scroll ? "auto" : "hidden",
-            "width": "auto"  // This is important so it can auto-size
+            "overflow": this.max_rows_before_scroll ? (
+                this.option_list.length <= this.max_rows_before_scroll ? "hidden" : "auto"
+            ) : "hidden"
         });
         // TODO: Make this.rows grab focus while active?
         this.rows.empty();
@@ -29375,6 +29377,7 @@ function DashGuiComboInterface () {
         this.show_rows_on_empty_search = false;
     };
     // Limit the height and make it scroll inside the container instead of expanding to its contents
+    // (Ideally this would be used by default, but I'm hesitant to break anything)
     this.SetMaxRowsBeforeScroll = function (num_rows=0) {
         this.max_rows_before_scroll = num_rows;
     };
@@ -47454,8 +47457,9 @@ function DashLayoutListColumnConfig () {
         );
     };
     this.AddCombo = function (
-        label_text, combo_options, binder, callback, data_key="", width_mult=null, css={},
-        header_css={}, is_user_list=false, multi_select=false, footer_css={}, hover_text="", can_edit=true
+        label_text, combo_options, binder, callback, data_key="", width_mult=null,
+        css={}, header_css={}, is_user_list=false, multi_select=false, footer_css={},
+        hover_text="", can_edit=true, max_rows_before_scroll=0
     ) {
         this.AddColumn(
             label_text,
@@ -47471,7 +47475,8 @@ function DashLayoutListColumnConfig () {
                     "hover_text": hover_text,
                     "combo_options": combo_options,
                     "is_user_list": is_user_list,
-                    "multi_select": multi_select
+                    "multi_select": multi_select,
+                    "max_rows_before_scroll": max_rows_before_scroll
                 },
                 "css": css,
                 "header_css": header_css,
@@ -48011,6 +48016,9 @@ function DashLayoutListRowElements () {
                 "multi_select": options["multi_select"] || false
             }
         );
+        if (options["max_rows_before_scroll"]) {
+            combo.SetMaxRowsBeforeScroll(options["max_rows_before_scroll"]);
+        }
         var css = {
             "height": this.height,
             "width": column_config_data["width"]
