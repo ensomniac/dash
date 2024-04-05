@@ -288,10 +288,6 @@ function DashGuiComboSearch () {
             }
         }
 
-        this.rows.stop().css({
-            "height": "auto"
-        });
-
         var option_list = respect_search_results_order ? [] : this.option_list;
 
         this.manage_search_button_map = respect_search_results_order ? {} : null;
@@ -329,6 +325,13 @@ function DashGuiComboSearch () {
                 this.rows.append(this.manage_search_button_map[id].html);
             }
         }
+
+        this.rows.stop().css({
+            "height": "auto",
+            "overflow": this.max_rows_before_scroll ? (
+                option_list.length <= this.max_rows_before_scroll ? "hidden" : "auto"
+            ) : "hidden"
+        });
 
         for (i in option_list) {
             option = option_list[i];

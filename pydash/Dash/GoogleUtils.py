@@ -171,7 +171,10 @@ class GUtils:
                         "uploaded to, you can open it directly there.\n"
                     )
 
-                msg += "After opening the file, you can download it as the desired format using:\n[File]>[Download]"
+                msg += (
+                    "After opening the file, you can download it "
+                    "as the desired format using:\n[File]>[Download]"
+                )
 
                 if not parent_id:
                     msg += (
@@ -246,17 +249,30 @@ class GUtils:
     def GetDriveFileDataByID(self, file_id, in_shared_drive=False, fields_override=""):
         return self._drive_utils.GetFileDataByID(file_id, in_shared_drive, fields_override)
 
-    def GetDriveFileDataByName(self, filename, drive_id, parent_id="", is_folder=False, fields="", extra_query="", raise_duplicates=True, in_shared_drive=False):
-        return self._drive_utils.GetFileDataByName(filename, drive_id, parent_id, is_folder, fields, extra_query, raise_duplicates, in_shared_drive)
+    def GetDriveFileDataByName(
+        self, filename, drive_id, parent_id="", is_folder=False, fields="",
+        extra_query="", raise_duplicates=True, in_shared_drive=False
+    ):
+        return self._drive_utils.GetFileDataByName(
+            filename, drive_id, parent_id, is_folder, fields, extra_query, raise_duplicates, in_shared_drive
+        )
 
-    def GetAllDriveFiles(self, drive_id, extra_query="", fields_override="", is_shared_drive=False, include_deleted=False):
-        return self._drive_utils.GetAllFiles(drive_id, extra_query, fields_override, is_shared_drive, include_deleted)
+    def GetAllDriveFiles(
+        self, drive_id, extra_query="", fields_override="", is_shared_drive=False, include_deleted=False
+    ):
+        return self._drive_utils.GetAllFiles(
+            drive_id, extra_query, fields_override, is_shared_drive, include_deleted
+        )
 
     def GetDriveFilePermissions(self, file_id, in_shared_drive=False, fields="id, emailAddress, role"):
         return self._drive_utils.GetFilePermissions(file_id, in_shared_drive, fields)
 
-    def AddPermissionToDriveFile(self, user_email, file_id, permission_level="writer", notify_user=False, in_shared_drive=False):
-        return self._drive_utils.AddPermissionToFile(user_email, file_id, permission_level, notify_user, in_shared_drive)
+    def AddPermissionToDriveFile(
+        self, user_email, file_id, permission_level="writer", notify_user=False, in_shared_drive=False
+    ):
+        return self._drive_utils.AddPermissionToFile(
+            user_email, file_id, permission_level, notify_user, in_shared_drive
+        )
 
     def RemovePermissionFromDriveFile(self, user_email, file_id, in_shared_drive=False, permission_id=""):
         return self._drive_utils.RemovePermissionFromFile(user_email, file_id, in_shared_drive, permission_id)
@@ -382,7 +398,9 @@ class _DriveUtils:
                 ]:
                     from Dash.Utils import ClientAlert
 
-                    raise ClientAlert(f"'.{file_ext}' files cannot be uploaded due to encoding restrictions of the Google API")
+                    raise ClientAlert(
+                        f"'.{file_ext}' files cannot be uploaded due to encoding restrictions of the Google API"
+                    )
 
             raise UnicodeEncodeError(e.encoding, e.object, e.start, e.end, e.reason)
 
@@ -470,7 +488,10 @@ class _DriveUtils:
         except:
             return None  # Why is this not being handled?
 
-    def GetFileDataByName(self, filename, drive_id, parent_id="", is_folder=False, fields="", extra_query="", raise_duplicates=True, in_shared_drive=False):
+    def GetFileDataByName(
+        self, filename, drive_id, parent_id="", is_folder=False, fields="",
+        extra_query="", raise_duplicates=True, in_shared_drive=False
+    ):
         """
         This is not as fast as GetFileDataByID(), but it's the best option when you don't have an ID.
 
@@ -509,7 +530,9 @@ class _DriveUtils:
         # Either no results, or too many - rebound to a more thorough request
         return None
 
-    def GetAllFiles(self, drive_id, extra_query="", fields_override="", is_shared_drive=False, include_deleted=False):
+    def GetAllFiles(
+        self, drive_id, extra_query="", fields_override="", is_shared_drive=False, include_deleted=False
+    ):
         """
         | ** THIS IS A HEAVY PULL IF NO EXTRA QUERY **
         |
@@ -564,7 +587,9 @@ class _DriveUtils:
         except HttpError as http_error:
             ParseHTTPError(http_error, params)
 
-    def AddPermissionToFile(self, user_email, file_id, permission_level="writer", notify_user=False, in_shared_drive=False):
+    def AddPermissionToFile(
+        self, user_email, file_id, permission_level="writer", notify_user=False, in_shared_drive=False
+    ):
         """
         | This will not update or demote an existing user. If a user already has access, it
           will just return that user's permission record with the fields specified below.

@@ -43,6 +43,7 @@ function DashGuiCombo (
     this.highlighted_button = null;
     this.init_labels_drawn = false;
     this.text_alignment = "center";
+    this.max_rows_before_scroll = 0;
     this.gravity_width_override = null;
     this.gravity_value_override = null;
     this.color_set = this.color.Button;
@@ -318,6 +319,8 @@ function DashGuiCombo (
             "opacity": 1,
             "left": this.border_size,
             "top": 0,
+            "max-height": this.max_rows_before_scroll ? this.max_rows_before_scroll * this.height : "",
+            "overflow": this.max_rows_before_scroll ? "auto" : "hidden",
             "width": "auto"  // This is important so it can auto-size
         });
 

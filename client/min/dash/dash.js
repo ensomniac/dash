@@ -28175,6 +28175,7 @@ function DashGuiCombo (
     this.highlighted_button = null;
     this.init_labels_drawn = false;
     this.text_alignment = "center";
+    this.max_rows_before_scroll = 0;
     this.gravity_width_override = null;
     this.gravity_value_override = null;
     this.color_set = this.color.Button;
@@ -28395,6 +28396,8 @@ function DashGuiCombo (
             "opacity": 1,
             "left": this.border_size,
             "top": 0,
+            "max-height": this.max_rows_before_scroll ? this.max_rows_before_scroll * this.height : "",
+            "overflow": this.max_rows_before_scroll ? "auto" : "hidden",
             "width": "auto"  // This is important so it can auto-size
         });
         // TODO: Make this.rows grab focus while active?
@@ -29108,9 +29111,6 @@ function DashGuiComboSearch () {
                 this.rows.append(button.html);
             }
         }
-        this.rows.stop().css({
-            "height": "auto"
-        });
         var option_list = respect_search_results_order ? [] : this.option_list;
         this.manage_search_button_map = respect_search_results_order ? {} : null;
         if (respect_search_results_order) {
@@ -29138,6 +29138,12 @@ function DashGuiComboSearch () {
                 this.rows.append(this.manage_search_button_map[id].html);
             }
         }
+        this.rows.stop().css({
+            "height": "auto",
+            "overflow": this.max_rows_before_scroll ? (
+                option_list.length <= this.max_rows_before_scroll ? "hidden" : "auto"
+            ) : "hidden"
+        });
         for (i in option_list) {
             option = option_list[i];
             button = respect_search_results_order ? this.manage_search_button_map[option["id"]] : this.row_buttons[i];
@@ -29361,12 +29367,16 @@ function DashGuiComboInterface () {
     this.SetReadOnly = function (read_only=false) {
         this.read_only = read_only;
     };
+    // This is for ludicrously long lists, but really
+    // should display a certain max of rows, or recent
+    // rows, etc - but this is needed for a quick thing,
+    // no time right now to fully work out a better version.
     this.DisableShowRowsOnEmptySearch = function () {
-        // This is for ludicrously long lists, but really
-        // should display a certain max of rows, or recent
-        // rows, etc - but this is needed for a quick thing,
-        // no time right now to fully work out a better version.
         this.show_rows_on_empty_search = false;
+    };
+    // Limit the height and make it scroll inside the container instead of expanding to its contents
+    this.SetMaxRowsBeforeScroll = function (num_rows=0) {
+        this.max_rows_before_scroll = num_rows;
     };
     this.SetHoverHint = function (hint) {
         this.label_container.attr("title", hint);
@@ -29401,10 +29411,14 @@ function DashGuiComboInterface () {
             ...overrides
         };
     };
+    // If the user has entered text in the search bar and has no results,
+    // but hits enter/submits the entry anyway, this combo will be the result
     this.SetDefaultSearchSubmitCombo = function (combo_option) {
-        // If the user has entered text in the search bar and has no results,
-        // but hits enter/submits the entry anyway, this combo will be the result
-        if (!Dash.Validate.Object(combo_option) || !combo_option["id"] || !(combo_option["label_text"] || combo_option["display_name"])) {
+        if (
+               !Dash.Validate.Object(combo_option)
+            || !combo_option["id"]
+            || !(combo_option["label_text"] || combo_option["display_name"])
+        ) {
             Dash.Log.Warn("Invalid combo option, cannot set default search submit combo:", combo_option);
             return;
         }

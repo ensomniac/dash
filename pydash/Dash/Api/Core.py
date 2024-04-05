@@ -622,6 +622,9 @@ class ApiCore:
         if "Missing param 'file'" in error:
             return True
 
+        if "Invalid file extension" in error:
+            return True
+
         if "Unauthorized" in error:
             return True
 
