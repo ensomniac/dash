@@ -36,7 +36,8 @@ function DashGuiLoadingOverlay (
             Dash.Size.RowHeight,
             true,
             0.6,
-            false
+            false,
+            this.color.BackgroundRaised
         );
 
         // Deprecated, just wrappers now - but keeping around to avoid breaking things

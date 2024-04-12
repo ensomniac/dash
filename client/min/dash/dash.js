@@ -23374,7 +23374,7 @@ function DashGuiLogin (on_login_binder=null, on_login_callback=null, color=null,
 /**@member DashGuiPrompt*/
 function DashGuiModal (
     color=null, parent_html=null, width=null, height=null,
-    include_bg=true, bg_opacity=0.6, include_close_button=true, bg_color=null
+    include_bg=true, bg_opacity=0.7, include_close_button=true, bg_color=null
 ) {
     this.parent_html = parent_html;
     this.width = width !== null ? (Math.min(width, (window.innerWidth - (Dash.Size.Padding * 2)))) : null;
@@ -23383,7 +23383,7 @@ function DashGuiModal (
     this.bg_opacity = bg_opacity;
     this.color = color || Dash.Color.Light;
     this.include_close_button = include_close_button;
-    this.bg_color = bg_color || this.color.BackgroundRaised;
+    this.bg_color = bg_color || Dash.Color.GetOpposite(this.color).BackgroundRaised;
     // Not using 'this.html' is unconventional, but it's not appropriate in
     // this context, since the modal consists of two individual elements with
     // 'this.parent_html' essentially being the equivalent of the usual 'this.html'.
@@ -23406,11 +23406,11 @@ function DashGuiModal (
         this.add_close_button();
         this.add_esc_shortcut();
     };
-    this.SetOnCloseCallback = function (binder, callback) {
+    this.SetOnCloseCallback = function (binder=null, callback=null) {
         if (!this.include_close_button) {
             return;
         }
-        this.on_close_callback = callback.bind(binder);
+        this.on_close_callback = callback && binder ? callback.bind(binder) : callback;
         return this;
     };
     this.SetParentHTML = function (parent_html) {
@@ -43304,7 +43304,8 @@ function DashGuiLoadingOverlay (
             Dash.Size.RowHeight,
             true,
             0.6,
-            false
+            false,
+            this.color.BackgroundRaised
         );
         // Deprecated, just wrappers now - but keeping around to avoid breaking things
         this.bubble = this.modal.modal;

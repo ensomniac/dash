@@ -19,7 +19,10 @@ class Utils:
     LayerOrder: list
     PreCompsMin: dict
     SetProperty: callable
+    product_details: dict
     precomps_default: dict
+    get_vdb_color_for_team: callable
+    get_organization_details: callable
 
     def __init__(self):
         pass
@@ -94,11 +97,11 @@ class Utils:
         for layer_id in reversed_order:
             if not last_precomp_tag:
                 last_precomp_tag = (
-                        layers["data"][layer_id]["precomp_tag"]
+                        layers["data"][layer_id].get("precomp_tag")
                         or self.precomps_default[list(self.precomps_default.keys())[0]]["asset_path"]
                 )
 
-            if not layers["data"][layer_id]["precomp_tag"]:
+            if not layers["data"][layer_id].get("precomp_tag"):
                 layers["data"][layer_id]["precomp_tag"] = last_precomp_tag
 
             last_precomp_tag = layers["data"][layer_id]["precomp_tag"]
@@ -186,3 +189,36 @@ class Utils:
             properties[key] = int(properties[key])
 
         return properties
+
+    def get_tint_color_for_image_or_video(self, data, obj_details, save):
+        team_key = ""
+        vdb_color = data.get("vdb_color") or ""
+        vdb_asset_type = data["vdb_asset_type"]
+        vdb_type = self.product_details.get("associated_vdb_type")
+        organization_details = obj_details if vdb_type == "teams" else {}
+
+        if vdb_asset_type.startswith("home_team_") or vdb_asset_type.startswith("away_team_"):
+            team_key = vdb_asset_type.split("_")[0]
+
+        elif vdb_color.startswith("home_team_") or vdb_color.startswith("away_team_"):
+            team_key = vdb_color.split("_")[0]
+
+        if team_key:
+            org_id = obj_details.get(f"{team_key}_team_id")
+
+            if org_id:
+                organization_details = self.get_organization_details(obj_id=org_id)
+                vdb_asset_type = vdb_asset_type.lstrip(f"{team_key}_team_")
+
+        if not organization_details:
+            organization_details = self.get_organization_details(obj_details)
+
+        if (
+            not save
+            and vdb_color
+            and self.Data.get("vdb_preview_obj_id")
+            and organization_details
+        ):
+            data = self.get_vdb_color_for_team(data, "vdb_color", organization_details, "tint_color", team_key)
+
+        return data, organization_details, vdb_asset_type
