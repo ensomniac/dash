@@ -486,7 +486,7 @@ function DashLayoutListRowElements () {
         }
 
         if (options["hover_text"]) {
-            copy_button.button.SetHoverHint(options["hover_text"]);
+            copy_button.SetHoverHint(options["hover_text"]);
         }
 
         copy_button.button.AddHighlight();

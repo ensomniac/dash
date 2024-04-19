@@ -100,8 +100,11 @@ def GetFilePathFromURL(dash_context, server_file_url):
     return GetPathFromURL(dash_context, server_file_url)
 
 
-def GetImageExtensions():
-    from .file import ImageExtensions
+def GetImageExtensions(strict=False):
+    if strict:
+        from .file import ImageExtensionsStrict as ImageExtensions
+    else:
+        from .file import ImageExtensions
 
     return ImageExtensions
 

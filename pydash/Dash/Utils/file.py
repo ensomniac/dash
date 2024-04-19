@@ -18,7 +18,8 @@ VideoExtensions = ["mp4"]
 AudioExtensions = ["mp3", "wav", "ogg"]
 FontExtensions = ["ttf", "otf", "woff", "woff2"]
 DraftingExtensions = ["cad", "pdg", "dxf", "dwg", "job", "3d"]
-ImageExtensions = ["png", "jpg", "jpeg", "gif", "tiff", "tga", "bmp", "heic"]
+ImageExtensionsStrict = ["png", "jpg", "jpeg"]
+ImageExtensions = [*ImageExtensionsStrict, "gif", "tiff", "tga", "bmp", "heic"]
 
 
 # Using an existing path instead of file bytes is a way to spoof a copied file as an upload

@@ -495,11 +495,19 @@ function DashGuiCombo (
 
         if (html_width > this.rows.width()) {
             this.rows.css({
-                "width": html_width + (this.multi_select ? Dash.Size.Padding : 0)
+                "width": html_width + (
+                      this.multi_select ? Dash.Size.Padding
+                    : this.max_rows_before_scroll ? (
+                        // This value may need adjusting per style
+                        this.option_list.length <= this.max_rows_before_scroll ? 0 : (Dash.Size.Padding * 2)
+                    ) : 0
+                )
             });
 
             for (i in this.row_buttons) {
-                this.row_buttons[i].SetWidthToFit(html_width);
+                this.row_buttons[i].SetWidthToFit(
+                    html_width - (this.style === "default_bubbled" ? Dash.Size.Padding * 1.1 : 0)
+                );
             }
         }
     };

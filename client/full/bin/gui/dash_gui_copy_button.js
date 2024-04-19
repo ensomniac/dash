@@ -41,10 +41,20 @@ function DashGuiCopyButton (
         this.button.SetIconColor(color);
 
         this.icon_color = color;
+
+        return this;
+    };
+
+    this.SetHoverHint = function (text) {
+        this.button.SetHoverHint(text);
+
+        return this;
     };
 
     this.AddHighlight = function () {
         this.button.AddHighlight(true);
+
+        return this;
     };
 
     this.add_label = function () {
