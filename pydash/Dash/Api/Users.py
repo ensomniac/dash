@@ -23,6 +23,7 @@ class ApiUsers:
         self._execute_as_module = execute_as_module
         self._asset_path = asset_path
         self._on_init_callback = None
+        self._on_termination_callback = None
 
         # (Intended to be overwritten)
         # Emails that can bypass DashContext's specified 'user_email_domain' and create an account regardless of domain
@@ -33,6 +34,7 @@ class ApiUsers:
         self.Add(self.login,                requires_authentication=False)
         self.Add(self.get_all,              requires_authentication=True)
         self.Add(self.validate,             requires_authentication=False)
+        self.Add(self.terminate,            requires_authentication=True)
         self.Add(self.update_pin,           requires_authentication=True)
         self.Add(self.upload_image,         requires_authentication=True)
         self.Add(self.set_property,         requires_authentication=True)
@@ -43,6 +45,9 @@ class ApiUsers:
         # When passed a callback, this function will be called whenever portal
         # init data is passed back, so that custom data can be included in the response.
         self._on_init_callback = callback
+
+    def OnTermination(self, callback):
+        self._on_termination_callback = callback
 
     def r(self):
         from Dash.Users import ResetResponse
@@ -107,6 +112,40 @@ class ApiUsers:
             request_params=self.Params,
             dash_context=self.DashContext
         )))
+
+    def terminate(self):
+        self.ValidateParams(["email_to_term"])
+
+        from datetime import datetime
+        from Dash.Users import Get as GetUser
+        from Dash.LocalStorage import SetProperties
+
+        user_data = GetUser(
+            user_email_to_get=self.Params["email_to_term"],
+            dash_context=self.DashContext,
+            request_params=self.Params
+        )
+
+        properties = {
+            "terminated": True,
+            "terminated_on": datetime.now().isoformat(),
+            "terminated_by": self.User["email"] if self.User and self.User.get("email") else ""
+        }
+
+        if not user_data["last_name"].endswith("(Terminated)"):
+            # Do this here so we don't have to keep track of this on any given view of the front end.
+            # It doesn't hurt to do it here, since we won't be renaming them moving forward.
+            properties["last_name"] = f"{user_data['last_name']} (Terminated)"
+
+        if self._on_termination_callback:
+            self._on_termination_callback(user_data)
+
+        return self.SetResponse(SetProperties(
+            dash_context=self.DashContext,
+            store_path="users",
+            obj_id=self.Params["email_to_term"],
+            properties=properties
+        ))
 
     def update_pin(self):
         self.ValidateParams(["email", "pin"])

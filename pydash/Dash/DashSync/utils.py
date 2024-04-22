@@ -230,12 +230,17 @@ class _SyncUtils:
         # client packages on this user's machine
 
         distribution_packages = []
+
         for package in packages:
             usr_path_git = package.get("usr_path_git")
+
             if not usr_path_git:
                 continue
 
-            client_root = os.path.join(usr_path_git, "client/")
+            if package["asset_path"] == "fantom":  # Special case
+                client_root = os.path.join(usr_path_git, "factory", "client/")
+            else:
+                client_root = os.path.join(usr_path_git, "client/")
 
             if not os.path.exists(client_root):
                 print("\tWarning: Client path doesn't exist! Expected: " + client_root)

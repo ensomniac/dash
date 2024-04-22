@@ -180,7 +180,11 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
         // This isn't technically correct, but it's working - moving on
         var height = this.img_box_size + Dash.Size.Padding;
 
-        if (this.view_mode === "preview" && this.options["property_box"] && this.options["property_box"]["properties"]) {
+        if (
+               this.view_mode === "preview"
+            && this.options["property_box"]
+            && Dash.Validate.Object(this.options["property_box"]["properties"])
+        ) {
             height += (
                   Dash.Size.RowHeight
                 * (this.options["property_box"]["properties"].length - (this.has_privileges ? 2 : 4))
