@@ -42980,6 +42980,13 @@ function DashGuiInputRowInterface () {
             "user-select": "auto"
         });
     };
+    this.DisableHighlight = function () {
+        this.html.off("mouseenter");
+        this.html.off("mouseleave");
+        this.highlight.remove();
+        this.highlight = null;
+        return this;
+    };
     this.SetInputValidity = function (input_is_valid) {
         // Dash.Log.Log("input_is_valid: " + input_is_valid, "\n", this.color);
         if (input_is_valid) {
@@ -43122,6 +43129,7 @@ function DashGuiInputRowInterface () {
         }
         this.button.html.remove();
         this.button = null;
+        return this;
     };
     this.IsLoading = function () {
         if (this.button) {
