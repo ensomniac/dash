@@ -19925,7 +19925,7 @@ class DashGuiAddress extends DashGuiInputType {
             return;
         }
         // The API key won't be authorized for this scope, so it'll fail to initialize
-        if (Dash.LocalDev) {
+        if (Dash.LocalDev && !["stetandrew@gmail.com", "ryan@ensomniac.com"].includes(Dash.User.Init["email"])) {
             return;
         }
         try {
@@ -19934,7 +19934,7 @@ class DashGuiAddress extends DashGuiInputType {
         catch {
             console.warn(
                 "Warn (google.maps.places.Autocomplete):\nDashGuiAddress cannot initialize because the required " +
-                "script was not added to index.html, please reference the docstring to make the required change."
+                "script was not added to index.html, please reference the docstring and make the required change."
             );
             return;
         }
@@ -19942,6 +19942,20 @@ class DashGuiAddress extends DashGuiInputType {
             this.parse_value();
             this._on_submit(true);
         });
+
+        setTimeout(
+            () => {
+                // .pac-container is the CSS class for the above autocomplete element
+                // (there's no other way I found to edit the element directly)
+                $(".pac-container").css({
+                    // DashGuiModal, which used to be the highest in the stack,
+                    // starts at half this value, so this should be more than
+                    // high enough to ensure it's always on the very top
+                    "z-index": 2000000
+                });
+            },
+            500  // Ensure it's been added to the DOM first
+        );
     }
     add_map_link_button () {
         if (!this.google_places_autocomplete) {
