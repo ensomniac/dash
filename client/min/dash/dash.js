@@ -28468,6 +28468,7 @@ function DashGuiCombo (
     };
     // Called when a selection in the combo is made
     this.on_selection = function (selected_option, ignore_callback=false, search_text=null) {
+        Dash.Temp.SetLastComboChanged(this);
         if (this.multi_select) {
             this.update_label_for_multi_select();
         }
@@ -28475,7 +28476,6 @@ function DashGuiCombo (
             this._on_selection(selected_option, ignore_callback, search_text);
         }
         this.initialized = true;
-        Dash.Temp.SetLastComboChanged(this);
     };
     this._on_selection = function (selected_option, ignore_callback=false, search_text=null) {
         var label_text = this.static_label_text || selected_option["label_text"] || selected_option["display_name"];
@@ -28701,10 +28701,10 @@ function DashGuiCombo (
             $(window).off("keydown." + this.random_id);
         }
         if (this.initialized && this.multi_select && this.callback) {
+            Dash.Temp.SetLastComboChanged(this);
             var selections = this.GetMultiSelections();
             this.update_label_for_multi_select();
             this.callback(selections, this.additional_data);
-            Dash.Temp.SetLastComboChanged(this);
         }
         this.hide_highlight();
         if (this.on_collapse_cb) {

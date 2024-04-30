@@ -389,6 +389,8 @@ function DashGuiCombo (
 
     // Called when a selection in the combo is made
     this.on_selection = function (selected_option, ignore_callback=false, search_text=null) {
+        Dash.Temp.SetLastComboChanged(this);
+
         if (this.multi_select) {
             this.update_label_for_multi_select();
         }
@@ -398,8 +400,6 @@ function DashGuiCombo (
         }
 
         this.initialized = true;
-
-        Dash.Temp.SetLastComboChanged(this);
     };
 
     this._on_selection = function (selected_option, ignore_callback=false, search_text=null) {
@@ -693,13 +693,13 @@ function DashGuiCombo (
         }
 
         if (this.initialized && this.multi_select && this.callback) {
+            Dash.Temp.SetLastComboChanged(this);
+
             var selections = this.GetMultiSelections();
 
             this.update_label_for_multi_select();
 
             this.callback(selections, this.additional_data);
-
-            Dash.Temp.SetLastComboChanged(this);
         }
 
         this.hide_highlight();
