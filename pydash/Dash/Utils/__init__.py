@@ -314,6 +314,88 @@ def SendDebugEmail(msg, recipient="stetandrew@gmail.com"):
     )
 
 
+# ----------------------------------------------- WORKSHEET -------------------------------------------------
+
+
+# Use this if multiple operations will be done, otherwise, the singular functions below will do
+def GetWorksheetUtils(worksheet):
+    from .worksheet import WorksheetUtils
+
+    return WorksheetUtils(worksheet)
+
+
+def AutoSizeColumnsByContent(worksheet, pad=2):
+    return GetWorksheetUtils(worksheet).AutoSizeColumnsByContent(pad)
+
+
+def StyleHeaderRow(worksheet, bg_color="dcdfe3", font=None, border=None, fill=None):
+    return GetWorksheetUtils(worksheet).StyleHeaderRow(bg_color, font, border, fill)
+
+
+def StyleFooterRow(worksheet, bg_color="dcdfe3", font=None, border=None, fill=None):
+    return GetWorksheetUtils(worksheet).StyleFooterRow(bg_color, font, border, fill)
+
+
+def StyleRow(worksheet, row_num, font=None, border=None, fill=None, bg_color="", font_type=""):
+    return GetWorksheetUtils(worksheet).StyleRow(row_num, font, border, fill, bg_color, font_type)
+
+
+def SetCellValueByColumnIndex(worksheet, row_num, column_index, value=""):
+    return GetWorksheetUtils(worksheet).SetCellValueByColumnIndex(row_num, column_index, value)
+
+
+def CenterTextVerticallyInAllCells(worksheet, min_height=30, min_height_mults={}):
+    return GetWorksheetUtils(worksheet).CenterTextVerticallyInAllCells(min_height, min_height_mults)
+
+
+# -------------------------------------------------- CRON ---------------------------------------------------
+
+
+# Intended to be used as a base for any cron scripts' classes
+class Cron:
+    def __init__(self, dash_context_asset_path):
+        from Dash import AdminEmails
+
+        self.DashContext = Memory.SetContext(dash_context_asset_path)
+
+        Memory.SetUser(AdminEmails[0])
+
+        try:
+            sys.path.append(os.path.join(self.DashContext["srv_path_git_oapi"], "server", "cgi-bin"))
+        except:
+            raise EnvironmentError("Error: This needs to be run on the server.")
+
+    def Run(self):
+        try:
+            self.run()
+
+        except (SystemExit, KeyboardInterrupt):
+            pass
+
+        except:
+            from traceback import format_exc
+
+            self.send_error_email("Failed to run", format_exc())
+
+    # Intended to be overwritten
+    def run(self):
+        pass
+
+    def send_error_email(self, msg, error=None, notify_email_list=[], strict_notify=False):
+        if error:
+            print(error)
+
+        SendEmail(
+            subject=f"{self.__class__.__name__} CRON",
+            msg=msg,
+            error=error,
+            notify_email_list=notify_email_list,
+            strict_notify=strict_notify,
+            sender_email=self.DashContext.get("admin_from_email"),
+            sender_name=(self.DashContext.get("code_copyright_text") or self.DashContext.get("display_name"))
+        )
+
+
 # ------------------------------------------------- MEMORY --------------------------------------------------
 
 
