@@ -357,8 +357,7 @@ class Cron:
         from Dash import AdminEmails
 
         self.DashContext = Memory.SetContext(dash_context_asset_path)
-
-        Memory.SetUser(AdminEmails[0])
+        self.User = Memory.SetUser(AdminEmails[0])
 
         try:
             sys.path.append(os.path.join(self.DashContext["srv_path_git_oapi"], "server", "cgi-bin"))
@@ -373,23 +372,43 @@ class Cron:
             pass
 
         except:
-            from traceback import format_exc
-
-            self.send_error_email("Failed to run", format_exc())
+            self.send_fail_email()
+            self.on_run_fail()
 
     # Intended to be overwritten
     def run(self):
         pass
 
-    def send_error_email(self, msg, error=None, notify_email_list=[], strict_notify=False):
+    # Intended to be overwritten
+    def get_error_detail(self):
+        return ""
+
+    # Intended to be overwritten
+    def on_run_fail(self):
+        pass
+
+    # Wrapper - when sending an error email manually, use send_error_email
+    def send_fail_email(self):
+        from traceback import format_exc
+
+        self.send_error_email(
+            f"Failed to run{self.get_error_detail()}",
+            format_exc()
+        )
+
+    # Name is misleading, as it can also be used to send non-error emails, that's just uncommon in most crons
+    def send_error_email(
+        self, msg, error=None, notify_email_list=[], strict_notify=False, subject="", bcc_email_list=[]
+    ):
         if error:
             print(error)
 
         SendEmail(
-            subject=f"{self.__class__.__name__} CRON",
+            subject=subject or f"{self.__class__.__name__} CRON",
             msg=msg,
             error=error,
             notify_email_list=notify_email_list,
+            bcc_email_list=bcc_email_list,
             strict_notify=strict_notify,
             sender_email=self.DashContext.get("admin_from_email"),
             sender_name=(self.DashContext.get("code_copyright_text") or self.DashContext.get("display_name"))
