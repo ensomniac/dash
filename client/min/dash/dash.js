@@ -17501,20 +17501,13 @@ function Dash () {
     this.Local = new DashLocal(this.Context);
     this.DarkModeActive = ["true", true].includes(this.Local.Get("dark_mode_active"));
     this.Color = new DashColor(this.DarkModeActive);
-    if (this.DarkModeActive) {
-        Dash.Log.Warn(
-            "*** Dark mode active ***\n\n" +
-            "Be sure that to call Dash.Color.SwapIfDarkModeActive() " +
-            "after custom colors are set in color spec file."
-        );
-    }
     this.Animation = new DashAnimation();
     this.DateTime  = new DashDateTime();
     this.File      = new DashFile();
     this.Gui       = new DashGui();
     this.History   = new DashHistory();
     this.Layout    = new DashLayout();
-    this.Log       = new DashLog();
+    this.Log       = new DashLog(this);
     this.Math      = new DashMath();
     this.RegEx     = new DashRegEx();
     this.Requests  = new DashRequest();
@@ -17876,6 +17869,13 @@ $(document).on("ready", function () {
     window.d = window.Dash;  // TODO: deprecate this
     window.Dash.Initialize();
     $("body").empty().append(window.Dash.html);
+    if (Dash.DarkModeActive) {
+        Dash.Log.Warn(
+            "*** Dark mode active ***\n\n" +
+            "Be sure that to call Dash.Color.SwapIfDarkModeActive() " +
+            "after custom colors are set in color spec file."
+        );
+    }
     if (!window.RunDash) {
         console.error("Dash is initialized, but there is no window.RunDash() function. Create one and reload.");
     }
