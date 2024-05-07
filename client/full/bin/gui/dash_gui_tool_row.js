@@ -31,6 +31,14 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
         this.html = this.toolbar.html;
     };
 
+    this.RefreshConnections = function () {
+        for (var element of this.elements) {
+            if (element.hasOwnProperty("RefreshConnections")) {
+                element.RefreshConnections();
+            }
+        }
+    };
+
     this.InputInFocus = function () {
         for (var element of this.elements) {
             if ((element instanceof DashGuiInput || element instanceof DashGuiInputRow) && element.InFocus()) {
