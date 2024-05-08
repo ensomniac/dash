@@ -67,12 +67,12 @@ class WorksheetUtils:
     def StyleHeaderRow(self, bg_color="dcdfe3", font=None, border=None, fill=None):
         font, border, fill = self.assert_header_footer_params(bg_color, font, border, fill, header=True)
 
-        self.StyleRow(self.worksheet, 1, font, border, fill)
+        self.StyleRow(1, font, border, fill)
 
     def StyleFooterRow(self, bg_color="dcdfe3", font=None, border=None, fill=None):
         font, border, fill = self.assert_header_footer_params(bg_color, font, border, fill)
 
-        self.StyleRow(self.worksheet, self.worksheet.max_row, font, border, fill)
+        self.StyleRow(self.worksheet.max_row, font, border, fill)
 
     def StyleRow(self, row_num, font=None, border=None, fill=None, bg_color="", font_type=""):
         if not fill and bg_color:
@@ -124,17 +124,17 @@ class WorksheetUtils:
 
         return self.sides[style]
 
-    def get_border(self, left="", right="", top="", bottom=""):
+    def get_border(self, left=None, right=None, top=None, bottom=None):
         key = f"{left}{right}{top}{bottom}"
 
         if not self.borders.get(key):
             from openpyxl.styles import Border
 
             self.borders[key] = Border(
-                left=self.get_side(left),
-                right=self.get_side(right),
-                top=self.get_side(top),
-                bottom=self.get_side(bottom)
+                left=self.get_side(left) if left else None,
+                right=self.get_side(right) if right else None,
+                top=self.get_side(top) if top else None,
+                bottom=self.get_side(bottom) if bottom else None
             )
 
         return self.borders[key]
