@@ -41918,6 +41918,8 @@ function DashGuiIcons (icon) {
         "history":                 new DashGuiIconDefinition(this.icon, "History", this.weight["regular"], "history"),
         "hockey_puck":             new DashGuiIconDefinition(this.icon, "Hockey Puck", this.weight["regular"], "hockey-puck"),
         "hr":                      new DashGuiIconDefinition(this.icon, "Human Resources", this.weight["light"], "poll-people"),
+        "hyphen":                  new DashGuiIconDefinition(this.icon, "Hyphen", this.weight["regular"], "horizontal-rule"),
+        "hyphen_solid":            new DashGuiIconDefinition(this.icon, "Hyphen (Solid)", this.weight["solid"], "horizontal-rule"),
         "id_card":                 new DashGuiIconDefinition(this.icon, "ID Card", this.weight["regular"], "address-card"),
         "image":                   new DashGuiIconDefinition(this.icon, "Image", this.weight["regular"], "image"),
         "images":                  new DashGuiIconDefinition(this.icon, "Images", this.weight["regular"], "images"),
@@ -47463,14 +47465,20 @@ function DashLayoutListColumnConfig () {
             "on_click_callback": options && options["on_click_callback"] ? options["on_click_callback"] : null
         });
     };
-    this.AddSpacer = function (header_only=false, footer_only=false) {
+    this.AddSpacer = function (
+        header_only=false, footer_only=false, rows_only=false, css={}, header_css={}, footer_css={}
+    ) {
         if (this.columns.length && this.columns.Last()["type"] === "spacer") {
             return;
         }
         this.columns.push({
             "type": "spacer",
             "header_only": header_only,
-            "footer_only": footer_only
+            "footer_only": footer_only,
+            "rows_only": rows_only,
+            "css": css,
+            "header_css": header_css,
+            "footer_css": footer_css
         });
     };
     this.AddDivider = function (
@@ -47936,7 +47944,10 @@ function DashLayoutListRowElements () {
         if (column_config_data["footer_only"] && !this.is_footer) {
             return;
         }
-        var spacer = this.get_spacer();
+        if (column_config_data["rows_only"] && (this.is_footer || this.is_header)) {
+            return;
+        }
+        var spacer = this.get_spacer(column_config_data);
         this.column_box.append(spacer);
         this.columns["spacers"].push({
             "obj": spacer,
@@ -47995,13 +48006,32 @@ function DashLayoutListRowElements () {
             "column_config_data": column_config_data
         });
     };
-    this.get_spacer = function () {
+    this.get_spacer = function (column_config_data) {
         var spacer = $("<div></div>");
-        spacer.css({
+        var css = {
             "height": this.height,
             "flex-grow": 2,
             "flex-shrink": 2
-        });
+        };
+        if (column_config_data["css"]) {
+            css = {
+                ...css,
+                ...column_config_data["css"]
+            };
+        }
+        if (this.is_header && column_config_data["header_css"]) {
+            css = {
+                ...css,
+                ...column_config_data["header_css"]
+            };
+        }
+        if (this.is_footer && column_config_data["footer_css"]) {
+            css = {
+                ...css,
+                ...column_config_data["footer_css"]
+            };
+        }
+        spacer.css(css);
         return spacer;
     };
     this.get_divider = function (column_config_data) {

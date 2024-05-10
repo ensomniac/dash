@@ -17,7 +17,9 @@ function DashLayoutListColumnConfig () {
         });
     };
 
-    this.AddSpacer = function (header_only=false, footer_only=false) {
+    this.AddSpacer = function (
+        header_only=false, footer_only=false, rows_only=false, css={}, header_css={}, footer_css={}
+    ) {
         if (this.columns.length && this.columns.Last()["type"] === "spacer") {
             return;
         }
@@ -25,7 +27,11 @@ function DashLayoutListColumnConfig () {
         this.columns.push({
             "type": "spacer",
             "header_only": header_only,
-            "footer_only": footer_only
+            "footer_only": footer_only,
+            "rows_only": rows_only,
+            "css": css,
+            "header_css": header_css,
+            "footer_css": footer_css
         });
     };
 

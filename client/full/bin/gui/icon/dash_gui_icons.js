@@ -194,6 +194,8 @@ function DashGuiIcons (icon) {
         "history":                 new DashGuiIconDefinition(this.icon, "History", this.weight["regular"], "history"),
         "hockey_puck":             new DashGuiIconDefinition(this.icon, "Hockey Puck", this.weight["regular"], "hockey-puck"),
         "hr":                      new DashGuiIconDefinition(this.icon, "Human Resources", this.weight["light"], "poll-people"),
+        "hyphen":                  new DashGuiIconDefinition(this.icon, "Hyphen", this.weight["regular"], "horizontal-rule"),
+        "hyphen_solid":            new DashGuiIconDefinition(this.icon, "Hyphen (Solid)", this.weight["solid"], "horizontal-rule"),
         "id_card":                 new DashGuiIconDefinition(this.icon, "ID Card", this.weight["regular"], "address-card"),
         "image":                   new DashGuiIconDefinition(this.icon, "Image", this.weight["regular"], "image"),
         "images":                  new DashGuiIconDefinition(this.icon, "Images", this.weight["regular"], "images"),

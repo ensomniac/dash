@@ -23,7 +23,11 @@ function DashLayoutListRowElements () {
             return;
         }
 
-        var spacer = this.get_spacer();
+        if (column_config_data["rows_only"] && (this.is_footer || this.is_header)) {
+            return;
+        }
+
+        var spacer = this.get_spacer(column_config_data);
 
         this.column_box.append(spacer);
 
@@ -105,14 +109,37 @@ function DashLayoutListRowElements () {
         });
     };
 
-    this.get_spacer = function () {
+    this.get_spacer = function (column_config_data) {
         var spacer = $("<div></div>");
 
-        spacer.css({
+        var css = {
             "height": this.height,
             "flex-grow": 2,
             "flex-shrink": 2
-        });
+        };
+
+        if (column_config_data["css"]) {
+            css = {
+                ...css,
+                ...column_config_data["css"]
+            };
+        }
+
+        if (this.is_header && column_config_data["header_css"]) {
+            css = {
+                ...css,
+                ...column_config_data["header_css"]
+            };
+        }
+
+        if (this.is_footer && column_config_data["footer_css"]) {
+            css = {
+                ...css,
+                ...column_config_data["footer_css"]
+            };
+        }
+
+        spacer.css(css);
 
         return spacer;
     };
