@@ -16,7 +16,7 @@ class WorksheetUtils:
         self.sides = {}
         self.borders = {}
 
-    def AutoSizeColumnsByContent(self, pad=2):
+    def AutoSizeColumnsByContent(self, pad=0):
         from openpyxl.utils import get_column_letter
 
         # Auto-size columns based on content
@@ -26,8 +26,7 @@ class WorksheetUtils:
 
             for cell in column:
                 try:
-                    length = len(str(cell.value))
-                    max_length = max(length, max_length)
+                    max_length = max(max_length, *map(len, str(cell.value).split("\n")))
                 except:
                     pass
 
@@ -64,24 +63,27 @@ class WorksheetUtils:
 
             break
 
-    def StyleHeaderRow(self, bg_color="dcdfe3", font=None, border=None, fill=None):
-        font, border, fill = self.assert_header_footer_params(bg_color, font, border, fill, header=True)
+    def StyleHeaderRow(self, bg_color="dcdfe3", font=None, border=None, fill=None, font_color=""):
+        font, border, fill = self.assert_header_footer_params(bg_color, font, border, fill, font_color, header=True)
 
         self.StyleRow(1, font, border, fill)
 
-    def StyleFooterRow(self, bg_color="dcdfe3", font=None, border=None, fill=None):
-        font, border, fill = self.assert_header_footer_params(bg_color, font, border, fill)
+    def StyleFooterRow(self, bg_color="dcdfe3", font=None, border=None, fill=None, font_color=""):
+        font, border, fill = self.assert_header_footer_params(bg_color, font, border, fill, font_color)
 
         self.StyleRow(self.worksheet.max_row, font, border, fill)
 
-    def StyleRow(self, row_num, font=None, border=None, fill=None, bg_color="", font_type=""):
+    def StyleRow(
+        self, row_num, font=None, border=None, fill=None,
+        bg_color="", font_type="", font_color="", include_border=True
+    ):
         if not fill and bg_color:
             fill = self.get_fill(bg_color)
 
-        if not font and font_type:
-            font = self.get_font(font_type)
+        if not font and (font_type or font_color):
+            font = self.get_font(font_type, font_color)
 
-        if not border:
+        if not border and include_border:
             border = self.get_border("thin", "thin", "thin", "thin")
 
         for cell in self.worksheet[row_num]:
@@ -94,13 +96,61 @@ class WorksheetUtils:
             if border:
                 cell.border = border
 
-    def get_font(self, font_type):
-        if not self.fonts.get(font_type):
+    def StyleColumn(
+        self, col_letter_or_num, font=None, border=None, fill=None,
+        bg_color="", font_type="", font_color="", include_border=True
+    ):
+        if type(col_letter_or_num) is int:
+            from openpyxl.utils import get_column_letter
+
+            col_letter_or_num = get_column_letter(col_letter_or_num)
+
+        if type(col_letter_or_num) is not str:
+            raise ValueError(f"'col_letter_or_num' must be a letter or a number: {col_letter_or_num}")
+
+        from openpyxl.utils import column_index_from_string
+
+        col_index = column_index_from_string(col_letter_or_num.upper())
+
+        # Retrieve styles if not provided
+        if not fill and bg_color:
+            fill = self.get_fill(bg_color)
+
+        if not font and (font_type or font_color):
+            font = self.get_font(font_type, font_color)
+
+        if not border and include_border:
+            border = self.get_border("thin", "thin", "thin", "thin")
+
+        # Apply styles to each cell in the specified column
+        for row in self.worksheet.iter_rows(min_col=col_index, max_col=col_index):
+            for cell in row:
+                if font:
+                    cell.font = font
+
+                if fill:
+                    cell.fill = fill
+
+                if border:
+                    cell.border = border
+
+    def get_font(self, font_type="", font_color=""):
+        key = f"{font_type}{font_color}"
+
+        if not self.fonts.get(key):
             from openpyxl.styles import Font
 
-            self.fonts[font_type] = Font(**{font_type: True})
+            kwargs = {}
 
-        return self.fonts[font_type]
+            if font_color:
+                kwargs["color"] = font_color
+
+            if font_type:
+                kwargs[font_type] = True
+
+            self.fonts[key] = Font(**kwargs)
+
+        return self.fonts[key]
 
     def get_fill(self, start_color, end_color="", fill_type="solid"):
         key = f"{start_color}{end_color}{fill_type}"
@@ -139,12 +189,12 @@ class WorksheetUtils:
 
         return self.borders[key]
 
-    def assert_header_footer_params(self, bg_color="dcdfe3", font=None, border=None, fill=None, header=False):
+    def assert_header_footer_params(self, bg_color="dcdfe3", font=None, border=None, fill=None, font_color="", header=False):
         if not fill:
             fill = self.get_fill(bg_color)
 
         if not font:
-            font = self.get_font("bold")
+            font = self.get_font("bold", font_color)
 
         if not border:
             border = self.get_border(**{"bottom" if header else "top": "thin"})

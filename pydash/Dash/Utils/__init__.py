@@ -324,20 +324,34 @@ def GetWorksheetUtils(worksheet):
     return WorksheetUtils(worksheet)
 
 
-def AutoSizeColumnsByContent(worksheet, pad=2):
+def AutoSizeColumnsByContent(worksheet, pad=0):
     return GetWorksheetUtils(worksheet).AutoSizeColumnsByContent(pad)
 
 
-def StyleHeaderRow(worksheet, bg_color="dcdfe3", font=None, border=None, fill=None):
-    return GetWorksheetUtils(worksheet).StyleHeaderRow(bg_color, font, border, fill)
+def StyleHeaderRow(worksheet, bg_color="dcdfe3", font=None, border=None, fill=None, font_color=""):
+    return GetWorksheetUtils(worksheet).StyleHeaderRow(bg_color, font, border, fill, font_color)
 
 
-def StyleFooterRow(worksheet, bg_color="dcdfe3", font=None, border=None, fill=None):
-    return GetWorksheetUtils(worksheet).StyleFooterRow(bg_color, font, border, fill)
+def StyleFooterRow(worksheet, bg_color="dcdfe3", font=None, border=None, fill=None, font_color=""):
+    return GetWorksheetUtils(worksheet).StyleFooterRow(bg_color, font, border, fill, font_color)
 
 
-def StyleRow(worksheet, row_num, font=None, border=None, fill=None, bg_color="", font_type=""):
-    return GetWorksheetUtils(worksheet).StyleRow(row_num, font, border, fill, bg_color, font_type)
+def StyleRow(
+    worksheet, row_num, font=None, border=None, fill=None,
+    bg_color="", font_type="", font_color="", include_border=True
+):
+    return GetWorksheetUtils(worksheet).StyleRow(
+        row_num, font, border, fill, bg_color, font_type, font_color, include_border
+    )
+
+
+def StyleColumn(
+    worksheet, col_letter_or_num, font=None, border=None, fill=None,
+    bg_color="", font_type="", font_color="", include_border=True
+):
+    return GetWorksheetUtils(worksheet).StyleColumn(
+        col_letter_or_num, font, border, fill, bg_color, font_type, font_color, include_border
+    )
 
 
 def SetCellValueByColumnIndex(worksheet, row_num, column_index, value=""):

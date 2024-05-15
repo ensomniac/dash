@@ -400,6 +400,9 @@ def Abbreviate(string, length=3, excluded_abbreviations=[], _retry=0):
 
 
 def change_dt_tz(dt_obj, tz):
+    if str(dt_obj.time()) == "00:00:00":
+        return dt_obj
+
     from pytz import timezone as pytz_timezone
 
     if not dt_obj.tzinfo:

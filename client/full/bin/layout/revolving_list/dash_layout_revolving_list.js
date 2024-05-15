@@ -123,7 +123,7 @@ function DashLayoutRevolvingList (
         this.non_expanding_click_cb = binder ? callback.bind(binder) : callback;
     };
 
-    this.SetColumnConfig = function (column_config, row_ids_to_include=[]) {
+    this.SetColumnConfig = function (column_config, row_ids_to_include=null) {
         if (!(column_config instanceof DashLayoutListColumnConfig)) {
             console.error("Error: New 'column_config' is not of the correct class, DashLayoutListColumnConfig!");
 
@@ -133,7 +133,7 @@ function DashLayoutRevolvingList (
         this.last_column_config = this.column_config;
         this.column_config = column_config;
 
-        if (Dash.Validate.Object(row_ids_to_include)) {
+        if (Array.isArray(row_ids_to_include)) {
             this.Draw(row_ids_to_include);
         }
     };
