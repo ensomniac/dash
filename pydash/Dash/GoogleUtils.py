@@ -110,9 +110,14 @@ class GUtils:
         return self._auth_utils.OAuth2Creds
 
     @property
+    def BearerToken(self):
+        return self._auth_utils.BearerToken
+
+    @property
     def PDFMimeType(self):
         return "application/pdf"
 
+    # If downloading a sheet as a PDF and landscape is needed, use DownloadSheetAsPDF with landscape set to True
     def DownloadAsPDF(self, file_id, pdf_path, parent_id=""):
         return self.download_as(
             file_id=file_id,
@@ -219,6 +224,10 @@ class GUtils:
 
     def DownloadSheetAsXLSX(self, sheet_id, xlsx_path, parent_id=""):
         return self._sheets_utils.DownloadAsXLSX(sheet_id, xlsx_path, parent_id)
+
+    # Wrapper to support landscape workaround
+    def DownloadSheetAsPDF(self, file_id, pdf_path, parent_id="", landscape=False):
+        self._sheets_utils.DownloadAsPDF(file_id, pdf_path, parent_id, landscape)
 
     # ========================= DRIVE =========================
 
@@ -746,6 +755,47 @@ class _SheetsUtils:
             parent_id=parent_id
         )
 
+    def DownloadAsPDF(self, file_id, pdf_path, parent_id="", landscape=False):
+        if not landscape:
+            return self.gutils.DownloadAsPDF(file_id, pdf_path, parent_id)
+
+        # As of writing, the Google API does not have support for any download parameters specific
+        # to each document type. For example, when downloading a sheet from the Google Sheets interface,
+        # there are a lot of options presented that are specific to that download, but those options
+        # are not supported in the API. The workaround is to call the request URL directly, instead
+        # of using the API, which is what we have to do to export a sheet as a landscape PDF.
+
+        from requests import get as requests_get
+
+        params = "&".join([
+            f"{k}={v}" for k, v in {
+                "format": "pdf",
+                "portrait": False,
+                "size": "letter",  # This is likely the default, but there's no documentation to confirm
+
+                # Might want to use these at some point
+                # "fitw": True,  # Fit to width
+                # "sheetnames": False,  # Include sheet names
+                # "printtitle": False,  # Include title
+                # "pagenumbers": False,  # Include page numbers
+                # "gridlines": False,  # Show gridlines
+                # "fzr": False  # Repeat frozen rows on each page
+            }.items()
+        ])
+
+        response = requests_get(
+            f"https://docs.google.com/spreadsheets/d/{file_id}/export?{params}",
+            headers={
+                "Authorization": f"Bearer {self.gutils.BearerToken}"
+            }
+        )
+
+        if response.status_code != 200:
+            raise Exception(f"Failed to download spreadsheet as landscape PDF:\n{response.text}")
+
+        with open(pdf_path, "wb") as f:
+            f.write(response.content)
+
 
 class _SlidesUtils:
     _client: callable
@@ -796,12 +846,28 @@ class _AuthUtils:
 
     @property
     def OAuth2Creds(self):
+        """
+        This is used for API instance authentication.
+        """
+
         if not hasattr(self, "_oauth2_creds"):
             from httplib2 import Http
 
             self._oauth2_creds = self.credentials.authorize(Http())
 
         return self._oauth2_creds
+
+    @property
+    def BearerToken(self):
+        """
+        | This is used for standard request authentication, ex:
+        | requests.get(url, headers={"Authorization": f"Bearer {self.BearerToken}"})
+        """
+
+        if self.credentials.access_token_expired:
+            self.credentials.refresh(self.OAuth2Creds)
+
+        return self.credentials.access_token
 
     @property
     def credentials(self):
