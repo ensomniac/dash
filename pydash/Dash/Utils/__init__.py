@@ -440,28 +440,12 @@ class _Memory:
         pass
 
     @property
-    def global_memory(self):
-        if not hasattr(self, "_global_memory"):
-            from Dash import __name__ as DashName
-
-            self._global_memory = sys.modules[DashName]
-
-        return self._global_memory
+    def User(self):  # Wrapper
+        return self.Global.RequestUser
 
     @property
-    def Global(self):
-        # This function is meant to return meaningful shared data in the context of a single request
-
-        if not hasattr(self.global_memory, "RequestData"):
-            self.global_memory.RequestData = {}
-
-        if not hasattr(self.global_memory, "RequestUser"):
-            self.global_memory.RequestUser = None
-
-        if not hasattr(self.global_memory, "Context"):
-            self.global_memory.Context = None
-
-        return self.global_memory
+    def DashContext(self):  # Wrapper
+        return self.Global.Context
 
     @property
     def UserToken(self):
@@ -478,6 +462,28 @@ class _Memory:
                 return None
 
         return self._usr_token
+
+    @property
+    def Global(self):
+        if not hasattr(self.global_memory, "RequestData"):
+            self.global_memory.RequestData = {}
+
+        if not hasattr(self.global_memory, "RequestUser"):
+            self.global_memory.RequestUser = None
+
+        if not hasattr(self.global_memory, "Context"):
+            self.global_memory.Context = None
+
+        return self.global_memory
+
+    @property
+    def global_memory(self):
+        if not hasattr(self, "_global_memory"):
+            from Dash import __name__ as DashName
+
+            self._global_memory = sys.modules[DashName]
+
+        return self._global_memory
 
     def SetUser(self, email):
         from Dash.Users import Get as GetUser
