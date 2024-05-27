@@ -60,16 +60,21 @@ class Flags:
     def add_flags_by_keyword(self, index, line, formatted_line, comment, keyword):
         if keyword in line and comment not in line:
             line = f"{formatted_line} {comment}"
+
             self.source_code[index] = line
 
         return line
 
     def add_path_flags(self, index, line, formatted_line):
-        if (line.count("'") >= 2 or line.count('"') >= 2) and line.count("/") >= 2 \
-                and ".join" not in line and self.path_comment not in line \
-                and (os.path.isabs(line.strip()) or os.path.exists(line.strip())):
-
+        if (
+            (line.count("'") >= 2 or line.count('"') >= 2)
+            and line.count("/") >= 2
+            and ".join" not in line
+            and self.path_comment not in line
+            and (os.path.isabs(line.strip()) or os.path.exists(line.strip()))
+        ):
             line = f"{formatted_line} {self.path_comment}"
+
             self.source_code[index] = line
 
         return line
@@ -85,6 +90,7 @@ class Flags:
                     comment += f" {self.line_length_flag_suffix}"
 
             line = f"{formatted_line} {comment}"
+
             self.source_code[index] = line
 
         return line
@@ -103,19 +109,28 @@ class Flags:
 
         try:
             line = self.source_code[index]
+
             total_line_length_comment_base = self.total_line_length_comment.split(
-                                             str(self.total_line_length_max))[0].strip()
+                str(self.total_line_length_max)
+            )[0].strip()
 
             if total_line_length_comment_base in line:
-                existing_line_total_max = line.split(total_line_length_comment_base)[1]\
-                                              .strip().split(" ")[0].strip()
+                existing_line_total_max = line.split(
+                    total_line_length_comment_base
+                )[1].strip().split(" ")[0].strip()
 
-                if not existing_line_total_max.startswith(str(self.total_line_length_max)) \
-                        or len(self.source_code) < self.total_line_length_max:
+                if (
+                    not existing_line_total_max.startswith(str(self.total_line_length_max))
+                    or len(self.source_code) < self.total_line_length_max
+                ):
 
-                    line = line.replace(total_line_length_comment_base, "")\
-                               .replace(existing_line_total_max, "")\
-                               .replace(self.line_length_flag_suffix, "")
+                    line = line.replace(
+                        total_line_length_comment_base, ""
+                    ).replace(
+                        existing_line_total_max, ""
+                    ).replace(
+                        self.line_length_flag_suffix, ""
+                    )
 
                     self.source_code[index] = line
 

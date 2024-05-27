@@ -137,19 +137,24 @@ class GlobalSpacing:
             for index, line in enumerate(self.source_code):
                 if index == len(self.source_code) - 1:
                     finished = True
+
                     break
 
                 try:
                     two_strip = self.source_code[index + 2].strip()
                 except:
                     finished = True
+
                     break
 
-                if line.strip().startswith("#") \
-                        and not self.source_code[index - 1].strip().startswith("#") \
-                        and not self.source_code[index + 1].strip().startswith("#"):
+                if (
+                    line.strip().startswith("#")
+                    and not self.source_code[index - 1].strip().startswith("#")
+                    and not self.source_code[index + 1].strip().startswith("#")
+                ):
                     if two_strip.startswith("def ") or two_strip.startswith("class "):
                         self.source_code.pop(index + 1)
+
                         break
 
                     elif not len(two_strip):
@@ -164,11 +169,13 @@ class GlobalSpacing:
 
                             if not len(next_strip):
                                 continue
+
                             elif next_strip.startswith("def ") or next_strip.startswith("class "):
                                 for n in range(0, num - 1):
                                     self.source_code.pop(index + 1)
 
                                 break
+
                             else:
                                 break
 
@@ -177,8 +184,21 @@ class GlobalSpacing:
                     prev1_line_strip = self.source_code[index - 1].strip()
                     prev2_line_strip = self.source_code[index - 2].strip()
 
-                    if (next_line_strip.startswith("class ") or (next_line_strip.startswith("def ") and self.GetIndentSpaceCount(line) == 0)) and (len(prev1_line_strip) or len(prev2_line_strip)):
+                    if (
+                        (
+                            next_line_strip.startswith("class ")
+                            or (
+                                next_line_strip.startswith("def ")
+                                and self.GetIndentSpaceCount(line) == 0
+                            )
+                        )
+                        and (
+                            len(prev1_line_strip)
+                            or len(prev2_line_strip)
+                        )
+                    ):
                         self.source_code.insert(index, "")
+
                         break
 
     def fix_specific_spacing(self):
@@ -199,13 +219,16 @@ class GlobalSpacing:
             if line.startswith(" ") and self.starts_with_keyword in line:
                 indented_keyword = f"{indent * ' '}{self.starts_with_keyword}"
 
-            if line.startswith(self.starts_with_keyword) or \
-                    (len(indented_keyword) and line.startswith(indented_keyword)):
+            if (
+                line.startswith(self.starts_with_keyword)
+                or (len(indented_keyword) and line.startswith(indented_keyword))
+            ):
 
                 if len(self.ignore) and self.ignore in line:
                     continue
 
                 line_break_count = index - (last_index_before_line_breaks + 1)
+
                 occurrence += 1
 
                 if occurrence > 1 and self.group:

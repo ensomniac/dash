@@ -109,9 +109,10 @@ class PyDoc:
 
         self.ds_end_index = index
 
-        if self.ds_starts_with \
-                and (len(stripped) == 3 and (stripped == "'''" or stripped == '"""')) \
-                or (len(stripped) > 3 and self.ds_starts_with and not self.ds_ends_with):
+        if (
+            (self.ds_starts_with and (len(stripped) == 3 and (stripped == "'''" or stripped == '"""')))
+            or (len(stripped) > 3 and self.ds_starts_with and not self.ds_ends_with)
+        ):
             self.get_docstring_end_index(index)
 
         self.get_current_block_end_index(index)
@@ -158,8 +159,8 @@ class PyDoc:
                     break
 
                 if self.source_code[prev_index].strip().startswith(":return:"):
-                    self.source_code[prev_index] = f"{self.source_code[self.ds_end_index - num]} " \
-                                                                f"{self.multiple_return_possibilities_tag}"
+                    self.source_code[prev_index] = f"{self.source_code[self.ds_end_index - num]} {self.multiple_return_possibilities_tag}"
+
                     break
 
     def conform_docstring_return_syntax(self):
@@ -189,8 +190,10 @@ class PyDoc:
 
             self.final_comment += "Incomplete"
 
-            if "description" not in self.incomplete_ds_components \
-                    and "return" not in self.incomplete_ds_components:
+            if (
+                "description" not in self.incomplete_ds_components
+                and "return" not in self.incomplete_ds_components
+            ):
                 self.final_comment += " (needs type and/or desc)"
 
             self.final_comment += f": {', '.join(self.incomplete_ds_components)}"
@@ -203,8 +206,12 @@ class PyDoc:
         if self.ds_end_index == index:
 
             # Insert line break after docstring, if missing
-            if len(strip) > 6 and self.ds_starts_with \
-                    and self.ds_ends_with and len(self.source_code[index + 1].strip()):
+            if (
+                len(strip) > 6
+                and self.ds_starts_with
+                and self.ds_ends_with
+                and len(self.source_code[index + 1].strip())
+            ):
                 for num in self.iter_limit_range:
                     if num < 1:
                         continue
@@ -212,7 +219,9 @@ class PyDoc:
                     try:
                         if self.source_code[index + (num - 1)] == line:
                             self.source_code.insert(index + num, "")
+
                             index += (num - 1)
+
                             break
                     except:
                         pass
@@ -270,8 +279,13 @@ class PyDoc:
             self.iterate_ds_lines = self.source_code[index:(self.ds_end_index + self.index_ds_buffer)]
 
         for docstring_line in self.iterate_ds_lines:
-            cleaned_line = docstring_line.replace("'''", "").replace('"""', "")\
-                .replace(self.doc_auto_gen_tag, "").strip()
+            cleaned_line = docstring_line.replace(
+                "'''", ""
+            ).replace(
+                '"""', ""
+            ).replace(
+                self.doc_auto_gen_tag, ""
+            ).strip()
 
             if len(cleaned_line) and not cleaned_line.startswith(":"):
                 includes_desc = True
@@ -295,10 +309,14 @@ class PyDoc:
                         split = cleaned_line.split(f"{param}:")
 
                         # Param missing description or missing type declaration
-                        if not len(split[1].strip()) \
-                                or ("(default=" in split[1].strip()
-                                    and not len(split[1].split("(default=")[0].strip())) \
-                                or not len(split[0].split(":param")[1].strip()):
+                        if (
+                            not len(split[1].strip())
+                            or (
+                                "(default=" in split[1].strip()
+                                and not len(split[1].split("(default=")[0].strip())
+                            )
+                            or not len(split[0].split(":param")[1].strip())
+                        ):
                             self.incomplete_ds_components.append(param)
 
         for param in self.current_block_params:
@@ -482,8 +500,10 @@ class PyDoc:
 
                     self.missing_ds_components.remove(component)
 
-                    if (call in generated_line or not len(generated_line.split(call)[-1].strip())) \
-                            and component not in self.incomplete_ds_components:
+                    if (
+                        (call in generated_line or not len(generated_line.split(call)[-1].strip()))
+                        and component not in self.incomplete_ds_components
+                    ):
                         self.incomplete_ds_components.append(component)
 
         self.prioritize_desc_return_in_final_comment_list()
@@ -496,10 +516,11 @@ class PyDoc:
 
     def add_missing_default_value_tags_to_existing_docstring(self):
         for source_index, source_line in enumerate(self.source_code):
-            if source_line in self.iterate_ds_lines \
-                    and source_line.strip().startswith(":param") \
-                    and "(default=" not in source_line:
-
+            if (
+                source_line in self.iterate_ds_lines
+                and source_line.strip().startswith(":param")
+                and "(default=" not in source_line
+            ):
                 param = source_line.strip().replace(":param", "").split(":")[0].split(" ")[-1].strip()
 
                 if param in self.params_with_defaults and self.params_with_defaults.get(param):

@@ -52,18 +52,28 @@ class Cleanup:
 
     def update_line_length_comments(self, index, line):
         individual_line_length_comment_base = self.individual_line_length_comment.split(
-                                              str(self.individual_line_length_max))[0].strip()
+            str(self.individual_line_length_max)
+        )[0].strip()
 
         if individual_line_length_comment_base in line:
-            existing_line_length_max = line.split(individual_line_length_comment_base)[1]\
-                                           .strip().split(" ")[0].strip()
+            existing_line_length_max = line.split(
+                individual_line_length_comment_base
+            )[1].strip().split(" ")[0].strip()
 
-            if not existing_line_length_max.startswith(str(self.individual_line_length_max)) \
-                    or (self.comment_token in line and len(line.split(self.comment_token)[0].rstrip()) < self.individual_line_length_max):
-
-                line = line.replace(individual_line_length_comment_base, "")\
-                           .replace(existing_line_length_max, "")\
-                           .replace(self.line_length_flag_suffix, "")
+            if (
+                not existing_line_length_max.startswith(str(self.individual_line_length_max))
+                or (
+                    self.comment_token in line
+                    and len(line.split(self.comment_token)[0].rstrip()) < self.individual_line_length_max
+                )
+            ):
+                line = line.replace(
+                    individual_line_length_comment_base, ""
+                ).replace(
+                    existing_line_length_max, ""
+                ).replace(
+                    self.line_length_flag_suffix, ""
+                )
 
                 self.source_code[index] = line
 
