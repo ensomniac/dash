@@ -66,11 +66,11 @@ class Interface:
 
         return response
 
-    def GetAll(self, include_combos=True):
+    def GetAll(self, combo_types=[], include_combos=True):
         response = self.get_collection().GetAll()
 
         if include_combos:
-            response["combo_options"] = self.GetComboOptions()
+            response["combo_options"] = self.GetComboOptions(combo_types=combo_types)
 
         return response
 
