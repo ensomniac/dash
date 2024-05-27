@@ -565,6 +565,8 @@ class DashLocalStorage:
         return filtered_data
 
     def get_dict_order_by_sort_key(self, all_data):
+        from unidecode import unidecode
+
         order = []
         unsortable = []
         keys_to_sort = []
@@ -582,6 +584,11 @@ class DashLocalStorage:
             sort_value = entry_data[self.sort_by_key]
 
             if type(sort_value) is str:
+                try:
+                    sort_value = unidecode(sort_value)
+                except:
+                    pass
+
                 sort_value = sort_value.lower().strip()
 
             if not restructured_data.get(sort_value):
