@@ -26,7 +26,7 @@ class Interface:
     _get_combo_options: callable
     validate_properties: callable
     get_3d_pipeline_root: callable
-    get_details__combos_kwargs: callable
+    get_details_combos_kwargs: callable
     filter_get_details_all_data: callable
     get_set_properties_response: callable
     get_3d_pipeline_vdb_obj_map: callable
@@ -226,7 +226,7 @@ class Interface:
         if combo_options:
             response["combo_options"] = self.GetComboOptions(
                 combo_types=combo_options,
-                combos_kwargs=self.get_details__combos_kwargs(response)
+                combos_kwargs=self.get_details_combos_kwargs(response)
             )
 
         if og_vdb_type is not None:

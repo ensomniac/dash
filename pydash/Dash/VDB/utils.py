@@ -56,7 +56,7 @@ class Utils:
         return ""
 
     # Intended to be overridden (see Candy's VDB module for example)
-    def get_details__combos_kwargs(self, data):  # noqa
+    def get_details_combos_kwargs(self, data):  # noqa
         return {}
 
     # Intended to be overridden (see Candy's VDB module for example)
@@ -236,7 +236,12 @@ class Utils:
             vdb_type = self.Type
 
         if vdb_type == "vdb_types":
-            return self.get_vdb_type_combo_options()
+            combo_options = self.get_vdb_type_combo_options()
+
+            if return_type:
+                return combo_options, vdb_type
+
+            return combo_options
 
         combo_options = [{
             "id": "",
