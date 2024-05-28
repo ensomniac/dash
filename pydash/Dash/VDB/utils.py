@@ -10,11 +10,10 @@ import sys
 class Utils:
     Type: str
     ObjID: str
-    sort_by_key: str
-    collections: dict
     DashContext: dict
     unofficial_types: list
     pipeline_3d_types: list
+    GetCollection: callable
     type_combo_options_rename_map: dict
 
     def __init__(self):
@@ -105,33 +104,6 @@ class Utils:
         return ""
 
     # --------------------------------------------------------------
-
-    def get_collection(self, vdb_type=""):
-        if vdb_type:
-            vdb_type_provided = True
-        else:
-            vdb_type = self.Type
-            vdb_type_provided = False
-
-        if not vdb_type.startswith("vdb_"):
-            vdb_type = f"vdb_{vdb_type}"
-
-        if not self.collections.get(vdb_type):
-            collection = self._get_collection(vdb_type, vdb_type_provided)  # noqa
-
-            if collection:
-                self.collections[vdb_type] = collection
-            else:
-                from Dash.Collection import Collection
-
-                self.collections[vdb_type] = Collection(
-                    store_path=vdb_type,
-                    nested=True,
-                    dash_context=self.DashContext,
-                    sort_by_key=self.get_sort_by_key(vdb_type) if vdb_type_provided else self.sort_by_key
-                )
-
-        return self.collections[vdb_type]
 
     def get_sort_by_key(self, vdb_type=""):
         if not vdb_type:
@@ -275,7 +247,7 @@ class Utils:
         entries = self._get_combos_entries(vdb_type)
 
         if not entries:
-            entries = self.get_collection(vdb_type).All
+            entries = self.GetCollection(vdb_type).All
 
         entries = self._filter_combos_entries(vdb_type, entries)
 

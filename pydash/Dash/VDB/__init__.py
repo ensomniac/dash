@@ -127,6 +127,14 @@ def GetDetailsAll(vdb_type, dash_context={}, user={}):
     ).GetDetailsAll()
 
 
+def GetCollection(vdb_type, dash_context={}, user={}):
+    return VDB(
+        vdb_type=vdb_type,
+        dash_context=dash_context,
+        user=user
+    ).GetCollection()
+
+
 # ------------------------ 3D PIPELINE ------------------------
 
 

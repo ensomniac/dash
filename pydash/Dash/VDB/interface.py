@@ -11,20 +11,22 @@ class Interface:
     Type: str
     ObjID: str
     User: dict
+    sort_by_key: str
+    collections: dict
     DashContext: dict
     get_combos: callable
     update_glb: callable
     add_details: callable
-    get_collection: callable
     skip_asset_map: callable
     modify_get_data: callable
+    get_sort_by_key: callable
     conform_new_data: callable
     get_texture_path: callable
-    get_details__combos_kwargs: callable
     asset_bundle_queue_root: str
     _get_combo_options: callable
     validate_properties: callable
     get_3d_pipeline_root: callable
+    get_details__combos_kwargs: callable
     filter_get_details_all_data: callable
     get_set_properties_response: callable
     get_3d_pipeline_vdb_obj_map: callable
@@ -48,7 +50,7 @@ class Interface:
         else:
             og_obj_id = None
 
-        collection = self.get_collection()
+        collection = self.GetCollection()
         data = self.modify_get_data(collection.Get(self.ObjID))
 
         if og_vdb_type is not None:
@@ -60,22 +62,32 @@ class Interface:
         return data
 
     def Delete(self):
-        response = self.get_collection().Delete(obj_id=self.ObjID)
+        response = self.GetCollection().Delete(obj_id=self.ObjID)
 
         response["vdb_type"] = self.Type
 
         return response
 
-    def GetAll(self, combo_types=[], include_combos=True):
-        response = self.get_collection().GetAll()
+    def GetAll(self, combo_types=[], include_combos=True, _vdb_type=""):
+        if _vdb_type:
+            og_vdb_type = self.Type or ""
+
+            self.Type = _vdb_type
+        else:
+            og_vdb_type = None
+
+        response = self.GetCollection().GetAll()
 
         if include_combos:
             response["combo_options"] = self.GetComboOptions(combo_types=combo_types)
 
+        if og_vdb_type is not None:
+            self.Type = og_vdb_type
+
         return response
 
     def Duplicate(self, id_to_duplicate=""):
-        collection = self.get_collection()
+        collection = self.GetCollection()
 
         return self.conform_new_data(
             collection.Duplicate(
@@ -85,10 +97,17 @@ class Interface:
             collection
         )
 
-    def CreateNew(self, additional_data={}, return_all=True):
-        collection = self.get_collection()
+    def CreateNew(self, additional_data={}, return_all=True, _vdb_type=""):
+        if _vdb_type:
+            og_vdb_type = self.Type or ""
 
-        return self.conform_new_data(
+            self.Type = _vdb_type
+        else:
+            og_vdb_type = None
+
+        collection = self.GetCollection()
+
+        data = self.conform_new_data(
             new_data=collection.New(
                 additional_data=additional_data,
                 return_all_data=False  # Let SetProperty in conform_new_data return all after updating
@@ -98,12 +117,35 @@ class Interface:
             return_all=return_all
         )
 
-    def SetProperty(self, key="", value=""):
-        return self.SetProperties({key: value})
+        if og_vdb_type is not None:
+            self.Type = og_vdb_type
 
-    def SetProperties(self, properties={}, return_response_only=True):
+        return data
+
+    def SetProperty(self, key="", value="", _vdb_type="", _obj_id=""):
+        return self.SetProperties(
+            properties={key: value},
+            _vdb_type=_vdb_type,
+            _obj_id=_obj_id
+        )
+
+    def SetProperties(self, properties={}, return_response_only=True, _vdb_type="", _obj_id=""):
+        if _vdb_type:
+            og_vdb_type = self.Type or ""
+
+            self.Type = _vdb_type
+        else:
+            og_vdb_type = None
+
+        if _obj_id:
+            og_obj_id = self.ObjID or ""
+
+            self.ObjID = _obj_id
+        else:
+            og_obj_id = None
+
         orig_data = {}
-        collection = self.get_collection()
+        collection = self.GetCollection()
         validated_properties = self.validate_properties(properties, collection)
         response = self.get_set_properties_response(validated_properties, collection)
 
@@ -114,6 +156,12 @@ class Interface:
                 obj_id=self.ObjID,
                 properties=validated_properties
             )
+
+        if og_vdb_type is not None:
+            self.Type = og_vdb_type
+
+        if og_obj_id is not None:
+            self.ObjID = og_obj_id
 
         if not return_response_only:
             return response, validated_properties, orig_data
@@ -136,7 +184,7 @@ class Interface:
 
     def GetAssetPathMap(self):
         response = {}
-        collection = self.get_collection()
+        collection = self.GetCollection()
 
         for obj_id in collection.All["order"]:
             obj_data = collection.All["data"][obj_id]
@@ -163,7 +211,7 @@ class Interface:
         else:
             og_obj_id = None
 
-        collection = self.get_collection()
+        collection = self.GetCollection()
         obj_data = collection.Get(self.ObjID)
 
         if not obj_data or not obj_data.get("id"):
@@ -190,7 +238,7 @@ class Interface:
         return response
 
     def GetDetailsAll(self, add_details_kwargs={}):
-        collection = self.get_collection()
+        collection = self.GetCollection()
         all_data = collection.GetAll()
 
         if not all_data.get("order"):
@@ -209,6 +257,33 @@ class Interface:
 
         return all_data
 
+    def GetCollection(self, vdb_type=""):
+        if vdb_type:
+            vdb_type_provided = True
+        else:
+            vdb_type = self.Type
+            vdb_type_provided = False
+
+        if not vdb_type.startswith("vdb_"):
+            vdb_type = f"vdb_{vdb_type}"
+
+        if not self.collections.get(vdb_type):
+            collection = self._get_collection(vdb_type, vdb_type_provided)  # noqa
+
+            if collection:
+                self.collections[vdb_type] = collection
+            else:
+                from Dash.Collection import Collection
+
+                self.collections[vdb_type] = Collection(
+                    store_path=vdb_type,
+                    nested=True,
+                    dash_context=self.DashContext,
+                    sort_by_key=self.get_sort_by_key(vdb_type) if vdb_type_provided else self.sort_by_key
+                )
+
+        return self.collections[vdb_type]
+
     # ------------------------ 3D PIPELINE ------------------------
 
     def Get3DPipelineAssets(self, vdb_type="", obj_id=""):
@@ -221,7 +296,7 @@ class Interface:
         data = {}
 
         pipeline_root = os.path.join(
-            self.get_collection(vdb_type).Root,
+            self.GetCollection(vdb_type).Root,
             obj_id,
             "3d_pipeline"
         )
@@ -263,7 +338,7 @@ class Interface:
         texture_url = ""
         texture_path = ""
         updated_glb_url = ""
-        pipeline_root = os.path.join(self.get_collection().Root, self.ObjID, "3d_pipeline")
+        pipeline_root = os.path.join(self.GetCollection().Root, self.ObjID, "3d_pipeline")
         root = os.path.join(pipeline_root, asset_type)
 
         if os.path.exists(root):
