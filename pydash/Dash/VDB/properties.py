@@ -16,6 +16,7 @@ class Properties:
     get_sort_by_key: callable
 
     def __init__(self):
+        self.temp = {}
         self.collections = {}
         self.asset_bundle_queue_root = os.path.join(self.DashContext["srv_path_local"], "asset_bundle_queue")
 

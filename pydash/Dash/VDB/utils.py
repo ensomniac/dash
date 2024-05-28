@@ -9,6 +9,7 @@ import sys
 
 class Utils:
     Type: str
+    temp: dict
     ObjID: str
     DashContext: dict
     unofficial_types: list
@@ -18,6 +19,34 @@ class Utils:
 
     def __init__(self):
         pass
+
+    # Intended to be extended (see Candy's VDB module for example)
+    def set_temp_attrs(self, vdb_type="", obj_id=""):
+        if vdb_type:
+            self.temp["vdb_type"] = self.Type or ""
+
+            self.Type = vdb_type
+        else:
+            self.temp["vdb_type"] = None
+
+        if obj_id:
+            self.temp["obj_id"] = self.ObjID or ""
+
+            self.ObjID = obj_id
+        else:
+            self.temp["obj_id"] = None
+
+    # Intended to be extended (see Candy's VDB module for example)
+    def unset_temp_attrs(self):
+        if self.temp.get("vdb_type") is not None:
+            self.Type = self.temp["vdb_type"]
+
+            self.temp["vdb_type"] = None
+
+        if self.temp.get("obj_id") is not None:
+            self.ObjID = self.temp["obj_id"]
+
+            self.temp["obj_id"] = None
 
     # Intended to be extended (see Candy's VDB module for example)
     def validate_properties(self, properties, collection, validated_properties={}):  # noqa

@@ -17,9 +17,11 @@ class Interface:
     get_combos: callable
     update_glb: callable
     add_details: callable
+    set_temp_attrs: callable
     skip_asset_map: callable
     modify_get_data: callable
     get_sort_by_key: callable
+    unset_temp_attrs: callable
     conform_new_data: callable
     get_texture_path: callable
     asset_bundle_queue_root: str
@@ -35,29 +37,14 @@ class Interface:
     def __init__(self):
         pass
 
-    def Get(self, _vdb_type="", _obj_id=""):
-        if _vdb_type:
-            og_vdb_type = self.Type or ""
-
-            self.Type = _vdb_type
-        else:
-            og_vdb_type = None
-
-        if _obj_id:
-            og_obj_id = self.ObjID or ""
-
-            self.ObjID = _obj_id
-        else:
-            og_obj_id = None
+    def Get(self, _vdb_type="", _obj_id="", temp_kwargs={}, unset_temp=True):
+        self.set_temp_attrs(_vdb_type, _obj_id, **temp_kwargs)
 
         collection = self.GetCollection()
         data = self.modify_get_data(collection.Get(self.ObjID))
 
-        if og_vdb_type is not None:
-            self.Type = og_vdb_type
-
-        if og_obj_id is not None:
-            self.ObjID = og_obj_id
+        if unset_temp:
+            self.unset_temp_attrs()
 
         return data
 
@@ -68,21 +55,16 @@ class Interface:
 
         return response
 
-    def GetAll(self, combo_types=[], include_combos=True, _vdb_type=""):
-        if _vdb_type:
-            og_vdb_type = self.Type or ""
-
-            self.Type = _vdb_type
-        else:
-            og_vdb_type = None
+    def GetAll(self, combo_types=[], include_combos=True, _vdb_type="", temp_kwargs={}, unset_temp=True):
+        self.set_temp_attrs(_vdb_type, **temp_kwargs)
 
         response = self.GetCollection().GetAll()
 
         if include_combos:
             response["combo_options"] = self.GetComboOptions(combo_types=combo_types)
 
-        if og_vdb_type is not None:
-            self.Type = og_vdb_type
+        if unset_temp:
+            self.unset_temp_attrs()
 
         return response
 
@@ -97,13 +79,8 @@ class Interface:
             collection
         )
 
-    def CreateNew(self, additional_data={}, return_all=True, _vdb_type=""):
-        if _vdb_type:
-            og_vdb_type = self.Type or ""
-
-            self.Type = _vdb_type
-        else:
-            og_vdb_type = None
+    def CreateNew(self, additional_data={}, return_all=True, _vdb_type="", unset_temp=True):
+        self.set_temp_attrs(_vdb_type)
 
         collection = self.GetCollection()
 
@@ -117,32 +94,24 @@ class Interface:
             return_all=return_all
         )
 
-        if og_vdb_type is not None:
-            self.Type = og_vdb_type
+        if unset_temp:
+            self.unset_temp_attrs()
 
         return data
 
-    def SetProperty(self, key="", value="", _vdb_type="", _obj_id=""):
+    def SetProperty(self, key="", value="", _vdb_type="", _obj_id="", temp_kwargs={}, unset_temp=True):
         return self.SetProperties(
             properties={key: value},
             _vdb_type=_vdb_type,
-            _obj_id=_obj_id
+            _obj_id=_obj_id,
+            temp_kwargs=temp_kwargs,
+            unset_temp=unset_temp
         )
 
-    def SetProperties(self, properties={}, return_response_only=True, _vdb_type="", _obj_id=""):
-        if _vdb_type:
-            og_vdb_type = self.Type or ""
-
-            self.Type = _vdb_type
-        else:
-            og_vdb_type = None
-
-        if _obj_id:
-            og_obj_id = self.ObjID or ""
-
-            self.ObjID = _obj_id
-        else:
-            og_obj_id = None
+    def SetProperties(
+        self, properties={}, return_response_only=True, _vdb_type="", _obj_id="", temp_kwargs={}, unset_temp=True
+    ):
+        self.set_temp_attrs(_vdb_type, _obj_id, **temp_kwargs)
 
         orig_data = {}
         collection = self.GetCollection()
@@ -157,11 +126,8 @@ class Interface:
                 properties=validated_properties
             )
 
-        if og_vdb_type is not None:
-            self.Type = og_vdb_type
-
-        if og_obj_id is not None:
-            self.ObjID = og_obj_id
+        if unset_temp:
+            self.unset_temp_attrs()
 
         if not return_response_only:
             return response, validated_properties, orig_data
@@ -196,20 +162,10 @@ class Interface:
 
         return response
 
-    def GetDetails(self, combo_options=[], add_details_kwargs={}, _vdb_type="", _obj_id=""):
-        if _vdb_type:
-            og_vdb_type = self.Type or ""
-
-            self.Type = _vdb_type
-        else:
-            og_vdb_type = None
-
-        if _obj_id:
-            og_obj_id = self.ObjID or ""
-
-            self.ObjID = _obj_id
-        else:
-            og_obj_id = None
+    def GetDetails(
+        self, combo_options=[], add_details_kwargs={}, _vdb_type="", _obj_id="", temp_kwargs={}, unset_temp=True
+    ):
+        self.set_temp_attrs(_vdb_type, _obj_id, **temp_kwargs)
 
         collection = self.GetCollection()
         obj_data = collection.Get(self.ObjID)
@@ -229,15 +185,14 @@ class Interface:
                 combos_kwargs=self.get_details_combos_kwargs(response)
             )
 
-        if og_vdb_type is not None:
-            self.Type = og_vdb_type
-
-        if og_obj_id is not None:
-            self.ObjID = og_obj_id
+        if unset_temp:
+            self.unset_temp_attrs()
 
         return response
 
-    def GetDetailsAll(self, add_details_kwargs={}):
+    def GetDetailsAll(self, add_details_kwargs={}, _vdb_type="", temp_kwargs={}, unset_temp=True):
+        self.set_temp_attrs(_vdb_type, **temp_kwargs)
+
         collection = self.GetCollection()
         all_data = collection.GetAll()
 
@@ -254,6 +209,9 @@ class Interface:
                 obj_data=all_data["data"][obj_id],
                 **add_details_kwargs
             )
+
+        if unset_temp:
+            self.unset_temp_attrs()
 
         return all_data
 
