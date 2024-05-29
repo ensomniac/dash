@@ -99,17 +99,18 @@ class Interface:
 
         return data
 
-    def SetProperty(self, key="", value="", _vdb_type="", _obj_id="", temp_kwargs={}, unset_temp=True):
+    def SetProperty(self, key="", value="", _vdb_type="", _obj_id="", temp_kwargs={}, unset_temp=True, return_all=True):
         return self.SetProperties(
             properties={key: value},
             _vdb_type=_vdb_type,
             _obj_id=_obj_id,
             temp_kwargs=temp_kwargs,
-            unset_temp=unset_temp
+            unset_temp=unset_temp,
+            return_all=return_all
         )
 
     def SetProperties(
-        self, properties={}, return_response_only=True, _vdb_type="", _obj_id="", temp_kwargs={}, unset_temp=True
+        self, properties={}, return_response_only=True, _vdb_type="", _obj_id="", temp_kwargs={}, unset_temp=True, return_all=True
     ):
         self.set_temp_attrs(_vdb_type, _obj_id, **temp_kwargs)
 
@@ -123,7 +124,8 @@ class Interface:
 
             response = collection.SetProperties(
                 obj_id=self.ObjID,
-                properties=validated_properties
+                properties=validated_properties,
+                return_all_data=return_all
             )
 
         if unset_temp:
