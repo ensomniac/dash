@@ -1,13 +1,13 @@
 function DashGuiVDBEntry (
     list_view, obj_id, include_display_name_key=true, refresh_ms=35000,
-    include_primary_header=true, init_with_prop_box=false
+    include_primary_header=true, start_with_prop_box=true
 ) {
     this.list_view = list_view;
     this.obj_id = obj_id;
     this.include_display_name_key = include_display_name_key;
     this.refresh_ms = refresh_ms;
     this.include_primary_header = include_primary_header;
-    this.init_with_prop_box = init_with_prop_box;
+    this.start_with_prop_box = start_with_prop_box;
 
     this.full_data = null;
     this.vdb_3d_box = null;
@@ -399,7 +399,7 @@ function DashGuiVDBEntry (
 
     // This is an internal setup that applies to all entries.
     this._setup_styles = function () {
-        if (this.init_with_prop_box) {
+        if (this.start_with_prop_box) {
             this.add_property_box();
         }
 

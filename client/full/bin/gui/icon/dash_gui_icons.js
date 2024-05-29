@@ -182,6 +182,7 @@ function DashGuiIcons (icon) {
         "gear":                    new DashGuiIconDefinition(this.icon, "Gear", this.weight["regular"], "cog"),
         "gears":                   new DashGuiIconDefinition(this.icon, "Gears", this.weight["regular"], "cogs"),
         "gem":                     new DashGuiIconDefinition(this.icon, "Gem", this.weight["solid"], "gem"),
+        "ghost":                   new DashGuiIconDefinition(this.icon, "Ghost", this.weight["regular"], "ghost"),
         "git":                     new DashGuiIconDefinition(this.icon, "Git", this.weight["brand"], "git-square"),
         "github":                  new DashGuiIconDefinition(this.icon, "Github", this.weight["brand"], "github"),
         "goal_reply":              new DashGuiIconDefinition(this.icon, "Goal Reply", this.weight["solid"], "reply"),
