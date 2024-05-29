@@ -57,8 +57,8 @@ function DashUtils () {
     };
 
     this.GetDeepCopy = function (obj) {
-        if (!Dash.Validate.Object(obj)) {
-            Dash.Log.Warn("Warning: Failed to produce deepcopy, invalid/empty object:", typeof obj, obj);
+        if (!Dash.Validate.Object(obj, false)) {
+            Dash.Log.Warn("Warning: Failed to produce deepcopy, invalid object:", typeof obj, obj);
 
             return obj;
         }

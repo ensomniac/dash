@@ -30,6 +30,11 @@ function DashGui () {
     this.TextArea                  = DashGuiTextArea;
     this.TimePicker                = DashGuiTimePicker;
     this.ToolRow                   = DashGuiToolRow;
+    this.VDB                       = DashGuiVDB;
+    this.VDBEntry                  = DashGuiVDBEntry;
+    this.VDBList                   = DashGuiVDBList;
+    this.VDBListRow                = DashGuiVDBListRow;
+    this.VDB3D                     = DashGuiVDB3D;
 
     this.GetHTMLContext = function (optional_label_text="", optional_style_css={}, color=null) {
         if (!color) {

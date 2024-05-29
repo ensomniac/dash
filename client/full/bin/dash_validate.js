@@ -38,8 +38,12 @@ function DashValidate () {
         return null;
     };
 
-    this.Object = function (data_object) {
-        return (data_object && typeof data_object === "object" && !jQuery.isEmptyObject(data_object));
+    this.Object = function (data_object, check_empty=true) {
+        return (
+               data_object
+            && typeof data_object === "object"
+            && (check_empty ? !jQuery.isEmptyObject(data_object) : true)
+        );
     };
 
     this.Email = function (str) {
