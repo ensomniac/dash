@@ -44579,6 +44579,7 @@ function DashGuiVDB (
     this.get_row_text_cb = get_row_text_cb;
     this.get_combo_types_cb = get_combo_types_cb;
     this.color = color;
+    this.last_vdb_type = "";
     this.last_list_view = null;
     this.layout = new Dash.Layout.Tabs.Top(this, "dash_gui_vdb", this.color);
     this.html = this.layout.html;
@@ -44607,6 +44608,7 @@ function DashGuiVDB (
         }
     };
     this.load_view = function (vdb_type) {
+        this.last_vdb_type = vdb_type;
         this.last_list_view = new Dash.Gui.VDBList(
             vdb_type,
             this.get_title(vdb_type),
@@ -45056,7 +45058,7 @@ function DashGuiVDB3D (
         if (as_background) {
             css["background-image"] = (
                   "url('https://dash.guide/github/dash/client/full/bin/img/checker_bg_"
-                + (Dash.Color.IsDark(this.color) ? "dark" : "light") + ".png')"
+                + (Dash.Color.IsDark(this.color) ? "light" : "dark") + ".png')"
             );
             css["box-shadow"] = "0px 0px 1px 1px rgba(0, 0, 0, 0.1)";
         }
@@ -46473,7 +46475,7 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="", color=null) {
     };
     this.is_class = function (func) {
         var dummy = Function.prototype.toString.call(func);
-        return dummy.includes("this.setup_styles") || dummy.includes("this.html");
+        return dummy.includes("this.setup_styles") || dummy.includes("this.html") || dummy.includes(".call(");
     };
     this.set_styles_for_side_tabs = function () {
         this.html.css({

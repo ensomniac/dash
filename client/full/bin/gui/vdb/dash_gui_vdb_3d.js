@@ -544,7 +544,7 @@ function DashGuiVDB3D (
         if (as_background) {
             css["background-image"] = (
                   "url('https://dash.guide/github/dash/client/full/bin/img/checker_bg_"
-                + (Dash.Color.IsDark(this.color) ? "dark" : "light") + ".png')"
+                + (Dash.Color.IsDark(this.color) ? "light" : "dark") + ".png')"
             );
 
             css["box-shadow"] = "0px 0px 1px 1px rgba(0, 0, 0, 0.1)";

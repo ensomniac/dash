@@ -10,6 +10,7 @@ function DashGuiVDB (
     this.get_combo_types_cb = get_combo_types_cb;
     this.color = color;
 
+    this.last_vdb_type = "";
     this.last_list_view = null;
     this.layout = new Dash.Layout.Tabs.Top(this, "dash_gui_vdb", this.color);
     this.html = this.layout.html;
@@ -44,6 +45,8 @@ function DashGuiVDB (
     };
 
     this.load_view = function (vdb_type) {
+        this.last_vdb_type = vdb_type;
+
         this.last_list_view = new Dash.Gui.VDBList(
             vdb_type,
             this.get_title(vdb_type),

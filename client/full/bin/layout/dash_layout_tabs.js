@@ -199,6 +199,7 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="", color=null) {
                 }
 
                 content_html = inst_class.html;
+
                 this.active_content = inst_class;
 
             }
@@ -219,12 +220,14 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="", color=null) {
                 }
 
                 content_html = inst_class.html;
+
                 this.active_content = inst_class;
             }
         }
 
         else {
             content_html = this.all_content[index]["content_div_html_class"].bind(this.binder)(button);
+
             this.active_content = content_html;
         }
 
@@ -512,7 +515,7 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="", color=null) {
     this.is_class = function (func) {
         var dummy = Function.prototype.toString.call(func);
 
-        return dummy.includes("this.setup_styles") || dummy.includes("this.html");
+        return dummy.includes("this.setup_styles") || dummy.includes("this.html") || dummy.includes(".call(");
     };
 
     this.set_styles_for_side_tabs = function () {
