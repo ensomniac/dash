@@ -110,7 +110,8 @@ class Interface:
         )
 
     def SetProperties(
-        self, properties={}, return_response_only=True, _vdb_type="", _obj_id="", temp_kwargs={}, unset_temp=True, return_all=True
+        self, properties={}, return_response_only=True, _vdb_type="",
+        _obj_id="", temp_kwargs={}, unset_temp=True, return_all=True
     ):
         self.set_temp_attrs(_vdb_type, _obj_id, **temp_kwargs)
 

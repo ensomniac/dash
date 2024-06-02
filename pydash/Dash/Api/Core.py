@@ -357,8 +357,10 @@ class ApiCore:
                 return self._params[key]
 
             value = self._params[key]
+            is_str = param_type is str
+            num_tt = (target_type is int or target_type is float)
 
-            if param_type is str:
+            if is_str:
                 stripped = self._params[key].strip('"').strip("'").lower()
 
                 # Extended bool handling
@@ -366,13 +368,23 @@ class ApiCore:
                     value = stripped  # Otherwise, json.loads can't parse it properly
 
                 # Extended number handling
-                if (target_type is int or target_type is float) and value.startswith("0") and len(value) > 1:
+                if num_tt and value.startswith("0") and len(value) > 1:
                     if value.count("0") == len(value):
                         value = "0"
                     else:
                         value = value.lstrip("0")
 
-            value = json.loads(value)
+            if num_tt and is_str and not value:
+                value = default_value
+            else:
+                try:
+                    value = json.loads(value)
+
+                except Exception as e:
+                    raise Exception(
+                        f"Failed to parse param for key '{key}' and type '{target_type.__name__}' (default "
+                        f"value '{default_value}')\n\nValue (type: {type(value).__name__}): {value}\n\nError: {e}"
+                    )
 
             if set_param:
                 self._params[key] = value
