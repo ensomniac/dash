@@ -211,6 +211,7 @@ class DashLocalStorage:
 
         if missing:
             from Dash.Utils import SendEmail
+            from traceback import format_stack
 
             SendEmail(
                 subject="Dash.LocalStorage.GetAll",
@@ -218,7 +219,8 @@ class DashLocalStorage:
                     "Warning:\nFolder(s) were identified as missing a data.json file. This typically happens "
                     "if an object failed to be fully deleted, and therefore, this folder likely needs to be removed.\n"
                     "Alternatively, a request to get the data may have happened at the same moment it was deleted."
-                    f"\n\n" + "\n- ".join(missing)
+                    f"\n\nFolders:" + "\n- ".join(missing) +
+                    f"\n\nStack trace:" + "\n".join(format_stack())
                 )
             )
 
