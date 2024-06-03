@@ -219,8 +219,8 @@ class DashLocalStorage:
                     "Warning:\nFolder(s) were identified as missing a data.json file. This typically happens "
                     "if an object failed to be fully deleted, and therefore, this folder likely needs to be removed.\n"
                     "Alternatively, a request to get the data may have happened at the same moment it was deleted."
-                    f"\n\nFolders:" + "\n- ".join(missing) +
-                    f"\n\nStack trace:" + "\n".join(format_stack())
+                    f"\n\nFolders:\n" + "\n- ".join(missing) +
+                    f"\n\nStack trace:\n" + "\n".join(format_stack())
                 )
             )
 
