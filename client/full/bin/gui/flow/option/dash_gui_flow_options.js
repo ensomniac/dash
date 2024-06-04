@@ -143,6 +143,20 @@ class DashGuiFlowOptions {
         return option;
     }
 
+    Empty () {
+        if (!this.options.length) {
+            return;
+        }
+
+        for (var option of this.options) {
+            option.html.remove();
+        }
+
+        this.options = [];
+
+        this.resize();
+    }
+
     EnableMultiSelect () {
         this.multi_select = true;
     }

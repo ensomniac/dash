@@ -7,15 +7,14 @@ class DashGuiFlowOption {
         this.image = null;
         this.label = null;
         this.active = false;
-        this.font_size=null;
         this.text_tip = null;
         this.sub_label = null;
+        this.font_size = null;
         this.multi_icon = null;
         this.multi_icon_num = null;
         this.view = this.options.view;
         this.color = this.view.color;
         this.html = $("<div></div>");
-        this.view = this.options.view;
         this.bg_color = this.color.Pinstripe;
         this.border_color = this.color.PinstripeLight;
         this.active_bg_color = this.color.StrokeLight;
@@ -27,6 +26,13 @@ class DashGuiFlowOption {
         this.sub_label_active_text_color = this.color.Stroke;
         this.label_text_shadow = "1px 1px 1px rgba(0, 0, 0, 0.25)";
         this.hover_border_color = Dash.Color.GetTransparent(this.active_border_color, 0.5);
+
+        this.multi_icon_num_text_shadow = (
+            "-1px 1px 0 " + this.multi_icon_color + ", " +
+            "1px 1px 0 " + this.multi_icon_color + ", " +
+            "1px -1px 0 " + this.multi_icon_color + ", " +
+            "-1px -1px 0 " + this.multi_icon_color
+        );
 
         this.label_css = {
             "overflow": "hidden",
@@ -460,12 +466,7 @@ class DashGuiFlowOption {
                 "top": "50%",
                 "left": "50%",
                 "transform": "translate(-50%, -50%)",
-                "text-shadow": (
-                    "-1px 1px 0 " + this.multi_icon_color + ", " +
-                    "1px 1px 0 " + this.multi_icon_color + ", " +
-                    "1px -1px 0 " + this.multi_icon_color + ", " +
-                    "-1px -1px 0 " + this.multi_icon_color
-                )
+                "text-shadow": this.multi_icon_num_text_shadow
             });
 
             this.multi_icon.html.append(this.multi_icon_num);
