@@ -48991,6 +48991,9 @@ function DashLayoutListColumnConfig () {
             "footer_css": footer_css
         });
     };
+    this.CheckToAddDivider = function () {
+        return this.columns.length && this.columns.Last()["type"] !== "divider";
+    };
     this.AddDivider = function (
         css=null, show_for_header=false, show_for_footer=false, header_css={}, footer_css={}
     ) {
