@@ -379,6 +379,8 @@ class Users:
         if not password_correct:
             if return_login_dict:
                 return {
+                    # "email": email,
+                    # "user_root": user_root,
                     "error": "Incorrect login information",
                     "_error": f"email: {email}",
                     # "h": hashed_password,
