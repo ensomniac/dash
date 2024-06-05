@@ -17627,8 +17627,8 @@ function Dash () {
                         try {
                             return this[this.length - 1];
                         }
-                        catch {
-                            console.warn("Array.prototype.Last() failed:", this);
+                        catch (e) {
+                            console.warn("Array.prototype.Last() failed:", typeof this, this, e);
                             return this;
                         }
                     }
@@ -17638,8 +17638,8 @@ function Dash () {
                         try {
                             this[this.length - 1] = value;
                         }
-                        catch {
-                            console.warn("Array.prototype.SetLast() failed:", this);
+                        catch (e) {
+                            console.warn("Array.prototype.SetLast() failed:", typeof this, this, e);
                             return this;
                         }
                     }
@@ -17649,8 +17649,8 @@ function Dash () {
                         try {
                             return this.splice(index, 0, item);
                         }
-                        catch {
-                            console.warn("Array.prototype.Insert() failed:", this);
+                        catch (e) {
+                            console.warn("Array.prototype.Insert() failed:", typeof this, this, e);
                             return this;
                         }
                     }
@@ -17664,8 +17664,8 @@ function Dash () {
                             }
                             return this;
                         }
-                        catch {
-                            console.warn("Array.prototype.Remove() failed:", this);
+                        catch (e) {
+                            console.warn("Array.prototype.Remove() failed:", typeof this, this, e);
                             return this;
                         }
                     }
@@ -17685,8 +17685,8 @@ function Dash () {
                             }
                             return this;
                         }
-                        catch {
-                            console.warn("Array.prototype.Pop() failed:", this);
+                        catch (e) {
+                            console.warn("Array.prototype.Pop() failed:", typeof this, this, e);
                             return this;
                         }
                     }
@@ -17698,8 +17698,8 @@ function Dash () {
                                 return item === value;
                             }).length;
                         }
-                        catch {
-                            console.warn("Array.prototype.Count() failed:", this);
+                        catch (e) {
+                            console.warn("Array.prototype.Count() failed:", typeof this, this, e);
                             return this;
                         }
                     }
@@ -17719,8 +17719,8 @@ function Dash () {
                 }
                 return this.slice(0, 1).toUpperCase() + this.slice(1, this.length);
             }
-            catch {
-                console.warn("String.prototype.Title() failed:", typeof this, this);
+            catch (e) {
+                console.warn("String.prototype.Title() failed:", typeof this, this, e);
                 return this.toString();
             }
         };
@@ -17731,8 +17731,8 @@ function Dash () {
                 }
                 return this.LTrim(char).RTrim(char);
             }
-            catch {
-                console.warn("String.prototype.Trim() failed:", typeof this, this);
+            catch (e) {
+                console.warn("String.prototype.Trim() failed:", typeof this, this, e);
                 return this.toString();
             }
         };
@@ -17747,8 +17747,8 @@ function Dash () {
                 }
                 return this.toString();
             }
-            catch {
-                console.warn("String.prototype.LTrim() failed:", typeof this, this);
+            catch (e) {
+                console.warn("String.prototype.LTrim() failed:", typeof this, this, e);
                 return this.toString();
             }
         };
@@ -17763,8 +17763,8 @@ function Dash () {
                 }
                 return this.toString();
             }
-            catch {
-                console.warn("String.prototype.RTrim() failed:", typeof this, this);
+            catch (e) {
+                console.warn("String.prototype.RTrim() failed:", typeof this, this, e);
                 return this.toString();
             }
         };
@@ -17772,8 +17772,8 @@ function Dash () {
             try {
                 return (this.split(char).length - 1);
             }
-            catch {
-                console.warn("String.prototype.Count() failed:", typeof this, this);
+            catch (e) {
+                console.warn("String.prototype.Count() failed:", typeof this, this, e);
                 return this.toString();
             }
         };
@@ -17781,37 +17781,52 @@ function Dash () {
             try {
                 return /^\d+$/.test(this);
             }
-            catch {
-                console.warn("String.prototype.IsDigit() failed:", typeof this, this);
+            catch (e) {
+                console.warn("String.prototype.IsDigit() failed:", typeof this, this, e);
                 return this.toString();
             }
         };
         String.prototype.ZFill = function (len) {
-            if (!len || this.length === len) {
+            try {
+                if (!len || this.length === len) {
+                    return this.toString();
+                }
+                var string = "";
+                string += this.toString();
+                for (var _ of Dash.Math.Range(len)) {
+                    if (string.length >= len) {
+                        break;
+                    }
+                    string = "0" + string;
+                }
+                return string;
+            }
+            catch (e) {
+                console.warn("String.prototype.ZFill() failed:", typeof this, this, e);
                 return this.toString();
             }
-            var string = "";
-            string += this.toString();
-            for (var _ of Dash.Math.Range(len)) {
-                if (string.length >= len) {
-                    break;
-                }
-                string = "0" + string;
-            }
-            return string;
         };
     };
     this.extend_date_prototype = function () {
-        // This gets the ISO week number, which is equivalent to calling '.isocalendar().week' on a python datetime object
+        // This gets the ISO week number, which is equivalent to
+        // calling '.isocalendar().week' on a python datetime object
         Date.prototype.getWeek = function () {
-            var date = new Date(this.getTime());
-            date.setHours(0, 0, 0, 0);
-            // Thursday in current week decides the year
-            date.setDate(date.getDate() + 3 - (date.getDay() + 6) % 7);
-            // January 4 is always in week 1
-            var week1 = new Date(date.getFullYear(), 0, 4);
-            // Adjust to Thursday in week 1 and count number of weeks from date to week1
-            return 1 + Math.round(((date.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
+            try {
+                var date = new Date(this.getTime());
+                date.setHours(0, 0, 0, 0);
+                // Thursday in current week decides the year
+                date.setDate(date.getDate() + 3 - (date.getDay() + 6) % 7);
+                // January 4 is always in week 1
+                var week1 = new Date(date.getFullYear(), 0, 4);
+                // Adjust to Thursday in week 1 and count number of weeks from date to week1
+                return 1 + Math.round(
+                    ((date.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7
+                );
+            }
+            catch (e) {
+                console.warn("Date.prototype.getWeek() failed:", typeof this, this, e);
+                return this.toString();
+            }
         };
     };
     this.extend_js = function () {
@@ -38356,7 +38371,7 @@ class DashGuiFlowOption {
             return;
         }
         if (num === null) {
-            num = parseInt(this.options.multi_select_order.indexOf(this)) + 1;
+            num = this.options.multi_select_order.indexOf(this) + 1;
         }
         if (!this.multi_icon_num) {
             this.multi_icon_num = $("<div>" + num + "</div>");
@@ -38600,6 +38615,19 @@ class DashGuiFlowOptions {
         }
         return options;
     }
+    SelectAll (skip_cb=true) {
+        this.ClearSelections();
+        for (var option of this.options) {
+            option.SetActive(true);
+            this.on_option_selected(option, skip_cb);
+        }
+    }
+    ClearSelections (skip_cb=true) {
+        for (var option of this.options) {
+            option.SetActive(false);
+            this.on_option_selected(option, skip_cb);
+        }
+    }
     on_option_selected (selected_option, skip_cb=false) {
         var option;
         if (!this.MultiEnabled()) {
@@ -38614,7 +38642,7 @@ class DashGuiFlowOptions {
             if (selected_option.IsActive()) {
                 this.multi_select_order.push(selected_option);
             }
-            else {
+            else if (this.multi_select_order.length) {
                 this.multi_select_order.Remove(selected_option);
             }
             for (var i in this.multi_select_order) {
@@ -46486,7 +46514,12 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="", color=null) {
     };
     this.is_class = function (func) {
         var dummy = Function.prototype.toString.call(func);
-        return dummy.includes("this.setup_styles") || dummy.includes("this.html") || dummy.includes(".call(");
+        return (
+               dummy.includes("this.setup_styles")
+            || dummy.includes("this.html")
+            || dummy.includes(".call(")
+            || (dummy.includes("class ") && dummy.includes("constructor ("))
+        );
     };
     this.set_styles_for_side_tabs = function () {
         this.html.css({

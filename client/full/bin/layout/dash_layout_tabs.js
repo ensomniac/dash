@@ -515,7 +515,12 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="", color=null) {
     this.is_class = function (func) {
         var dummy = Function.prototype.toString.call(func);
 
-        return dummy.includes("this.setup_styles") || dummy.includes("this.html") || dummy.includes(".call(");
+        return (
+               dummy.includes("this.setup_styles")
+            || dummy.includes("this.html")
+            || dummy.includes(".call(")
+            || (dummy.includes("class ") && dummy.includes("constructor ("))
+        );
     };
 
     this.set_styles_for_side_tabs = function () {

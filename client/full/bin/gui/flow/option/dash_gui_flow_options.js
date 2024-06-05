@@ -212,6 +212,24 @@ class DashGuiFlowOptions {
         return options;
     }
 
+    SelectAll (skip_cb=true) {
+        this.ClearSelections();
+
+        for (var option of this.options) {
+            option.SetActive(true);
+
+            this.on_option_selected(option, skip_cb);
+        }
+    }
+
+    ClearSelections (skip_cb=true) {
+        for (var option of this.options) {
+            option.SetActive(false);
+
+            this.on_option_selected(option, skip_cb);
+        }
+    }
+
     on_option_selected (selected_option, skip_cb=false) {
         var option;
 
@@ -230,7 +248,7 @@ class DashGuiFlowOptions {
                 this.multi_select_order.push(selected_option);
             }
 
-            else {
+            else if (this.multi_select_order.length) {
                 this.multi_select_order.Remove(selected_option);
             }
 

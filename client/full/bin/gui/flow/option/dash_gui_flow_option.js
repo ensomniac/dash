@@ -453,7 +453,7 @@ class DashGuiFlowOption {
         }
 
         if (num === null) {
-            num = parseInt(this.options.multi_select_order.indexOf(this)) + 1;
+            num = this.options.multi_select_order.indexOf(this) + 1;
         }
 
         if (!this.multi_icon_num) {

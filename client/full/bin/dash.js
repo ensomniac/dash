@@ -167,8 +167,8 @@ function Dash () {
                             return this[this.length - 1];
                         }
 
-                        catch {
-                            console.warn("Array.prototype.Last() failed:", this);
+                        catch (e) {
+                            console.warn("Array.prototype.Last() failed:", typeof this, this, e);
 
                             return this;
                         }
@@ -180,8 +180,8 @@ function Dash () {
                             this[this.length - 1] = value;
                         }
 
-                        catch {
-                            console.warn("Array.prototype.SetLast() failed:", this);
+                        catch (e) {
+                            console.warn("Array.prototype.SetLast() failed:", typeof this, this, e);
 
                             return this;
                         }
@@ -193,8 +193,8 @@ function Dash () {
                             return this.splice(index, 0, item);
                         }
 
-                        catch {
-                            console.warn("Array.prototype.Insert() failed:", this);
+                        catch (e) {
+                            console.warn("Array.prototype.Insert() failed:", typeof this, this, e);
 
                             return this;
                         }
@@ -212,8 +212,8 @@ function Dash () {
                             return this;
                         }
 
-                        catch {
-                            console.warn("Array.prototype.Remove() failed:", this);
+                        catch (e) {
+                            console.warn("Array.prototype.Remove() failed:", typeof this, this, e);
 
                             return this;
                         }
@@ -239,8 +239,8 @@ function Dash () {
                             return this;
                         }
 
-                        catch {
-                            console.warn("Array.prototype.Pop() failed:", this);
+                        catch (e) {
+                            console.warn("Array.prototype.Pop() failed:", typeof this, this, e);
 
                             return this;
                         }
@@ -254,8 +254,8 @@ function Dash () {
                             }).length;
                         }
 
-                        catch {
-                            console.warn("Array.prototype.Count() failed:", this);
+                        catch (e) {
+                            console.warn("Array.prototype.Count() failed:", typeof this, this, e);
 
                             return this;
                         }
@@ -281,8 +281,8 @@ function Dash () {
                 return this.slice(0, 1).toUpperCase() + this.slice(1, this.length);
             }
 
-            catch {
-                console.warn("String.prototype.Title() failed:", typeof this, this);
+            catch (e) {
+                console.warn("String.prototype.Title() failed:", typeof this, this, e);
 
                 return this.toString();
             }
@@ -297,8 +297,8 @@ function Dash () {
                 return this.LTrim(char).RTrim(char);
             }
 
-            catch {
-                console.warn("String.prototype.Trim() failed:", typeof this, this);
+            catch (e) {
+                console.warn("String.prototype.Trim() failed:", typeof this, this, e);
 
                 return this.toString();
             }
@@ -319,8 +319,8 @@ function Dash () {
                 return this.toString();
             }
 
-            catch {
-                console.warn("String.prototype.LTrim() failed:", typeof this, this);
+            catch (e) {
+                console.warn("String.prototype.LTrim() failed:", typeof this, this, e);
 
                 return this.toString();
             }
@@ -341,8 +341,8 @@ function Dash () {
                 return this.toString();
             }
 
-            catch {
-                console.warn("String.prototype.RTrim() failed:", typeof this, this);
+            catch (e) {
+                console.warn("String.prototype.RTrim() failed:", typeof this, this, e);
 
                 return this.toString();
             }
@@ -353,8 +353,8 @@ function Dash () {
                 return (this.split(char).length - 1);
             }
 
-            catch {
-                console.warn("String.prototype.Count() failed:", typeof this, this);
+            catch (e) {
+                console.warn("String.prototype.Count() failed:", typeof this, this, e);
 
                 return this.toString();
             }
@@ -365,49 +365,68 @@ function Dash () {
                 return /^\d+$/.test(this);
             }
 
-            catch {
-                console.warn("String.prototype.IsDigit() failed:", typeof this, this);
+            catch (e) {
+                console.warn("String.prototype.IsDigit() failed:", typeof this, this, e);
 
                 return this.toString();
             }
         };
 
         String.prototype.ZFill = function (len) {
-            if (!len || this.length === len) {
-                return this.toString();
-            }
-
-            var string = "";
-
-            string += this.toString();
-
-            for (var _ of Dash.Math.Range(len)) {
-                if (string.length >= len) {
-                    break;
+            try {
+                if (!len || this.length === len) {
+                    return this.toString();
                 }
 
-                string = "0" + string;
+                var string = "";
+
+                string += this.toString();
+
+                for (var _ of Dash.Math.Range(len)) {
+                    if (string.length >= len) {
+                        break;
+                    }
+
+                    string = "0" + string;
+                }
+
+                return string;
             }
 
-            return string;
+            catch (e) {
+                console.warn("String.prototype.ZFill() failed:", typeof this, this, e);
+
+                return this.toString();
+            }
         };
     };
 
     this.extend_date_prototype = function () {
-        // This gets the ISO week number, which is equivalent to calling '.isocalendar().week' on a python datetime object
+        // This gets the ISO week number, which is equivalent to
+        // calling '.isocalendar().week' on a python datetime object
         Date.prototype.getWeek = function () {
-            var date = new Date(this.getTime());
+            try {
+                var date = new Date(this.getTime());
 
-            date.setHours(0, 0, 0, 0);
+                date.setHours(0, 0, 0, 0);
 
-            // Thursday in current week decides the year
-            date.setDate(date.getDate() + 3 - (date.getDay() + 6) % 7);
+                // Thursday in current week decides the year
+                date.setDate(date.getDate() + 3 - (date.getDay() + 6) % 7);
 
-            // January 4 is always in week 1
-            var week1 = new Date(date.getFullYear(), 0, 4);
+                // January 4 is always in week 1
+                var week1 = new Date(date.getFullYear(), 0, 4);
 
-            // Adjust to Thursday in week 1 and count number of weeks from date to week1
-            return 1 + Math.round(((date.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7);
+                // Adjust to Thursday in week 1 and count number of weeks from date to week1
+                return 1 + Math.round(
+                    ((date.getTime() - week1.getTime()) / 86400000 - 3 + (week1.getDay() + 6) % 7) / 7
+                );
+            }
+
+            catch (e) {
+                console.warn("Date.prototype.getWeek() failed:", typeof this, this, e);
+
+                return this.toString();
+            }
         };
     };
 
