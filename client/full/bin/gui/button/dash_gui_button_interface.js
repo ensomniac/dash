@@ -123,6 +123,8 @@ function DashGuiButtonInterface () {
                 "color": label
             });
         }
+
+        return this;
     };
 
     this.Disable = function (opacity=0.5) {

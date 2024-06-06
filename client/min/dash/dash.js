@@ -26616,6 +26616,7 @@ function DashGuiButtonInterface () {
                 "color": label
             });
         }
+        return this;
     };
     this.Disable = function (opacity=0.5) {
         if (this.disabled) {
@@ -28595,6 +28596,7 @@ function DashGuiCombo (
     this.determine_gravity = function (end_height) {
         var gravity = null;
         var offset_added = false;
+        var top_set = false;
         var top_offset = this.html.offset().top - (
             this.gravity_parent_override ? this.gravity_parent_override.offset().top : 0
         );
@@ -28630,6 +28632,7 @@ function DashGuiCombo (
                     "top": this.gravity_value_override || (gravity + this.list_offset_vertical)
                 });
                 offset_added = true;
+                top_set = true;
             }
         }
         // If the row list width is wider than this.html (assuming
@@ -28659,7 +28662,9 @@ function DashGuiCombo (
             this.rows.css({
                 "top": (parseInt(this.rows.css("top")) || 0) + this.list_offset_vertical
             });
+            top_set = true;
         }
+        return top_set;
     };
     this.show = function () {
         this.pre_show_size_set();
@@ -28684,7 +28689,7 @@ function DashGuiCombo (
             "height": "auto",
         });
         this.last_rows_height = this.rows.height();
-        this.determine_gravity(this.last_rows_height);
+        var top_set = this.determine_gravity(this.last_rows_height);
         this.draw_click_skirt(this.last_rows_height, this.rows.width());
         this.rows.css({
             "height": start_height,
@@ -28692,9 +28697,11 @@ function DashGuiCombo (
         });
         this.rows.animate({"height": this.last_rows_height}, 150);
         if (this.is_searchable) {
-            this.rows.css({
-                "top": this.html.height() + this.list_offset_vertical
-            });
+            if (!top_set) {
+                this.rows.css({
+                    "top": this.html.height() + this.list_offset_vertical
+                });
+            }
             this.manage_search_list();
         }
         if (!this.is_searchable) {
@@ -38214,6 +38221,11 @@ class DashGuiFlowOption {
             this.style_icon();
         }
     }
+    BreakConnections () {
+        this.html.off("mouseenter");
+        this.html.off("mouseleave");
+        this.html.off("click");
+    }
     add_icon (icon_name) {
         this.icon = new Dash.Gui.Icon(this.color, icon_name, null, 1, this.color.Stroke);
         this.style_icon();
@@ -38571,6 +38583,7 @@ class DashGuiFlowOptions {
             option.html.remove();
         }
         this.options = [];
+        this.multi_select_order = [];
         this.resize();
     }
     EnableMultiSelect () {

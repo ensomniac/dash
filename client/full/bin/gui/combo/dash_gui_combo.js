@@ -515,6 +515,7 @@ function DashGuiCombo (
     this.determine_gravity = function (end_height) {
         var gravity = null;
         var offset_added = false;
+        var top_set = false;
 
         var top_offset = this.html.offset().top - (
             this.gravity_parent_override ? this.gravity_parent_override.offset().top : 0
@@ -536,7 +537,6 @@ function DashGuiCombo (
 
         // Expand the combo upwards if not enough room below
         if (this.auto_gravity && this.last_total_height > height_override) {
-
             // As long as there's enough room above
             if (end_height < top_offset) {
                 gravity = this.html.height() - end_height;
@@ -561,6 +561,7 @@ function DashGuiCombo (
                 });
 
                 offset_added = true;
+                top_set = true;
             }
         }
 
@@ -595,7 +596,11 @@ function DashGuiCombo (
             this.rows.css({
                 "top": (parseInt(this.rows.css("top")) || 0) + this.list_offset_vertical
             });
+
+            top_set = true;
         }
+
+        return top_set;
     };
 
     this.show = function () {
@@ -633,7 +638,8 @@ function DashGuiCombo (
 
         this.last_rows_height = this.rows.height();
 
-        this.determine_gravity(this.last_rows_height);
+        var top_set = this.determine_gravity(this.last_rows_height);
+
         this.draw_click_skirt(this.last_rows_height, this.rows.width());
 
         this.rows.css({
@@ -644,9 +650,11 @@ function DashGuiCombo (
         this.rows.animate({"height": this.last_rows_height}, 150);
 
         if (this.is_searchable) {
-            this.rows.css({
-                "top": this.html.height() + this.list_offset_vertical
-            });
+            if (!top_set) {
+                this.rows.css({
+                    "top": this.html.height() + this.list_offset_vertical
+                });
+            }
 
             this.manage_search_list();
         }

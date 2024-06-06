@@ -246,6 +246,12 @@ class DashGuiFlowOption {
         }
     }
 
+    BreakConnections () {
+        this.html.off("mouseenter");
+        this.html.off("mouseleave");
+        this.html.off("click");
+    }
+
     add_icon (icon_name) {
         this.icon = new Dash.Gui.Icon(this.color, icon_name, null, 1, this.color.Stroke);
 

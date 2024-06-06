@@ -153,6 +153,7 @@ class DashGuiFlowOptions {
         }
 
         this.options = [];
+        this.multi_select_order = [];
 
         this.resize();
     }
