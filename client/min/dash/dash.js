@@ -18942,31 +18942,37 @@ function DashFile () {
                 if (error_callback) {
                     error_callback();
                 }
-                Dash.Log.Warn("Inline file download using Dash.File.URLToBlob() failed. The URL will be opened in a new tab instead:\n" + url);
+                Dash.Log.Warn(
+                    "Inline file download using Dash.File.URLToBlob() failed. " +
+                    "The URL will be opened in a new tab instead:\n" + url
+                );
                 window.open(url, "_blank");
             }
         );
     };
-    this.GetPreview = function (color, file_data, height, allow_100_percent_size=true, default_to_placeholder=true) {
+    this.GetPreview = function (
+        color, file_data={}, height=null, allow_100_percent_size=true,
+        default_to_placeholder=true, center_in_parent=true, assert_ext="", width=null
+    ) {
         var preview = null;
         var file_url = file_data["url"] || file_data["orig_url"] || "";
         var filename = file_data["filename"] || file_data["orig_filename"];
-        if (file_url) {
-            var file_ext = file_url.split(".").Last();
+        if (file_url || assert_ext) {
+            var file_ext = file_url ? file_url.split(".").Last() : assert_ext;
             if (file_ext === "txt") {
                 preview = this.GetPlainTextPreview(file_url);
             }
             else if (this.Extensions["video"].includes(file_ext)) {
-                preview = this.GetVideoPreview(file_url, height);
+                preview = this.GetVideoPreview(file_url, height, center_in_parent, false, true, width);
             }
             else if (this.Extensions["audio"].includes(file_ext)) {
-                preview = this.GetAudioPreview(file_url, height);
+                preview = this.GetAudioPreview(file_url, height, center_in_parent);
             }
             else if (file_ext === "pdf") {
                 preview = this.GetPDFPreview(file_url, height);
             }
             else if (this.Extensions["image"].includes(file_ext) || "aspect" in file_data) {
-                preview = this.GetImagePreview(file_url, height);
+                preview = this.GetImagePreview(file_url, height, width);
             }
             else if (this.Extensions["model_viewer"].includes(file_ext)) {
                 preview = this.GetModelPreview(file_data["glb_url"], height);
@@ -19055,12 +19061,16 @@ function DashFile () {
             "100%"
         );
     };
-    this.GetVideoPreview = function (url, height, center_in_parent=true, square=false, controls=true) {
+    this.GetVideoPreview = function (url, height, center_in_parent=true, square=false, controls=true, width=null) {
         var html = $("<video src='" + url + "' crossorigin='anonymous'></video>");
         if (center_in_parent) {
             html.css(this.abs_center_css);
         }
-        this.check_if_video_exists_in_dom(html, height, square, controls);
+        // This property is old but keeping it to not break anything
+        if (square) {
+            width = height;
+        }
+        this.check_if_video_exists_in_dom(html, height, controls, width);
         return html;
     };
     this.GetAudioPreview = function (url, height, center_in_parent=true) {
@@ -19107,7 +19117,7 @@ function DashFile () {
         return this.set_preview_size(html, height, "100%");
     };
     // Basic version
-    this.GetImagePreview = function (url, height=null, width=null) {
+    this.GetImagePreview = function (url, height=null, width=null, default_bg_color=null) {
         var html = $("<div></div>");
         var css = {
             "background-image": url ? "url(" + url + ")" : "",
@@ -19116,7 +19126,7 @@ function DashFile () {
             "background-position": "center center"
         };
         if (!url) {
-            css["background-color"] = Dash.Color.Light.StrokeDark;
+            css["background-color"] = default_bg_color || Dash.Color.Light.StrokeDark;
         }
         html.css(css);
         return this.set_preview_size(html, width ? width : height, width ? height : "100%");
@@ -19153,15 +19163,15 @@ function DashFile () {
     // controls not being scaled properly to match the video tag element. Waiting until the
     // video tag exists in the DOM solves that problem. If the source (URL) is updated
     // while the video is not in view, this problem may reappear. This isn't perfect.
-    this.check_if_video_exists_in_dom = function (html, height, square=false, controls=true) {
+    this.check_if_video_exists_in_dom = function (html, height, controls=true, width=null) {
         (function (self) {
             setTimeout(
                 function () {
                     if (!($.contains(document, html[0]))) {
-                        self.check_if_video_exists_in_dom(html, height, square, controls);
+                        self.check_if_video_exists_in_dom(html, height, controls, width);
                         return;
                     }
-                    self.set_preview_size(html, square ? height : null, height);
+                    self.set_preview_size(html, width, height);
                     if (controls) {
                         html.attr("controls", true);
                     }
@@ -41869,6 +41879,7 @@ function DashGuiIcons (icon) {
         "caret_left":              new DashGuiIconDefinition(this.icon, "Caret Left", this.weight["solid"], "caret-left"),
         "caret_right":             new DashGuiIconDefinition(this.icon, "Caret Right", this.weight["solid"], "caret-right"),
         "caret_up":                new DashGuiIconDefinition(this.icon, "Caret Up", this.weight["solid"], "caret-up"),
+        "cd":                      new DashGuiIconDefinition(this.icon, "CD", this.weight["regular"], "compact-disc"),
         "cdn_tool_accordion":      new DashGuiIconDefinition(this.icon, "Accordion Tool", this.weight["regular"], "angle-double-down"),
         "cdn_tool_block_layout":   new DashGuiIconDefinition(this.icon, "Block Layout Tool", this.weight["regular"], "th-large"),
         "cdn_tool_career_path":    new DashGuiIconDefinition(this.icon, "Career Path Tool", this.weight["regular"], "shoe-prints"),
@@ -42016,6 +42027,7 @@ function DashGuiIcons (icon) {
         "moon":                    new DashGuiIconDefinition(this.icon, "Moon", this.weight["regular"], "moon"),
         "more":                    new DashGuiIconDefinition(this.icon, "More", this.weight["regular"], "window-restore"),
         "move":                    new DashGuiIconDefinition(this.icon, "Move", this.weight["regular"], "arrows-alt"),
+        "music":                   new DashGuiIconDefinition(this.icon, "Music", this.weight["regular"], "music"),
         "navigation":              new DashGuiIconDefinition(this.icon, "Navigation - Top Level", this.weight["regular"], "tasks"),
         "newsfeed":                new DashGuiIconDefinition(this.icon, "Newsfeed", this.weight["regular"], "newspaper"),
         "note":                    new DashGuiIconDefinition(this.icon, "Note", this.weight["regular"], "sticky-note"),
@@ -45211,6 +45223,7 @@ function DashGuiVDBEntry (
     this.refresh_ms = refresh_ms;
     this.include_primary_header = include_primary_header;
     this.start_with_prop_box = start_with_prop_box;
+    this.api = "VDB";
     this.full_data = null;
     this.vdb_3d_box = null;
     this.property_box = null;
@@ -45493,7 +45506,7 @@ function DashGuiVDBEntry (
         Dash.Request(
             this,
             this.on_data,
-            "VDB",
+            this.api,
             {
                 "f": "get_details",
                 "vdb_type": this.vdb_type,

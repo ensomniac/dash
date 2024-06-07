@@ -99,7 +99,9 @@ class Interface:
 
         return data
 
-    def SetProperty(self, key="", value="", _vdb_type="", _obj_id="", temp_kwargs={}, unset_temp=True, return_all=True):
+    def SetProperty(
+        self, key="", value="", _vdb_type="", _obj_id="", temp_kwargs={}, unset_temp=True, return_all=True
+    ):
         return self.SetProperties(
             properties={key: value},
             _vdb_type=_vdb_type,

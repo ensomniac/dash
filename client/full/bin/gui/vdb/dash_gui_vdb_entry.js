@@ -9,6 +9,7 @@ function DashGuiVDBEntry (
     this.include_primary_header = include_primary_header;
     this.start_with_prop_box = start_with_prop_box;
 
+    this.api = "VDB";
     this.full_data = null;
     this.vdb_3d_box = null;
     this.property_box = null;
@@ -375,7 +376,7 @@ function DashGuiVDBEntry (
         Dash.Request(
             this,
             this.on_data,
-            "VDB",
+            this.api,
             {
                 "f": "get_details",
                 "vdb_type": this.vdb_type,
