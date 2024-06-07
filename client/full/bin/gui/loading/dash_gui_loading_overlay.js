@@ -40,7 +40,7 @@ function DashGuiLoadingOverlay (
             this.color.BackgroundRaised
         );
 
-        // Deprecated, just wrappers now - but keeping around to avoid breaking things
+        // Deprecated, just wrappers now, but keeping around to avoid breaking things
         this.bubble = this.modal.modal;
         this.background = this.modal.background;
 
