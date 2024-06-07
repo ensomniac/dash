@@ -73,6 +73,7 @@ function DashGuiLoadingOverlay (
         }
 
         this.modal.background.css(css);
+
         this.modal.modal.css(css);
     };
 
@@ -175,6 +176,14 @@ function DashGuiLoadingOverlay (
 
         this.bubble_dots.Start();
 
+        this.SetLabelText();
+    };
+
+    this.SetLabelText = function (label_prefix="", progress=null) {
+        if (label_prefix) {
+            this.SetLabelPrefix(label_prefix);
+        }
+
         this.bubble_label.SetText(this.get_loading_label_text(progress));
     };
 
@@ -186,12 +195,20 @@ function DashGuiLoadingOverlay (
         this.bubble_dots.Stop();
 
         if (label_prefix) {
-            this.label_prefix = label_prefix;
-
-            this.bubble_label.SetText(this.get_loading_label_text(this.progress));
+            this.SetLabelText(label_prefix);
         }
 
         this.bubble_dots.html.hide();
+    };
+
+    this.Start = function (label_prefix="") {
+        this.bubble_dots.Start();
+
+        if (label_prefix) {
+            this.SetLabelText(label_prefix);
+        }
+
+        this.bubble_dots.html.show();
     };
 
     this.IsShowing = function () {
@@ -211,7 +228,7 @@ function DashGuiLoadingOverlay (
     };
 
     this.setup_label = function () {
-        this.bubble_label = new Dash.Gui.Header(this.get_loading_label_text(this.progress), null, false);
+        this.bubble_label = new Dash.Gui.Header(this.get_loading_label_text(), null, false);
 
         this.bubble_label.label.css({
             "padding-left": 0,
@@ -221,7 +238,11 @@ function DashGuiLoadingOverlay (
         this.modal.AddHTML(this.bubble_label.html);
     };
 
-    this.get_loading_label_text = function (progress) {
+    this.get_loading_label_text = function (progress=null) {
+        if (progress === null) {
+            progress = this.progress;
+        }
+
         if (progress === "none") {  // Special case
             return this.label_prefix;
         }
@@ -234,9 +255,7 @@ function DashGuiLoadingOverlay (
             return (this.label_prefix + "...");
         }
 
-        else {
-            return (this.label_prefix + " (" + progress.toString() + "%)");
-        }
+        return (this.label_prefix + " (" + progress.toString() + "%)");
     };
     
     this.setup_styles();

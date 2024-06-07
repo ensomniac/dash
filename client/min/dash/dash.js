@@ -43523,6 +43523,12 @@ function DashGuiLoadingOverlay (
         this.progress = progress;
         this.Show();
         this.bubble_dots.Start();
+        this.SetLabelText();
+    };
+    this.SetLabelText = function (label_prefix="", progress=null) {
+        if (label_prefix) {
+            this.SetLabelPrefix(label_prefix);
+        }
         this.bubble_label.SetText(this.get_loading_label_text(progress));
     };
     this.SetLabelPrefix = function (label_prefix="Loading") {
@@ -43531,10 +43537,16 @@ function DashGuiLoadingOverlay (
     this.Stop = function (label_prefix="") {
         this.bubble_dots.Stop();
         if (label_prefix) {
-            this.label_prefix = label_prefix;
-            this.bubble_label.SetText(this.get_loading_label_text(this.progress));
+            this.SetLabelText(label_prefix);
         }
         this.bubble_dots.html.hide();
+    };
+    this.Start = function (label_prefix="") {
+        this.bubble_dots.Start();
+        if (label_prefix) {
+            this.SetLabelText(label_prefix);
+        }
+        this.bubble_dots.html.show();
     };
     this.IsShowing = function () {
         return this.is_showing;
@@ -43548,14 +43560,17 @@ function DashGuiLoadingOverlay (
         this.modal.AddHTML(this.bubble_dots.html);
     };
     this.setup_label = function () {
-        this.bubble_label = new Dash.Gui.Header(this.get_loading_label_text(this.progress), null, false);
+        this.bubble_label = new Dash.Gui.Header(this.get_loading_label_text(), null, false);
         this.bubble_label.label.css({
             "padding-left": 0,
             "padding-right": Dash.Size.Padding * 0.5
         });
         this.modal.AddHTML(this.bubble_label.html);
     };
-    this.get_loading_label_text = function (progress) {
+    this.get_loading_label_text = function (progress=null) {
+        if (progress === null) {
+            progress = this.progress;
+        }
         if (progress === "none") {  // Special case
             return this.label_prefix;
         }
@@ -43565,9 +43580,7 @@ function DashGuiLoadingOverlay (
         if (this.simple) {
             return (this.label_prefix + "...");
         }
-        else {
-            return (this.label_prefix + " (" + progress.toString() + "%)");
-        }
+        return (this.label_prefix + " (" + progress.toString() + "%)");
     };
     
     this.setup_styles();
@@ -45223,7 +45236,6 @@ function DashGuiVDBEntry (
     this.refresh_ms = refresh_ms;
     this.include_primary_header = include_primary_header;
     this.start_with_prop_box = start_with_prop_box;
-    this.api = "VDB";
     this.full_data = null;
     this.vdb_3d_box = null;
     this.property_box = null;
@@ -45506,7 +45518,7 @@ function DashGuiVDBEntry (
         Dash.Request(
             this,
             this.on_data,
-            this.api,
+            "VDB",  // Leave this alone, don't set it as a class attr
             {
                 "f": "get_details",
                 "vdb_type": this.vdb_type,
