@@ -32,6 +32,7 @@ function DashGuiIcons (icon) {
         "archive":                 new DashGuiIconDefinition(this.icon, "Archive", this.weight["regular"], "archive"),
         "archive_light":           new DashGuiIconDefinition(this.icon, "Archive (Light)", this.weight["light"], "archive"),
         "arrow_down":              new DashGuiIconDefinition(this.icon, "Arrow Down", this.weight["regular"], "angle-down"),
+        "arrow_down_heavy":        new DashGuiIconDefinition(this.icon, "Arrow Down", this.weight["solid"], "angle-down"),
         "arrow_down_alt":          new DashGuiIconDefinition(this.icon, "Arrow Down Alt", this.weight["regular"], "arrow-down"),
         "arrow_down_alt_heavy":    new DashGuiIconDefinition(this.icon, "Arrow Down Alt (Heavy)", this.weight["solid"], "arrow-down"),
         "arrow_left":              new DashGuiIconDefinition(this.icon, "Arrow Left", this.weight["regular"], "angle-left"),

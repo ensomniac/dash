@@ -41712,7 +41712,7 @@ function DashGuiIcon (color=null, icon_name="unknown", container_size=null, icon
     };
     this.SetIcon = function (icon_name) {
         if (icon_name === this.name) {
-            return;
+            return this;
         }
         this.name = icon_name || "unknown";
         this.icon_definition = new DashGuiIcons(this);
@@ -41746,7 +41746,7 @@ function DashGuiIcon (color=null, icon_name="unknown", container_size=null, icon
                 "Error: DashGuiIcon SetSize requires a number for " +
                 "icon_size_percent_num (that represents a percentage)"
             );
-            return;
+            return this;
         }
         this.icon_html.css({
             "font-size": icon_size_percent_num.toString() + "%"
@@ -41826,6 +41826,7 @@ function DashGuiIcons (icon) {
         "archive":                 new DashGuiIconDefinition(this.icon, "Archive", this.weight["regular"], "archive"),
         "archive_light":           new DashGuiIconDefinition(this.icon, "Archive (Light)", this.weight["light"], "archive"),
         "arrow_down":              new DashGuiIconDefinition(this.icon, "Arrow Down", this.weight["regular"], "angle-down"),
+        "arrow_down_heavy":        new DashGuiIconDefinition(this.icon, "Arrow Down", this.weight["solid"], "angle-down"),
         "arrow_down_alt":          new DashGuiIconDefinition(this.icon, "Arrow Down Alt", this.weight["regular"], "arrow-down"),
         "arrow_down_alt_heavy":    new DashGuiIconDefinition(this.icon, "Arrow Down Alt (Heavy)", this.weight["solid"], "arrow-down"),
         "arrow_left":              new DashGuiIconDefinition(this.icon, "Arrow Left", this.weight["regular"], "angle-left"),

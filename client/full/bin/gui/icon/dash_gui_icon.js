@@ -36,7 +36,7 @@ function DashGuiIcon (color=null, icon_name="unknown", container_size=null, icon
 
     this.SetIcon = function (icon_name) {
         if (icon_name === this.name) {
-            return;
+            return this;
         }
 
         this.name = icon_name || "unknown";
@@ -85,7 +85,7 @@ function DashGuiIcon (color=null, icon_name="unknown", container_size=null, icon
                 "icon_size_percent_num (that represents a percentage)"
             );
 
-            return;
+            return this;
         }
 
         this.icon_html.css({

@@ -195,14 +195,24 @@ class Interface:
 
         return response
 
-    def GetDetailsAll(self, add_details_kwargs={}, _vdb_type="", temp_kwargs={}, unset_temp=True):
+    def GetDetailsAll(self, add_details_kwargs={}, _vdb_type="", temp_kwargs={}, unset_temp=True, obj_id_filter=[]):
         self.set_temp_attrs(_vdb_type, **temp_kwargs)
 
         collection = self.GetCollection()
-        all_data = collection.GetAll()
 
-        if not all_data.get("order"):
-            return all_data
+        if obj_id_filter:
+            all_data = {
+                "data": {},
+                "order": obj_id_filter
+            }
+
+            for obj_id in obj_id_filter:
+                all_data["data"][obj_id] = collection.Get(obj_id)
+        else:
+            all_data = collection.GetAll()
+
+            if not all_data.get("order"):
+                return all_data
 
         all_data = self.filter_get_details_all_data(all_data)
 
