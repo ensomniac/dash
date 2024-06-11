@@ -371,6 +371,14 @@ class DashLocalStorage:
 
         return data
 
+    # Shortcut/wrapper for Read->Write
+    def UpdateData(self, full_path, update_data, conform_permissions=True):
+        return Write(
+            full_path=full_path,
+            data=Read(full_path).update(update_data),
+            conform_permissions=conform_permissions
+        )
+
     def Write(self, full_path, data, conform_permissions=True):
         if not full_path:
             raise ValueError(f"No path provided to LocalStorage.Write: {full_path}")
@@ -876,6 +884,11 @@ def Read(full_path, is_json=True):
 
 def Write(full_path, data, conform_permissions=True):
     return DashLocalStorage().Write(full_path, data, conform_permissions)
+
+
+# Shortcut/wrapper for Read->Write
+def UpdateData(full_path, update_data, conform_permissions=True):
+    return DashLocalStorage().UpdateData(full_path, update_data, conform_permissions)
 
 
 def GetPrivKey(filename, subfolders=[], is_json=True):
