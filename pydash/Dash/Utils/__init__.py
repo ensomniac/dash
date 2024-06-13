@@ -26,7 +26,7 @@ def UploadFile(
     enforce_unique_filename_key=True, existing_data_for_update={}, enforce_single_period=True,
     allowable_executable_exts=[], related_file_path="", target_aspect_ratio=0, additional_data={},
     replace_extra_periods=True, include_jpg_thumb=True, include_png_thumb=True, include_square_thumb=False,
-    include_orig_png=True, min_size=0, is_mask=False
+    include_orig_png=True, min_size=0, is_mask=False, allowable_exts=[]
 ):
     from .file import Upload
 
@@ -51,7 +51,8 @@ def UploadFile(
         include_square_thumb=include_square_thumb,
         include_orig_png=include_orig_png,
         min_size=min_size,
-        is_mask=is_mask
+        is_mask=is_mask,
+        allowable_exts=allowable_exts
     )
 
 
@@ -338,19 +339,34 @@ def StyleFooterRow(worksheet, bg_color="dcdfe3", font=None, border=None, fill=No
 
 def StyleRow(
     worksheet, row_num, font=None, border=None, fill=None,
-    bg_color="", font_type="", font_color="", include_border=True
+    bg_color="", font_type="", font_color="", include_border=True,
+    alignment=None, align_hor="center", align_ver="center"
 ):
     return GetWorksheetUtils(worksheet).StyleRow(
-        row_num, font, border, fill, bg_color, font_type, font_color, include_border
+        row_num, font, border, fill, bg_color, font_type, font_color,
+        include_border, alignment, align_hor, align_ver
     )
 
 
 def StyleColumn(
     worksheet, col_letter_or_num, font=None, border=None, fill=None,
-    bg_color="", font_type="", font_color="", include_border=True
+    bg_color="", font_type="", font_color="", include_border=True,
+    alignment=None, align_hor="center", align_ver="center"
 ):
     return GetWorksheetUtils(worksheet).StyleColumn(
-        col_letter_or_num, font, border, fill, bg_color, font_type, font_color, include_border
+        col_letter_or_num, font, border, fill, bg_color, font_type,
+        font_color, include_border, alignment, align_hor, align_ver
+    )
+
+
+def StyleCell(
+    worksheet, row_num, col_num, font=None, border=None, fill=None,
+    bg_color="", font_type="", font_color="", include_border=True,
+    alignment=None, align_hor="center", align_ver="center"
+):
+    return GetWorksheetUtils(worksheet).StyleCell(
+        row_num, col_num, font, border, fill, bg_color, font_type,
+        font_color, include_border, alignment, align_hor, align_ver
     )
 
 

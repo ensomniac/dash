@@ -15,6 +15,7 @@ class WorksheetUtils:
         self.fills = {}
         self.sides = {}
         self.borders = {}
+        self.alignments = {}
 
     def AutoSizeColumnsByContent(self, pad=0):
         from openpyxl.utils import get_column_letter
@@ -35,9 +36,7 @@ class WorksheetUtils:
             )
 
     def CenterTextVerticallyInAllCells(self, min_height=30, min_height_mults={}):
-        from openpyxl.styles import Alignment
-
-        alignment = Alignment(vertical="center")
+        alignment = self.get_alignment(vertical="center")
 
         for row in self.worksheet.iter_rows():
             for cell in row:
@@ -64,7 +63,9 @@ class WorksheetUtils:
             break
 
     def StyleHeaderRow(self, bg_color="dcdfe3", font=None, border=None, fill=None, font_color=""):
-        font, border, fill = self.assert_header_footer_params(bg_color, font, border, fill, font_color, header=True)
+        font, border, fill = self.assert_header_footer_params(
+            bg_color, font, border, fill, font_color, header=True
+        )
 
         self.StyleRow(1, font, border, fill)
 
@@ -73,32 +74,51 @@ class WorksheetUtils:
 
         self.StyleRow(self.worksheet.max_row, font, border, fill)
 
-    def StyleRow(
-        self, row_num, font=None, border=None, fill=None,
-        bg_color="", font_type="", font_color="", include_border=True
+    def StyleCell(
+        self, row_num, col_num, font=None, border=None, fill=None,
+        bg_color="", font_type="", font_color="", include_border=True,
+        alignment=None, align_hor="center", align_ver="center"
     ):
-        if not fill and bg_color:
-            fill = self.get_fill(bg_color)
+        return self.StyleRow(
+            row_num=row_num,
+            font=font,
+            border=border,
+            fill=fill,
+            bg_color=bg_color,
+            font_type=font_type,
+            font_color=font_color,
+            include_border=include_border,
+            alignment=alignment,
+            align_hor=align_hor,
+            align_ver=align_ver,
+            _col_num=col_num
+        )
 
-        if not font and (font_type or font_color):
-            font = self.get_font(font_type, font_color)
+    def StyleRow(
+        self, row_num, font=None, border=None, fill=None, bg_color="",
+        font_type="", font_color="", include_border=True, alignment=None,
+        align_hor="center", align_ver="center", _col_num=0
+    ):
+        fill, font, border, alignment = self.init_style_params(
+            fill, bg_color, font, font_type, font_color, border, include_border, alignment, align_hor, align_ver
+        )
 
-        if not border and include_border:
-            border = self.get_border("thin", "thin", "thin", "thin")
+        for index, cell in enumerate(self.worksheet[row_num]):
+            if _col_num:
+                i = index + 1
 
-        for cell in self.worksheet[row_num]:
-            if font:
-                cell.font = font
+                if i < _col_num:
+                    continue
 
-            if fill:
-                cell.fill = fill
+                if i > _col_num:
+                    break
 
-            if border:
-                cell.border = border
+            self.style_cell(cell, fill, font, border, alignment)
 
     def StyleColumn(
         self, col_letter_or_num, font=None, border=None, fill=None,
-        bg_color="", font_type="", font_color="", include_border=True
+        bg_color="", font_type="", font_color="", include_border=True,
+        alignment=None, align_hor="center", align_ver="center"
     ):
         if type(col_letter_or_num) is int:
             from openpyxl.utils import get_column_letter
@@ -112,27 +132,14 @@ class WorksheetUtils:
 
         col_index = column_index_from_string(col_letter_or_num.upper())
 
-        # Retrieve styles if not provided
-        if not fill and bg_color:
-            fill = self.get_fill(bg_color)
-
-        if not font and (font_type or font_color):
-            font = self.get_font(font_type, font_color)
-
-        if not border and include_border:
-            border = self.get_border("thin", "thin", "thin", "thin")
+        fill, font, border, alignment = self.init_style_params(
+            fill, bg_color, font, font_type, font_color, border, include_border, alignment, align_hor, align_ver
+        )
 
         # Apply styles to each cell in the specified column
         for row in self.worksheet.iter_rows(min_col=col_index, max_col=col_index):
             for cell in row:
-                if font:
-                    cell.font = font
-
-                if fill:
-                    cell.fill = fill
-
-                if border:
-                    cell.border = border
+                self.style_cell(cell, fill, font, border, alignment)
 
     def get_font(self, font_type="", font_color=""):
         key = f"{font_type}{font_color}"
@@ -174,6 +181,19 @@ class WorksheetUtils:
 
         return self.sides[style]
 
+    def get_alignment(self, horizontal="", vertical=""):
+        key = f"{horizontal}{vertical}"
+
+        if not self.alignments.get(key):
+            from openpyxl.styles import Alignment
+
+            self.alignments[key] = Alignment(
+                horizontal=horizontal or None,
+                vertical=vertical or None
+            )
+
+        return self.alignments[key]
+
     def get_border(self, left=None, right=None, top=None, bottom=None):
         key = f"{left}{right}{top}{bottom}"
 
@@ -189,7 +209,9 @@ class WorksheetUtils:
 
         return self.borders[key]
 
-    def assert_header_footer_params(self, bg_color="dcdfe3", font=None, border=None, fill=None, font_color="", header=False):
+    def assert_header_footer_params(
+        self, bg_color="dcdfe3", font=None, border=None, fill=None, font_color="", header=False
+    ):
         if not fill:
             fill = self.get_fill(bg_color)
 
@@ -200,3 +222,36 @@ class WorksheetUtils:
             border = self.get_border(**{"bottom" if header else "top": "thin"})
 
         return font, border, fill
+
+    def init_style_params(
+        self, fill, bg_color, font, font_type, font_color, border, include_border, alignment, align_hor, align_ver
+    ):
+        if not fill and bg_color:
+            fill = self.get_fill(bg_color)
+
+        if not font and (font_type or font_color):
+            font = self.get_font(font_type, font_color)
+
+        if not border and include_border:
+            border = self.get_border("thin", "thin", "thin", "thin")
+
+        if not alignment and (align_hor != "center" or align_ver != "center"):
+            alignment = self.get_alignment(
+                horizontal=align_hor,
+                vertical=align_ver
+            )
+
+        return fill, font, border, alignment
+
+    def style_cell(self, cell, fill, font, border, alignment):
+        if fill:
+            cell.fill = fill
+
+        if font:
+            cell.font = font
+
+        if border:
+            cell.border = border
+
+        if alignment:
+            cell.alignment = alignment

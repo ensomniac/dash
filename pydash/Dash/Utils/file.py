@@ -28,7 +28,7 @@ def Upload(
     enforce_unique_filename_key=True, existing_data_for_update={}, enforce_single_period=True,
     allowable_executable_exts=[], related_file_path="", target_aspect_ratio=0, additional_data={},
     replace_extra_periods=True, include_jpg_thumb=True, include_png_thumb=True, include_square_thumb=False,
-    include_orig_png=True, min_size=0, is_mask=False
+    include_orig_png=True, min_size=0, is_mask=False, allowable_exts=[]
 ):
     if type(file_bytes_or_existing_path) is not bytes:
         if type(file_bytes_or_existing_path) is not str:
@@ -53,6 +53,9 @@ def Upload(
 
     if file_ext in executable_extensions and file_ext not in allowable_executable_exts:
         raise ClientAlert(f"Executable files are not permitted (.{file_ext}). If you believe this is in error, please let an admin know.")
+
+    if allowable_exts and file_ext not in allowable_exts:
+        raise ClientAlert(f"Invalid file type ({file_ext}), expected: {', '.join(allowable_exts)}")
 
     if file_ext == "gif":
         include_jpg_thumb = False

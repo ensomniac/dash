@@ -32,6 +32,7 @@ function DashGui () {
     this.ToolRow                   = DashGuiToolRow;
     this.VDB                       = DashGuiVDB;
     this.VDBEntry                  = DashGuiVDBEntry;
+    this.VDBFile                   = DashGuiVDBFile;
     this.VDBList                   = DashGuiVDBList;
     this.VDBListRow                = DashGuiVDBListRow;
     this.VDB3D                     = DashGuiVDB3D;
