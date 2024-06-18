@@ -55,6 +55,28 @@ def get_by_name(name):
     return services.get(name)
 
 
+# I added this and related '/var/priv/youtube.json' for Fantom - Andrew, 6/17/24
+YouTube = Service(
+    name="youtube",
+    authorize_url="",
+    token_endpoint="google",
+    token_refresh_endpoint="",
+    scope=[
+        "https://www.googleapis.com/auth/youtube",
+        "https://www.googleapis.com/auth/youtube.channel-memberships.creator",
+        "https://www.googleapis.com/auth/youtube.force-ssl",
+        "https://www.googleapis.com/auth/youtube.readonly",
+        "https://www.googleapis.com/auth/youtube.upload",
+        "https://www.googleapis.com/auth/youtubepartner",
+        "https://www.googleapis.com/auth/youtubepartner-channel-audit",
+        "https://www.googleapis.com/auth/userinfo.email"  # This is important so we know whose credentials we're getting
+    ],
+    success_token_exchange_key="access_token",  # This key should be included in the return data when the code is exchanged for a token
+    access_token_key="access_token",
+    token_valid_url=""
+)
+
+
 GoogleDrive = Service(
     name="gdrive",
     authorize_url="",

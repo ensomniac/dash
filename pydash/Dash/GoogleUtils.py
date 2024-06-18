@@ -87,6 +87,13 @@ def ParseHTTPError(http_error, params={}):
 
 
 class GUtils:
+    _auth_utils_: callable
+    _docs_utils_: callable
+    _drive_utils_: callable
+    _sheets_utils_: callable
+    _slides_utils_: callable
+    _youtube_utils_: callable
+
     def __init__(self, user_email=""):
         self._user_email = user_email
 
@@ -94,12 +101,6 @@ class GUtils:
             from Dash import AdminEmails
 
             self._user_email = AdminEmails[0]
-
-        self._auth_utils = _AuthUtils(self)
-        self._docs_utils = _DocsUtils(self)
-        self._drive_utils = _DriveUtils(self)
-        self._sheets_utils = _SheetsUtils(self)
-        self._slides_utils = _SlidesUtils(self)
 
     @property
     def UserEmail(self):
@@ -116,6 +117,48 @@ class GUtils:
     @property
     def PDFMimeType(self):
         return "application/pdf"
+
+    @property
+    def _auth_utils(self):
+        if not hasattr(self, "_auth_utils_"):
+            self._auth_utils_ = _AuthUtils(self)
+
+        return self._auth_utils_
+
+    @property
+    def _drive_utils(self):
+        if not hasattr(self, "_drive_utils_"):
+            self._drive_utils_ = _DriveUtils(self)
+
+        return self._drive_utils_
+
+    @property
+    def _docs_utils(self):
+        if not hasattr(self, "_docs_utils_"):
+            self._docs_utils_ = _DocsUtils(self)
+
+        return self._docs_utils_
+
+    @property
+    def _sheets_utils(self):
+        if not hasattr(self, "_sheets_utils_"):
+            self._sheets_utils_ = _SheetsUtils(self)
+
+        return self._sheets_utils_
+
+    @property
+    def _slides_utils(self):
+        if not hasattr(self, "_slides_utils_"):
+            self._slides_utils_ = _SlidesUtils(self)
+
+        return self._slides_utils_
+
+    @property
+    def _youtube_utils(self):
+        if not hasattr(self, "_youtube_utils_"):
+            self._youtube_utils_ = _YouTubeUtils(self)
+
+        return self._youtube_utils_
 
     # If downloading a sheet as a PDF and landscape is needed, use DownloadSheetAsPDF with landscape set to True
     def DownloadAsPDF(self, file_id, pdf_path, parent_id=""):
@@ -305,6 +348,12 @@ class GUtils:
     @property
     def DocsMimeType(self):
         return self._docs_utils.DocsMimeType
+
+    # ======================== YOUTUBE =======================
+
+    @property
+    def YouTubeClient(self):
+        return self._youtube_utils.Client
 
 
 class _DriveUtils:
@@ -835,6 +884,22 @@ class _DocsUtils:
     @property
     def DocsMimeType(self):
         return "application/vnd.google-apps.document"
+
+
+class _YouTubeUtils:
+    _client: callable
+
+    def __init__(self, gutils):
+        self.gutils = gutils
+
+    @property
+    def Client(self):
+        if not hasattr(self, "_client"):
+            from googleapiclient.discovery import build
+
+            self._client = build("youtube", "v3", http=self.gutils.OAuth2Creds)
+
+        return self._client
 
 
 class _AuthUtils:
