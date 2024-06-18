@@ -173,6 +173,10 @@ def FormatTime(dt_obj, time_format=1, tz="utc", update_tz=True):
 
         return dt_obj.strftime(f"%A, {month} {day}")
 
+    # Format: 2/14
+    if time_format == 22:
+        return dt_obj.strftime("%-m/%-d")
+
     # Format: Monday, October 9th, 2023 at 2:51 pm
     return f"{date_markup} at {time_markup}"
 
