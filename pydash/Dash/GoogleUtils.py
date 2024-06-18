@@ -93,6 +93,7 @@ class GUtils:
     _sheets_utils_: callable
     _slides_utils_: callable
     _youtube_utils_: callable
+    _youtube_auth_utils_: callable
 
     def __init__(self, user_email=""):
         self._user_email = user_email
@@ -106,11 +107,11 @@ class GUtils:
     def UserEmail(self):
         return self._user_email
 
-    @property
+    @property  # For all Drive-based apps (not YouTube)
     def OAuth2Creds(self):
         return self._auth_utils.OAuth2Creds
 
-    @property
+    @property  # For all Drive-based apps (not YouTube)
     def BearerToken(self):
         return self._auth_utils.BearerToken
 
@@ -118,47 +119,12 @@ class GUtils:
     def PDFMimeType(self):
         return "application/pdf"
 
-    @property
+    @property  # For all Drive-based apps (not YouTube)
     def _auth_utils(self):
         if not hasattr(self, "_auth_utils_"):
             self._auth_utils_ = _AuthUtils(self)
 
         return self._auth_utils_
-
-    @property
-    def _drive_utils(self):
-        if not hasattr(self, "_drive_utils_"):
-            self._drive_utils_ = _DriveUtils(self)
-
-        return self._drive_utils_
-
-    @property
-    def _docs_utils(self):
-        if not hasattr(self, "_docs_utils_"):
-            self._docs_utils_ = _DocsUtils(self)
-
-        return self._docs_utils_
-
-    @property
-    def _sheets_utils(self):
-        if not hasattr(self, "_sheets_utils_"):
-            self._sheets_utils_ = _SheetsUtils(self)
-
-        return self._sheets_utils_
-
-    @property
-    def _slides_utils(self):
-        if not hasattr(self, "_slides_utils_"):
-            self._slides_utils_ = _SlidesUtils(self)
-
-        return self._slides_utils_
-
-    @property
-    def _youtube_utils(self):
-        if not hasattr(self, "_youtube_utils_"):
-            self._youtube_utils_ = _YouTubeUtils(self)
-
-        return self._youtube_utils_
 
     # If downloading a sheet as a PDF and landscape is needed, use DownloadSheetAsPDF with landscape set to True
     def DownloadAsPDF(self, file_id, pdf_path, parent_id=""):
@@ -256,6 +222,13 @@ class GUtils:
     def ExcelMimeType(self):
         return self._sheets_utils.ExcelMimeType
 
+    @property
+    def _sheets_utils(self):
+        if not hasattr(self, "_sheets_utils_"):
+            self._sheets_utils_ = _SheetsUtils(self)
+
+        return self._sheets_utils_
+
     def GetSheetData(self, sheet_id, row_data_only=True):
         return self._sheets_utils.GetData(sheet_id, row_data_only)
 
@@ -285,6 +258,13 @@ class GUtils:
     @property
     def DriveFields(self):
         return self._drive_utils.Fields
+
+    @property
+    def _drive_utils(self):
+        if not hasattr(self, "_drive_utils_"):
+            self._drive_utils_ = _DriveUtils(self)
+
+        return self._drive_utils_
 
     def CreateDriveFile(self, params, file_path=None, in_shared_drive=False, fields=""):
         return self._drive_utils.CreateFile(params, file_path, in_shared_drive, fields)
@@ -339,6 +319,13 @@ class GUtils:
     def SlidesMimeType(self):
         return self._slides_utils.SlidesMimeType
 
+    @property
+    def _slides_utils(self):
+        if not hasattr(self, "_slides_utils_"):
+            self._slides_utils_ = _SlidesUtils(self)
+
+        return self._slides_utils_
+
     # ========================= DOCS =========================
 
     @property
@@ -349,11 +336,40 @@ class GUtils:
     def DocsMimeType(self):
         return self._docs_utils.DocsMimeType
 
+    @property
+    def _docs_utils(self):
+        if not hasattr(self, "_docs_utils_"):
+            self._docs_utils_ = _DocsUtils(self)
+
+        return self._docs_utils_
+
     # ======================== YOUTUBE =======================
 
     @property
     def YouTubeClient(self):
         return self._youtube_utils.Client
+
+    @property
+    def YouTubeOAuth2Creds(self):
+        return self._youtube_auth_utils.OAuth2Creds
+
+    @property
+    def YouTubeBearerToken(self):
+        return self._youtube_auth_utils.BearerToken
+
+    @property
+    def _youtube_auth_utils(self):
+        if not hasattr(self, "_youtube_auth_utils_"):
+            self._youtube_auth_utils_ = _YouTubeAuthUtils(self)
+
+        return self._youtube_auth_utils_
+
+    @property
+    def _youtube_utils(self):
+        if not hasattr(self, "_youtube_utils_"):
+            self._youtube_utils_ = _YouTubeUtils(self)
+
+        return self._youtube_utils_
 
 
 class _DriveUtils:
@@ -886,6 +902,7 @@ class _DocsUtils:
         return "application/vnd.google-apps.document"
 
 
+# Ref: https://developers.google.com/youtube/v3/docs
 class _YouTubeUtils:
     _client: callable
 
@@ -897,17 +914,25 @@ class _YouTubeUtils:
         if not hasattr(self, "_client"):
             from googleapiclient.discovery import build
 
-            self._client = build("youtube", "v3", http=self.gutils.OAuth2Creds)
+            self._client = build("youtube", "v3", http=self.gutils.YouTubeOAuth2Creds)
 
         return self._client
+
+    # TODO: write API functions, ex:
+    # self.Client.channels().list(**{
+    #     "part": "id",
+    #     # "mine": True
+    #     "forHandle": "GoogleDevelopers"
+    # }).execute()
 
 
 class _AuthUtils:
     _creds: object
     _oauth2_creds: object
 
-    def __init__(self, gutils):
+    def __init__(self, gutils, service_name="gdrive"):
         self.gutils = gutils
+        self.service_name = service_name
 
     @property
     def OAuth2Creds(self):
@@ -940,7 +965,7 @@ class _AuthUtils:
             from Dash.Authorize import GetTokenData
 
             try:
-                token_json = GetTokenData(service_name="gdrive", user_email=self.gutils.UserEmail)
+                token_json = GetTokenData(service_name=self.service_name, user_email=self.gutils.UserEmail)
 
             except Exception as e:
                 raise Exception(f"Failed to get Google credentials, error:\n\n{e}")
@@ -959,3 +984,9 @@ class _AuthUtils:
             )
 
         return self._creds
+
+
+class _YouTubeAuthUtils(_AuthUtils):
+    def __init__(self, gutils):
+        _AuthUtils.__init__(self, gutils, service_name="youtube")
+
