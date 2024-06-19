@@ -44327,7 +44327,7 @@ function DashGuiPropertyBoxInterface () {
     ) {
         this.data = this.get_data_cb ? this.get_data_cb() : {};
         var value = this.get_formatted_data_cb ? this.get_formatted_data_cb(data_key) : this.data[data_key];
-        if (!(label_text.endsWith(":"))) {
+        if (label_text && !(label_text.endsWith(":"))) {
             label_text += ":";
         }
         var container = $("<div></div>");
