@@ -454,6 +454,14 @@ function DashLayoutListRowElements () {
             icon_button.html.css(column_config_data["css"]);
         }
 
+        if (this.is_header && column_config_data["header_css"]) {
+            icon_button.html.css(column_config_data["header_css"]);
+        }
+
+        else if (this.is_footer && column_config_data["footer_css"]) {
+            icon_button.html.css(column_config_data["footer_css"]);
+        }
+
         if (this.is_header || this.is_footer || this.is_sublist) {
             // Keep the container so the row stays properly aligned, but don't add the actual element
             icon_button.icon.icon_html.remove();

@@ -44,7 +44,9 @@ class Properties:
             self._dash_context = Memory.DashContext
 
             if not self._dash_context:
-                self._dash_context = Memory.SetContext("candy")
+                from Dash.PackageContext import GetAssetPath
+
+                self._dash_context = Memory.SetContext(GetAssetPath())
 
         return self._dash_context
 

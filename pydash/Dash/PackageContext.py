@@ -126,3 +126,7 @@ def Get(asset_path):
 
 def GetFullData(asset_path):
     return PackageContext(asset_path).PackageData
+
+
+def GetAssetPath():
+    return os.getcwd().lstrip(f"{OapiRoot}{os.path.sep}").split(os.path.sep)[0]
