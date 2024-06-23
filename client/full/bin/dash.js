@@ -4,7 +4,9 @@ function Dash () {
     this.html = $("<div></div>");
     this.TabIsVisible = true;
     this.Context = DASH_CONTEXT;
-    this.Daypart = "Morning/Afternoon/Evening"; // Managed by Dash.Utils -> 5-minute background update interval.
+    this.GlobalStorageEnabled = false;
+    this.InChromeExtension = chrome?.runtime;
+    this.Daypart = "Morning/Afternoon/Evening"; // Managed by Dash.Utils -> 5-minute background update interval
     this.LocalDev = window.location.protocol === "file:";
 
     // TODO: Mozilla officially/explicitly recommends against userAgent sniffing, we should probably update this...
@@ -102,16 +104,23 @@ function Dash () {
     };
 
     this.setup_styles = function () {
+        this.check_for_global_storage();
+
         $("body").css({
             "overflow": "hidden"
         });
 
-        this.html.css({
-            "position": "absolute",
-            "left": 0,
-            "top": 0,
+        var css = {
             "background": this.Color.GetVerticalGradient("#444", "#111", "#111")
-        });
+        };
+
+        if (!this.InChromeExtension) {
+            css["position"] = "absolute";
+            css["left"] = 0;
+            css["top"] = 0;
+        }
+
+        this.html.css(css);
 
         (function (self) {
             requestAnimationFrame(function () {
@@ -124,7 +133,87 @@ function Dash () {
         })(this);
     };
 
+    this.check_for_global_storage = function () {
+        var event_key = "DashGlobalStorageReady";
+
+        if (this.InChromeExtension) {  // For extensions (using Dash)
+            // This goes to the extension's background context (background.js)
+            chrome.runtime.sendMessage(
+                {"type": "Is" + event_key},
+                (response) => {
+                    if (chrome.runtime.lastError) {
+                        console.log(
+                            "(Dash Is" + event_key + ") responseCallback failed:",
+                            chrome.runtime.lastError.message
+                        );
+
+                        return;
+                    }
+
+                    this.GlobalStorageEnabled = response["ready"];
+
+                    if (!this.GlobalStorageEnabled) {
+                        // This receives messages from the extension's background context (background.js)
+                        chrome.runtime.onMessage.addListener((message) => {
+                            if (message["type"] === event_key) {
+                                this.GlobalStorageEnabled = true;
+                            }
+                        });
+                    }
+                }
+            );
+        }
+
+        else {  // For webpages
+            var on_ready;
+            var timeout_id;
+
+            on_ready = () => {
+                if (this.GlobalStorageEnabled) {
+                    clearTimeout(timeout_id);
+
+                    window.removeEventListener(event_key, on_ready);
+
+                    return;
+                }
+
+                this.GlobalStorageEnabled = true;
+
+                clearTimeout(timeout_id);
+
+                window.removeEventListener(event_key, on_ready);
+
+                // This receives messages from the Dash Global Storage extension's content context (content.js)
+                window.addEventListener("message", (event) => {
+                    if (event.source !== window || !event.data?.["type"]) {
+                        return;
+                    }
+
+                    if (event.data["type"] === "DashGlobalStorageGetResponse") {
+                        this.Local.global_get_cbs[event.data["callback_id"]](event.data["value"]);
+
+                        delete this.Local.global_get_cbs[event.data["callback_id"]];
+                    }
+                });
+            };
+
+            // This receives messages from the Dash Global Storage extension's content context (content.js)
+            window.addEventListener(event_key, on_ready);
+
+            timeout_id = setTimeout(
+                () => {
+                    window.removeEventListener(event_key, on_ready);
+                },
+                5000
+            );
+        }
+    };
+
     this.draw = function () {
+        if (this.InChromeExtension) {
+            return;
+        }
+
         this.width = $(window).width();
         this.height = $(window).height();
 
@@ -455,6 +544,39 @@ function Dash () {
     };
 }
 
+function WindowInitDash () {
+    window.Dash = new Dash();
+    window.d = window.Dash;  // TODO: deprecate this
+
+    window.Dash.Initialize();
+
+    $("body").empty().append(window.Dash.html);
+
+    if (Dash.DarkModeActive) {
+        Dash.Log.Warn(
+            "*** Dark mode active ***\n\n" +
+            "Be sure that to call Dash.Color.SwapIfDarkModeActive() " +
+            "after custom colors are set in color spec file."
+        );
+    }
+
+    if (!window.RunDash) {
+        console.error("Dash is initialized, but there is no window.RunDash() function. Create one and reload.");
+
+        return;
+    }
+
+    var html = window.RunDash();
+
+    if (!html) {
+        console.error("The window.RunDash() must return an html element to anchor this app.");
+
+        return;
+    }
+
+    window.Dash.html.append(html);
+}
+
 $(document).on("ready", function () {
     $.fn.extend({  // TODO: are these extensions used?
         "animateStep": function (options) {
@@ -493,34 +615,5 @@ $(document).on("ready", function () {
         return valA + t * (valB - valA);
     };
 
-    window.Dash = new Dash();
-    window.d = window.Dash;  // TODO: deprecate this
-
-    window.Dash.Initialize();
-
-    $("body").empty().append(window.Dash.html);
-
-    if (Dash.DarkModeActive) {
-        Dash.Log.Warn(
-            "*** Dark mode active ***\n\n" +
-            "Be sure that to call Dash.Color.SwapIfDarkModeActive() " +
-            "after custom colors are set in color spec file."
-        );
-    }
-
-    if (!window.RunDash) {
-        console.error("Dash is initialized, but there is no window.RunDash() function. Create one and reload.");
-    }
-
-    else {
-        var html = window.RunDash();
-
-        if (!html) {
-            console.error("The window.RunDash() must return an html element to anchor this app.");
-        }
-
-        else {
-            window.Dash.html.append(html);
-        }
-    }
+    WindowInitDash();
 });

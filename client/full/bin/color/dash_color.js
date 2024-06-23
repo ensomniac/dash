@@ -307,14 +307,6 @@ function DashColor (dark_mode_active=false) {
         return this.to_rgba(color_data);
     };
 
-    this.to_rgba = function (color_data) {
-        return "rgba(" + color_data[0] + ", " + color_data[1] + ", " + color_data[2] + ", " + color_data[3] + ")";
-    };
-
-    this.to_rgb = function (color_data) {
-        return "rgb(" + color_data[0] + ", " + color_data[1] + ", " + color_data[2] + ")";
-    };
-
     this.ParseToRGB = function (cstr) {
         return this.to_rgb(this.Parse(cstr));
     };
@@ -555,6 +547,170 @@ function DashColor (dark_mode_active=false) {
         return input_html;
     };
 
+    // If a portal follows the standard color setup, this can be used after globally defining the required colors
+    this.InitColors = function () {
+        for (var color of [
+            "ColorAccentPrimary",
+            "ColorAccentSecondary",
+            "ColorDarkBG",
+            "ColorLightBG",
+            "ColorDarkText",
+            "ColorLightText",
+            "ColorButton",
+            "ColorButtonSelected"
+        ]) {
+            if (!window[color]) {
+                console.error(
+                    "'InitColors' can only be called once all required " +
+                    "colors have been globally defined.\nMissing: window." + color
+                );
+
+                console.trace();
+
+                debugger;
+            }
+        }
+
+        this.init_color_light();
+        this.init_color_dark();
+        this.init_color_mobile();
+        this.SwapIfDarkModeActive();
+    };
+
+    this.init_color_light = function () {
+        this.Light.Background = window["ColorLightBG"];
+        this.Light.Text = window["ColorDarkText"];
+        this.Light.TextHeader = window["ColorDarkText"];
+        this.Light.AccentGood = window["ColorAccentPrimary"];
+        this.Light.AccentBad = window["ColorAccentSecondary"];
+
+        this.Light.Button = new DashColorButtonSet(
+            "none",  // Light.Button.AreaBackground (If applicable)
+            new DashColorStateSet(
+                window["ColorButton"],  // Light.Button.Background.Base
+                window["ColorButtonSelected"],  // Light.Button.Background.Selected
+                this.Darken(window["ColorButton"], 20),  // Light.Button.Background.BaseHover
+                this.Darken(window["ColorButtonSelected"], 20)  // Light.Button.Background.SelectedHover
+            ),
+            new DashColorStateSet(
+                window["ColorLightText"],  // Light.Button.Text.Base
+                window["ColorLightText"],  // Light.Button.Text.Selected
+                this.Lighten(window["ColorLightText"], 20),  // Light.Button.Text.BaseHover
+                this.Lighten(window["ColorLightText"], 20)  // Light.Button.Text.SelectedHover
+            )
+        );
+
+        this.Light.Tab = new DashColorButtonSet(
+            this.Darken(window["ColorLightBG"], 50),  // Light.Tab.AreaBackground (If applicable)
+            new DashColorStateSet(
+                this.Darken(window["ColorLightBG"], 25),  // Light.Tab.Background.Base
+                window["ColorLightBG"],  // Light.Tab.Background.Selected
+                this.Darken(window["ColorLightBG"], 50),  // Light.Tab.Background.BaseHover
+                window["ColorAccentPrimary"]  // Light.Tab.Background.SelectedHover
+            ),
+            new DashColorStateSet(
+                window["ColorDarkText"],  // Light.Tab.Text.Base
+                window["ColorDarkText"],  // Light.Tab.Text.Selected
+                this.Lighten(window["ColorDarkText"], 50),  // Light.Tab.Text.BaseHover
+                this.Lighten(window["ColorDarkText"], 50)  // Light.Tab.Text.SelectedHover
+            )
+        );
+
+        this.Light.Input = new DashColorButtonSet(
+            "none",  // Light.Input.AreaBackground (If applicable)
+            new DashColorStateSet(
+                this.Lighten(window["ColorLightBG"], 5),  // Light.Input.Background.Base
+                "none",  // Light.Input.Background.Selected
+                "none",  // Light.Input.Background.BaseHover
+                "none"  // Light.Input.Background.SelectedHover
+            ),
+            new DashColorStateSet(
+                window["ColorLightText"],  // Light.Input.Text.Base
+                window["ColorLightText"],  // Light.Input.Text.Selected
+                window["ColorLightText"],  // Light.Input.Text.BaseHover
+                window["ColorLightText"]  // Light.Input.Text.SelectedHover
+            )
+        );
+    };
+
+    this.init_color_dark = function () {
+        this.Dark.Background = window["ColorDarkBG"];
+        this.Dark.Text = window["ColorLightText"];
+        this.Dark.TextHeader = window["ColorLightText"];
+        this.Dark.AccentGood = window["ColorAccentPrimary"];
+        this.Dark.AccentBad = window["ColorAccentSecondary"];
+
+        this.Dark.Button = new DashColorButtonSet(
+            "none",  // Dark.Button.AreaBackground (If applicable)
+            new DashColorStateSet(
+                window["ColorButton"],  // Dark.Button.Background.Base
+                window["ColorButtonSelected"],  // Dark.Button.Background.Selected
+                this.Lighten(window["ColorButton"], 20),  // Dark.Button.Background.BaseHover
+                this.Lighten(window["ColorButtonSelected"], 20)  // Dark.Button.Background.SelectedHover
+            ),
+            new DashColorStateSet(
+                window["ColorLightText"],  // Dark.Button.Text.Base
+                window["ColorLightText"],  // Dark.Button.Text.Selected
+                this.Darken(window["ColorLightText"], 20),  // Dark.Button.Text.BaseHover
+                this.Darken(window["ColorLightText"], 20)  // Dark.Button.Text.SelectedHover
+            )
+        );
+
+        this.Dark.Tab = new DashColorButtonSet(
+            window["ColorDarkBG"],  // Dark.Tab.AreaBackground (If applicable)
+            new DashColorStateSet(
+                window["ColorButton"],  // Dark.Tab.Background.Base
+                window["ColorButtonSelected"],  // Dark.Tab.Background.Selected
+                this.Lighten(window["ColorButton"], 20),  // Dark.Tab.Background.BaseHover
+                this.Lighten(window["ColorButtonSelected"], 20)  // Dark.Tab.Background.SelectedHover
+            ),
+            new DashColorStateSet(
+                window["ColorLightText"],  // Dark.Tab.Text.Base
+                window["ColorLightText"],  // Dark.Tab.Text.Selected
+                this.Darken(window["ColorLightText"], 20),  // Dark.Tab.Text.BaseHover
+                this.Darken(window["ColorLightText"], 20)  // Dark.Tab.Text.SelectedHover
+            )
+        );
+
+        this.Dark.Input = new DashColorButtonSet(
+            "none",  // Dark.Input.AreaBackground (If applicable)
+            new DashColorStateSet(
+                this.Lighten(window["ColorLightBG"], 5),  // Dark.Input.Background.Base
+                "none",  // Dark.Input.Background.Selected
+                "none",  // Dark.Input.Background.BaseHover
+                "none"  // Dark.Input.Background.SelectedHover
+            ),
+            new DashColorStateSet(
+                window["ColorLightText"],  // Dark.Input.Text.Base
+                window["ColorLightText"],  // Dark.Input.Text.Selected
+                window["ColorLightText"],  // Dark.Input.Text.BaseHover
+                window["ColorLightText"]  // Dark.Input.Text.SelectedHover
+            )
+        );
+    };
+
+    this.init_color_mobile = function () {
+        var gradient_dark = this.Lighten(window["ColorDarkBG"], 15);
+        var gradient_light = this.Lighten(window["ColorDarkBG"], 45);
+
+        this.Mobile.AccentSecondary = this.Lighten(window["ColorButton"], 45);
+        this.Mobile.AccentPrimary = this.Lighten(window["ColorButtonSelected"], 45);
+        this.Mobile.BackgroundGradient = this.GetVerticalGradient(gradient_light, gradient_dark);
+        this.Mobile.ButtonGradient = this.GetHorizontalGradient(gradient_light, gradient_dark);
+    };
+
+    this.to_rgba = function (color_data) {
+        return "rgba(" + color_data[0] + ", " + color_data[1] + ", " + color_data[2] + ", " + color_data[3] + ")";
+    };
+
+    this.to_rgb = function (color_data) {
+        return "rgb(" + color_data[0] + ", " + color_data[1] + ", " + color_data[2] + ")";
+    };
+
+    this._get_background_raised = function (color) {
+        return this.Lighten(color, this.IsLightColor(color) ? 10: 40);
+    };
+
     this.Names = {
         "aliceblue": [240, 248, 255],
         "antiquewhite": [250, 235, 215],
@@ -704,10 +860,6 @@ function DashColor (dark_mode_active=false) {
         "whitesmoke": [245, 245, 245],
         "yellow": [255, 255, 0],
         "yellowgreen": [154, 205, 50]
-    };
-
-    this._get_background_raised = function (color) {
-        return this.Lighten(color, Dash.Color.IsLightColor(color) ? 10: 40);
     };
 
     this.setup_color_sets();

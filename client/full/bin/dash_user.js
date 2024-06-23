@@ -74,18 +74,18 @@ function DashUser () {
             this.Data = server_response["user"];
             this.Init = server_response["init"];
 
-            Dash.Local.Set("email", email);
-            Dash.Local.Set("token", server_response["token"]);
-            Dash.Local.Set("user_json", JSON.stringify(server_response["user"]));
+            Dash.Local.Set("email", email, false, true);
+            Dash.Local.Set("token", server_response["token"], false, true);
+            Dash.Local.Set("user_json", JSON.stringify(server_response["user"]), false, true);
         }
 
         else {
             this.Data = null;
             this.Init = null;
 
-            Dash.Local.Set("email", "");
-            Dash.Local.Set("token", "");
-            Dash.Local.Set("user_json", "");
+            Dash.Local.Set("email", "", false, true);
+            Dash.Local.Set("token", "", false, true);
+            Dash.Local.Set("user_json", "", false, true);
         }
 
         this.build_init_team_combo();
@@ -139,9 +139,9 @@ function DashUser () {
             return;
         }
 
-        Dash.Local.Set("email", "");
-        Dash.Local.Set("token", "");
-        Dash.Local.Set("user_json", "");
+        Dash.Local.Set("email", "", false, true);
+        Dash.Local.Set("token", "", false, true);
+        Dash.Local.Set("user_json", "", false, true);
 
         location.reload();
     };

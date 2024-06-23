@@ -225,10 +225,8 @@ class _SyncUtils:
 
         return client_path_full, client_path_min, pydash_package
 
+    # Return all valid local paths to any Dash client packages on this user's machine
     def GetLocalDashClientPaths(self, packages):
-        # return all valid local paths to any Dash
-        # client packages on this user's machine
-
         distribution_packages = []
 
         for package in packages:
@@ -253,6 +251,20 @@ class _SyncUtils:
 
             if os.path.exists(sync_client_root):
                 package["sync_client_root"] = sync_client_root
+
+            chrome_extensions_root = os.path.join(usr_path_git, "chrome_extensions/")
+
+            if os.path.exists(chrome_extensions_root):
+                roots = []
+
+                for folder in os.listdir(chrome_extensions_root):
+                    root = os.path.join(chrome_extensions_root, folder)
+
+                    if os.path.exists(os.path.join(root, "dash_init.js")):
+                        roots.append(root)
+
+                if roots:
+                    package["chrome_extension_roots"] = roots
 
             distribution_packages.append(package)
 

@@ -17483,7 +17483,9 @@ function Dash () {
     this.html = $("<div></div>");
     this.TabIsVisible = true;
     this.Context = DASH_CONTEXT;
-    this.Daypart = "Morning/Afternoon/Evening"; // Managed by Dash.Utils -> 5-minute background update interval.
+    this.GlobalStorageEnabled = false;
+    this.InChromeExtension = chrome?.runtime;
+    this.Daypart = "Morning/Afternoon/Evening"; // Managed by Dash.Utils -> 5-minute background update interval
     this.LocalDev = window.location.protocol === "file:";
     // TODO: Mozilla officially/explicitly recommends against userAgent sniffing, we should probably update this...
     //  https://developer.mozilla.org/en-US/docs/Web/HTTP/Browser_detection_using_the_user_agent#mobile_device_detection
@@ -17570,15 +17572,19 @@ function Dash () {
         "transform":         "translateZ(0)"
     };
     this.setup_styles = function () {
+        this.check_for_global_storage();
         $("body").css({
             "overflow": "hidden"
         });
-        this.html.css({
-            "position": "absolute",
-            "left": 0,
-            "top": 0,
+        var css = {
             "background": this.Color.GetVerticalGradient("#444", "#111", "#111")
-        });
+        };
+        if (!this.InChromeExtension) {
+            css["position"] = "absolute";
+            css["left"] = 0;
+            css["top"] = 0;
+        }
+        this.html.css(css);
         (function (self) {
             requestAnimationFrame(function () {
                 self.draw();
@@ -17588,7 +17594,69 @@ function Dash () {
             });
         })(this);
     };
+    this.check_for_global_storage = function () {
+        var event_key = "DashGlobalStorageReady";
+        if (this.InChromeExtension) {  // For extensions (using Dash)
+            // This goes to the extension's background context (background.js)
+            chrome.runtime.sendMessage(
+                {"type": "Is" + event_key},
+                (response) => {
+                    if (chrome.runtime.lastError) {
+                        console.log(
+                            "(Dash Is" + event_key + ") responseCallback failed:",
+                            chrome.runtime.lastError.message
+                        );
+                        return;
+                    }
+                    this.GlobalStorageEnabled = response["ready"];
+                    if (!this.GlobalStorageEnabled) {
+                        // This receives messages from the extension's background context (background.js)
+                        chrome.runtime.onMessage.addListener((message) => {
+                            if (message["type"] === event_key) {
+                                this.GlobalStorageEnabled = true;
+                            }
+                        });
+                    }
+                }
+            );
+        }
+        else {  // For webpages
+            var on_ready;
+            var timeout_id;
+            on_ready = () => {
+                if (this.GlobalStorageEnabled) {
+                    clearTimeout(timeout_id);
+                    window.removeEventListener(event_key, on_ready);
+                    return;
+                }
+                this.GlobalStorageEnabled = true;
+                clearTimeout(timeout_id);
+                window.removeEventListener(event_key, on_ready);
+                // This receives messages from the Dash Global Storage extension's content context (content.js)
+                window.addEventListener("message", (event) => {
+                    if (event.source !== window || !event.data?.["type"]) {
+                        return;
+                    }
+                    if (event.data["type"] === "DashGlobalStorageGetResponse") {
+                        this.Local.global_get_cbs[event.data["callback_id"]](event.data["value"]);
+                        delete this.Local.global_get_cbs[event.data["callback_id"]];
+                    }
+                });
+            };
+            // This receives messages from the Dash Global Storage extension's content context (content.js)
+            window.addEventListener(event_key, on_ready);
+            timeout_id = setTimeout(
+                () => {
+                    window.removeEventListener(event_key, on_ready);
+                },
+                5000
+            );
+        }
+    };
     this.draw = function () {
+        if (this.InChromeExtension) {
+            return;
+        }
         this.width = $(window).width();
         this.height = $(window).height();
         this.html.css({
@@ -17850,6 +17918,29 @@ function Dash () {
         //  https://developer.mozilla.org/en-US/docs/Web/API/Idle_Detection_API
     };
 }
+function WindowInitDash () {
+    window.Dash = new Dash();
+    window.d = window.Dash;  // TODO: deprecate this
+    window.Dash.Initialize();
+    $("body").empty().append(window.Dash.html);
+    if (Dash.DarkModeActive) {
+        Dash.Log.Warn(
+            "*** Dark mode active ***\n\n" +
+            "Be sure that to call Dash.Color.SwapIfDarkModeActive() " +
+            "after custom colors are set in color spec file."
+        );
+    }
+    if (!window.RunDash) {
+        console.error("Dash is initialized, but there is no window.RunDash() function. Create one and reload.");
+        return;
+    }
+    var html = window.RunDash();
+    if (!html) {
+        console.error("The window.RunDash() must return an html element to anchor this app.");
+        return;
+    }
+    window.Dash.html.append(html);
+}
 $(document).on("ready", function () {
     $.fn.extend({  // TODO: are these extensions used?
         "animateStep": function (options) {
@@ -17880,29 +17971,7 @@ $(document).on("ready", function () {
         }
         return valA + t * (valB - valA);
     };
-    window.Dash = new Dash();
-    window.d = window.Dash;  // TODO: deprecate this
-    window.Dash.Initialize();
-    $("body").empty().append(window.Dash.html);
-    if (Dash.DarkModeActive) {
-        Dash.Log.Warn(
-            "*** Dark mode active ***\n\n" +
-            "Be sure that to call Dash.Color.SwapIfDarkModeActive() " +
-            "after custom colors are set in color spec file."
-        );
-    }
-    if (!window.RunDash) {
-        console.error("Dash is initialized, but there is no window.RunDash() function. Create one and reload.");
-    }
-    else {
-        var html = window.RunDash();
-        if (!html) {
-            console.error("The window.RunDash() must return an html element to anchor this app.");
-        }
-        else {
-            window.Dash.html.append(html);
-        }
-    }
+    WindowInitDash();
 });
 
 function DashGui () {
@@ -18571,16 +18640,16 @@ function DashUser () {
         if (email && server_response["token"]) {
             this.Data = server_response["user"];
             this.Init = server_response["init"];
-            Dash.Local.Set("email", email);
-            Dash.Local.Set("token", server_response["token"]);
-            Dash.Local.Set("user_json", JSON.stringify(server_response["user"]));
+            Dash.Local.Set("email", email, false, true);
+            Dash.Local.Set("token", server_response["token"], false, true);
+            Dash.Local.Set("user_json", JSON.stringify(server_response["user"]), false, true);
         }
         else {
             this.Data = null;
             this.Init = null;
-            Dash.Local.Set("email", "");
-            Dash.Local.Set("token", "");
-            Dash.Local.Set("user_json", "");
+            Dash.Local.Set("email", "", false, true);
+            Dash.Local.Set("token", "", false, true);
+            Dash.Local.Set("user_json", "", false, true);
         }
         this.build_init_team_combo();
     };
@@ -18622,9 +18691,9 @@ function DashUser () {
         if (!window.confirm("Log out?")) {
             return;
         }
-        Dash.Local.Set("email", "");
-        Dash.Local.Set("token", "");
-        Dash.Local.Set("user_json", "");
+        Dash.Local.Set("email", "", false, true);
+        Dash.Local.Set("token", "", false, true);
+        Dash.Local.Set("user_json", "", false, true);
         location.reload();
     };
 }
@@ -19437,19 +19506,55 @@ function DashUtils () {
 
 function DashLocal (context) {
     this.context = context;
-    this.Set = function (key, value, session=false) {
+    this.global_get_cbs = {};
+    this.Set = function (key, value, session=false, global=false) {
         if (key.indexOf(this.context["asset_path"] + "_") !== 0) {
             key = this.context["asset_path"] + "_" + key;
+        }
+        if (global) {
+            if (Dash.GlobalStorageEnabled) {
+                this.query_global_storage("DashGlobalStorageSet", key, {"value": value});
+            }
+            else if (!Dash.InChromeExtension) {
+                console.error(
+                      "Error: Dash.Local.Set was called for '"
+                    + key
+                    + "' with 'global' but 'Dash.GlobalStorageEnabled' is false"
+                );
+            }
         }
         return session ? sessionStorage.setItem(key, value) : localStorage.setItem(key, value);
     };
     // If bool_default is provided, the value will be
     // parsed as a bool and default to the value provided
-    this.Get = function (key, bool_default=null, session=false) {
+    this.Get = function (key, bool_default=null, session=false, global_cb=null) {
         if (key.indexOf(this.context["asset_path"] + "_") !== 0) {
             key = this.context["asset_path"] + "_" + key;
         }
-        var value = session ? sessionStorage.getItem(key) : localStorage.getItem(key);
+        if (global_cb) {
+            if (Dash.GlobalStorageEnabled) {
+                var callback_id = Dash.Math.RandomID();
+                this.global_get_cbs[callback_id] = (value) => {
+                    global_cb(this.parse_get_value(value, bool_default));
+                };
+                this.query_global_storage("DashGlobalStorageGet", key, {"callback_id": callback_id});
+            }
+            else if (!Dash.InChromeExtension) {
+                console.error(
+                      "Error: Dash.Local.Get was called for '"
+                    + key
+                    + "' with 'global_cb' but 'Dash.GlobalStorageEnabled' is false"
+                );
+                global_cb("");
+            }
+            return;
+        }
+        return this.parse_get_value(
+            session ? sessionStorage.getItem(key) : localStorage.getItem(key),
+            bool_default
+        );
+    };
+    this.parse_get_value = function (value, bool_default=null) {
         if (bool_default === true) {
             return ["true", true, null, ""].includes(value);
         }
@@ -19457,6 +19562,52 @@ function DashLocal (context) {
             return ["true", true].includes(value);
         }
         return value;
+    };
+    this.query_global_storage = function (type, key, extra_data={}) {
+        if (!Dash.GlobalStorageEnabled) {
+            if (!Dash.InChromeExtension) {
+                console.error(
+                      "Error: Dash.Local.query_global_storage was called for '"
+                    + key
+                    + "' but 'Dash.GlobalStorageEnabled' is false"
+                );
+            }
+            return;
+        }
+        if (Dash.InChromeExtension) {
+            chrome.runtime.sendMessage(
+                {
+                    "type": type,
+                    "key": "dash_global_" + key,
+                    ...extra_data
+                },
+                (response) => {
+                    if (chrome.runtime.lastError) {
+                        if (chrome.runtime.lastError.message !== "The message port closed before a response was received.") {
+                            console.log(
+                                "(Dash.Local " + type + ") responseCallback failed:",
+                                chrome.runtime.lastError.message
+                            );
+                        }
+                        return;
+                    }
+                    if (response?.["type"] === "DashGlobalStorageGetResponse") {
+                        this.global_get_cbs[response["callback_id"]](response["value"]);
+                        delete this.global_get_cbs[response["callback_id"]];
+                    }
+                }
+            );
+        }
+        else {
+            window.postMessage(
+                {
+                    "type": type,
+                    "key": "dash_global_" + key,
+                    ...extra_data
+                },
+                "*"
+            );
+        }
     };
 }
 
@@ -21680,12 +21831,6 @@ function DashColor (dark_mode_active=false) {
     this.ToRGBA = function (color_data) {
         return this.to_rgba(color_data);
     };
-    this.to_rgba = function (color_data) {
-        return "rgba(" + color_data[0] + ", " + color_data[1] + ", " + color_data[2] + ", " + color_data[3] + ")";
-    };
-    this.to_rgb = function (color_data) {
-        return "rgb(" + color_data[0] + ", " + color_data[1] + ", " + color_data[2] + ")";
-    };
     this.ParseToRGB = function (cstr) {
         return this.to_rgb(this.Parse(cstr));
     };
@@ -21871,6 +22016,153 @@ function DashColor (dark_mode_active=false) {
         input_html.addClass(class_name);
         return input_html;
     };
+    // If a portal follows the standard color setup, this can be used after globally defining the required colors
+    this.InitColors = function () {
+        for (var color of [
+            "ColorAccentPrimary",
+            "ColorAccentSecondary",
+            "ColorDarkBG",
+            "ColorLightBG",
+            "ColorDarkText",
+            "ColorLightText",
+            "ColorButton",
+            "ColorButtonSelected"
+        ]) {
+            if (!window[color]) {
+                console.error(
+                    "'InitColors' can only be called once all required " +
+                    "colors have been globally defined.\nMissing: window." + color
+                );
+                console.trace();
+                debugger;
+            }
+        }
+        this.init_color_light();
+        this.init_color_dark();
+        this.init_color_mobile();
+        this.SwapIfDarkModeActive();
+    };
+    this.init_color_light = function () {
+        this.Light.Background = window["ColorLightBG"];
+        this.Light.Text = window["ColorDarkText"];
+        this.Light.TextHeader = window["ColorDarkText"];
+        this.Light.AccentGood = window["ColorAccentPrimary"];
+        this.Light.AccentBad = window["ColorAccentSecondary"];
+        this.Light.Button = new DashColorButtonSet(
+            "none",  // Light.Button.AreaBackground (If applicable)
+            new DashColorStateSet(
+                window["ColorButton"],  // Light.Button.Background.Base
+                window["ColorButtonSelected"],  // Light.Button.Background.Selected
+                this.Darken(window["ColorButton"], 20),  // Light.Button.Background.BaseHover
+                this.Darken(window["ColorButtonSelected"], 20)  // Light.Button.Background.SelectedHover
+            ),
+            new DashColorStateSet(
+                window["ColorLightText"],  // Light.Button.Text.Base
+                window["ColorLightText"],  // Light.Button.Text.Selected
+                this.Lighten(window["ColorLightText"], 20),  // Light.Button.Text.BaseHover
+                this.Lighten(window["ColorLightText"], 20)  // Light.Button.Text.SelectedHover
+            )
+        );
+        this.Light.Tab = new DashColorButtonSet(
+            this.Darken(window["ColorLightBG"], 50),  // Light.Tab.AreaBackground (If applicable)
+            new DashColorStateSet(
+                this.Darken(window["ColorLightBG"], 25),  // Light.Tab.Background.Base
+                window["ColorLightBG"],  // Light.Tab.Background.Selected
+                this.Darken(window["ColorLightBG"], 50),  // Light.Tab.Background.BaseHover
+                window["ColorAccentPrimary"]  // Light.Tab.Background.SelectedHover
+            ),
+            new DashColorStateSet(
+                window["ColorDarkText"],  // Light.Tab.Text.Base
+                window["ColorDarkText"],  // Light.Tab.Text.Selected
+                this.Lighten(window["ColorDarkText"], 50),  // Light.Tab.Text.BaseHover
+                this.Lighten(window["ColorDarkText"], 50)  // Light.Tab.Text.SelectedHover
+            )
+        );
+        this.Light.Input = new DashColorButtonSet(
+            "none",  // Light.Input.AreaBackground (If applicable)
+            new DashColorStateSet(
+                this.Lighten(window["ColorLightBG"], 5),  // Light.Input.Background.Base
+                "none",  // Light.Input.Background.Selected
+                "none",  // Light.Input.Background.BaseHover
+                "none"  // Light.Input.Background.SelectedHover
+            ),
+            new DashColorStateSet(
+                window["ColorLightText"],  // Light.Input.Text.Base
+                window["ColorLightText"],  // Light.Input.Text.Selected
+                window["ColorLightText"],  // Light.Input.Text.BaseHover
+                window["ColorLightText"]  // Light.Input.Text.SelectedHover
+            )
+        );
+    };
+    this.init_color_dark = function () {
+        this.Dark.Background = window["ColorDarkBG"];
+        this.Dark.Text = window["ColorLightText"];
+        this.Dark.TextHeader = window["ColorLightText"];
+        this.Dark.AccentGood = window["ColorAccentPrimary"];
+        this.Dark.AccentBad = window["ColorAccentSecondary"];
+        this.Dark.Button = new DashColorButtonSet(
+            "none",  // Dark.Button.AreaBackground (If applicable)
+            new DashColorStateSet(
+                window["ColorButton"],  // Dark.Button.Background.Base
+                window["ColorButtonSelected"],  // Dark.Button.Background.Selected
+                this.Lighten(window["ColorButton"], 20),  // Dark.Button.Background.BaseHover
+                this.Lighten(window["ColorButtonSelected"], 20)  // Dark.Button.Background.SelectedHover
+            ),
+            new DashColorStateSet(
+                window["ColorLightText"],  // Dark.Button.Text.Base
+                window["ColorLightText"],  // Dark.Button.Text.Selected
+                this.Darken(window["ColorLightText"], 20),  // Dark.Button.Text.BaseHover
+                this.Darken(window["ColorLightText"], 20)  // Dark.Button.Text.SelectedHover
+            )
+        );
+        this.Dark.Tab = new DashColorButtonSet(
+            window["ColorDarkBG"],  // Dark.Tab.AreaBackground (If applicable)
+            new DashColorStateSet(
+                window["ColorButton"],  // Dark.Tab.Background.Base
+                window["ColorButtonSelected"],  // Dark.Tab.Background.Selected
+                this.Lighten(window["ColorButton"], 20),  // Dark.Tab.Background.BaseHover
+                this.Lighten(window["ColorButtonSelected"], 20)  // Dark.Tab.Background.SelectedHover
+            ),
+            new DashColorStateSet(
+                window["ColorLightText"],  // Dark.Tab.Text.Base
+                window["ColorLightText"],  // Dark.Tab.Text.Selected
+                this.Darken(window["ColorLightText"], 20),  // Dark.Tab.Text.BaseHover
+                this.Darken(window["ColorLightText"], 20)  // Dark.Tab.Text.SelectedHover
+            )
+        );
+        this.Dark.Input = new DashColorButtonSet(
+            "none",  // Dark.Input.AreaBackground (If applicable)
+            new DashColorStateSet(
+                this.Lighten(window["ColorLightBG"], 5),  // Dark.Input.Background.Base
+                "none",  // Dark.Input.Background.Selected
+                "none",  // Dark.Input.Background.BaseHover
+                "none"  // Dark.Input.Background.SelectedHover
+            ),
+            new DashColorStateSet(
+                window["ColorLightText"],  // Dark.Input.Text.Base
+                window["ColorLightText"],  // Dark.Input.Text.Selected
+                window["ColorLightText"],  // Dark.Input.Text.BaseHover
+                window["ColorLightText"]  // Dark.Input.Text.SelectedHover
+            )
+        );
+    };
+    this.init_color_mobile = function () {
+        var gradient_dark = this.Lighten(window["ColorDarkBG"], 15);
+        var gradient_light = this.Lighten(window["ColorDarkBG"], 45);
+        this.Mobile.AccentSecondary = this.Lighten(window["ColorButton"], 45);
+        this.Mobile.AccentPrimary = this.Lighten(window["ColorButtonSelected"], 45);
+        this.Mobile.BackgroundGradient = this.GetVerticalGradient(gradient_light, gradient_dark);
+        this.Mobile.ButtonGradient = this.GetHorizontalGradient(gradient_light, gradient_dark);
+    };
+    this.to_rgba = function (color_data) {
+        return "rgba(" + color_data[0] + ", " + color_data[1] + ", " + color_data[2] + ", " + color_data[3] + ")";
+    };
+    this.to_rgb = function (color_data) {
+        return "rgb(" + color_data[0] + ", " + color_data[1] + ", " + color_data[2] + ")";
+    };
+    this._get_background_raised = function (color) {
+        return this.Lighten(color, this.IsLightColor(color) ? 10: 40);
+    };
     this.Names = {
         "aliceblue": [240, 248, 255],
         "antiquewhite": [250, 235, 215],
@@ -22020,9 +22312,6 @@ function DashColor (dark_mode_active=false) {
         "whitesmoke": [245, 245, 245],
         "yellow": [255, 255, 0],
         "yellowgreen": [154, 205, 50]
-    };
-    this._get_background_raised = function (color) {
-        return this.Lighten(color, Dash.Color.IsLightColor(color) ? 10: 40);
     };
     this.setup_color_sets();
 }
