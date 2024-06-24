@@ -5,7 +5,6 @@ function Dash () {
     this.TabIsVisible = true;
     this.Context = DASH_CONTEXT;
     this.GlobalStorageEnabled = false;
-    this.InChromeExtension = chrome?.runtime;
     this.Daypart = "Morning/Afternoon/Evening"; // Managed by Dash.Utils -> 5-minute background update interval
     this.LocalDev = window.location.protocol === "file:";
 
@@ -24,6 +23,14 @@ function Dash () {
            window.navigator.standalone === true  // iOS
         || window.matchMedia("(display-mode: standalone)").matches  // Android
     );
+
+    try {
+        this.InChromeExtension = this.IsMobile ? false : chrome?.runtime;
+    }
+
+    catch {
+        this.InChromeExtension = false;
+    }
 
     this.Local = new DashLocal(this.Context);
     this.DarkModeActive = ["true", true].includes(this.Local.Get("dark_mode_active"));
