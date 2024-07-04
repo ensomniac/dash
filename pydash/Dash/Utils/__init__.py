@@ -26,7 +26,7 @@ def UploadFile(
     enforce_unique_filename_key=True, existing_data_for_update={}, enforce_single_period=True,
     allowable_executable_exts=[], related_file_path="", target_aspect_ratio=0, additional_data={},
     replace_extra_periods=True, include_jpg_thumb=True, include_png_thumb=True, include_square_thumb=False,
-    include_orig_png=True, min_size=0, is_mask=False, allowable_exts=[]
+    include_orig_png=True, min_size=0, is_mask=False, allowable_exts=[], target_width=0, target_height=0
 ):
     from .file import Upload
 
@@ -52,7 +52,9 @@ def UploadFile(
         include_orig_png=include_orig_png,
         min_size=min_size,
         is_mask=is_mask,
-        allowable_exts=allowable_exts
+        allowable_exts=allowable_exts,
+        target_width=target_width,
+        target_height=target_height
     )
 
 

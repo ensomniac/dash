@@ -28,7 +28,7 @@ def Upload(
     enforce_unique_filename_key=True, existing_data_for_update={}, enforce_single_period=True,
     allowable_executable_exts=[], related_file_path="", target_aspect_ratio=0, additional_data={},
     replace_extra_periods=True, include_jpg_thumb=True, include_png_thumb=True, include_square_thumb=False,
-    include_orig_png=True, min_size=0, is_mask=False, allowable_exts=[]
+    include_orig_png=True, min_size=0, is_mask=False, allowable_exts=[], target_width=0, target_height=0
 ):
     if type(file_bytes_or_existing_path) is not bytes:
         if type(file_bytes_or_existing_path) is not str:
@@ -73,7 +73,9 @@ def Upload(
             existing_data_for_update.get("orig_filename") or filename,
             target_aspect_ratio,
             min_size,
-            is_mask
+            is_mask,
+            target_width,
+            target_height
         )
     else:
         img = None
@@ -445,13 +447,34 @@ def get_root(root_path, file_id, nested):
     return root_path
 
 
-def get_image_with_data(file_bytes_or_existing_path, filename, target_aspect_ratio=0, min_size=0, is_mask=False):
+def get_image_with_data(
+    file_bytes_or_existing_path, filename, target_aspect_ratio=0,
+    min_size=0, is_mask=False, target_width=0, target_height=0
+):
     img = get_pil_image_object(file_bytes_or_existing_path, filename)
 
     if min_size and img.size[0] < min_size and img.size[1] < min_size:
         from Dash.Utils import ClientAlert
 
         raise ClientAlert(f"Image is too small. Make sure either the width or height is at least {min_size}.")
+
+    valid_width = target_width == img.size[0] if target_width else True
+    valid_height = target_height == img.size[1] if target_height else True
+
+    if target_width and target_height and not valid_width and not valid_height:
+        from Dash.Utils import ClientAlert
+
+        raise ClientAlert(f"Image dimensions must be exactly: {target_width}x{target_height}")
+
+    if not valid_width:
+        from Dash.Utils import ClientAlert
+
+        raise ClientAlert(f"Image width must be exactly: {target_width}")
+
+    if not valid_height:
+        from Dash.Utils import ClientAlert
+
+        raise ClientAlert(f"Image height must be exactly: {target_height}")
 
     if is_mask:
         ValidateMaskImage(

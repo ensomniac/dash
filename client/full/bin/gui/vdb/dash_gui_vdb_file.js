@@ -15,6 +15,8 @@ class DashGuiVDBFile {
         this.preview = null;
         this.toolbar = null;
         this.preview_bg = null;
+        this.upload_button = null;
+        this.download_button = null;
         this.html = $("<div></div>");
         this.preview_width = this.preview_size;
         this.preview_height = this.preview_size;
@@ -38,18 +40,13 @@ class DashGuiVDBFile {
             return;
         }
 
-        var css = {
+        this.html.css({
             "background": this.color.BackgroundRaised,
             "border": "1px solid " + this.color.Pinstripe,
             "border-radius": Dash.Size.BorderRadius,
-            "padding": Dash.Size.Padding
-        };
-
-        if (this.preview_width <= this.preview_height) {
-            css["width"] = this.preview_size;
-        }
-
-        this.html.css(css);
+            "padding": Dash.Size.Padding,
+            "width": this.preview_width <= this.preview_height ? this.preview_size : this.preview_width
+        });
 
         this.add_preview_bg();
 
@@ -170,17 +167,19 @@ class DashGuiVDBFile {
             this.toolbar.AddExpander();
 
             if (this.include_upload_button) {
-                this.add_icon_button_to_toolbar(
+                this.upload_button = this.add_icon_button_to_toolbar(
                     "upload",
                     this.upload
-                ).SetFileUploader(
+                );
+
+                this.upload_button.SetFileUploader(
                     this.upload_api,
                     this.upload_params
                 );
             }
 
             if (this.include_download_button) {
-                this.add_icon_button_to_toolbar("download", this.download);
+                this.download_button = this.add_icon_button_to_toolbar("download", this.download);
             }
         }
 

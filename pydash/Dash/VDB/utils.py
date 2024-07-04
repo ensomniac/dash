@@ -22,31 +22,13 @@ class Utils:
 
     # Intended to be extended (see Candy's VDB module for example)
     def set_temp_attrs(self, vdb_type="", obj_id=""):
-        if vdb_type:
-            self.temp["vdb_type"] = self.Type or ""
-
-            self.Type = vdb_type
-        else:
-            self.temp["vdb_type"] = None
-
-        if obj_id:
-            self.temp["obj_id"] = self.ObjID or ""
-
-            self.ObjID = obj_id
-        else:
-            self.temp["obj_id"] = None
+        self.set_temp_attr("vdb_type", vdb_type, "Type")
+        self.set_temp_attr("obj_id", obj_id, "ObjID")
 
     # Intended to be extended (see Candy's VDB module for example)
     def unset_temp_attrs(self):
-        if self.temp.get("vdb_type") is not None:
-            self.Type = self.temp["vdb_type"]
-
-            self.temp["vdb_type"] = None
-
-        if self.temp.get("obj_id") is not None:
-            self.ObjID = self.temp["obj_id"]
-
-            self.temp["obj_id"] = None
+        self.unset_temp_attr("vdb_type", "Type")
+        self.unset_temp_attr("obj_id", "ObjID")
 
     # Intended to be extended (see Candy's VDB module for example)
     def validate_properties(self, properties, collection, validated_properties={}):  # noqa
@@ -133,6 +115,40 @@ class Utils:
         return ""
 
     # --------------------------------------------------------------
+
+    def set_temp_attr(self, key, value, attr_name, temp_default=""):
+        current_value = getattr(self, attr_name) or temp_default
+
+        if self.temp.get(key) is None:
+            if value:
+                self.temp[key] = current_value
+                self.temp[f"{key}s"] = [self.temp[key]]
+            else:
+                self.temp[key] = None
+                self.temp[f"{key}s"] = []
+        else:  # Recursion is occurring, track the temp stack
+            if value:
+                self.temp[f"{key}s"].append(current_value)
+            else:
+                self.temp[f"{key}s"].append(None)
+
+        if value:
+            setattr(self, attr_name, value)
+
+    def unset_temp_attr(self, key, attr_name):
+        if self.temp.get(f"{key}s"):  # Recursion is occurring, process the temp stack
+            temp_vdb_type = self.temp[f"{key}s"].pop()
+
+            if temp_vdb_type is not None:
+                setattr(self, attr_name, temp_vdb_type)
+
+            if not self.temp[f"{key}s"]:
+                self.temp[key] = None
+
+        elif self.temp.get(key) is not None:
+            setattr(self, attr_name, self.temp[key])
+
+            self.temp[key] = None
 
     def get_sort_by_key(self, vdb_type=""):
         if not vdb_type:

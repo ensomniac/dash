@@ -43200,7 +43200,6 @@ function DashGuiInputRow (
     };
     this.on_label_clicked = function (check_validity=false) {
         var active_text = this.input.Text().toString();
-        var tracking_labels = ["track", "tracking", "track #", "tracking #", "track number", "tracking number"];
         if (active_text.startsWith("https://")) {
             if (check_validity) {
                 return true;
@@ -43213,11 +43212,29 @@ function DashGuiInputRow (
             }
             window.open("mailto:" + active_text, "_blank");
         }
-        else if (tracking_labels.includes(this.label_text.toLowerCase())) {
+        else if (
+            [
+                "track",
+                "tracking",
+                "track #",
+                "tracking #",
+                "track number",
+                "tracking number"
+            ].includes(this.label_text.toLowerCase())
+        ) {
             if (check_validity) {
                 return true;
             }
             window.open("https://www.google.com/search?q=track+" + active_text.toString(), "_blank");
+        }
+        else if (this.end_tag) {
+            var end_tag_text = this.end_tag.text().toString();
+            if (end_tag_text.startsWith("https://")) {
+                if (check_validity) {
+                    return true;
+                }
+                window.open(end_tag_text, "_blank");
+            }
         }
         if (check_validity) {
             return false;
@@ -43229,7 +43246,7 @@ function DashGuiInputRow (
                 self.on_label_clicked();
             });
             self.html.on("mouseenter", function () {
-                self.highlight.stop().animate({"opacity": 0.5}, 50);
+                self.highlight.stop().animate({"opacity": 0.3}, 50);
             });
             self.html.on("mouseleave", function () {
                 self.highlight.stop().animate({"opacity": 0}, 250);
@@ -44990,7 +45007,10 @@ function DashGuiVDB (
             this.get_combo_types_cb,
             this.vdb_types[vdb_type]["description"] || "",
             this.color,
-            this.vdb_types[vdb_type]["list_width"] || null
+            this.vdb_types[vdb_type]["list_width"] || null,
+            this.vdb_types[vdb_type]["include_toolbar"] || true,
+            this.vdb_types[vdb_type]["single_mode_data"] || null,
+            this.vdb_types[vdb_type]["extra_params"] || {}
         );
         if (this.on_load_view_cb) {
             this.on_load_view_cb(this.last_list_view, vdb_type);
@@ -45859,6 +45879,8 @@ class DashGuiVDBFile {
         this.preview = null;
         this.toolbar = null;
         this.preview_bg = null;
+        this.upload_button = null;
+        this.download_button = null;
         this.html = $("<div></div>");
         this.preview_width = this.preview_size;
         this.preview_height = this.preview_size;
@@ -45877,16 +45899,13 @@ class DashGuiVDBFile {
         if ((this.type === "image" || this.type === "video") && !this.parse_aspect()) {
             return;
         }
-        var css = {
+        this.html.css({
             "background": this.color.BackgroundRaised,
             "border": "1px solid " + this.color.Pinstripe,
             "border-radius": Dash.Size.BorderRadius,
-            "padding": Dash.Size.Padding
-        };
-        if (this.preview_width <= this.preview_height) {
-            css["width"] = this.preview_size;
-        }
-        this.html.css(css);
+            "padding": Dash.Size.Padding,
+            "width": this.preview_width <= this.preview_height ? this.preview_size : this.preview_width
+        });
         this.add_preview_bg();
         try {
             this.get_data();  // If this succeeds, proceed
@@ -45977,16 +45996,17 @@ class DashGuiVDBFile {
         if (this.include_upload_button || this.include_download_button) {
             this.toolbar.AddExpander();
             if (this.include_upload_button) {
-                this.add_icon_button_to_toolbar(
+                this.upload_button = this.add_icon_button_to_toolbar(
                     "upload",
                     this.upload
-                ).SetFileUploader(
+                );
+                this.upload_button.SetFileUploader(
                     this.upload_api,
                     this.upload_params
                 );
             }
             if (this.include_download_button) {
-                this.add_icon_button_to_toolbar("download", this.download);
+                this.download_button = this.add_icon_button_to_toolbar("download", this.download);
             }
         }
         if (this.preview_width > this.preview_height) {
@@ -46120,8 +46140,9 @@ class DashGuiVDBFile {
 }
 
 function DashGuiVDBList (
-    vdb_type, vdb_title, get_obj_view_cb=null, get_row_text_cb=null, get_combo_types_cb=null,
-    vdb_description="", color=null, list_column_width=null, include_toolbar=true, single_mode_data=null
+    vdb_type, vdb_title, get_obj_view_cb=null, get_row_text_cb=null,
+    get_combo_types_cb=null, vdb_description="", color=null, list_column_width=null,
+    include_toolbar=true, single_mode_data=null, extra_params={}
 ) {
     this.vdb_type = vdb_type;
     this.vdb_title = vdb_title;
@@ -46133,6 +46154,7 @@ function DashGuiVDBList (
     this.list_column_width = list_column_width || (Dash.Size.ColumnWidth * 1.75);
     this.include_toolbar = include_toolbar;
     this.single_mode_data = single_mode_data;
+    this.extra_params = extra_params;
     this.rows = {};
     this.api = "VDB";
     this.data = null;
@@ -46574,9 +46596,6 @@ function DashGuiVDBList (
         return order;
     };
     this.refresh_data = function () {
-        this._refresh_data();
-    };
-    this._refresh_data = function (extra_params={}) {
         if (!this.vdb_type) {
             // Dash.Log.Warn("Missing VDB type");
             return;
@@ -46592,7 +46611,7 @@ function DashGuiVDBList (
                     "f": "get_all",
                     "vdb_type": self.vdb_type,
                     "combo_types": JSON.stringify(self.get_combo_types()),
-                    ...extra_params
+                    ...self.extra_params
                 }
             );
         })(this);

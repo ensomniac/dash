@@ -55,7 +55,10 @@ function DashGuiVDB (
             this.get_combo_types_cb,
             this.vdb_types[vdb_type]["description"] || "",
             this.color,
-            this.vdb_types[vdb_type]["list_width"] || null
+            this.vdb_types[vdb_type]["list_width"] || null,
+            this.vdb_types[vdb_type]["include_toolbar"] || true,
+            this.vdb_types[vdb_type]["single_mode_data"] || null,
+            this.vdb_types[vdb_type]["extra_params"] || {}
         );
 
         if (this.on_load_view_cb) {

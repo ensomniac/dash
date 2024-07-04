@@ -1,6 +1,7 @@
 function DashGuiVDBList (
-    vdb_type, vdb_title, get_obj_view_cb=null, get_row_text_cb=null, get_combo_types_cb=null,
-    vdb_description="", color=null, list_column_width=null, include_toolbar=true, single_mode_data=null
+    vdb_type, vdb_title, get_obj_view_cb=null, get_row_text_cb=null,
+    get_combo_types_cb=null, vdb_description="", color=null, list_column_width=null,
+    include_toolbar=true, single_mode_data=null, extra_params={}
 ) {
     this.vdb_type = vdb_type;
     this.vdb_title = vdb_title;
@@ -12,6 +13,7 @@ function DashGuiVDBList (
     this.list_column_width = list_column_width || (Dash.Size.ColumnWidth * 1.75);
     this.include_toolbar = include_toolbar;
     this.single_mode_data = single_mode_data;
+    this.extra_params = extra_params;
 
     this.rows = {};
     this.api = "VDB";
@@ -578,10 +580,6 @@ function DashGuiVDBList (
     };
 
     this.refresh_data = function () {
-        this._refresh_data();
-    };
-
-    this._refresh_data = function (extra_params={}) {
         if (!this.vdb_type) {
             // Dash.Log.Warn("Missing VDB type");
 
@@ -599,7 +597,7 @@ function DashGuiVDBList (
                     "f": "get_all",
                     "vdb_type": self.vdb_type,
                     "combo_types": JSON.stringify(self.get_combo_types()),
-                    ...extra_params
+                    ...self.extra_params
                 }
             );
         })(this);

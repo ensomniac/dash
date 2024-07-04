@@ -175,7 +175,6 @@ function DashGuiInputRow (
 
     this.on_label_clicked = function (check_validity=false) {
         var active_text = this.input.Text().toString();
-        var tracking_labels = ["track", "tracking", "track #", "tracking #", "track number", "tracking number"];
 
         if (active_text.startsWith("https://")) {
             if (check_validity) {
@@ -193,12 +192,33 @@ function DashGuiInputRow (
             window.open("mailto:" + active_text, "_blank");
         }
 
-        else if (tracking_labels.includes(this.label_text.toLowerCase())) {
+        else if (
+            [
+                "track",
+                "tracking",
+                "track #",
+                "tracking #",
+                "track number",
+                "tracking number"
+            ].includes(this.label_text.toLowerCase())
+        ) {
             if (check_validity) {
                 return true;
             }
 
             window.open("https://www.google.com/search?q=track+" + active_text.toString(), "_blank");
+        }
+
+        else if (this.end_tag) {
+            var end_tag_text = this.end_tag.text().toString();
+
+            if (end_tag_text.startsWith("https://")) {
+                if (check_validity) {
+                    return true;
+                }
+
+                window.open(end_tag_text, "_blank");
+            }
         }
 
         if (check_validity) {
@@ -213,7 +233,7 @@ function DashGuiInputRow (
             });
 
             self.html.on("mouseenter", function () {
-                self.highlight.stop().animate({"opacity": 0.5}, 50);
+                self.highlight.stop().animate({"opacity": 0.3}, 50);
             });
 
             self.html.on("mouseleave", function () {
