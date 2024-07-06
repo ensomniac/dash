@@ -9,11 +9,12 @@ function DashGuiButtonBar (binder, color=null, button_style="default") {
     this.start_spacer = null;
     this.fit_content = false;
     this.html = $("<div></div>");
-    this.auto_spacing_enabled = true;
 
     this.setup_styles = function () {
         this.html.css({
             "display": "flex",
+            "flex-wrap": "wrap",
+            "gap": Dash.Size.Padding * (Dash.IsMobile ? 0.5 : 1),
             "height": this.style === "toolbar" ? Dash.Size.RowHeight : Dash.Size.ButtonHeight
         });
     };
@@ -48,12 +49,6 @@ function DashGuiButtonBar (binder, color=null, button_style="default") {
         return this;
     };
 
-    this.DisableAutoSpacing = function () {
-        this.auto_spacing_enabled = false;
-
-        return this;
-    };
-
     this.Disable = function (opacity=0.5) {
         for (var button of this.buttons) {
             this.buttons.Disable(opacity);
@@ -74,8 +69,6 @@ function DashGuiButtonBar (binder, color=null, button_style="default") {
         button.html.remove();
 
         this.buttons.Remove(button);
-
-        this.update_spacing();
     };
 
     this.GetIndex = function (button) {
@@ -144,30 +137,11 @@ function DashGuiButtonBar (binder, color=null, button_style="default") {
             this.buttons.push(button);
         }
 
-        this.update_spacing();
-
         if (this.disabled) {
             button.Disable();
         }
 
         return button;
-    };
-
-    // TODO: Make this more efficient - we don't need to hit this multiple times on the same frame
-    this.update_spacing = function () {
-        if (!this.auto_spacing_enabled) {
-            return;
-        }
-
-        for (var i in this.buttons) {
-            var button = this.buttons[i];
-
-            button.html.css({
-                "margin-right": (parseInt(i) === this.buttons.length - 1) ? 0 : (
-                    Dash.Size.Padding * (Dash.IsMobile ? 0.5 : 1)
-                )
-            });
-        }
     };
 
     this.setup_styles();
