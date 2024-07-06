@@ -1,6 +1,34 @@
 /**@member DashGuiInputRow*/
 
 function DashGuiInputRowInterface () {
+    this.AddKeyCopyButton = function (data_key="") {
+        if (!data_key) {
+            data_key = this.data_key;
+        }
+
+        if (!data_key) {
+            Dash.Log.Warn("No data key assigned to this input, skipping key copy button...");
+
+            return;
+        }
+
+        var size = this.height * 0.5;
+        var right_margin = Dash.Size.Padding * 0.3;
+        var button = Dash.Gui.GetKeyCopyButton(size, data_key, this.color);
+
+        this.highlight.css({
+            "right": size + right_margin
+        });
+
+        this.flash_save.css({
+            "right": size + right_margin
+        });
+
+        this.html.append(button.html);
+
+        return button;
+    };
+
     this.InFocus = function () {
         return (this.input && this.input.InFocus());
     };
@@ -82,8 +110,8 @@ function DashGuiInputRowInterface () {
         this.end_tag.css({
             "color": this.color.Stroke,
             "font-family": "sans_serif_italic",
-            "height": Dash.Size.RowHeight,
-            "line-height": Dash.Size.RowHeight + "px",
+            "height": this.height,
+            "line-height": this.height + "px",
             "user-select": "none",
             "pointer-events": "none",
             "flex": "none",
@@ -287,8 +315,8 @@ function DashGuiInputRowInterface () {
             "position": "absolute",
             "right": 0,
             "top": 0,
-            "height": Dash.Size.RowHeight,
-            "width": Dash.Size.RowHeight,
+            "height": this.height,
+            "width": this.height
         });
 
         this.html.append(button.html);

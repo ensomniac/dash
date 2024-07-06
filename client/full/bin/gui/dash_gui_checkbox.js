@@ -243,6 +243,35 @@ function DashGuiCheckbox (
         this.restyle_icon_button();
     };
 
+    this.AddKeyCopyButton = function (data_key) {
+        if (!data_key) {
+            Dash.Log.Warn("No data key provided, skipping key copy button...");
+
+            return;
+        }
+
+        var size = this.icon_container_size * 0.5;
+        var right_margin = Dash.Size.Padding * 0.3;
+
+        var button = Dash.Gui.GetKeyCopyButton(size, data_key, this.color);
+
+        button.html.css({
+            "position": "absolute",
+            "top": 0,
+            "right": 0
+        });
+
+        if (this._property_box_highlight) {
+            this._property_box_highlight.css({
+                "right": size + right_margin
+            });
+        }
+
+        this.html.append(button.html);
+
+        return button;
+    };
+
     // Should this just be the default?
     this.AddHighlight = function (bottom=null, force_in_container=false, redraw_css={}) {
         if (Dash.IsMobile) {

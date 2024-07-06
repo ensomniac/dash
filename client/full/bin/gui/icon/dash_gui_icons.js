@@ -208,6 +208,8 @@ function DashGuiIcons (icon) {
         "invoice":                 new DashGuiIconDefinition(this.icon, "Invoice", this.weight["regular"], "file-invoice-dollar"),
         "invoice_alt":             new DashGuiIconDefinition(this.icon, "Invoice Alt", this.weight["regular"], "file-invoice"),
         "javascript_logo":         new DashGuiIconDefinition(this.icon, "JavaScript", this.weight["brand"], "js-square"),
+        "key":                     new DashGuiIconDefinition(this.icon, "Key", this.weight["regular"], "key"),
+        "key_solid":               new DashGuiIconDefinition(this.icon, "Key (Solid)", this.weight["solid"], "key"),
         "layers":                  new DashGuiIconDefinition(this.icon, "Layers", this.weight["regular"], "layer-group"),
         "level_up":                new DashGuiIconDefinition(this.icon, "Level Up", this.weight["regular"], "level-up"),
         "level_down":              new DashGuiIconDefinition(this.icon, "Level Down", this.weight["regular"], "level-down"),

@@ -466,7 +466,7 @@ function DashGuiPropertyBoxInterface () {
 
     this.AddTextArea = function (
         data_key, label_text="", can_edit=true, placeholder_text="",
-        callback=null, delay_cb=true, starting_height_mult=6
+        callback=null, delay_cb=true, starting_height_mult=6, add_key_copy_button=false
     ) {
         this.data = this.get_data_cb ? this.get_data_cb() : {};
 
@@ -482,11 +482,18 @@ function DashGuiPropertyBoxInterface () {
             "border-bottom": "1px dotted " + this.color.PinstripeDark
         });
 
+        var label_container = $("<div></div>");
+
+        label_container.css({
+            "display": "flex"
+        });
+
+        var label_height = Dash.Size.RowHeight;
         var label = $("<div>" + label_text + "</div>");
 
         label.css({
-            "height": Dash.Size.RowHeight,
-            "line-height": (Dash.Size.RowHeight) + "px",
+            "height": label_height,
+            "line-height": label_height + "px",
             "text-align": "left",
             "color": this.color.Text,
             "font-family": "sans_serif_bold",
@@ -494,7 +501,17 @@ function DashGuiPropertyBoxInterface () {
             "flex": "none"
         });
 
-        container.append(label);
+        label_container.append(label);
+
+        if (add_key_copy_button) {
+            label_container.append(Dash.Gui.GetFlexSpacer());
+
+            var key_button = Dash.Gui.GetKeyCopyButton(label_height * 0.5, data_key, this.color);
+
+            label_container.append(key_button.html);
+        }
+
+        container.append(label_container);
 
         var text_area = (function (self) {
             return new Dash.Gui.TextArea(
@@ -538,7 +555,7 @@ function DashGuiPropertyBoxInterface () {
             "border": text_area.border_size + "px solid " + this.color.StrokeLight
         });
 
-        text_area.SetHeight(Dash.Size.RowHeight * starting_height_mult);
+        text_area.SetHeight(label_height * starting_height_mult);
 
         if (!can_edit) {
             text_area.Lock(false);
@@ -552,6 +569,7 @@ function DashGuiPropertyBoxInterface () {
 
         container._label = label;
         container._text_area = text_area;
+        container._label_container = label_container;
 
         this.text_areas[data_key] = text_area;
 
@@ -672,7 +690,7 @@ function DashGuiPropertyBoxInterface () {
         }
 
         if (highlight_row) {
-            this.add_hover_highlight(checkbox.html);
+            checkbox._property_box_highlight = this.add_hover_highlight(checkbox.html);
         }
 
         this.AddHTML(checkbox.html);

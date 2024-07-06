@@ -98,7 +98,7 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
             });
 
             container.on("mouseenter", function () {
-                highlight.stop().animate({"opacity": 0.5}, 50);
+                highlight.stop().animate({"opacity": 0.25}, 50);
             });
 
             container.on("mouseleave", function () {

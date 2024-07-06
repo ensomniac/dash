@@ -439,7 +439,7 @@ function DashGuiPropertyBox (
         });
 
         html.on("mouseenter", function () {
-            highlight.stop().animate({"opacity": 0.5}, 50);
+            highlight.stop().animate({"opacity": 0.25}, 50);
         });
 
         html.on("mouseleave", function () {

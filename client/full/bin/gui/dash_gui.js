@@ -573,6 +573,34 @@ function DashGui () {
         return icon;
     };
 
+    this.GetKeyCopyButton = function (size, data_key, dash_color) {
+        var right_margin = Dash.Size.Padding * 0.3;
+
+        var button = new Dash.Gui.CopyButton(
+            this,
+            () => {
+                return data_key;
+            },
+            1,
+            size,
+            "default",
+            "key_solid",
+            dash_color,
+            "Key copied!"
+        );
+
+        button.button.MirrorIcon();
+
+        button.SetIconColor(dash_color.Stroke);
+
+        button.html.css({
+            "padding-top": size * 0.5,
+            "margin-left": right_margin
+        });
+
+        return button;
+    };
+
     this.add_corner_button_to_image_container = function (image_container, container_height, minimize=true) {
         var opacity = 0.75;
         var color = Dash.Color.Light;

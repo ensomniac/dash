@@ -18439,6 +18439,28 @@ function DashGui () {
         });
         return icon;
     };
+    this.GetKeyCopyButton = function (size, data_key, dash_color) {
+        var right_margin = Dash.Size.Padding * 0.3;
+        var button = new Dash.Gui.CopyButton(
+            this,
+            () => {
+                return data_key;
+            },
+            1,
+            size,
+            "default",
+            "key_solid",
+            dash_color,
+            "Key copied!"
+        );
+        button.button.MirrorIcon();
+        button.SetIconColor(dash_color.Stroke);
+        button.html.css({
+            "padding-top": size * 0.5,
+            "margin-left": right_margin
+        });
+        return button;
+    };
     this.add_corner_button_to_image_container = function (image_container, container_height, minimize=true) {
         var opacity = 0.75;
         var color = Dash.Color.Light;
@@ -24922,6 +24944,27 @@ function DashGuiCheckbox (
         }
         this.restyle_icon_button();
     };
+    this.AddKeyCopyButton = function (data_key) {
+        if (!data_key) {
+            Dash.Log.Warn("No data key provided, skipping key copy button...");
+            return;
+        }
+        var size = this.icon_container_size * 0.5;
+        var right_margin = Dash.Size.Padding * 0.3;
+        var button = Dash.Gui.GetKeyCopyButton(size, data_key, this.color);
+        button.html.css({
+            "position": "absolute",
+            "top": 0,
+            "right": 0
+        });
+        if (this._property_box_highlight) {
+            this._property_box_highlight.css({
+                "right": size + right_margin
+            });
+        }
+        this.html.append(button.html);
+        return button;
+    };
     // Should this just be the default?
     this.AddHighlight = function (bottom=null, force_in_container=false, redraw_css={}) {
         if (Dash.IsMobile) {
@@ -25201,7 +25244,7 @@ function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null)
                 "opacity": 0
             });
             container.on("mouseenter", function () {
-                highlight.stop().animate({"opacity": 0.5}, 50);
+                highlight.stop().animate({"opacity": 0.25}, 50);
             });
             container.on("mouseleave", function () {
                 highlight.stop().animate({"opacity": 0}, 250);
@@ -42278,6 +42321,8 @@ function DashGuiIcons (icon) {
         "invoice":                 new DashGuiIconDefinition(this.icon, "Invoice", this.weight["regular"], "file-invoice-dollar"),
         "invoice_alt":             new DashGuiIconDefinition(this.icon, "Invoice Alt", this.weight["regular"], "file-invoice"),
         "javascript_logo":         new DashGuiIconDefinition(this.icon, "JavaScript", this.weight["brand"], "js-square"),
+        "key":                     new DashGuiIconDefinition(this.icon, "Key", this.weight["regular"], "key"),
+        "key_solid":               new DashGuiIconDefinition(this.icon, "Key (Solid)", this.weight["solid"], "key"),
         "layers":                  new DashGuiIconDefinition(this.icon, "Layers", this.weight["regular"], "layer-group"),
         "level_up":                new DashGuiIconDefinition(this.icon, "Level Up", this.weight["regular"], "level-up"),
         "level_down":              new DashGuiIconDefinition(this.icon, "Level Down", this.weight["regular"], "level-down"),
@@ -43055,6 +43100,7 @@ function DashGuiInputRow (
     this.icon_button_count = 0;
     this.html = $("<div></div>");
     this.save_button_visible = false;
+    this.height = Dash.Size.RowHeight;
     this.highlight = $("<div></div>");
     this.flash_save = $("<div></div>");
     this.invalid_input_highlight = $("<div></div>");
@@ -43089,7 +43135,7 @@ function DashGuiInputRow (
         }
         this.html.css({
             "cursor": "auto",
-            "height": Dash.Size.RowHeight,
+            "height": this.height,
             "display": "flex",
             "border-bottom": "1px dotted " + this.color.PinstripeDark
         });
@@ -43123,8 +43169,8 @@ function DashGuiInputRow (
             "margin-right": Dash.Size.Padding
         });
         this.label.css({
-            "height": Dash.Size.RowHeight,
-            "line-height": (Dash.Size.RowHeight) + "px",
+            "height": this.height,
+            "line-height": this.height + "px",
             "text-align": "left",
             "color": this.color.Text,
             "font-family": "sans_serif_bold",
@@ -43155,7 +43201,7 @@ function DashGuiInputRow (
             "right": 0,
             "top": 0,
             "margin": 0,
-            "height": Dash.Size.RowHeight,
+            "height": this.height,
             "width": Dash.Size.ColumnWidth,
             "background": "none",
             "opacity": 0,
@@ -43166,7 +43212,7 @@ function DashGuiInputRow (
         });
         this.button.label.css({
             "text-align": "right",
-            "line-height": Dash.Size.RowHeight + "px",
+            "line-height": this.height + "px",
             "color": "rgba(0, 0, 0, 0.9)"
         });
     };
@@ -43227,7 +43273,7 @@ function DashGuiInputRow (
                 self.on_label_clicked();
             });
             self.html.on("mouseenter", function () {
-                self.highlight.stop().animate({"opacity": 0.3}, 50);
+                self.highlight.stop().animate({"opacity": 0.25}, 50);
             });
             self.html.on("mouseleave", function () {
                 self.highlight.stop().animate({"opacity": 0}, 250);
@@ -43254,7 +43300,7 @@ function DashGuiInputRow (
         if (this.load_dots) {
             return;
         }
-        this.load_dots = new Dash.Gui.LoadDots(Dash.Size.RowHeight - Dash.Size.Padding);
+        this.load_dots = new Dash.Gui.LoadDots(this.height - Dash.Size.Padding);
         this.load_dots.SetOrientation("vertical");
         this.load_dots.SetColor("rgba(0, 0, 0, 0.8)");
         this.html.append(this.load_dots.html);
@@ -43336,6 +43382,26 @@ function DashGuiInputRow (
 
 /**@member DashGuiInputRow*/
 function DashGuiInputRowInterface () {
+    this.AddKeyCopyButton = function (data_key="") {
+        if (!data_key) {
+            data_key = this.data_key;
+        }
+        if (!data_key) {
+            Dash.Log.Warn("No data key assigned to this input, skipping key copy button...");
+            return;
+        }
+        var size = this.height * 0.5;
+        var right_margin = Dash.Size.Padding * 0.3;
+        var button = Dash.Gui.GetKeyCopyButton(size, data_key, this.color);
+        this.highlight.css({
+            "right": size + right_margin
+        });
+        this.flash_save.css({
+            "right": size + right_margin
+        });
+        this.html.append(button.html);
+        return button;
+    };
     this.InFocus = function () {
         return (this.input && this.input.InFocus());
     };
@@ -43398,8 +43464,8 @@ function DashGuiInputRowInterface () {
         this.end_tag.css({
             "color": this.color.Stroke,
             "font-family": "sans_serif_italic",
-            "height": Dash.Size.RowHeight,
-            "line-height": Dash.Size.RowHeight + "px",
+            "height": this.height,
+            "line-height": this.height + "px",
             "user-select": "none",
             "pointer-events": "none",
             "flex": "none",
@@ -43557,8 +43623,8 @@ function DashGuiInputRowInterface () {
             "position": "absolute",
             "right": 0,
             "top": 0,
-            "height": Dash.Size.RowHeight,
-            "width": Dash.Size.RowHeight,
+            "height": this.height,
+            "width": this.height
         });
         this.html.append(button.html);
         this.icon_button_count += 1;
@@ -44232,7 +44298,7 @@ function DashGuiPropertyBox (
             "opacity": 0
         });
         html.on("mouseenter", function () {
-            highlight.stop().animate({"opacity": 0.5}, 50);
+            highlight.stop().animate({"opacity": 0.25}, 50);
         });
         html.on("mouseleave", function () {
             highlight.stop().animate({"opacity": 0}, 250);
@@ -44615,7 +44681,7 @@ function DashGuiPropertyBoxInterface () {
     };
     this.AddTextArea = function (
         data_key, label_text="", can_edit=true, placeholder_text="",
-        callback=null, delay_cb=true, starting_height_mult=6
+        callback=null, delay_cb=true, starting_height_mult=6, add_key_copy_button=false
     ) {
         this.data = this.get_data_cb ? this.get_data_cb() : {};
         var value = this.get_formatted_data_cb ? this.get_formatted_data_cb(data_key) : this.data[data_key];
@@ -44626,17 +44692,28 @@ function DashGuiPropertyBoxInterface () {
         container.css({
             "border-bottom": "1px dotted " + this.color.PinstripeDark
         });
+        var label_container = $("<div></div>");
+        label_container.css({
+            "display": "flex"
+        });
+        var label_height = Dash.Size.RowHeight;
         var label = $("<div>" + label_text + "</div>");
         label.css({
-            "height": Dash.Size.RowHeight,
-            "line-height": (Dash.Size.RowHeight) + "px",
+            "height": label_height,
+            "line-height": label_height + "px",
             "text-align": "left",
             "color": this.color.Text,
             "font-family": "sans_serif_bold",
             "font-size": Dash.Size.DesktopToMobileMode ? "60%" : "80%",
             "flex": "none"
         });
-        container.append(label);
+        label_container.append(label);
+        if (add_key_copy_button) {
+            label_container.append(Dash.Gui.GetFlexSpacer());
+            var key_button = Dash.Gui.GetKeyCopyButton(label_height * 0.5, data_key, this.color);
+            label_container.append(key_button.html);
+        }
+        container.append(label_container);
         var text_area = (function (self) {
             return new Dash.Gui.TextArea(
                 self.color,
@@ -44671,7 +44748,7 @@ function DashGuiPropertyBoxInterface () {
         text_area.textarea.css({
             "border": text_area.border_size + "px solid " + this.color.StrokeLight
         });
-        text_area.SetHeight(Dash.Size.RowHeight * starting_height_mult);
+        text_area.SetHeight(label_height * starting_height_mult);
         if (!can_edit) {
             text_area.Lock(false);
         }
@@ -44681,6 +44758,7 @@ function DashGuiPropertyBoxInterface () {
         container.append(text_area.html);
         container._label = label;
         container._text_area = text_area;
+        container._label_container = label_container;
         this.text_areas[data_key] = text_area;
         this.indent_row(container);
         this.track_row(container);
@@ -44770,7 +44848,7 @@ function DashGuiPropertyBoxInterface () {
             checkbox._end_tag = tag;
         }
         if (highlight_row) {
-            this.add_hover_highlight(checkbox.html);
+            checkbox._property_box_highlight = this.add_hover_highlight(checkbox.html);
         }
         this.AddHTML(checkbox.html);
         this.track_row(checkbox);
@@ -47904,7 +47982,7 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
         this.user_image_upload_button.html.attr("title", label);
         (function (user_image_upload_button) {
             user_image_upload_button.html.on("mouseenter", function () {
-                user_image_upload_button.highlight.stop().animate({"opacity": 0.3}, 50);
+                user_image_upload_button.highlight.stop().animate({"opacity": 0.25}, 50);
                 user_image_upload_button.label.stop().animate({"opacity": 0.65}, 50);
                 if (user_image_upload_button.is_selected) {
                     user_image_upload_button.label.css("color", user_image_upload_button.color_set.Text.SelectedHover);

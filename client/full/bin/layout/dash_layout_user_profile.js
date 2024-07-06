@@ -421,7 +421,7 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
 
         (function (user_image_upload_button) {
             user_image_upload_button.html.on("mouseenter", function () {
-                user_image_upload_button.highlight.stop().animate({"opacity": 0.3}, 50);
+                user_image_upload_button.highlight.stop().animate({"opacity": 0.25}, 50);
                 user_image_upload_button.label.stop().animate({"opacity": 0.65}, 50);
 
                 if (user_image_upload_button.is_selected) {

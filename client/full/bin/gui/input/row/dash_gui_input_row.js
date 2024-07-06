@@ -15,6 +15,7 @@ function DashGuiInputRow (
     this.icon_button_count = 0;
     this.html = $("<div></div>");
     this.save_button_visible = false;
+    this.height = Dash.Size.RowHeight;
     this.highlight = $("<div></div>");
     this.flash_save = $("<div></div>");
     this.invalid_input_highlight = $("<div></div>");
@@ -64,7 +65,7 @@ function DashGuiInputRow (
 
         this.html.css({
             "cursor": "auto",
-            "height": Dash.Size.RowHeight,
+            "height": this.height,
             "display": "flex",
             "border-bottom": "1px dotted " + this.color.PinstripeDark
         });
@@ -103,8 +104,8 @@ function DashGuiInputRow (
         });
 
         this.label.css({
-            "height": Dash.Size.RowHeight,
-            "line-height": (Dash.Size.RowHeight) + "px",
+            "height": this.height,
+            "line-height": this.height + "px",
             "text-align": "left",
             "color": this.color.Text,
             "font-family": "sans_serif_bold",
@@ -143,7 +144,7 @@ function DashGuiInputRow (
             "right": 0,
             "top": 0,
             "margin": 0,
-            "height": Dash.Size.RowHeight,
+            "height": this.height,
             "width": Dash.Size.ColumnWidth,
             "background": "none",
             "opacity": 0,
@@ -156,7 +157,7 @@ function DashGuiInputRow (
 
         this.button.label.css({
             "text-align": "right",
-            "line-height": Dash.Size.RowHeight + "px",
+            "line-height": this.height + "px",
             "color": "rgba(0, 0, 0, 0.9)"
         });
     };
@@ -233,7 +234,7 @@ function DashGuiInputRow (
             });
 
             self.html.on("mouseenter", function () {
-                self.highlight.stop().animate({"opacity": 0.3}, 50);
+                self.highlight.stop().animate({"opacity": 0.25}, 50);
             });
 
             self.html.on("mouseleave", function () {
@@ -269,7 +270,7 @@ function DashGuiInputRow (
             return;
         }
 
-        this.load_dots = new Dash.Gui.LoadDots(Dash.Size.RowHeight - Dash.Size.Padding);
+        this.load_dots = new Dash.Gui.LoadDots(this.height - Dash.Size.Padding);
 
         this.load_dots.SetOrientation("vertical");
         this.load_dots.SetColor("rgba(0, 0, 0, 0.8)");
