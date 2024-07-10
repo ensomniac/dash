@@ -37955,7 +37955,11 @@ function DashGuiFileExplorerPreviewStrip (file_explorer, file_id) {
                     var print_window = window.open(this.file_explorer.get_file_url(this.get_data()), "_blank");
                     // Wait for the content to load and then trigger the print dialog
                     print_window.onload = () => {
-                        print_window.focus();  // Will likely already be in focus
+                        print_window.focus();  // Will likely already be in focus, but just in case
+                        // Close the window after printing
+                        print_window.addEventListener("afterprint", () => {
+                            print_window.close();
+                        });
                         print_window.print();
                     };
                 },
