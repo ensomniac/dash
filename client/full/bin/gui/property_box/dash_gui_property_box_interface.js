@@ -111,7 +111,7 @@ function DashGuiPropertyBoxInterface () {
         );
     };
 
-    this.AddTopRightIconButton = function (callback, data_key, additional_data=null, icon_id="trash") {
+    this.AddTopRightIconButton = function (callback, data_key=null, additional_data=null, icon_id="trash") {
         if (this.top_right_delete_button) {
             return;
         }

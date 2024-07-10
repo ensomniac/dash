@@ -324,7 +324,10 @@ function DashGui () {
         return color_picker;
     };
 
-    this.GetTopRightIconButton = function (binder, callback, icon_id="trash", data_key=null, additional_data=null, existing_top_right_label=null) {
+    // This function is old and not written well
+    this.GetTopRightIconButton = function (
+        binder, callback, icon_id="trash", data_key=null, additional_data=null, existing_top_right_label=null
+    ) {
         callback = callback.bind(binder);
 
         if (existing_top_right_label) {
@@ -333,28 +336,26 @@ function DashGui () {
             });
         }
 
-        return (function (self, icon_id, callback, data_key, additional_data, binder) {
-            var button = new Dash.Gui.IconButton(
-                icon_id,
-                function (response) {
-                    callback(data_key, additional_data, response);
-                },
-                binder,
-                binder.color || Dash.Color.Dark
-            );
+        var button = new Dash.Gui.IconButton(
+            icon_id,
+            function (response) {
+                callback(data_key, additional_data, response);
+            },
+            binder,
+            binder.color || Dash.Color.Dark
+        );
 
-            button.html.css({
-                "position": "absolute",
-                "left": "auto",
-                "bottom": "auto",
-                "top": Dash.Size.Padding * 0.8,
-                "right": Dash.Size.Padding,
-                "height": Dash.Size.RowHeight,
-                "z-index": 1
-            });
+        button.html.css({
+            "position": "absolute",
+            "left": "auto",
+            "bottom": "auto",
+            "top": Dash.Size.Padding * 0.8,
+            "right": Dash.Size.Padding,
+            "height": Dash.Size.RowHeight,
+            "z-index": 1
+        });
 
-            return button;
-        })(this, icon_id, callback, data_key, additional_data, binder);
+        return button;
     };
 
     this.GetTopRightLabel = function (text="", color=null) {

@@ -18244,33 +18244,34 @@ function DashGui () {
         })(color_picker.input, callback);
         return color_picker;
     };
-    this.GetTopRightIconButton = function (binder, callback, icon_id="trash", data_key=null, additional_data=null, existing_top_right_label=null) {
+    // This function is old and not written well
+    this.GetTopRightIconButton = function (
+        binder, callback, icon_id="trash", data_key=null, additional_data=null, existing_top_right_label=null
+    ) {
         callback = callback.bind(binder);
         if (existing_top_right_label) {
             existing_top_right_label.css({
                 "right": Dash.Size.Padding * 5
             });
         }
-        return (function (self, icon_id, callback, data_key, additional_data, binder) {
-            var button = new Dash.Gui.IconButton(
-                icon_id,
-                function (response) {
-                    callback(data_key, additional_data, response);
-                },
-                binder,
-                binder.color || Dash.Color.Dark
-            );
-            button.html.css({
-                "position": "absolute",
-                "left": "auto",
-                "bottom": "auto",
-                "top": Dash.Size.Padding * 0.8,
-                "right": Dash.Size.Padding,
-                "height": Dash.Size.RowHeight,
-                "z-index": 1
-            });
-            return button;
-        })(this, icon_id, callback, data_key, additional_data, binder);
+        var button = new Dash.Gui.IconButton(
+            icon_id,
+            function (response) {
+                callback(data_key, additional_data, response);
+            },
+            binder,
+            binder.color || Dash.Color.Dark
+        );
+        button.html.css({
+            "position": "absolute",
+            "left": "auto",
+            "bottom": "auto",
+            "top": Dash.Size.Padding * 0.8,
+            "right": Dash.Size.Padding,
+            "height": Dash.Size.RowHeight,
+            "z-index": 1
+        });
+        return button;
     };
     this.GetTopRightLabel = function (text="", color=null) {
         var label = this.GetHTMLAbsContext(text, color);
@@ -37948,6 +37949,24 @@ function DashGuiFileExplorerPreviewStrip (file_explorer, file_id) {
         else {
             this.add_primary_inputs(file_data, is_image);
         }
+        if (is_image) {
+            this.details_property_box.AddTopRightIconButton(
+                () => {
+                    var print_window = window.open(this.file_explorer.get_file_url(this.get_data()), "_blank");
+                    // Wait for the content to load and then trigger the print dialog
+                    print_window.onload = () => {
+                        print_window.focus();  // Will likely already be in focus
+                        print_window.print();
+                    };
+                },
+                null,
+                null,
+                "print"
+            ).AddHighlight();
+            this.details_property_box.top_right_label.css({
+                "right": Dash.Size.ButtonHeight + Dash.Size.Padding
+            });
+        }
         this.details_property_box.AddExpander();
         if (!this.read_only) {
             this.add_server_data_inputs(file_data);
@@ -44412,7 +44431,7 @@ function DashGuiPropertyBoxInterface () {
             binder || this.binder ? callback.bind(binder ? binder : this.binder) : callback
         );
     };
-    this.AddTopRightIconButton = function (callback, data_key, additional_data=null, icon_id="trash") {
+    this.AddTopRightIconButton = function (callback, data_key=null, additional_data=null, icon_id="trash") {
         if (this.top_right_delete_button) {
             return;
         }

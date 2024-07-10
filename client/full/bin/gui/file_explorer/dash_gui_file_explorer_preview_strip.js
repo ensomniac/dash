@@ -95,6 +95,27 @@ function DashGuiFileExplorerPreviewStrip (file_explorer, file_id) {
             this.add_primary_inputs(file_data, is_image);
         }
 
+        if (is_image) {
+            this.details_property_box.AddTopRightIconButton(
+                () => {
+                    var print_window = window.open(this.file_explorer.get_file_url(this.get_data()), "_blank");
+
+                    // Wait for the content to load and then trigger the print dialog
+                    print_window.onload = () => {
+                        print_window.focus();  // Will likely already be in focus
+                        print_window.print();
+                    };
+                },
+                null,
+                null,
+                "print"
+            ).AddHighlight();
+
+            this.details_property_box.top_right_label.css({
+                "right": Dash.Size.ButtonHeight + Dash.Size.Padding
+            });
+        }
+
         this.details_property_box.AddExpander();
 
         if (!this.read_only) {
