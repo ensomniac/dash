@@ -19563,6 +19563,7 @@ function DashLocal (context) {
                                 + Object.keys(this.on_init_pending_global_sets).join(", ")
                                 + "'\nwith 'global' but 'Dash.GlobalStorageEnabled' is false"
                             );
+                            this.on_init_pending_global_sets = {};
                         },
                         5000
                     );
@@ -19606,9 +19607,14 @@ function DashLocal (context) {
             return;  // Should never be the case
         }
         for (var key in this.on_init_pending_global_sets) {
-            console.warn("TEST2 set global", key, value);
-            this.query_global_storage("DashGlobalStorageSet", key, {"value": value});
+            console.warn("TEST2 set global", key, this.on_init_pending_global_sets[key]);
+            this.query_global_storage(
+                "DashGlobalStorageSet",
+                key,
+                {"value": this.on_init_pending_global_sets[key]}
+            );
         }
+        this.on_init_pending_global_sets = {};
     };
     this.parse_get_value = function (value, bool_default=null) {
         if (bool_default === true) {
