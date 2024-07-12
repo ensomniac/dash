@@ -159,14 +159,20 @@ function Dash () {
 
                     this.GlobalStorageEnabled = response["ready"];
 
-                    if (!this.GlobalStorageEnabled) {
-                        // This receives messages from the extension's background context (background.js)
-                        chrome.runtime.onMessage.addListener((message) => {
-                            if (message["type"] === event_key) {
-                                this.GlobalStorageEnabled = true;
-                            }
-                        });
+                    if (this.GlobalStorageEnabled) {
+                        this.Local.on_global_storage_enabled();
+
+                        return;
                     }
+
+                    // This receives messages from the extension's background context (background.js)
+                    chrome.runtime.onMessage.addListener((message) => {
+                        if (message["type"] === event_key) {
+                            this.GlobalStorageEnabled = true;
+
+                            this.Local.on_global_storage_enabled();
+                        }
+                    });
                 }
             );
         }
@@ -202,6 +208,8 @@ function Dash () {
                         delete this.Local.global_get_cbs[event.data["callback_id"]];
                     }
                 });
+
+                this.Local.on_global_storage_enabled();
             };
 
             // This receives messages from the Dash Global Storage extension's content context (content.js)
