@@ -17614,14 +17614,17 @@ function Dash () {
                         return;
                     }
                     this.GlobalStorageEnabled = response["ready"];
-                    if (!this.GlobalStorageEnabled) {
-                        // This receives messages from the extension's background context (background.js)
-                        chrome.runtime.onMessage.addListener((message) => {
-                            if (message["type"] === event_key) {
-                                this.GlobalStorageEnabled = true;
-                            }
-                        });
+                    if (this.GlobalStorageEnabled) {
+                        this.Local.on_global_storage_enabled();
+                        return;
                     }
+                    // This receives messages from the extension's background context (background.js)
+                    chrome.runtime.onMessage.addListener((message) => {
+                        if (message["type"] === event_key) {
+                            this.GlobalStorageEnabled = true;
+                            this.Local.on_global_storage_enabled();
+                        }
+                    });
                 }
             );
         }
@@ -17647,6 +17650,7 @@ function Dash () {
                         delete this.Local.global_get_cbs[event.data["callback_id"]];
                     }
                 });
+                this.Local.on_global_storage_enabled();
             };
             // This receives messages from the Dash Global Storage extension's content context (content.js)
             window.addEventListener(event_key, on_ready);
@@ -19535,6 +19539,8 @@ function DashUtils () {
 function DashLocal (context) {
     this.context = context;
     this.global_get_cbs = {};
+    this.on_init_pending_global_sets = {};
+    this.on_init_pending_global_set_timer = null;
     this.Set = function (key, value, session=false, global=false) {
         if (key.indexOf(this.context["asset_path"] + "_") !== 0) {
             key = this.context["asset_path"] + "_" + key;
@@ -19544,11 +19550,23 @@ function DashLocal (context) {
                 this.query_global_storage("DashGlobalStorageSet", key, {"value": value});
             }
             else if (!Dash.InChromeExtension) {
-                console.error(
-                      "Error: Dash.Local.Set was called for '"
-                    + key
-                    + "' with 'global' but 'Dash.GlobalStorageEnabled' is false"
-                );
+                this.on_init_pending_global_sets[key] = value;
+                if (!this.on_init_pending_global_set_timer) {
+                    this.on_init_pending_global_set_timer = setTimeout(
+                        () => {
+                            if (Dash.GlobalStorageEnabled) {
+                                return;
+                            }
+                            console.warn(
+                                "Warning: Dash.Local.Set was called for:\n'"
+                                + Object.keys(this.on_init_pending_global_sets).join(", ")
+                                + "'\nwith 'global' but 'Dash.GlobalStorageEnabled' is false"
+                            );
+                            this.on_init_pending_global_sets = {};
+                        },
+                        5000
+                    );
+                }
             }
         }
         return session ? sessionStorage.setItem(key, value) : localStorage.setItem(key, value);
@@ -19568,8 +19586,8 @@ function DashLocal (context) {
                 this.query_global_storage("DashGlobalStorageGet", key, {"callback_id": callback_id});
             }
             else if (!Dash.InChromeExtension) {
-                console.error(
-                      "Error: Dash.Local.Get was called for '"
+                console.warn(
+                      "Warning: Dash.Local.Get was called for '"
                     + key
                     + "' with 'global_cb' but 'Dash.GlobalStorageEnabled' is false"
                 );
@@ -19581,6 +19599,23 @@ function DashLocal (context) {
             session ? sessionStorage.getItem(key) : localStorage.getItem(key),
             bool_default
         );
+    };
+    // Intended to be called by dash.js only
+    this.on_global_storage_enabled = function () {
+        if (!Dash.GlobalStorageEnabled) {
+            return;  // Should never be the case
+        }
+        if (this.on_init_pending_global_set_timer) {
+            clearTimeout(this.on_init_pending_global_set_timer);
+        }
+        for (var key in this.on_init_pending_global_sets) {
+            this.query_global_storage(
+                "DashGlobalStorageSet",
+                key,
+                {"value": this.on_init_pending_global_sets[key]}
+            );
+        }
+        this.on_init_pending_global_sets = {};
     };
     this.parse_get_value = function (value, bool_default=null) {
         if (bool_default === true) {
@@ -19594,8 +19629,8 @@ function DashLocal (context) {
     this.query_global_storage = function (type, key, extra_data={}) {
         if (!Dash.GlobalStorageEnabled) {
             if (!Dash.InChromeExtension) {
-                console.error(
-                      "Error: Dash.Local.query_global_storage was called for '"
+                console.warn(
+                      "Warning: Dash.Local.query_global_storage was called for '"
                     + key
                     + "' but 'Dash.GlobalStorageEnabled' is false"
                 );
