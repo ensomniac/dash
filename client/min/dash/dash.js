@@ -46896,6 +46896,25 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="", color=null) {
         }
         this.active_content.user_profile.ShowNameSuggestion();
     };
+    this.FancyShowTabs = function (transition_duration_ms=800) {
+        // Hide all tabs, then animate them fading in from top to bottom
+        var delay_slice_ms = transition_duration_ms / this.all_content.length;
+        var delay_ms = 0;
+        for (var x in this.all_content) {
+            var content = this.all_content[x];
+            var button  = content["button"];
+            if (!button) {
+                continue;
+            };
+            button.html.css({"opacity": 0});
+            (function(self, button, delay_ms){
+                setTimeout(function(){
+                    button.html.stop().animate({"opacity": 1.0}, delay_slice_ms);
+                }, delay_ms);
+            })(this, button, delay_ms);
+            delay_ms += delay_slice_ms;
+        }
+    };
     this.AlwaysStartOnFirstTab = function () {
         this.always_start_on_first_tab = true;
     };
@@ -46942,6 +46961,9 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="", color=null) {
         var button = null;
         for (var i in this.all_content) {
             var content_data = this.all_content[i];
+            if (!content_data["button"]) {
+                continue;
+            };
             if (parseInt(i) === parseInt(index)) {
                 content_data["button"].SetSelected(true);
                 button = content_data["button"];
@@ -47068,7 +47090,7 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="", color=null) {
         this.tab_bottom.append(html);
         return html;
     };
-    this.AppendImage = function (img_url, height=null) {
+    this.AppendImage = function (img_url, height=null, content_div_html_class=null, optional_args=null, additional_content_data={}) {
         // TODO: Move the concept of an 'Image' into dash as a light abstraction for managing aspect ratios
         // TODO: This AppendImage is a hack. We need to revise the stack of objects in this
         //  container so they derive from some abstraction to simplify append/prepend
@@ -47081,6 +47103,9 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="", color=null) {
             "background-position": "center"
         });
         this.tab_top.append(image);
+        if (content_div_html_class) {
+            this._add(image, content_div_html_class, null, optional_args, additional_content_data);
+        };
         return image;
     };
     this.Append = function (label_text, content_div_html_class, optional_args=null, additional_content_data={}) {
@@ -47344,20 +47369,35 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="", color=null) {
             // Extra data that doesn't belong in optional_args (since optional_args gets sent to the callback)
             ...additional_content_data
         };
-        (function (self, index) {
-            var style = self.side_tabs ? "tab_side" : "tab_top";
-            content_data["button"] = new Dash.Gui.Button(
-                label_text,                         // Label
-                function () {                       // Callback
+        if (anchor_div == null && typeof label_text != "string") {
+            // If anchor_div == null && label_text is not a string, this is some
+            // other element that needs to have clicks processed but
+            // isn't a traditional tab button
+            (function (self, index) {
+                content_data["button"] = null;
+                content_data["html"] = label_text;
+                content_data["html"].css({"cursor": "pointer"});
+                content_data["html"].click(function(){
                     self.LoadIndex(index, true);
-                },
-                self,                               // Binder
-                self.color,                         // Dash Color Set
-                {"style": style}                    // Options
-            );
-        })(this, this.all_content.length);
-        anchor_div = anchor_div || this.tab_top;
-        anchor_div.append(content_data["button"].html);
+                });
+            })(this, this.all_content.length);
+        }
+        else {
+            (function (self, index) {
+                var style = self.side_tabs ? "tab_side" : "tab_top";
+                content_data["button"] = new Dash.Gui.Button(
+                    label_text,                         // Label
+                    function () {                       // Callback
+                        self.LoadIndex(index, true);
+                    },
+                    self,                               // Binder
+                    self.color,                         // Dash Color Set
+                    {"style": style}                    // Options
+                );
+            })(this, this.all_content.length);
+            anchor_div = anchor_div || this.tab_top;
+            anchor_div.append(content_data["button"].html);
+        };
         this.all_content.push(content_data);
         return content_data["button"];
     };
