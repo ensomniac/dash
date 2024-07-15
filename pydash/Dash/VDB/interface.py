@@ -41,7 +41,12 @@ class Interface:
         self.set_temp_attrs(_vdb_type, _obj_id, **temp_kwargs)
 
         collection = self.GetCollection()
-        data = self.modify_get_data(collection.Get(self.ObjID))
+        data = collection.Get(self.ObjID)
+
+        if not data:
+            raise ValueError(f"Failed to load data for obj ID: {self.ObjID} ({self.Type})")
+
+        data = self.modify_get_data(data)
 
         if unset_temp:
             self.unset_temp_attrs()
