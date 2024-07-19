@@ -18010,6 +18010,7 @@ function DashGui () {
     this.PhoneNumber               = DashGuiPhoneNumber;
     this.Prompt                    = DashGuiPrompt;
     this.PropertyBox               = DashGuiPropertyBox;
+    this.SelectorMenu              = DashGuiSelectorMenu;
     this.Signature                 = DashGuiSignature;
     this.Slider                    = DashGuiSlider;
     this.TextArea                  = DashGuiTextArea;
@@ -27653,6 +27654,192 @@ function DashGuiButtonStyleTabSide () {
             "font-size": Dash.Size.DesktopToMobileMode ? "75%" : "100%"
         });
     };
+}
+
+function DashGuiSelectorMenu (binder, selected_callback, icon_name="unknown", options={}) {
+    this.binder            = binder;
+    this.selected_callback = selected_callback;
+    // Default Options
+    this.options    = options || {};
+    this.color      = this.options["color"] || this.binder.color || Dash.Color.Light;
+    this.icon_color = this.options["icon_color"] || this.color.Button.Text.Base;
+    this.bg_color   = this.options["bg_color"] || this.color.Button.Background.Selected;
+    this.size       = this.options["size"] || Dash.Size.ButtonHeight;
+    this.icon_name  = this.options["icon_name"] || icon_name || "unknown";
+    this.icon_sm    = this.options["icon_size_mult"] || 0.6;
+    this.html  = $("<div class='SelectorMenu'></div>");
+    this.hover = Dash.Gui.GetHTMLAbsContext();
+    this.icon  = null;
+    this.tray  = new DashGuiSelectorMenuTray(this);
+    this.setup_styles = function () {
+        this.icon = new Dash.Gui.Icon(
+            this.color,
+            this.icon_name,
+            this.size,
+            this.icon_sm, // icon_size_mult
+            this.icon_color, // icon_color
+        );
+        this.html.css({
+            "width":       this.size,
+            "height":      this.size,
+            "margin":      0,
+            "padding":     0,
+            "cursor":      "pointer",
+            "user-select": "none",
+            "background":  this.bg_color,
+            "border-radius": Dash.Size.BorderRadius,
+        });
+        this.hover.css({
+            "background":  "rgba(255, 255, 255, 0.4)",
+            "opacity": 0,
+        });
+        this.html.append(this.hover);
+        this.html.append(this.icon.html);
+        this.html.append(this.tray.html);
+        (function(self){
+            self.html.click(function(){
+                self.toggle_menu();
+            });
+            self.html.on("mouseenter", function(){
+                self.on_hover_start();
+            });
+            self.html.on("mouseleave", function(){
+                self.on_hover_stop();
+            });
+        })(this);
+    };
+    this.on_hover_start = function () {
+        this.hover.stop().animate({"opacity": 1}, 250);
+    };
+    this.on_hover_stop = function () {
+        this.hover.stop().animate({"opacity": 0}, 500);
+    };
+
+
+    this.toggle_menu = function () {
+        console.log("toggle_menu")
+        this.tray.Show();
+    };
+    this.open_menu = function () {
+        console.log("open")
+    };
+    this.close_menu = function () {
+        console.log("close")
+    };
+
+    this.setup_styles();
+}
+
+function DashGuiSelectorMenuTray (selector_menu) {
+    this.selector_menu = selector_menu;
+    this.color         = this.selector_menu.color;
+    this.icon_size     = this.selector_menu.icon_size;
+    this.html  = $("<div class='SelectorMenuTray'></div>");
+    this.close_skirt = $("<div></div>");
+    this.background  = $("<div></div>");
+    this.content     = $("<div></div>");
+    this.setup_styles = function () {
+        this.html.css({
+            "position": "absolute",
+            "left":   0,
+            "right":  0,
+            "top":    0,
+            "bottom": 0,
+            "pointer-events": "none",
+            "user-select":    "none",
+        });
+        this.background.css({
+            "position": "fixed",
+            "left":   0,
+            "top":    0,
+            "width": 500,
+            "height": Dash.Size.ColumnWidth * 3,
+            "background": "rgba(255, 255, 255, 0.0)",
+            "pointer-events": "auto",
+            "user-select":    "none",
+        });
+        this.close_skirt.css({
+            "position": "fixed",
+            "left":   0,
+            "top":    0,
+            "right": 0,
+            "bottom": 0,
+            "background": "rgba(0, 0, 0, 0.3)",
+            "pointer-events": "auto",
+            "user-select":    "none",
+        });
+        this.content.css({
+            "position": "absolute",
+            "left":   0,
+            "top":    0,
+            "right":  0,
+            "bottom": 0,
+            "border-radius":  Dash.Size.BorderRadius,
+            "background":     this.color.Background,
+            "pointer-events": "auto",
+            "user-select":    "none",
+            "box-shadow": "0px 10px 30px 0px rgba(0, 0, 0, 0.5)",
+        });
+        this.background.append(this.content);
+        (function(self){
+            self.close_skirt.click(function(){
+                self.Hide();
+            });
+            self.content.click(function(event){
+                event.preventDefault();
+                return false;
+            });
+            self.background.click(function(){
+                self.Hide();
+            });
+            self.background.on("mouseleave", function(){
+                self.Hide();
+            });
+        })(this);
+    };
+    this.get_content_size = function () {
+        return {"width": Dash.Size.ColumnWidth * 6, "height": Dash.Size.ColumnWidth * 3};
+    };
+    this.Show = function () {
+        this.close_skirt.stop();
+        this.background.stop();
+        this.content.stop();
+        this.content_size = this.get_content_size();
+        var offset = this.selector_menu.html.offset();
+        var ex_mouse_buffer_px = this.selector_menu.size * 2;
+        this.close_skirt.css({
+            "opacity": 0,
+        });
+        this.background.css({
+            "left": offset["left"] - ex_mouse_buffer_px,
+            "top":  offset["top"]  - ex_mouse_buffer_px,
+            "width":  this.content_size["width"]  + (ex_mouse_buffer_px * 2),
+            "height": this.content_size["height"] + (ex_mouse_buffer_px * 2),
+        });
+        this.content.css({
+            "left":   ex_mouse_buffer_px,
+            "top":    ex_mouse_buffer_px + this.selector_menu.size,
+            "width":  this.content_size["width"],
+            "height": 1,
+            "overflow": "hidden",
+        });
+        $("body").append(this.close_skirt);
+        $("body").append(this.background);
+        this.close_skirt.stop().animate({"opacity": 1}, 300);
+        this.content.animate({"height": this.content_size["height"]}, 200);
+    };
+    this.Hide = function () {
+        console.log("Hide tray");
+        (function(self){
+            self.close_skirt.stop().animate({"opacity": 0}, 300, function(){
+                self.close_skirt.detach();
+            });
+            self.content.stop().animate({"height": 1}, 200, function(){
+                self.background.detach();
+            });
+        })(this);
+    };
+    this.setup_styles();
 }
 
 function DashGuiChatBox (binder, header_text="Messages", add_msg_cb=null, del_msg_cb=null, mention_cb=null, at_combo_options=[], color=null, dual_sided=true) {

@@ -25,6 +25,7 @@ function DashGui () {
     this.PhoneNumber               = DashGuiPhoneNumber;
     this.Prompt                    = DashGuiPrompt;
     this.PropertyBox               = DashGuiPropertyBox;
+    this.SelectorMenu              = DashGuiSelectorMenu;
     this.Signature                 = DashGuiSignature;
     this.Slider                    = DashGuiSlider;
     this.TextArea                  = DashGuiTextArea;
