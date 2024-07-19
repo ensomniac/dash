@@ -1,6 +1,19 @@
 /**@member DashGuiInputRow*/
 
 function DashGuiInputRowInterface () {
+    this.RefreshConnections = function () {
+        this.BreakConnections();
+        this.setup_connections();
+
+        this.input.RefreshConnections();
+    };
+
+    this.BreakConnections = function () {
+        this.html.off("click");
+        this.html.off("mouseenter");
+        this.html.off("mouseleave");
+    };
+
     this.AddKeyCopyButton = function (data_key="") {
         if (!data_key) {
             data_key = this.data_key;

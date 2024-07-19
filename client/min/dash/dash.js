@@ -19742,8 +19742,9 @@ function DashRegEx () {
 }
 
 function DashGuiPrompt (
-    bound_cb=null, width=null, height=null, message="", header_text="Alert", continue_text="Continue",
-    cancel_text="Cancel", color=null, include_bg=true, bg_opacity=0.1, use_esc_and_enter_shortcuts=true, bg_color=null
+    bound_cb=null, width=null, height=null, message="", header_text="Alert",
+    continue_text="Continue", cancel_text="Cancel", color=null, include_bg=true,
+    bg_opacity=0.1, use_esc_and_enter_shortcuts=true, bg_color=null, scale_mod=1
 ) {
     /**
      * DashGuiPrompt
@@ -19769,6 +19770,7 @@ function DashGuiPrompt (
      *                                                and an `Enter` key shortcut that maps to the default `Continue` button
      *                                                (applicable only when using the default two buttons)
      * @param {string} bg_color - Color for background overlay
+     * @param {number} scale_mod - Global scale modifier for all elements
      */
     this.bound_cb = bound_cb;
     this.message = message;
@@ -19776,6 +19778,7 @@ function DashGuiPrompt (
     this.continue_text = continue_text;
     this.cancel_text = cancel_text;
     this.use_esc_and_enter_shortcuts = use_esc_and_enter_shortcuts;
+    this.scale_mod = scale_mod;
     DashGuiModal.call(
         this,
         color || Dash.Color.Dark,
@@ -19825,9 +19828,9 @@ function DashGuiPrompt (
                     "inset": 0,
                     "top": self.header.html.outerHeight(),
                     "bottom": self.button_bar.html.outerHeight(),
-                    "padding": Dash.Size.Padding * 2,
+                    "padding": (Dash.Size.Padding * 2) * self.scale_mod,
                     "overflow": "auto",
-                    "font-size": "105%",
+                    "font-size": (105 * self.scale_mod) + "%",
                     ...self.message_css
                 });
                 if (self.message) {
@@ -19851,6 +19854,15 @@ function DashGuiPrompt (
         });
         if (prepend) {
             button.StyleAsBorderButton();
+        }
+        if (this.scale_mod !== 1) {
+            button.html.css({
+                "height": Dash.Size.ButtonHeight * this.scale_mod
+            });
+            button.label.css({
+                "line-height": (Dash.Size.ButtonHeight * this.scale_mod) + "px",
+                "font-size": ((Dash.Size.DesktopToMobileMode ? 75 : 100) * this.scale_mod) + "%"
+            });
         }
         // Shortcut is only applicable when using default two buttons
         if (this.shortcuts_active) {
@@ -19918,7 +19930,11 @@ function DashGuiPrompt (
     };
     this.add_header = function () {
         this.header = new Dash.Gui.Header(this.header_text, this.color);
-        this.header.ReplaceBorderWithIcon("alert_square").SetSize(165);
+        var icon = this.header.ReplaceBorderWithIcon("alert_square");
+        icon.SetSize(
+            165 * this.scale_mod,
+            this.scale_mod !== 1 ? icon.size * this.scale_mod : null
+        );
         this.header.html.css({
             "user-select": "none",
             "pointer-events": "none",
@@ -19929,12 +19945,14 @@ function DashGuiPrompt (
             "top": 0,
             "left": 0,
             "right": 0,
-            "padding": Dash.Size.Padding,
+            "height": Dash.Size.RowHeight * this.scale_mod,
+            "padding": Dash.Size.Padding * this.scale_mod,
             "margin": 0
         });
         this.header.label.css({
-            "font-size": "120%",
-            "padding-left": Dash.Size.Padding * 1.1
+            "font-size": (120 * this.scale_mod) + "%",
+            "padding-left": (Dash.Size.Padding * 1.1) * this.scale_mod,
+            "line-height": (Dash.Size.RowHeight * this.scale_mod) + "px",
         });
         this.modal.append(this.header.html);
     };
@@ -19946,7 +19964,8 @@ function DashGuiPrompt (
             "left": 0,
             "right": 0,
             "bottom": 0,
-            "padding": Dash.Size.Padding
+            "padding": Dash.Size.Padding * this.scale_mod,
+            "height": (this.button_bar.style === "toolbar" ? Dash.Size.RowHeight : Dash.Size.ButtonHeight) * this.scale_mod
         });
         this.continue_button = this.AddButton(this.continue_text);
         this.cancel_button = this.AddButton(this.cancel_text, true);
@@ -19995,8 +20014,9 @@ function DashGuiPrompt (
 }
 
 function DashGuiAlert (
-    message, color=null, header_text="Alert", button_text="Dismiss", bound_cb=null,
-    width=null, height=null, include_bg=true, bg_opacity=0.1, use_esc_and_enter_shortcuts=true, bg_color=null
+    message, color=null, header_text="Alert", button_text="Dismiss",
+    bound_cb=null, width=null, height=null, include_bg=true, bg_opacity=0.1,
+    use_esc_and_enter_shortcuts=true, bg_color=null, scale_mod=1
 ) {
     /**
      * DashGuiAlert
@@ -20021,7 +20041,8 @@ function DashGuiAlert (
         include_bg,
         bg_opacity,
         use_esc_and_enter_shortcuts,
-        bg_color
+        bg_color,
+        scale_mod
     );
     this.RemoveCancelButton();
     // Delete inapplicable public functions from DashGuiPrompt to keep things clear
@@ -27414,17 +27435,15 @@ function DashGuiButtonStyleDefault () {
             "cursor": "pointer",
             "height": Dash.Size.ButtonHeight,
             "border-radius": Dash.Size.BorderRadiusInteractive,
-            "padding-left": Dash.Size.Padding,
-            "padding-right": Dash.Size.Padding,
             "padding": 0,
-            "margin": 0,
+            "margin": 0
         });
         this.highlight.css({
             "position": "absolute",
             "inset": 0,
             "background": this.default_highlight_background,
             "opacity": 0,
-            "border-radius": Dash.Size.BorderRadiusInteractive,
+            "border-radius": Dash.Size.BorderRadiusInteractive
         });
         this.load_bar.css({
             "position": "absolute",
@@ -27433,14 +27452,14 @@ function DashGuiButtonStyleDefault () {
             "bottom": 0,
             "width": 0,
             "background": this.default_load_bar_background,
-            "border-radius": Dash.Size.BorderRadiusInteractive,
+            "border-radius": Dash.Size.BorderRadiusInteractive
         });
         this.click_highlight.css({
             "position": "absolute",
             "inset": 0,
             "background": this.default_click_highlight_background,
             "opacity": 0,
-            "border-radius": Dash.Size.BorderRadiusInteractive,
+            "border-radius": Dash.Size.BorderRadiusInteractive
         });
         this.label.css({
             "line-height": (Dash.Size.ButtonHeight) + "px",
@@ -43020,14 +43039,26 @@ function DashGuiInputBase (
         this.input.trigger("focus");
     };
     this.RefreshConnections = function () {
-        this.input.off("keydown");
-        this.input.off("change");
-        this.input.off("paste");
-        this.input.off("click");
-        this.input.off("blur");
-        this.input.off("keyup click");
-        this.input.off("dblclick");
+        this.BreakConnections();
         this.setup_connections();
+        if (this.blur_enabled) {
+            this.EnableBlurSubmit();
+        }
+    };
+    this.BreakConnections = function () {
+        this.html.off("keydown");
+        this.html.off("change");
+        this.html.off("dblclick");
+        if (this.include_paste_connection) {
+            this.html.off("paste");
+        }
+        if (this.include_click_connections) {
+            this.html.off("click");
+            this.html.off("keyup click");
+        }
+        if (this.blur_enabled) {
+            this.html.off("blur");
+        }
     };
     this.EnableDoubleClickClear = function () {
         this.allow_double_click_clear = true;
@@ -43173,8 +43204,8 @@ function DashGuiInputBase (
             this.on_submit();
         }
     };
-    // Intended to be overridden
     this.on_set_locked = function (locked) {
+        // Intended to be overridden
     };
     this.setup_connections = function () {
         (function (self) {
@@ -43627,6 +43658,16 @@ function DashGuiInputRow (
 
 /**@member DashGuiInputRow*/
 function DashGuiInputRowInterface () {
+    this.RefreshConnections = function () {
+        this.BreakConnections();
+        this.setup_connections();
+        this.input.RefreshConnections();
+    };
+    this.BreakConnections = function () {
+        this.html.off("click");
+        this.html.off("mouseenter");
+        this.html.off("mouseleave");
+    };
     this.AddKeyCopyButton = function (data_key="") {
         if (!data_key) {
             data_key = this.data_key;

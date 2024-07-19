@@ -1,6 +1,7 @@
 function DashGuiPrompt (
-    bound_cb=null, width=null, height=null, message="", header_text="Alert", continue_text="Continue",
-    cancel_text="Cancel", color=null, include_bg=true, bg_opacity=0.1, use_esc_and_enter_shortcuts=true, bg_color=null
+    bound_cb=null, width=null, height=null, message="", header_text="Alert",
+    continue_text="Continue", cancel_text="Cancel", color=null, include_bg=true,
+    bg_opacity=0.1, use_esc_and_enter_shortcuts=true, bg_color=null, scale_mod=1
 ) {
     /**
      * DashGuiPrompt
@@ -26,6 +27,7 @@ function DashGuiPrompt (
      *                                                and an `Enter` key shortcut that maps to the default `Continue` button
      *                                                (applicable only when using the default two buttons)
      * @param {string} bg_color - Color for background overlay
+     * @param {number} scale_mod - Global scale modifier for all elements
      */
 
     this.bound_cb = bound_cb;
@@ -34,6 +36,7 @@ function DashGuiPrompt (
     this.continue_text = continue_text;
     this.cancel_text = cancel_text;
     this.use_esc_and_enter_shortcuts = use_esc_and_enter_shortcuts;
+    this.scale_mod = scale_mod;
 
     DashGuiModal.call(
         this,
@@ -92,9 +95,9 @@ function DashGuiPrompt (
                     "inset": 0,
                     "top": self.header.html.outerHeight(),
                     "bottom": self.button_bar.html.outerHeight(),
-                    "padding": Dash.Size.Padding * 2,
+                    "padding": (Dash.Size.Padding * 2) * self.scale_mod,
                     "overflow": "auto",
-                    "font-size": "105%",
+                    "font-size": (105 * self.scale_mod) + "%",
                     ...self.message_css
                 });
 
@@ -122,6 +125,17 @@ function DashGuiPrompt (
 
         if (prepend) {
             button.StyleAsBorderButton();
+        }
+
+        if (this.scale_mod !== 1) {
+            button.html.css({
+                "height": Dash.Size.ButtonHeight * this.scale_mod
+            });
+
+            button.label.css({
+                "line-height": (Dash.Size.ButtonHeight * this.scale_mod) + "px",
+                "font-size": ((Dash.Size.DesktopToMobileMode ? 75 : 100) * this.scale_mod) + "%"
+            });
         }
 
         // Shortcut is only applicable when using default two buttons
@@ -210,7 +224,12 @@ function DashGuiPrompt (
     this.add_header = function () {
         this.header = new Dash.Gui.Header(this.header_text, this.color);
 
-        this.header.ReplaceBorderWithIcon("alert_square").SetSize(165);
+        var icon = this.header.ReplaceBorderWithIcon("alert_square");
+
+        icon.SetSize(
+            165 * this.scale_mod,
+            this.scale_mod !== 1 ? icon.size * this.scale_mod : null
+        );
 
         this.header.html.css({
             "user-select": "none",
@@ -222,13 +241,15 @@ function DashGuiPrompt (
             "top": 0,
             "left": 0,
             "right": 0,
-            "padding": Dash.Size.Padding,
+            "height": Dash.Size.RowHeight * this.scale_mod,
+            "padding": Dash.Size.Padding * this.scale_mod,
             "margin": 0
         });
 
         this.header.label.css({
-            "font-size": "120%",
-            "padding-left": Dash.Size.Padding * 1.1
+            "font-size": (120 * this.scale_mod) + "%",
+            "padding-left": (Dash.Size.Padding * 1.1) * this.scale_mod,
+            "line-height": (Dash.Size.RowHeight * this.scale_mod) + "px",
         });
 
         this.modal.append(this.header.html);
@@ -243,7 +264,8 @@ function DashGuiPrompt (
             "left": 0,
             "right": 0,
             "bottom": 0,
-            "padding": Dash.Size.Padding
+            "padding": Dash.Size.Padding * this.scale_mod,
+            "height": (this.button_bar.style === "toolbar" ? Dash.Size.RowHeight : Dash.Size.ButtonHeight) * this.scale_mod
         });
 
         this.continue_button = this.AddButton(this.continue_text);

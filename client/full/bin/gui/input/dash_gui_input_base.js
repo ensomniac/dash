@@ -175,15 +175,31 @@ function DashGuiInputBase (
     };
 
     this.RefreshConnections = function () {
-        this.input.off("keydown");
-        this.input.off("change");
-        this.input.off("paste");
-        this.input.off("click");
-        this.input.off("blur");
-        this.input.off("keyup click");
-        this.input.off("dblclick");
-
+        this.BreakConnections();
         this.setup_connections();
+
+        if (this.blur_enabled) {
+            this.EnableBlurSubmit();
+        }
+    };
+
+    this.BreakConnections = function () {
+        this.html.off("keydown");
+        this.html.off("change");
+        this.html.off("dblclick");
+
+        if (this.include_paste_connection) {
+            this.html.off("paste");
+        }
+
+        if (this.include_click_connections) {
+            this.html.off("click");
+            this.html.off("keyup click");
+        }
+
+        if (this.blur_enabled) {
+            this.html.off("blur");
+        }
     };
 
     this.EnableDoubleClickClear = function () {
@@ -371,9 +387,8 @@ function DashGuiInputBase (
         }
     };
 
-    // Intended to be overridden
     this.on_set_locked = function (locked) {
-
+        // Intended to be overridden
     };
 
     this.setup_connections = function () {
