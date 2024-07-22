@@ -27,7 +27,12 @@ class ApiUsers:
 
         # (Intended to be overwritten)
         # Emails that can bypass DashContext's specified 'user_email_domain' and create an account regardless of domain
-        self.UserEmailDomainBypassEmails = []
+        try:
+            self.UserEmailDomainBypassEmails = []
+
+        # This will happen if the above is overridden as a property, in which case, safe to ignore
+        except AttributeError:
+            pass
 
         self.Add(self.r,                    requires_authentication=False)
         self.Add(self.reset,                requires_authentication=False)

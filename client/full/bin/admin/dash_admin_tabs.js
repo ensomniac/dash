@@ -3,10 +3,12 @@ function DashAdminTabs () {
 
     this.user_tabs = [];
 
-    this.Add = function (label_text, html_obj) {
+    this.Add = function (label_text, html_obj, optional_args=null, additional_content_data={}) {
         this.user_tabs.push({
             "label_text": label_text,
-            "html_obj": html_obj
+            "html_obj": html_obj,
+            "optional_args": optional_args,
+            "additional_content_data": additional_content_data
         });
     };
 }

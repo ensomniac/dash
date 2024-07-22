@@ -21336,10 +21336,12 @@ function DashDateTime () {
 function DashAdminTabs () {
     // This tiny class allows us to add overrides to the tabs in the Dash Admin page
     this.user_tabs = [];
-    this.Add = function (label_text, html_obj) {
+    this.Add = function (label_text, html_obj, optional_args=null, additional_content_data={}) {
         this.user_tabs.push({
             "label_text": label_text,
-            "html_obj": html_obj
+            "html_obj": html_obj,
+            "optional_args": optional_args,
+            "additional_content_data": additional_content_data
         });
     };
 }
@@ -21357,7 +21359,12 @@ function DashAdminView (users_class_override=null) {
         );
         // this.layout.Append("Color", DashAdminColor);
         for (var tab_settings of Dash.View.SiteSettingsTabs.user_tabs) {
-            this.layout.Append(tab_settings["label_text"] || tab_settings["display_name"], tab_settings["html_obj"]);
+            this.layout.Append(
+                tab_settings["label_text"] || tab_settings["display_name"],
+                tab_settings["content_div_html_class"] || tab_settings["html_obj"],
+                tab_settings["optional_args"],
+                tab_settings["additional_content_data"]
+            );
         }
     };
     this.AddTab = function () {
@@ -42789,8 +42796,9 @@ function DashGuiInput (placeholder_text="", color=null) {
         this.html.css({
             "height": this.height,
             "background": this.color.Input.Background.Base,
+            "border": "1px solid " + this.color.PinstripeDark,
             "border-radius": Dash.Size.BorderRadiusInteractive,
-            "box-shadow": "0px 0px 20px 1px rgba(0, 0, 0, 0.2)",
+            // "box-shadow": "0px 0px 20px 1px rgba(0, 0, 0, 0.2)",
             "padding": 0,
             "margin": 0
         });
