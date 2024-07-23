@@ -17,9 +17,8 @@ function DashGuiInput (placeholder_text="", color=null) {
         this.html.css({
             "height": this.height,
             "background": this.color.Input.Background.Base,
-            "border": "1px solid " + this.color.PinstripeDark,
             "border-radius": Dash.Size.BorderRadiusInteractive,
-            // "box-shadow": "0px 0px 20px 1px rgba(0, 0, 0, 0.2)",
+            "box-shadow": "0px 0px 20px 1px rgba(0, 0, 0, 0.2)",  // DON'T REPLACE THIS WITH BORDER
             "padding": 0,
             "margin": 0
         });
