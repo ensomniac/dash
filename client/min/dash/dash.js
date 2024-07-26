@@ -17494,6 +17494,7 @@ function Dash () {
     // Safari will be present in the userAgent on Apple devices even when using other browsers,
     // so we have to make sure those other browser names aren't present in the userAgent.
     this.IsSafari = /Safari/i.test(navigator.userAgent) && !(/Chrome|Firefox|OP/i.test(navigator.userAgent));
+    this.IsChrome = !this.IsSafari && /Chrome/i.test(navigator.userAgent);
     // Web-app saved to home screen
     this.IsMobileFromHomeScreen = (
            window.navigator.standalone === true  // iOS
@@ -17672,6 +17673,54 @@ function Dash () {
             "width": this.width,
             "height": this.height
         });
+        if (Dash.IsMobile && !Dash.IsMobileiOS && !Dash.IsChrome) {
+            this.add_android_non_chrome_warning();
+        }
+    };
+    this.add_android_non_chrome_warning = function () {
+        var font_size_mult = 0.8;
+        var top_pad = Dash.Size.Padding * 0.3;
+        var height = this.Size.RowHeight;
+        var full_height = (height * font_size_mult) + (top_pad * 2);
+        this.height -= full_height;
+        this.html.css({
+            "top": full_height,
+            "height": this.height
+        });
+        var shared_css = {
+            "color": "#182424",
+            "text-align": "center",
+            "font-style": "italic",
+            "font-family": "sans_serif_bold",
+            "line-height": ((height * 0.5) * font_size_mult) + "px"
+        };
+        var warning = $("<div>This site works best on Google Chrome.</div>");
+        warning.css({
+            ...shared_css,
+            "padding-left": top_pad * 2,
+            "padding-right": top_pad * 2,
+            "padding-top": top_pad,
+            "padding-bottom": top_pad,
+            "position": "absolute",
+            "top": -full_height,
+            "left": 0,
+            "right": 0,
+            "height": height * font_size_mult,
+            "font-size": (font_size_mult * 100) + "%",
+            "background": "#ffcc00"
+        });
+        var link = $(
+            '<a href="https://play.google.com/store/apps/details?id=com.android.chrome" target="_blank">'
+            + "Download Chrome to avoid unexpected behavior."
+            + "</a>"
+        );
+        link.css({
+            ...shared_css,
+            "font-size": "100%",
+            "text-decoration": "underline"
+        });
+        warning.append(link);
+        this.html.append(warning);
     };
     this.extend_array_prototype = function () {
         // *** IMPORTANT NOTE ***
