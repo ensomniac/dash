@@ -17494,7 +17494,7 @@ function Dash () {
     // Safari will be present in the userAgent on Apple devices even when using other browsers,
     // so we have to make sure those other browser names aren't present in the userAgent.
     this.IsSafari = /Safari/i.test(navigator.userAgent) && !(/Chrome|Firefox|OP/i.test(navigator.userAgent));
-    this.IsChrome = !this.IsSafari && /Chrome/i.test(navigator.userAgent);
+    this.IsChrome = navigator.userAgent.toLowerCase().indexOf("chrome") > -1;  // !this.IsSafari && /Chrome/i.test(navigator.userAgent);
     // Web-app saved to home screen
     this.IsMobileFromHomeScreen = (
            window.navigator.standalone === true  // iOS
@@ -17673,7 +17673,7 @@ function Dash () {
             "width": this.width,
             "height": this.height
         });
-        if (Dash.IsMobile && !Dash.IsMobileiOS && !Dash.IsChrome) {
+        if (this.IsMobile && !this.IsMobileiOS && !this.IsChrome) {
             this.add_android_non_chrome_warning();
         }
     };
