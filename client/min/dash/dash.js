@@ -43225,6 +43225,7 @@ function DashGuiIcons (icon) {
         "web":                     new DashGuiIconDefinition(this.icon, "Web", this.weight["solid"], "spider-web"),
         "windows_logo":            new DashGuiIconDefinition(this.icon, "Windows Logo", this.weight["brand"], "windows"),
         "worker":                  new DashGuiIconDefinition(this.icon, "Worker", this.weight["regular"], "user-hard-hat"),
+        "world":                   new DashGuiIconDefinition(this.icon, "World", this.weight["regular"], "globe"),
         "wrench":                  new DashGuiIconDefinition(this.icon, "Wrench", this.weight["regular"], "wrench"),
         "wrestling_mask":          new DashGuiIconDefinition(this.icon, "Wrestling Mask", this.weight["regular"], "luchador"),
         "zoom_in":                 new DashGuiIconDefinition(this.icon, "Zoom In", this.weight["regular"],"search-plus"),
@@ -45544,6 +45545,12 @@ function DashGuiPropertyBoxInterface () {
             );
         })(this);
         text_area.textarea.css({
+            // This color is right in between color.Background and color.BackgroundRaised to make
+            // it feel like it's not quite popping, but like it's separate from the background
+            "background": Dash.Color.Lighten(
+                this.color.Background,
+                Dash.Color.IsLightColor(this.color.Background) ? 5: 20
+            ),
             "border": text_area.border_size + "px solid " + this.color.StrokeLight
         });
         text_area.SetHeight(label_height * starting_height_mult);
