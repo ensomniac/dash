@@ -21,6 +21,7 @@ class Interface:
     LayersRoot: str
     DisplayName: str
     LayerOrder: list
+    LayerLinks: dict
     DashContext: dict
     AspectRatioH: int
     AspectRatioW: int
@@ -29,6 +30,7 @@ class Interface:
     Context2DRoot: str
     add_layer: callable
     add_layer_from_file: callable
+    update_linked_layers_on_change: callable
     parse_aspect_keys_for_properties: callable
     parse_properties_for_override_tag: callable
     re_add_override_tag_to_properties: callable
@@ -47,9 +49,7 @@ class Interface:
         if not self.Data:
             return self.Data
 
-        # This is a function that is meant to be overridden to use for custom modifications
-        # to this returned data for abstractions and extensions of this code.
-        return self.OnToDict({
+        data = {
             "aspect_ratio_h": self.AspectRatioH,
             "aspect_ratio_w": self.AspectRatioW,
             "created_by":     self.CreatedBy,
@@ -66,7 +66,14 @@ class Interface:
 
             # Only save changes, don't need to save the entire default data structure
             "precomps": self.PreCompsMin if save else self.PreCompsFull
-        })
+        }
+
+        if not save:
+            data["layer_links"] = self.LayerLinks
+
+        # This is a function that is meant to be overridden to use for custom modifications
+        # to this returned data for abstractions and extensions of this code.
+        return self.OnToDict(data)
 
     def Duplicate(self):
         from Dash.LocalStorage import Duplicate
@@ -196,19 +203,46 @@ class Interface:
     def AddVideoLayer(self, file, filename):
         return self.add_layer_from_file(file, filename, "video")
 
-    def SetLayerProperty(self, layer_id, key, value, imported_context_layer_id="", file_op_key=""):
+    def GetLayer(self, layer_id):
         from .layer import Layer
 
-        Layer(self, layer_id).SetProperty(key, value, imported_context_layer_id, file_op_key)
+        return Layer(self, layer_id)
 
-        return self.ToDict()
-
-    def SetLayerProperties(self, layer_id, properties={}, imported_context_layer_id=""):
+    def SetLayerProperty(
+        self, layer_id, key, value, imported_context_layer_id="",
+        file_op_key="", return_full_data=True, update_linked_layers=True
+    ):
         from .layer import Layer
 
-        Layer(self, layer_id).SetProperties(properties, imported_context_layer_id)
+        data = Layer(self, layer_id).SetProperty(
+            key=key,
+            value=value,
+            imported_context_layer_id=imported_context_layer_id,
+            file_op_key=file_op_key,
+            update_linked_layers=update_linked_layers
+        )
 
-        return self.ToDict()
+        if return_full_data:
+            return self.ToDict()
+
+        return data
+
+    def SetLayerProperties(
+        self, layer_id, properties={}, imported_context_layer_id="",
+        return_full_data=True, update_linked_layers=True
+    ):
+        from .layer import Layer
+
+        data = Layer(self, layer_id).SetProperties(
+            properties=properties,
+            imported_context_layer_id=imported_context_layer_id,
+            update_linked_layers=update_linked_layers
+        )
+
+        if return_full_data:
+            return self.ToDict()
+
+        return data
 
     # TODO: When importing context with different aspect ratio, need
     #  to recalculate norms so everything is still positioned properly - how?
@@ -284,6 +318,46 @@ class Interface:
 
         return self.ToDict()
 
+    def SaveLayerLink(self, initiating_layer_id, layer_ids, keys, color="", link_id="", return_full_data=True):
+        from .layer_link import LayerLink
+
+        props = {
+            "layer_ids": layer_ids,
+            "keys": keys,
+            "color": color
+        }
+
+        if link_id:
+            data = LayerLink(
+                context_2d=self,
+                link_id=link_id
+            ).SetProperties(props)
+        else:
+            data = LayerLink(
+                context_2d=self,
+                link_id=link_id,
+                new_data=props,
+                initiating_layer_id=initiating_layer_id
+            ).Save().ToDict()
+
+        if return_full_data:
+            return self.ToDict()
+
+        return data
+
+    def DeleteLayerLink(self, link_id, return_full_data=True):
+        from .layer_link import LayerLink
+
+        data = LayerLink(
+            context_2d=self,
+            link_id=link_id
+        ).Delete()
+
+        if return_full_data:
+            return self.ToDict()
+
+        return data
+
     # --------------------------------- OVERRIDES ---------------------------------
 
     # Intended to be overwritten whenever this class is abstracted or expanded upon.
@@ -315,3 +389,8 @@ class Interface:
     # This is used to render all precomps.
     def RenderAllPreComps(self):
         return {}
+
+    # Intended to be overwritten whenever this class is abstracted or expanded upon.
+    # This is used to customize the returned layer data for abstractions.
+    def OnLayerLinkToDict(self, layer_link, data, save=False):  # noqa
+        return data

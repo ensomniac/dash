@@ -508,31 +508,6 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             this.contexts[context_key]["all_elements"].push(end_input.label);
         }
 
-        // var checkbox = (function (self) {
-        //     return new Dash.Gui.Checkbox(
-        //         "",
-        //         self.get_data()[data_key] || false,
-        //         self.color,
-        //         "Toggle",
-        //         self,
-        //         function (checkbox) {
-        //             self.set_data(data_key, checkbox.IsChecked());
-        //         },
-        //         label_text
-        //     );
-        // })(this);
-        //
-        // checkbox.html.css({
-        //     "margin-top": Dash.Size.Padding * 0.6,
-        //     "margin-left": Dash.Size.Padding
-        // });
-        //
-        // checkbox.label.label.css({
-        //     "font-family": "sans_serif_bold",
-        //     "font-size": "80%"
-        // });
-        //
-
         this.contexts[context_key]["fade_checkbox"] = (function (self) {
             return tool_row.AddCheckbox(
                 "Global:",

@@ -13,6 +13,7 @@ class Properties:
     get_layers: callable
     get_precomps: callable
     _precomps_default: dict
+    get_layer_links: callable
 
     def __init__(self, user_data, context2d_root, obj_id="", dash_context={}):
         self.User = user_data
@@ -60,6 +61,11 @@ class Properties:
         return self.get_layers()
 
     @property
+    def LayerLinks(self):
+        # Since links can be added, re-ordered, etc, this should be fresh each time
+        return self.get_layer_links()
+
+    @property
     def ModifiedBy(self):
         return self.Data.get("modified_by") or ""
 
@@ -84,6 +90,10 @@ class Properties:
     @property
     def LayersRoot(self):
         return os.path.join(self.ObjRoot, "layers")
+
+    @property
+    def LayerLinksRoot(self):
+        return os.path.join(self.ObjRoot, "layer_links")
 
     @property
     def ObjRoot(self):

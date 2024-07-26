@@ -4,6 +4,7 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
     this.parent_id = parent_id;
 
     this.input = null;
+    this.type_icon = null;
     this.selected = false;
     this.hidden_icon = null;
     this.locked_icon = null;
@@ -42,6 +43,7 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
         this.UpdatePreCompColor();
         this.add_type_icon();
         this.add_input();
+        this.UpdateLinkColor();
         this.add_override_icon();
 
         this.html.append(Dash.Gui.GetFlexSpacer());
@@ -366,6 +368,26 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
         this.input.SetText(this.get_value("display_name"));
     };
 
+    this.UpdateLinkColor = function () {
+        if (this.preview_mode) {
+            return;
+        }
+
+        var link_id = this.get_value("link_id");
+        var color = this.editor.get_data()["layer_links"][link_id]?.["color"];
+
+        // This is a viable alternative so leaving it in case we want it instead
+        // this.type_icon.html.css({
+        //     "background": color || "none"
+        // });
+
+        this.type_icon.SetIconColor(color || this.icon_color);
+
+        this.input.html.css({
+            "border": "1px solid " + (color || this.color.PinstripeDark)
+        });
+    };
+
     this.UpdateTintColor = function () {
         if (this.preview_mode) {
             return;
@@ -445,7 +467,7 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
     };
 
     this.add_type_icon = function () {
-        var type_icon = (function (self) {
+        this.type_icon = (function (self) {
             return new Dash.Gui.CopyButton(
                 self,
                 function () {
@@ -460,13 +482,14 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
             );
         })(this);
 
-        type_icon.SetIconColor(this.icon_color);
+        this.type_icon.SetIconColor(this.icon_color);
 
-        type_icon.html.css({
+        this.type_icon.html.css({
+            "border-radius": Dash.Size.BorderRadius,
             "margin-top": Dash.Size.Padding * 0.1
         });
 
-        type_icon.html.attr("title", "Copy Layer ID");
+        this.type_icon.html.attr("title", "Copy Layer ID");
 
         var css = {"margin-right": Dash.Size.Padding * 0.3};
 
@@ -474,14 +497,14 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
             css["margin-left"] = this.child_left_margin;
             css["border-left"] = "1px solid " + this.color.PinstripeDark;
 
-            type_icon.button.icon.icon_html.css({
+            this.type_icon.button.icon.icon_html.css({
                 "padding-left": Dash.Size.Padding * 0.3
             });
         }
 
-        type_icon.html.css(css);
+        this.type_icon.html.css(css);
 
-        this.html.append(type_icon.html);
+        this.html.append(this.type_icon.html);
     };
 
     this.add_input = function () {

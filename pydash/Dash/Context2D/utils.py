@@ -18,8 +18,10 @@ class Utils:
     ToDict: callable
     LayerOrder: list
     PreCompsMin: dict
+    LayerLinksRoot: str
     SetProperty: callable
     precomps_default: dict
+    SetLayerProperties: callable
 
     def __init__(self):
         pass
@@ -105,6 +107,24 @@ class Utils:
 
         return layers
 
+    def get_layer_links(self):
+        layer_links = {}
+
+        if not os.path.exists(self.LayerLinksRoot):
+            return layer_links
+
+        link_ids = os.listdir(self.LayerLinksRoot)
+
+        if not link_ids:
+            return layer_links
+
+        from .layer_link import LayerLink
+
+        for link_id in link_ids:
+            layer_links[link_id] = LayerLink(self, link_id).ToDict()
+
+        return layer_links
+
     def add_layer_from_file(self, file, filename, layer_type):
         from .layer import Layer
 
@@ -113,6 +133,51 @@ class Utils:
         layer.UploadFile(file, filename)
 
         return self.add_layer(layer)
+
+    def update_linked_layers_on_change(self, link_id, initiating_layer_id, properties={}):
+        properties, layer_ids = self.get_properties_and_layer_ids_to_update_linked_layers_on_change(
+            link_id=link_id,
+            properties=properties
+        )
+
+        if not properties or not layer_ids:
+            return
+
+        for layer_id in layer_ids:
+            if layer_id == initiating_layer_id:
+                continue
+
+            self.SetLayerProperties(
+                layer_id=layer_id,
+                properties=properties,
+                return_full_data=False,
+                update_linked_layers=False
+            )
+
+    # Lengthy name, I know
+    def get_properties_and_layer_ids_to_update_linked_layers_on_change(self, link_id, properties={}):
+        if not properties:
+            return None, None
+
+        from .layer_link import LayerLink
+
+        try:
+            layer_link = LayerLink(self, link_id)
+
+        except ValueError:
+            return None, None
+
+        layer_link_data = layer_link.ToDict()
+
+        if not layer_link_data.get("layer_ids") or not layer_link_data.get("keys"):
+            return None, None
+
+        properties = {k: properties[k] for k in properties if k in layer_link_data["keys"]}
+
+        if not properties:
+            return None, None
+
+        return properties, layer_link_data["layer_ids"]
 
     def add_layer(self, layer):
         layer.Save()

@@ -28,6 +28,10 @@ function DashGuiComboInterface () {
             return;
         }
 
+        if (!this.init_labels_drawn && ids_only && this.pending_initial_multi_select_ids) {
+            return this.pending_initial_multi_select_ids;
+        }
+
         var selections = [];  // Selected option(s)
 
         for (var row of this.row_buttons) {
@@ -37,6 +41,36 @@ function DashGuiComboInterface () {
         }
 
         return selections;
+    };
+
+    this.SetMultiSelections = function (ids=[]) {
+        if (!this.multi_select) {
+            return;
+        }
+
+        if (this.row_buttons.length) {
+            for (var row of this.row_buttons) {
+                if (ids.includes(row.id)) {
+                    if (!row.IsMultiSelected()) {
+                        row.checkbox.Toggle(true);
+                    }
+                }
+
+                else {
+                    if (row.IsMultiSelected()) {
+                        row.checkbox.Toggle(true);
+                    }
+                }
+            }
+
+            this.update_label_for_multi_select();
+        }
+
+        else {
+            this.pending_initial_multi_select_ids = ids;
+
+            this.update_label_for_multi_select(ids);
+        }
     };
 
     this.ClearAllMultiSelections = function () {

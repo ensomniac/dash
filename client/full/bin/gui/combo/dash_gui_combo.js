@@ -55,6 +55,7 @@ function DashGuiCombo (
     this.arrow_buttons_allow_first = true;
     this.show_rows_on_empty_search = true;
     this.default_search_submit_combo = null;
+    this.pending_initial_multi_select_ids = [];
     this.html = $("<div class='Combo'></div>");
     this.rows = $("<div class='Combo'></div>");
     this.click = $("<div class='Combo'></div>");
@@ -345,6 +346,12 @@ function DashGuiCombo (
         }
 
         this.init_labels_drawn = true;
+
+        if (this.pending_initial_multi_select_ids.length) {
+            this.SetMultiSelections(this.pending_initial_multi_select_ids);
+
+            this.pending_initial_multi_select_ids = [];
+        }
     };
 
     this.on_click = function (skirt_clicked=false) {
@@ -428,17 +435,31 @@ function DashGuiCombo (
         }
     };
 
-    this.update_label_for_multi_select = function () {
+    this.update_label_for_multi_select = function (ids_for_override=null) {
         if (!this.multi_select) {
             return;
         }
 
-        this.label.text(this.get_multi_select_label());
+        this.label.text(this.get_multi_select_label(ids_for_override));
     };
 
-    this.get_multi_select_label = function () {
+    this.get_multi_select_label = function (ids_for_override=null) {
         if (!this.multi_select) {
             return "";
+        }
+
+        if (ids_for_override !== null && ids_for_override.length > 0) {
+            if (ids_for_override.length === 1) {
+                for (var option of this.option_list) {
+                    if (option["id"] === ids_for_override[0]) {
+                        return option["label_text"] || option["display_name"] || "One Selection";
+                    }
+                }
+
+                return "One Selection";
+            }
+
+            return "Multiple Selections";
         }
 
         if (!this.row_buttons.length) {

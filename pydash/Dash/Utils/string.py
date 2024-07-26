@@ -403,6 +403,12 @@ def Abbreviate(string, length=3, excluded_abbreviations=[], _retry=0):
     return abbreviation
 
 
+def GetRandomHexColor():
+    from random import randint
+
+    return f"#{randint(0, 0xFFFFFF):06x}"
+
+
 def change_dt_tz(dt_obj, tz):
     if str(dt_obj.time()) == "00:00:00":
         return dt_obj

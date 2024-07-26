@@ -317,6 +317,12 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         }
     };
 
+    this.UpdateLinkColors = function () {
+        for (var id in this.layers) {
+            this.layers[id].UpdateLinkColor();
+        }
+    };
+
     this.UpdateToolbarIconStates = function () {
         this.toolbar.UpdateIconStates();
     };
@@ -558,6 +564,8 @@ function DashGuiContext2DEditorPanelLayers (panel) {
 
         this.on_data(response);
 
+        var layer_id;
+
         if (key === "display_name" || key === "text_value") {
             this.layers[id].UpdateLabel();
         }
@@ -567,7 +575,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         }
 
         else if (key === "precomp_tag") {
-            for (var layer_id in this.layers) {
+            for (layer_id in this.layers) {
                 this.layers[layer_id].UpdatePreCompColor();
             }
         }
@@ -599,6 +607,20 @@ function DashGuiContext2DEditorPanelLayers (panel) {
 
             if (key === "hidden" || key === "locked") {
                 this.panel.RedrawCurrentContentTab();
+            }
+        }
+
+        var link_id = this.layers[id].GetValue("link_id");
+
+        if (link_id) {
+            var layer_ids = this.editor.data["layer_links"][link_id]?.["layer_ids"] || [];
+
+            for (layer_id of layer_ids) {
+                if (layer_id === id) {
+                    continue;
+                }
+
+                this.editor.canvas.RedrawPrimitive(this.layers[layer_id], false);
             }
         }
     };

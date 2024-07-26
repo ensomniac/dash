@@ -7,7 +7,8 @@ function DashGuiPrompt (
      * DashGuiPrompt
      * -------------
      *
-     * This a replacement for `window.confirm`.
+     * This is a (comprehensive) replacement for `window.confirm`.
+     * Use DashGuiConfirm for a more basic version of this.
      *
      * Once instantiated and configured as desired (using `AddButton`, `AddHTML`, etc),
      * simply call `Show` as a last step (it appears this may not be not necessary after all...).

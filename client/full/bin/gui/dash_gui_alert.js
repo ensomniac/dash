@@ -7,7 +7,7 @@ function DashGuiAlert (
      * DashGuiAlert
      * -------------
      *
-     * This a replacement for `window.alert`, as an abstraction of DashGuiAlert.
+     * This is a replacement for `window.alert`, as an abstraction of DashGuiPrompt.
      *
      * (Reference docstring of DashGuiPrompt for further info)
      */
@@ -37,5 +37,4 @@ function DashGuiAlert (
     delete this.AddButton;
     delete this.RemoveCancelButton;
     delete this.RemoveContinueButton;
-
 }

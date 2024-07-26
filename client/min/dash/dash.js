@@ -17991,6 +17991,7 @@ function DashGui () {
     this.ChatBox                   = DashGuiChatBox;
     this.Checkbox                  = DashGuiCheckbox;
     this.Combo                     = DashGuiCombo;
+    this.Confirm                   = DashGuiConfirm;
     this.Context2D                 = DashGuiContext2D;
     this.CopyButton                = DashGuiCopyButton;
     this.DatePicker                = DashGuiDatePicker;
@@ -18164,22 +18165,22 @@ function DashGui () {
     };
     // TODO: This needs to be its own class/element
     this.GetColorPicker = function (
-        binder, callback, label_text="Color Picker", dash_color=null,
+        binder=null, callback=null, label_text="Color Picker", dash_color=null,
         default_picker_hex_color="#00ff00", include_clear_button=false, clear_button_cb=null, height=null
     ) {
         if (!dash_color) {
-            dash_color = Dash.Color.Light;
+            dash_color = binder?.color || Dash.Color.Light;
         }
-        callback = callback.bind(binder);
         height = height || Dash.Size.ButtonHeight;
         var include_label = label_text && label_text.replace(":", "") !== "none";
+        var id = "colorpicker_" + Dash.Math.Random();
         var color_picker = {
             "height": height,
             "html": $("<div></div>"),
-            "input": $("<input type='color' id='colorpicker' value='" + default_picker_hex_color + "'>")
+            "input": $("<input type='color' id='" + id + "' value='" + default_picker_hex_color + "'>")
         };
         if (include_label) {
-            color_picker["label"] = $("<label for='colorpicker'>" + label_text + "</label>");
+            color_picker["label"] = $("<label for='" + id + "'>" + label_text + "</label>");
             var line_break = label_text.includes("\n");
             var label_css = {
                 "font-family": "sans_serif_bold",
@@ -18216,37 +18217,38 @@ function DashGui () {
             color_picker.html.css({
                 "display": "flex"
             });
-            if (clear_button_cb) {
+            if (clear_button_cb && binder) {
                 clear_button_cb = clear_button_cb.bind(binder);
             }
-            color_picker["clear_button"] = (function (self) {
-                return new Dash.Gui.IconButton(
-                    "close_square",
-                    function () {
-                        color_picker.input.val(default_picker_hex_color);
-                        if (clear_button_cb) {
-                            clear_button_cb();
-                        }
-                    },
-                    self,
-                    self.color,
-                    {
-                        "container_size": height,
-                        "size_mult": 0.5
+            color_picker["clear_button"] = new Dash.Gui.IconButton(
+                "close_square",
+                function () {
+                    color_picker.input.val(default_picker_hex_color);
+                    if (clear_button_cb) {
+                        clear_button_cb();
                     }
-                );
-            })(this);
+                },
+                this,
+                dash_color,
+                {
+                    "container_size": height,
+                    "size_mult": 0.5
+                }
+            );
             color_picker["clear_button"].SetIconColor(dash_color.AccentBad);
             color_picker["clear_button"].html.css({
                 "padding-top": Dash.Size.Padding * 0.1
             });
             color_picker.html.append(color_picker.clear_button.html);
         }
-        (function (input, callback) {
-            input.on("change", function () {
+        if (callback) {
+            if (binder) {
+                callback = callback.bind(binder);
+            }
+            color_picker.input.on("change", function () {
                 callback(color_picker.input.val());
             });
-        })(color_picker.input, callback);
+        }
         return color_picker;
     };
     // This function is old and not written well
@@ -19750,7 +19752,8 @@ function DashGuiPrompt (
      * DashGuiPrompt
      * -------------
      *
-     * This a replacement for `window.confirm`.
+     * This is a (comprehensive) replacement for `window.confirm`.
+     * Use DashGuiConfirm for a more basic version of this.
      *
      * Once instantiated and configured as desired (using `AddButton`, `AddHTML`, etc),
      * simply call `Show` as a last step (it appears this may not be not necessary after all...).
@@ -20022,7 +20025,7 @@ function DashGuiAlert (
      * DashGuiAlert
      * -------------
      *
-     * This a replacement for `window.alert`, as an abstraction of DashGuiAlert.
+     * This is a replacement for `window.alert`, as an abstraction of DashGuiPrompt.
      *
      * (Reference docstring of DashGuiPrompt for further info)
      */
@@ -20049,6 +20052,54 @@ function DashGuiAlert (
     delete this.AddButton;
     delete this.RemoveCancelButton;
     delete this.RemoveContinueButton;
+}
+
+function DashGuiConfirm (
+    message, bound_continue_cb, bound_cancel_cb=null, color=null,
+    header_text="Alert", continue_text="Continue", cancel_text="Cancel",
+    width=null, height=null, include_bg=true, bg_opacity=0.1,
+    use_esc_and_enter_shortcuts=true, bg_color=null, scale_mod=1
+) {
+    /**
+     * DashGuiConfirm
+     * -------------
+     *
+     * This is a (basic) replacement for `window.confirm`, as an abstraction of DashGuiPrompt.
+     * Use DashGuiPrompt for a more comprehensive version of this.
+     *
+     * (Reference docstring of DashGuiPrompt for further info)
+     */
+    DashGuiPrompt.call(
+        this,
+        (selected_index) => {
+            if (selected_index === 0 && bound_cancel_cb) {  // Cancel
+                bound_cancel_cb();
+            }
+            else if (selected_index === 1 && bound_continue_cb) {  // Continue
+                bound_continue_cb();
+            }
+        },
+        width || (Dash.Size.ColumnWidth * 2),
+        height || (Dash.Size.ColumnWidth * 1.5),
+        message,
+        header_text,
+        continue_text,
+        cancel_text,
+        color,
+        include_bg,
+        bg_opacity,
+        use_esc_and_enter_shortcuts,
+        bg_color,
+        scale_mod
+    );
+    // Delete inapplicable public functions from DashGuiPrompt to keep things clear
+    delete this.AddButton;
+    delete this.RemoveCancelButton;
+    delete this.RemoveContinueButton;
+    // Simplify usage by showing the prompt immediately on call, just like when calling window.confirm
+    requestAnimationFrame(() => {
+        this.Show();
+    });
 }
 
 /**
@@ -28817,6 +28868,7 @@ function DashGuiCombo (
     this.arrow_buttons_allow_first = true;
     this.show_rows_on_empty_search = true;
     this.default_search_submit_combo = null;
+    this.pending_initial_multi_select_ids = [];
     this.html = $("<div class='Combo'></div>");
     this.rows = $("<div class='Combo'></div>");
     this.click = $("<div class='Combo'></div>");
@@ -29044,6 +29096,10 @@ function DashGuiCombo (
             this.on_rows_drawn_cb();
         }
         this.init_labels_drawn = true;
+        if (this.pending_initial_multi_select_ids.length) {
+            this.SetMultiSelections(this.pending_initial_multi_select_ids);
+            this.pending_initial_multi_select_ids = [];
+        }
     };
     this.on_click = function (skirt_clicked=false) {
         if (this.read_only) {
@@ -29105,15 +29161,26 @@ function DashGuiCombo (
             }
         }
     };
-    this.update_label_for_multi_select = function () {
+    this.update_label_for_multi_select = function (ids_for_override=null) {
         if (!this.multi_select) {
             return;
         }
-        this.label.text(this.get_multi_select_label());
+        this.label.text(this.get_multi_select_label(ids_for_override));
     };
-    this.get_multi_select_label = function () {
+    this.get_multi_select_label = function (ids_for_override=null) {
         if (!this.multi_select) {
             return "";
+        }
+        if (ids_for_override !== null && ids_for_override.length > 0) {
+            if (ids_for_override.length === 1) {
+                for (var option of this.option_list) {
+                    if (option["id"] === ids_for_override[0]) {
+                        return option["label_text"] || option["display_name"] || "One Selection";
+                    }
+                }
+                return "One Selection";
+            }
+            return "Multiple Selections";
         }
         if (!this.row_buttons.length) {
             return (this.name || "Multiple Options");
@@ -30032,6 +30099,9 @@ function DashGuiComboInterface () {
         if (!this.multi_select) {
             return;
         }
+        if (!this.init_labels_drawn && ids_only && this.pending_initial_multi_select_ids) {
+            return this.pending_initial_multi_select_ids;
+        }
         var selections = [];  // Selected option(s)
         for (var row of this.row_buttons) {
             if (row.IsMultiSelected()) {
@@ -30039,6 +30109,30 @@ function DashGuiComboInterface () {
             }
         }
         return selections;
+    };
+    this.SetMultiSelections = function (ids=[]) {
+        if (!this.multi_select) {
+            return;
+        }
+        if (this.row_buttons.length) {
+            for (var row of this.row_buttons) {
+                if (ids.includes(row.id)) {
+                    if (!row.IsMultiSelected()) {
+                        row.checkbox.Toggle(true);
+                    }
+                }
+                else {
+                    if (row.IsMultiSelected()) {
+                        row.checkbox.Toggle(true);
+                    }
+                }
+            }
+            this.update_label_for_multi_select();
+        }
+        else {
+            this.pending_initial_multi_select_ids = ids;
+            this.update_label_for_multi_select(ids);
+        }
     };
     this.ClearAllMultiSelections = function () {
         if (!this.multi_select) {
@@ -30637,6 +30731,7 @@ function DashGuiContext2D (
      *                                     should call Dash.LocalStorage.Duplicate, unless there's a special need for a custom function
      *         - "duplicate_layer":        Duplicate the provided layer ID as a new layer (not tethered to the original)
      *         - "get_pil_preview":        Get PIL preview image URL of current state of provided object ID
+     *         - "save_layer_link":        Save linked layer selections
      *         - "get_combo_options":      Get dict with keys for different combo option types, such as "fonts", with values being lists
      *                                     containing dicts that match the standard combo option format, such as {"id": "font_1", "label_text": "Font 1"}
      *
@@ -30666,6 +30761,7 @@ function DashGuiContext2D (
     this.extra_request_params = extra_request_params;
     this.data = data;
     this.ComboOptions = combo_options;
+    this.modal = null;
     this.canvas = null;
     this.log_bar = null;
     this.toolbar = null;
@@ -30946,6 +31042,27 @@ function DashGuiContext2D (
         }
         this.full_res_mode = !this.full_res_mode;
         this.RedrawLayers(false, true);
+    };
+    this.ShowLayerLinks = function () {
+        var layer = this.GetSelectedLayer();
+        if (!layer) {
+            return;
+        }
+        var view;  // Declare early for cb access
+        if (this.modal) {
+            this.modal.Empty();
+            this.modal.Show();
+        }
+        else {
+            this.modal = new Dash.Gui.Modal(
+                this.color,
+                this.html,
+                Dash.Size.ColumnWidth * 4,
+                Dash.Size.ColumnWidth * 3.1
+            );
+        }
+        view = new DashGuiContext2DLayerLinks(this, layer);
+        this.modal.AddHTML(view.html);
     };
     this.initialize = function () {
         if (this.initialized) {
@@ -31250,6 +31367,13 @@ function DashGuiContext2DCanvas (editor) {
         this.primitives[id].Select(false, true, focus);
         this.last_selected_primitive = this.primitives[id];
     };
+    this.RedrawPrimitive = function (layer, select=true) {
+        var id = layer.GetID();
+        if (this.primitives[id]) {
+            this.RemovePrimitive(id);
+        }
+        this.AddPrimitive(layer, select);
+    };
     this.AddPrimitive = function (layer, select=true) {
         var id = layer.GetID();
         if (this.primitives[id]) {
@@ -31512,6 +31636,352 @@ function DashGuiContext2DCanvas (editor) {
         })(this);
     };
     this.setup_styles();
+}
+
+class DashGuiContext2DLayerLinks {
+    constructor (editor, layer) {
+        this.editor = editor;
+        this.layer = layer;
+        this.combo = null;
+        this.checkboxes = {};
+        this.linked_ids = [];
+        this.linked_keys = [];
+        this.linked_color = "";
+        this.save_button = null;
+        this.color_picker = null;
+        this.delete_button = null;
+        this.color = this.editor.color;
+        this.layer_id = this.layer.GetID();
+        this.link_id = this.layer.GetValue("link_id");
+        this.opposite_color = this.editor.opposite_color;
+        this.layers_box = this.editor.editor_panel.layers_box;
+        this.html = Dash.Gui.GetHTMLAbsContext(
+            "",
+            this.color,
+            {
+                "padding": Dash.Size.Padding,
+                "border-radius": "inherit"
+            }
+        );
+        this.setup_styles();
+    }
+    setup_styles () {
+        this.set_linked_attrs();
+        this.add_layer_combo();
+        this.add_key_checkboxes();
+        this.add_bottom_toolbar();
+    }
+    set_linked_attrs () {
+        if (!this.link_id) {
+            return;
+        }
+        var link_data = this.editor.get_data()["layer_links"]?.[this.link_id] || {};
+        for (var id of (link_data["layer_ids"] || [])) {
+            if (id !== this.layer_id) {
+                this.linked_ids.push(id);
+            }
+        }
+        this.linked_keys = link_data["keys"] || [];
+        this.linked_color = link_data["color"] || "";
+    }
+    add_layer_combo () {
+        var header = new Dash.Gui.Header(
+            (
+                  (this.link_id ? "Layers linked with" : "Select layers to link with")
+                + ' "'
+                + this.layer.GetValue("display_name")
+                + '":'
+            ),
+            this.color
+        );
+        header.ReplaceBorderWithIcon("linked");
+        if (this.link_id) {
+            header.html.append(this.get_badge());
+        }
+        this.html.append(header.html);
+        this.combo = new Dash.Gui.Combo(
+            "",
+            () => {
+                // pass
+            },
+            this,
+            this.get_layer_options(),
+            "",
+            null,
+            {"multi_select": true}
+        );
+        this.combo.html.css({
+            "margin-left": Dash.Size.Padding * 2
+        });
+        if (this.linked_ids.length) {
+            this.combo.SetMultiSelections(this.linked_ids);
+        }
+        this.html.append(this.combo.html);
+    }
+    add_key_checkboxes () {
+        var header = new Dash.Gui.Header(
+            (this.link_id ? "Linked fields/properties:" : "Select fields/properties to link:"),
+            this.color
+        );
+        header.ReplaceBorderWithIcon("linked");
+        header.html.css({
+            "margin-top": Dash.Size.Padding * 2
+        });
+        if (this.link_id) {
+            header.html.append(this.get_badge());
+        }
+        this.html.append(header.html);
+        var gap = Dash.Size.Padding;
+        var checkbox_padding = Dash.Size.Padding * 0.5;
+        var row_height = Dash.Size.RowHeight + (checkbox_padding * 2);
+        var min_row_width = Dash.Size.ColumnWidth + (checkbox_padding * 2);
+        var container = $("<div></div>");
+        container.css({
+            "background": this.color.Pinstripe,
+            "border-radius": Dash.Size.BorderRadius,
+            "margin-left": Dash.Size.Padding * 2,
+            "padding": Dash.Size.Padding,
+            "border": "1px solid " + this.color.Pinstripe,
+            "display": "grid",
+            "grid-template-columns": "repeat(auto-fit, minmax(" + min_row_width + "px, 1fr))",
+            "grid-auto-rows": row_height,
+            "gap": gap,
+            "height": (7 * (row_height + gap)) - gap
+        });
+        var keys = {
+            // Core keys
+            "anchor_norm_x": "X-Position",
+            "anchor_norm_y": "Y-Position",
+            "width_norm": "Scale",
+            "rot_deg": "Rotation",
+            // Referenced from DashGuiContext2DEditorPanelContentEdit.initialize_general_context
+            "opacity": "Opacity",
+            "blend_mode": "Blend Mode",
+            "invert": "Invert/Mirror",
+            "fade_direction": "Fade Direction",
+            "fade_norm_start": "Fade Start",
+            "fade_norm_end": "Fade End",
+            "fade_global": "Global Fade"
+            // Add any others here
+            // (and then update the num of rows in the container's css height above and the modal's height)
+        };
+        for (var key in keys) {
+            this.checkboxes[key] = this.get_checkbox(key, keys[key], checkbox_padding);
+            container.append(this.checkboxes[key].html);
+        }
+        this.html.append(container);
+    }
+    add_bottom_toolbar () {
+        var toolbar = new Dash.Layout.Toolbar(this);
+        toolbar.html.css({
+            "background": "none",
+            "padding": 0,
+            "margin-top": Dash.Size.Padding * 2
+        });
+        toolbar.RemoveStrokeSep();
+        toolbar.DisablePaddingRefactoring();
+        var label = toolbar.AddLabel("Quick-Reference Color:", false);
+        label.ReplaceBorderWithIcon("color_palette");
+        label.html.css({
+            "margin-right": 0
+        });
+        this.color_picker = Dash.Gui.GetColorPicker(
+            null,
+            null,
+            "",
+            this.color,
+            this.linked_color || "#00ff00",
+            false,
+            null,
+            toolbar.height
+        );
+        toolbar.AddHTML(this.color_picker.html);
+        toolbar.AddExpander();
+        if (this.link_id) {
+            this.delete_button = toolbar.AddButton(
+                "Delete",
+                this.delete,
+                null,
+                null,
+                "default"
+            );
+            this.delete_button.html.css({
+                "margin-right": Dash.Size.Padding
+            });
+            this.delete_button.SetColor(
+                this.color.StrokeLight,
+                this.color.AccentBad
+            );
+            this.delete_button.FitContent();
+        }
+        this.save_button = toolbar.AddButton(
+            "Save" + (this.link_id ? " Changes" : ""),
+            this.save,
+            null,
+            null,
+            "default"
+        );
+        this.save_button.FitContent();
+        this.html.append(toolbar.html);
+    }
+    delete () {
+        new Dash.Gui.Confirm(
+            (
+                "Are you sure you want to unlink\nall the layers " +
+                "linked with this one?\n\nThis cannot be undone."
+            ),
+            () => {
+                this.delete_button.SetLoading(true);
+                this.disable();
+                Dash.Request(
+                    this,
+                    (response) => {
+                        if (!Dash.Validate.Response(response)) {
+                            this.delete_button.SetLoading(false);
+                            this.enable();
+                            return;
+                        }
+                        this.on_response(response);
+                    },
+                    this.editor.api,
+                    {
+                        "f": "delete_layer_link",
+                        "c2d_id": this.editor.c2d_id,
+                        "link_id": this.link_id,
+                        ...this.editor.extra_request_params
+                    }
+                );
+            },
+            null,
+            this.opposite_color
+        );
+    }
+    on_response (response) {
+        this.editor.data = response;
+        this.editor._on_data();
+        this.editor.RedrawLayers(false, true);
+        this.editor.editor_panel.layers_box.UpdateLinkColors();
+        this.editor.editor_panel.SelectLayer(this.layer_id, false);
+        this.editor.modal.Hide();
+    }
+    disable () {
+        this.html.css({
+            "opacity": 0.5,
+            "pointer-events": "none",
+            "user-select": "none"
+        });
+    }
+    enable () {
+        this.html.css({
+            "opacity": 1,
+            "pointer-events": "auto",
+            "user-select": "auto"
+        });
+    }
+    save () {
+        var keys = [];
+        for (var key in this.checkboxes) {
+            if (this.checkboxes[key].IsChecked()) {
+                keys.push(key);
+            }
+        }
+        if (!keys.length) {
+            new Dash.Gui.Alert("You haven't selected any fields/properties to link", this.opposite_color);
+            return;
+        }
+        var layer_ids = this.combo.GetMultiSelections(true);
+        if (!layer_ids.length) {
+            new Dash.Gui.Alert("You haven't selected any layers to link", this.opposite_color);
+            return;
+        }
+        if (!layer_ids.includes(this.layer_id)) {
+            layer_ids.push(this.layer_id);
+        }
+        this.save_button.SetLoading(true);
+        this.disable();
+        var color = this.color_picker.input.val();
+        if (!this.linked_color && color === "#00ff00") {
+            color = "";  // If color not chosen, a random color will be assigned on the backend
+        }
+        Dash.Request(
+            this,
+            (response) => {
+                if (!Dash.Validate.Response(response)) {
+                    this.save_button.SetLoading(false);
+                    this.enable();
+                    return;
+                }
+                this.on_response(response);
+            },
+            this.editor.api,
+            {
+                "f": "save_layer_link",
+                "c2d_id": this.editor.c2d_id,
+                "initiating_layer_id": this.layer_id,
+                "link_id": this.link_id,
+                "layer_ids": JSON.stringify(layer_ids),
+                "keys": JSON.stringify(keys),
+                "color": color,
+                ...this.editor.extra_request_params
+            }
+        );
+    }
+    get_checkbox (key, label_text, padding) {
+        var checkbox = new Dash.Gui.Checkbox(
+            "",
+            (
+                   this.linked_keys.includes(key)
+                || ["width_norm", "anchor_norm_x", "anchor_norm_y", "rot_deg"].includes(key)
+            ),
+            this.color,
+            "Toggle",
+            null,
+            null,
+            label_text,
+            false
+        );
+        checkbox.html.css({
+            "background": this.color.Pinstripe,
+            "border-radius": Dash.Size.BorderRadius,
+            "padding": padding
+        });
+        checkbox.AddHighlight();
+        return checkbox;
+    }
+    get_layer_options () {
+        var options = [];
+        var layers = this.layers_box.get_data();
+        for (var id of layers["order"]) {
+            if (id === this.layer_id) {
+                continue;
+            }
+            var layer_data = layers["data"][id];
+            // Don't list any layers that are already linked under another link ID
+            if (this.link_id && layer_data["link_id"] && layer_data["link_id"] !== this.link_id) {
+                continue;
+            }
+            options.push({
+                "id": id,
+                "label_text": layer_data["display_name"]
+            });
+        }
+        return options;
+    }
+    get_badge () {
+        var badge = $("<div>LINKS EXIST</div>");
+        badge.css({
+            "color": this.color.StrokeDark,
+            "font-family": "sans_serif_bold",
+            "font-size": "80%",
+            "background": this.linked_color,
+            "border-radius": Dash.Size.BorderRadius,
+            "height": Dash.Size.RowHeight,
+            "line-height": Dash.Size.RowHeight + "px",
+            "padding-left": Dash.Size.Padding * 0.75,
+            "padding-right": Dash.Size.Padding * 0.75
+        });
+        return badge;
+    }
 }
 
 function DashGuiContext2DLogBar (editor) {
@@ -32404,6 +32874,18 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         if (this.type === "context" || this.parent_id) {
             this.canvas.RemoveAllPrimitives();
             this.editor.RedrawLayers(true);
+            return;
+        }
+        var link_id = this.layer.GetValue("link_id");
+        if (link_id) {
+            var layer_id = this.layer.GetID();
+            var layer_ids = this.editor.data["layer_links"][link_id]?.["layer_ids"] || [];
+            for (var id of layer_ids) {
+                if (id === layer_id) {
+                    continue;
+                }
+                this.canvas.RedrawPrimitive(this.layer.layers.layers[id], false);
+            }
         }
     };
     this.get_value = function (key, data=null, parent_data=null) {
@@ -34045,6 +34527,7 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
     this.id = id;
     this.parent_id = parent_id;
     this.input = null;
+    this.type_icon = null;
     this.selected = false;
     this.hidden_icon = null;
     this.locked_icon = null;
@@ -34080,6 +34563,7 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
         this.UpdatePreCompColor();
         this.add_type_icon();
         this.add_input();
+        this.UpdateLinkColor();
         this.add_override_icon();
         this.html.append(Dash.Gui.GetFlexSpacer());
         this.add_icon_area();
@@ -34324,6 +34808,21 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
         }
         this.input.SetText(this.get_value("display_name"));
     };
+    this.UpdateLinkColor = function () {
+        if (this.preview_mode) {
+            return;
+        }
+        var link_id = this.get_value("link_id");
+        var color = this.editor.get_data()["layer_links"][link_id]?.["color"];
+        // This is a viable alternative so leaving it in case we want it instead
+        // this.type_icon.html.css({
+        //     "background": color || "none"
+        // });
+        this.type_icon.SetIconColor(color || this.icon_color);
+        this.input.html.css({
+            "border": "1px solid " + (color || this.color.PinstripeDark)
+        });
+    };
     this.UpdateTintColor = function () {
         if (this.preview_mode) {
             return;
@@ -34383,7 +34882,7 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
         return "";
     };
     this.add_type_icon = function () {
-        var type_icon = (function (self) {
+        this.type_icon = (function (self) {
             return new Dash.Gui.CopyButton(
                 self,
                 function () {
@@ -34397,21 +34896,22 @@ function DashGuiContext2DEditorPanelLayer (layers, id, parent_id="") {
                 "Copied Layer ID!"
             );
         })(this);
-        type_icon.SetIconColor(this.icon_color);
-        type_icon.html.css({
+        this.type_icon.SetIconColor(this.icon_color);
+        this.type_icon.html.css({
+            "border-radius": Dash.Size.BorderRadius,
             "margin-top": Dash.Size.Padding * 0.1
         });
-        type_icon.html.attr("title", "Copy Layer ID");
+        this.type_icon.html.attr("title", "Copy Layer ID");
         var css = {"margin-right": Dash.Size.Padding * 0.3};
         if (this.parent_id) {
             css["margin-left"] = this.child_left_margin;
             css["border-left"] = "1px solid " + this.color.PinstripeDark;
-            type_icon.button.icon.icon_html.css({
+            this.type_icon.button.icon.icon_html.css({
                 "padding-left": Dash.Size.Padding * 0.3
             });
         }
-        type_icon.html.css(css);
-        this.html.append(type_icon.html);
+        this.type_icon.html.css(css);
+        this.html.append(this.type_icon.html);
     };
     this.add_input = function () {
         var display_name = this.get_value("display_name");
@@ -34810,6 +35310,11 @@ function DashGuiContext2DEditorPanelLayers (panel) {
             this.layers[id].UpdatePreCompColor();
         }
     };
+    this.UpdateLinkColors = function () {
+        for (var id in this.layers) {
+            this.layers[id].UpdateLinkColor();
+        }
+    };
     this.UpdateToolbarIconStates = function () {
         this.toolbar.UpdateIconStates();
     };
@@ -35003,6 +35508,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
             return;
         }
         this.on_data(response);
+        var layer_id;
         if (key === "display_name" || key === "text_value") {
             this.layers[id].UpdateLabel();
         }
@@ -35010,7 +35516,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
             this.layers[id].UpdateTintColor();
         }
         else if (key === "precomp_tag") {
-            for (var layer_id in this.layers) {
+            for (layer_id in this.layers) {
                 this.layers[layer_id].UpdatePreCompColor();
             }
         }
@@ -35034,6 +35540,16 @@ function DashGuiContext2DEditorPanelLayers (panel) {
             this.toolbar.ReEnableToggle(key);
             if (key === "hidden" || key === "locked") {
                 this.panel.RedrawCurrentContentTab();
+            }
+        }
+        var link_id = this.layers[id].GetValue("link_id");
+        if (link_id) {
+            var layer_ids = this.editor.data["layer_links"][link_id]?.["layer_ids"] || [];
+            for (layer_id of layer_ids) {
+                if (layer_id === id) {
+                    continue;
+                }
+                this.editor.canvas.RedrawPrimitive(this.layers[layer_id], false);
             }
         }
     };
@@ -35392,7 +35908,8 @@ function DashGuiContext2DEditorPanelContentNew (content) {
                 setTimeout(
                     function () {
                         self.draw_types();
-                        self.add_import_combo();
+                        // Hiding this to simplify the interface, since it ended up never getting used
+                        // self.add_import_combo();
                         requestAnimationFrame(function () {
                             self.content.FloatCombos(self);
                         });
@@ -35741,8 +36258,13 @@ function DashGuiContext2DEditorPanelLayersToolbar (layers) {
         var selected_layer = this.layers.GetSelectedLayer();
         this.add_icon_toggle(selected_layer, "hidden", "visible", "hidden");
         this.add_icon_toggle(selected_layer, "locked", "unlock_alt", "lock");
-        this.add_icon_toggle(selected_layer, "contained", "box_open", "box", true);
-        this.add_icon_toggle(selected_layer, "linked", "unlink", "linked", true);
+        // Hiding these because they're not ever used. "Contained" was never implemented
+        // in the pre-comps/CPE, but was intended to indicate whether a layer was contained
+        // to the bounds of the canvas once rendered. "Linked" applies to layers within
+        // a context that was imported into another context, determining if their properties
+        // are linked to their parent or the context to which they were imported.
+        // this.add_icon_toggle(selected_layer, "contained", "box_open", "box", true);
+        // this.add_icon_toggle(selected_layer, "linked", "unlink", "linked", true);
     };
     this.add_icon_buttons = function () {
         if (this.editor.override_mode) {
@@ -35787,6 +36309,13 @@ function DashGuiContext2DEditorPanelLayersToolbar (layers) {
                 "arrow_down_alt",
                 function () {
                     self.layers.MoveDown();
+                }
+            );
+            self.add_icon_button(
+                "links",
+                "linked",
+                function () {
+                    self.editor.ShowLayerLinks();
                 }
             );
         })(this);
@@ -36184,30 +36713,6 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         if (end_input.label) {
             this.contexts[context_key]["all_elements"].push(end_input.label);
         }
-        // var checkbox = (function (self) {
-        //     return new Dash.Gui.Checkbox(
-        //         "",
-        //         self.get_data()[data_key] || false,
-        //         self.color,
-        //         "Toggle",
-        //         self,
-        //         function (checkbox) {
-        //             self.set_data(data_key, checkbox.IsChecked());
-        //         },
-        //         label_text
-        //     );
-        // })(this);
-        //
-        // checkbox.html.css({
-        //     "margin-top": Dash.Size.Padding * 0.6,
-        //     "margin-left": Dash.Size.Padding
-        // });
-        //
-        // checkbox.label.label.css({
-        //     "font-family": "sans_serif_bold",
-        //     "font-size": "80%"
-        // });
-        //
         this.contexts[context_key]["fade_checkbox"] = (function (self) {
             return tool_row.AddCheckbox(
                 "Global:",
