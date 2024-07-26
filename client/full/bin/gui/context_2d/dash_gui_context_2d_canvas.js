@@ -120,6 +120,16 @@ function DashGuiContext2DCanvas (editor) {
         this.last_selected_primitive = this.primitives[id];
     };
 
+    this.RedrawPrimitive = function (layer, select=true) {
+        var id = layer.GetID();
+
+        if (this.primitives[id]) {
+            this.RemovePrimitive(id);
+        }
+
+        this.AddPrimitive(layer, select);
+    };
+
     this.AddPrimitive = function (layer, select=true) {
         var id = layer.GetID();
 

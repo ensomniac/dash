@@ -552,6 +552,12 @@ function DashGuiPropertyBoxInterface () {
         })(this);
 
         text_area.textarea.css({
+            // This color is right in between color.Background and color.BackgroundRaised to make
+            // it feel like it's not quite popping, but like it's separate from the background
+            "background": Dash.Color.Lighten(
+                this.color.Background,
+                Dash.Color.IsLightColor(this.color.Background) ? 5: 20
+            ),
             "border": text_area.border_size + "px solid " + this.color.StrokeLight
         });
 

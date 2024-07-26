@@ -259,6 +259,12 @@ def Abbreviate(string, length=3, excluded_abbreviations=[]):
     return Abbreviate(string, length, excluded_abbreviations)
 
 
+def GetRandomHexColor():
+    from .string import GetRandomHexColor
+
+    return GetRandomHexColor()
+
+
 # -------------------------------------------------- LIST ----------------------------------------------------
 
 

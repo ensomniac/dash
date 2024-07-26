@@ -336,6 +336,7 @@ function DashGuiIcons (icon) {
         "web":                     new DashGuiIconDefinition(this.icon, "Web", this.weight["solid"], "spider-web"),
         "windows_logo":            new DashGuiIconDefinition(this.icon, "Windows Logo", this.weight["brand"], "windows"),
         "worker":                  new DashGuiIconDefinition(this.icon, "Worker", this.weight["regular"], "user-hard-hat"),
+        "world":                   new DashGuiIconDefinition(this.icon, "World", this.weight["regular"], "globe"),
         "wrench":                  new DashGuiIconDefinition(this.icon, "Wrench", this.weight["regular"], "wrench"),
         "wrestling_mask":          new DashGuiIconDefinition(this.icon, "Wrestling Mask", this.weight["regular"], "luchador"),
         "zoom_in":                 new DashGuiIconDefinition(this.icon, "Zoom In", this.weight["regular"],"search-plus"),

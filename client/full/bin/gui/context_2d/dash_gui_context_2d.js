@@ -27,6 +27,7 @@ function DashGuiContext2D (
      *                                     should call Dash.LocalStorage.Duplicate, unless there's a special need for a custom function
      *         - "duplicate_layer":        Duplicate the provided layer ID as a new layer (not tethered to the original)
      *         - "get_pil_preview":        Get PIL preview image URL of current state of provided object ID
+     *         - "save_layer_link":        Save linked layer selections
      *         - "get_combo_options":      Get dict with keys for different combo option types, such as "fonts", with values being lists
      *                                     containing dicts that match the standard combo option format, such as {"id": "font_1", "label_text": "Font 1"}
      *
@@ -60,6 +61,7 @@ function DashGuiContext2D (
     this.data = data;
     this.ComboOptions = combo_options;
 
+    this.modal = null;
     this.canvas = null;
     this.log_bar = null;
     this.toolbar = null;
@@ -400,6 +402,34 @@ function DashGuiContext2D (
         this.full_res_mode = !this.full_res_mode;
 
         this.RedrawLayers(false, true);
+    };
+
+    this.ShowLayerLinks = function () {
+        var layer = this.GetSelectedLayer();
+
+        if (!layer) {
+            return;
+        }
+
+        var view;  // Declare early for cb access
+
+        if (this.modal) {
+            this.modal.Empty();
+            this.modal.Show();
+        }
+
+        else {
+            this.modal = new Dash.Gui.Modal(
+                this.color,
+                this.html,
+                Dash.Size.ColumnWidth * 4,
+                Dash.Size.ColumnWidth * 3.1
+            );
+        }
+
+        view = new DashGuiContext2DLayerLinks(this, layer);
+
+        this.modal.AddHTML(view.html);
     };
 
     this.initialize = function () {

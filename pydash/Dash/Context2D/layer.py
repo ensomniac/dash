@@ -17,7 +17,9 @@ class Layer:
         self.context_2d = context_2d
         self.ID = obj_id
         self.Type = new_layer_type  # text, image, video, etc
-        self._new_layer_imported_context_id = new_layer_imported_context_id  # When importing another context into a context
+
+        # When importing another context into a context
+        self._new_layer_imported_context_id = new_layer_imported_context_id
 
         self.data = {}
         self._new = False
@@ -44,6 +46,7 @@ class Layer:
             "tone_2",
             "tone_3",
             "invert",
+            "link_id",
             "font_id",
             "tint_mode",
             "text_value",
@@ -126,7 +129,9 @@ class Layer:
 
                 # This is a function that is meant to be overridden to use for custom modifications
                 # to this imported context data for abstractions and extensions of this code.
-                self._imported_context_data = self.context_2d.OnLayerImportedContextData(self._imported_context_data)
+                self._imported_context_data = self.context_2d.OnLayerImportedContextData(
+                    self._imported_context_data
+                )
             else:
                 self._imported_context_data = {}
 
@@ -135,14 +140,19 @@ class Layer:
     @property
     def default_display_name(self):
         if not hasattr(self, "_default_display_name"):
-            self._default_display_name = self.imported_context_data["display_name"] if self.Type == "context" else f"New {self.Type.title()} Layer"
+            self._default_display_name = (
+                self.imported_context_data["display_name"] if self.Type == "context"
+                else f"New {self.Type.title()} Layer"
+            )
 
         return self._default_display_name
 
     def ToDict(self, save=False, file_key_validation=True):
         """
-        :param bool save: When True, the 'modified_by' and 'modified_on' keys are updated, and data is slightly different than a non-save (default=False)
-        :param bool file_key_validation: When True, asserts relevant file keys and validates the URLs inside the file data (default=True)
+        :param bool save: When True, the 'modified_by' and 'modified_on' keys are updated,
+                          and data is slightly different than a non-save (default=False)
+        :param bool file_key_validation: When True, asserts relevant file keys and validates
+                                         the URLs inside the file data (default=True)
 
         :return: Sanitized layer data
         :rtype: dict
@@ -152,34 +162,45 @@ class Layer:
             return self.data
 
         data = {
-            # If the default values of anchor or width norm keys change, update front end: DashGuiContext2DPrimitive.get_drag_state_value
-            "anchor_norm_x":   self.data["anchor_norm_x"] if "anchor_norm_x" in self.data else 0.5,  # normalized in relation to the canvas
-            "anchor_norm_y":   self.data["anchor_norm_y"] if "anchor_norm_y" in self.data else 0.5,  # normalized in relation to the canvas
-            "aspect":          self.data["aspect"] if "aspect" in self.data else (15.45 if self.Type == "text" else 1.0),
-            "blend_mode":      self.data.get("blend_mode") or "",
-            "contained":       self.data["contained"] if "contained" in self.data else True,
-            "created_by":      self.data["created_by"],
-            "created_on":      self.data["created_on"],
-            "display_name":    self.data["display_name"],
-            "fade_direction":  self.data.get("fade_direction") or "",
-            "fade_global":     self.data["fade_global"] if "fade_global" in self.data else False,
-            "fade_norm_end":   self.data["fade_norm_end"] if "fade_norm_end" in self.data else 1.0,
+            # If the default values of anchor or width norm keys change,
+            # update front end: DashGuiContext2DPrimitive.get_drag_state_value
+
+            # normalized in relation to the canvas
+            "anchor_norm_x": self.data["anchor_norm_x"] if "anchor_norm_x" in self.data else 0.5,
+            "anchor_norm_y": self.data["anchor_norm_y"] if "anchor_norm_y" in self.data else 0.5,
+
+            "aspect": self.data["aspect"] if "aspect" in self.data else (
+                15.45 if self.Type == "text" else 1.0
+            ),
+            "blend_mode": self.data.get("blend_mode") or "",
+            "contained": self.data["contained"] if "contained" in self.data else True,
+            "created_by": self.data["created_by"],
+            "created_on": self.data["created_on"],
+            "display_name": self.data["display_name"],
+            "fade_direction": self.data.get("fade_direction") or "",
+            "fade_global": self.data["fade_global"] if "fade_global" in self.data else False,
+            "fade_norm_end": self.data["fade_norm_end"] if "fade_norm_end" in self.data else 1.0,
             "fade_norm_start": self.data["fade_norm_start"] if "fade_norm_start" in self.data else 0.5,
-            "hidden":          self.data["hidden"] if "hidden" in self.data else False,
-            "id":              self.ID,
-            "invert":          self.data.get("invert") or "",
-            "locked":          self.data["locked"] if "locked" in self.data else False,
-            "modified_by":     self.context_2d.User["email"] if save else (self.data.get("modified_by") or ""),
-            "modified_on":     self.context_2d.Now.isoformat() if save else (self.data.get("modified_on") or ""),
-            "opacity":         self.data["opacity"] if "opacity" in self.data else 1.0,
-            "precomp_tag":     self.data.get("precomp_tag") or "",
-            "rot_deg":         self.data.get("rot_deg") or 0,  # -180 to 180
-            "tint_color":      self.data.get("tint_color") or "",
-            "tint_mode":       self.data.get("tint_mode") or "",
-            "type":            self.Type,
-            "width_norm":      self.data["width_norm"] if "width_norm" in self.data else (  # normalized in relation to the canvas
-                # TODO: This default width norm thing for the "text" type is hacky, need a proper automated solution
-                (1.8 if self.context_2d.AspectRatioH > self.context_2d.AspectRatioW else 0.9) if self.Type == "text" else 0.5
+            "hidden": self.data["hidden"] if "hidden" in self.data else False,
+            "id": self.ID,
+            "invert": self.data.get("invert") or "",
+            "link_id": self.data.get("link_id") or "",
+            "locked": self.data["locked"] if "locked" in self.data else False,
+            "modified_by": self.context_2d.User["email"] if save else (self.data.get("modified_by") or ""),
+            "modified_on": self.context_2d.Now.isoformat() if save else (self.data.get("modified_on") or ""),
+            "opacity": self.data["opacity"] if "opacity" in self.data else 1.0,
+            "precomp_tag": self.data.get("precomp_tag") or "",
+            "rot_deg": self.data.get("rot_deg") or 0,  # -180 to 180
+            "tint_color": self.data.get("tint_color") or "",
+            "tint_mode": self.data.get("tint_mode") or "",
+            "type": self.Type,
+
+            # normalized in relation to the canvas
+            "width_norm":      self.data["width_norm"] if "width_norm" in self.data else (
+                # TODO: This default width norm thing for the "text"
+                #  type is hacky, need a proper automated solution
+                (1.8 if self.context_2d.AspectRatioH > self.context_2d.AspectRatioW else 0.9)
+                if self.Type == "text" else 0.5
             )
         }
 
@@ -211,7 +232,10 @@ class Layer:
 
             for num in [1, 2, 3]:
                 data[f"color_{num}"] = self.data.get(f"color_{num}") or ""
-                data[f"color_{num}_opacity"] = self.data[f"color_{num}_opacity"] if f"color_{num}_opacity" in self.data else 1.0
+
+                data[f"color_{num}_opacity"] = (
+                    self.data[f"color_{num}_opacity"] if f"color_{num}_opacity" in self.data else 1.0
+                )
 
         elif self.Type == "context":
             data = self.context_to_dict(data, save)
@@ -261,10 +285,22 @@ class Layer:
 
         return data
 
-    def SetProperty(self, key, value, imported_context_layer_id="", file_op_key="", file_key_validation=True):
-        return self.SetProperties({key: value}, imported_context_layer_id, file_op_key, file_key_validation)
+    def SetProperty(
+        self, key, value, imported_context_layer_id="", file_op_key="",
+        file_key_validation=True, update_linked_layers=True
+    ):
+        return self.SetProperties(
+            {key: value},
+            imported_context_layer_id,
+            file_op_key,
+            file_key_validation,
+            update_linked_layers
+        )
 
-    def SetProperties(self, properties={}, imported_context_layer_id="", file_op_key="", file_key_validation=True):
+    def SetProperties(
+        self, properties={}, imported_context_layer_id="", file_op_key="",
+        file_key_validation=True, update_linked_layers=True
+    ):
         properties = self.ParseProperties(
             properties=properties,
             imported_context_layer_id=imported_context_layer_id,
@@ -278,7 +314,9 @@ class Layer:
             for key in properties:
                 self.context_set_prop(key, properties[key], imported_context_layer_id)
 
-            return self.Save(file_key_validation=file_key_validation).ToDict(file_key_validation=file_key_validation)
+            return self.Save(file_key_validation=file_key_validation).ToDict(
+                file_key_validation=file_key_validation
+            )
 
         if "layer_order" in properties:
             del properties["layer_order"]  # Should never happen, but just in case
@@ -296,9 +334,21 @@ class Layer:
 
                 rmtree(file_root)
 
-        return self.Save(file_key_validation=file_key_validation).ToDict(file_key_validation=file_key_validation)
+        if update_linked_layers and self.data.get("link_id"):
+            self.context_2d.update_linked_layers_on_change(
+                link_id=self.data["link_id"],
+                initiating_layer_id=self.ID,
+                properties=properties
+            )
 
-    def ParseProperties(self, properties={}, imported_context_layer_id="", for_overrides=False, retain_override_tag=True, file_op_key=""):
+        return self.Save(file_key_validation=file_key_validation).ToDict(
+            file_key_validation=file_key_validation
+        )
+
+    def ParseProperties(
+        self, properties={}, imported_context_layer_id="",
+        for_overrides=False, retain_override_tag=True, file_op_key=""
+    ):
         from json import loads
 
         if properties and type(properties) is str:
@@ -504,7 +554,8 @@ class Layer:
         # These are overrides per layer (in the imported context)
         data["imported_context"]["layer_overrides"] = imported_context.get("layer_overrides") or {}
 
-        # Global overrides for all imported layers, such as rotating all imported layers 45º (rot_deg), is stored at the top level of this layer (self.Data)
+        # Global overrides for all imported layers, such as rotating all imported
+        # layers 45º (rot_deg), is stored at the top level of this layer (self.Data)
 
         if not self._new:
             return data
@@ -524,7 +575,9 @@ class Layer:
             layer_data = layers["data"][layer_id]
 
             if layer_data["type"] == "text":
-                continue  # Not concerned about text - text's width_norm is 0.9 by default, and that doesn't mean it's all filled
+                # Not concerned about text - text's width_norm is 0.9
+                # by default, and that doesn't mean it's all filled
+                continue
 
             if layer_data["type"] == "context":
                 from Dash.Utils import ClientAlert
@@ -610,7 +663,10 @@ class Layer:
     def is_linked(self, imported_context_layer_id):
         overrides = self.data["imported_context"]["layer_overrides"].get(imported_context_layer_id) or {}
 
-        return overrides["linked"] if "linked" in overrides else self.imported_context_data["layers"]["data"][imported_context_layer_id]["linked"]
+        return (
+            overrides["linked"] if "linked" in overrides
+            else self.imported_context_data["layers"]["data"][imported_context_layer_id]["linked"]
+        )
 
     def update_context_child_float(self, key, value, imported_context_layer_id):
         if not self.is_linked(imported_context_layer_id):
@@ -630,7 +686,12 @@ class Layer:
             return
 
         previous_override = self.data["imported_context"]["layer_overrides"][imported_context_layer_id][key]
-        previous_value = self.imported_context_data["layers"]["data"][imported_context_layer_id][key] + previous_override
+
+        previous_value = (
+            self.imported_context_data["layers"]["data"][imported_context_layer_id][key]
+            + previous_override
+        )
+
         dif = abs(value - previous_value)
 
         if value < previous_value:
@@ -832,10 +893,16 @@ class Layer:
             fixed_url = ""
 
             if layer_id_in_url != self.ID:
-                fixed_url = (fixed_url or file_data[key]).replace(f"/layers/{layer_id_in_url}/", f"/layers/{self.ID}/")
+                fixed_url = (fixed_url or file_data[key]).replace(
+                    f"/layers/{layer_id_in_url}/",
+                    f"/layers/{self.ID}/"
+                )
 
             if c2d_id_in_url != self.context_2d.ID:
-                fixed_url = (fixed_url or file_data[key]).replace(f"/{c2d_id_in_url}/layers/", f"/{self.context_2d.ID}/layers/")
+                fixed_url = (fixed_url or file_data[key]).replace(
+                    f"/{c2d_id_in_url}/layers/",
+                    f"/{self.context_2d.ID}/layers/"
+                )
 
             if not fixed_url:
                 continue

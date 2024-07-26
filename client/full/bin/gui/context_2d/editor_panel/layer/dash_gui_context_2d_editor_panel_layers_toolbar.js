@@ -180,8 +180,14 @@ function DashGuiContext2DEditorPanelLayersToolbar (layers) {
 
         this.add_icon_toggle(selected_layer, "hidden", "visible", "hidden");
         this.add_icon_toggle(selected_layer, "locked", "unlock_alt", "lock");
-        this.add_icon_toggle(selected_layer, "contained", "box_open", "box", true);
-        this.add_icon_toggle(selected_layer, "linked", "unlink", "linked", true);
+
+        // Hiding these because they're not ever used. "Contained" was never implemented
+        // in the pre-comps/CPE, but was intended to indicate whether a layer was contained
+        // to the bounds of the canvas once rendered. "Linked" applies to layers within
+        // a context that was imported into another context, determining if their properties
+        // are linked to their parent or the context to which they were imported.
+        // this.add_icon_toggle(selected_layer, "contained", "box_open", "box", true);
+        // this.add_icon_toggle(selected_layer, "linked", "unlink", "linked", true);
     };
 
     this.add_icon_buttons = function () {
@@ -233,6 +239,14 @@ function DashGuiContext2DEditorPanelLayersToolbar (layers) {
                 "arrow_down_alt",
                 function () {
                     self.layers.MoveDown();
+                }
+            );
+
+            self.add_icon_button(
+                "links",
+                "linked",
+                function () {
+                    self.editor.ShowLayerLinks();
                 }
             );
         })(this);

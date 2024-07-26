@@ -575,6 +575,23 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             this.canvas.RemoveAllPrimitives();
 
             this.editor.RedrawLayers(true);
+
+            return;
+        }
+
+        var link_id = this.layer.GetValue("link_id");
+
+        if (link_id) {
+            var layer_id = this.layer.GetID();
+            var layer_ids = this.editor.data["layer_links"][link_id]?.["layer_ids"] || [];
+
+            for (var id of layer_ids) {
+                if (id === layer_id) {
+                    continue;
+                }
+
+                this.canvas.RedrawPrimitive(this.layer.layers.layers[id], false);
+            }
         }
     };
 

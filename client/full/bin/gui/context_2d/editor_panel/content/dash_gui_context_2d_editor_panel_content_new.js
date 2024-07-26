@@ -22,7 +22,9 @@ function DashGuiContext2DEditorPanelContentNew (content) {
                 setTimeout(
                     function () {
                         self.draw_types();
-                        self.add_import_combo();
+
+                        // Hiding this to simplify the interface, since it ended up never getting used
+                        // self.add_import_combo();
 
                         requestAnimationFrame(function () {
                             self.content.FloatCombos(self);

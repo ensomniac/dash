@@ -6,6 +6,7 @@ function DashGui () {
     this.ChatBox                   = DashGuiChatBox;
     this.Checkbox                  = DashGuiCheckbox;
     this.Combo                     = DashGuiCombo;
+    this.Confirm                   = DashGuiConfirm;
     this.Context2D                 = DashGuiContext2D;
     this.CopyButton                = DashGuiCopyButton;
     this.DatePicker                = DashGuiDatePicker;
@@ -218,27 +219,27 @@ function DashGui () {
 
     // TODO: This needs to be its own class/element
     this.GetColorPicker = function (
-        binder, callback, label_text="Color Picker", dash_color=null,
+        binder=null, callback=null, label_text="Color Picker", dash_color=null,
         default_picker_hex_color="#00ff00", include_clear_button=false, clear_button_cb=null, height=null
     ) {
         if (!dash_color) {
-            dash_color = Dash.Color.Light;
+            dash_color = binder?.color || Dash.Color.Light;
         }
-
-        callback = callback.bind(binder);
 
         height = height || Dash.Size.ButtonHeight;
 
         var include_label = label_text && label_text.replace(":", "") !== "none";
 
+        var id = "colorpicker_" + Dash.Math.Random();
+
         var color_picker = {
             "height": height,
             "html": $("<div></div>"),
-            "input": $("<input type='color' id='colorpicker' value='" + default_picker_hex_color + "'>")
+            "input": $("<input type='color' id='" + id + "' value='" + default_picker_hex_color + "'>")
         };
 
         if (include_label) {
-            color_picker["label"] = $("<label for='colorpicker'>" + label_text + "</label>");
+            color_picker["label"] = $("<label for='" + id + "'>" + label_text + "</label>");
 
             var line_break = label_text.includes("\n");
 
@@ -284,28 +285,26 @@ function DashGui () {
                 "display": "flex"
             });
 
-            if (clear_button_cb) {
+            if (clear_button_cb && binder) {
                 clear_button_cb = clear_button_cb.bind(binder);
             }
 
-            color_picker["clear_button"] = (function (self) {
-                return new Dash.Gui.IconButton(
-                    "close_square",
-                    function () {
-                        color_picker.input.val(default_picker_hex_color);
+            color_picker["clear_button"] = new Dash.Gui.IconButton(
+                "close_square",
+                function () {
+                    color_picker.input.val(default_picker_hex_color);
 
-                        if (clear_button_cb) {
-                            clear_button_cb();
-                        }
-                    },
-                    self,
-                    self.color,
-                    {
-                        "container_size": height,
-                        "size_mult": 0.5
+                    if (clear_button_cb) {
+                        clear_button_cb();
                     }
-                );
-            })(this);
+                },
+                this,
+                dash_color,
+                {
+                    "container_size": height,
+                    "size_mult": 0.5
+                }
+            );
 
             color_picker["clear_button"].SetIconColor(dash_color.AccentBad);
 
@@ -316,11 +315,15 @@ function DashGui () {
             color_picker.html.append(color_picker.clear_button.html);
         }
 
-        (function (input, callback) {
-            input.on("change", function () {
+        if (callback) {
+            if (binder) {
+                callback = callback.bind(binder);
+            }
+
+            color_picker.input.on("change", function () {
                 callback(color_picker.input.val());
             });
-        })(color_picker.input, callback);
+        }
 
         return color_picker;
     };
