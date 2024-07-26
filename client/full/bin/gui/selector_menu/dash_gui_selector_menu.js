@@ -4,18 +4,44 @@ function DashGuiSelectorMenu (binder, selected_callback, icon_name="unknown", op
     this.selected_callback = selected_callback;
 
     // Default Options
-    this.options    = options || {};
-    this.color      = this.options["color"] || this.binder.color || Dash.Color.Light;
-    this.icon_color = this.options["icon_color"] || this.color.Button.Text.Base;
-    this.bg_color   = this.options["bg_color"] || this.color.Button.Background.Selected;
-    this.size       = this.options["size"] || Dash.Size.ButtonHeight;
-    this.icon_name  = this.options["icon_name"] || icon_name || "unknown";
-    this.icon_sm    = this.options["icon_size_mult"] || 0.6;
+    this.options     = options || {};
+    this.color       = this.options["color"] || this.binder.color || Dash.Color.Light;
+    this.icon_color  = this.options["icon_color"] || this.color.Button.Text.Base;
+    this.bg_color    = this.options["bg_color"] || this.color.Button.Background.Selected;
+    this.size        = this.options["size"] || Dash.Size.ButtonHeight;
+    this.icon_name   = this.options["icon_name"] || icon_name || "unknown";
+    this.icon_sm     = this.options["icon_size_mult"] || 0.6;
+    this.items       = [];
+    this.items_built = false;
+    this.items_str   = "-";
 
     this.html  = $("<div class='SelectorMenu'></div>");
     this.hover = Dash.Gui.GetHTMLAbsContext();
     this.icon  = null;
     this.tray  = new DashGuiSelectorMenuTray(this);
+
+    this.SetItems = function (items) {
+
+        var items_str = JSON.stringify(items);
+
+        if (items_str == this.items_str) {
+            // No need to rebuild items
+            return;
+        };
+
+        this.items       = items;
+        this.items_built = false;
+        this.items_str   = items_str;
+
+    };
+
+    this.OnItemClicked = function (item) {
+        var clicked_item = null;
+
+        this.tray.Hide();
+        this.selected_callback.bind(this.binder)(item);
+
+    };
 
     this.setup_styles = function () {
 
@@ -23,7 +49,7 @@ function DashGuiSelectorMenu (binder, selected_callback, icon_name="unknown", op
             this.color,
             this.icon_name,
             this.size,
-            this.icon_sm, // icon_size_mult
+            this.icon_sm,    // icon_size_mult
             this.icon_color, // icon_color
         );
 
@@ -72,23 +98,10 @@ function DashGuiSelectorMenu (binder, selected_callback, icon_name="unknown", op
         this.hover.stop().animate({"opacity": 0}, 500);
     };
 
-
-
-
     this.toggle_menu = function () {
-        console.log("toggle_menu")
         this.tray.Show();
     };
 
-    this.open_menu = function () {
-        console.log("open")
-    };
-
-    this.close_menu = function () {
-        console.log("close")
-    };
-
-
-
     this.setup_styles();
+
 }

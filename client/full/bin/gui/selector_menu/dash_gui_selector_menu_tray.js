@@ -4,6 +4,12 @@ function DashGuiSelectorMenuTray (selector_menu) {
     this.color         = this.selector_menu.color;
     this.icon_size     = this.selector_menu.icon_size;
 
+    this.item_height = Dash.Size.RowHeight   * 2;
+    this.item_width  = Dash.Size.ColumnWidth * 2;
+
+    this.num_rows = 3;
+    this.num_cols = 1;
+
     this.html  = $("<div class='SelectorMenuTray'></div>");
     this.close_skirt = $("<div></div>");
     this.background  = $("<div></div>");
@@ -45,15 +51,23 @@ function DashGuiSelectorMenuTray (selector_menu) {
 
         this.content.css({
             "position": "absolute",
+            "display":  "flex",
+            "flex-wrap": "wrap",
+            "justify-content": "left",
+            "align-items": "flex-start",
+            "align-content": "flex-start",
             "left":   0,
             "top":    0,
             "right":  0,
             "bottom": 0,
             "border-radius":  Dash.Size.BorderRadius,
             "background":     this.color.Background,
+            // "background":     "blue",
             "pointer-events": "auto",
             "user-select":    "none",
             "box-shadow": "0px 10px 30px 0px rgba(0, 0, 0, 0.5)",
+            "padding-left": Dash.Size.Padding,
+            "padding-top": Dash.Size.Padding,
         });
 
         this.background.append(this.content);
@@ -82,10 +96,62 @@ function DashGuiSelectorMenuTray (selector_menu) {
     };
 
     this.get_content_size = function () {
-        return {"width": Dash.Size.ColumnWidth * 6, "height": Dash.Size.ColumnWidth * 3};
+
+        var row_padding = (Dash.Size.Padding * 1) + (Dash.Size.Padding * (this.num_rows - 1));
+        var col_padding = (Dash.Size.Padding * 1) + (Dash.Size.Padding * (this.num_cols - 1));
+
+        var content_size = {};
+        content_size["width"]  = (this.item_width * this.num_cols)  + col_padding;
+        content_size["height"] = (this.item_height * this.num_rows) + row_padding;
+
+        return content_size;
+
+    };
+
+    this.rebuild_items = function () {
+
+        if (this.selector_menu.items.length <= 3) {
+            this.num_rows = 3;
+            this.num_cols = 1;
+        }
+        else if (this.selector_menu.items.length <= 6) {
+            this.num_rows = 3;
+            this.num_cols = 2;
+        }
+        else if (this.selector_menu.items.length <= 9) {
+            this.num_rows = 3;
+            this.num_cols = 3;
+        }
+        else if (this.selector_menu.items.length <= 12) {
+            this.num_rows = 4;
+            this.num_cols = 3;
+        }
+        else if (this.selector_menu.items.length <= 15) {
+            this.num_rows = 5;
+            this.num_cols = 3;
+        }
+        else if (this.selector_menu.items.length <= 20) {
+            this.num_rows = 5;
+            this.num_cols = 4;
+        };
+
+        this.content.empty();
+
+        for (var x in this.selector_menu.items) {
+            var item_details = this.selector_menu.items[x];
+            var item = new DashGuiSelectorItem(this, item_details);
+            this.content.append(item.html);
+        };
+
+        this.selector_menu.items_built = true;
+
     };
 
     this.Show = function () {
+
+        if (!this.selector_menu.items_built) {
+            this.rebuild_items();
+        };
 
         this.close_skirt.stop();
         this.background.stop();
@@ -125,8 +191,6 @@ function DashGuiSelectorMenuTray (selector_menu) {
     };
 
     this.Hide = function () {
-
-        console.log("Hide tray");
 
         (function(self){
 

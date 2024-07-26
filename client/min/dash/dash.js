@@ -27686,23 +27686,41 @@ function DashGuiSelectorMenu (binder, selected_callback, icon_name="unknown", op
     this.binder            = binder;
     this.selected_callback = selected_callback;
     // Default Options
-    this.options    = options || {};
-    this.color      = this.options["color"] || this.binder.color || Dash.Color.Light;
-    this.icon_color = this.options["icon_color"] || this.color.Button.Text.Base;
-    this.bg_color   = this.options["bg_color"] || this.color.Button.Background.Selected;
-    this.size       = this.options["size"] || Dash.Size.ButtonHeight;
-    this.icon_name  = this.options["icon_name"] || icon_name || "unknown";
-    this.icon_sm    = this.options["icon_size_mult"] || 0.6;
+    this.options     = options || {};
+    this.color       = this.options["color"] || this.binder.color || Dash.Color.Light;
+    this.icon_color  = this.options["icon_color"] || this.color.Button.Text.Base;
+    this.bg_color    = this.options["bg_color"] || this.color.Button.Background.Selected;
+    this.size        = this.options["size"] || Dash.Size.ButtonHeight;
+    this.icon_name   = this.options["icon_name"] || icon_name || "unknown";
+    this.icon_sm     = this.options["icon_size_mult"] || 0.6;
+    this.items       = [];
+    this.items_built = false;
+    this.items_str   = "-";
     this.html  = $("<div class='SelectorMenu'></div>");
     this.hover = Dash.Gui.GetHTMLAbsContext();
     this.icon  = null;
     this.tray  = new DashGuiSelectorMenuTray(this);
+    this.SetItems = function (items) {
+        var items_str = JSON.stringify(items);
+        if (items_str == this.items_str) {
+            // No need to rebuild items
+            return;
+        };
+        this.items       = items;
+        this.items_built = false;
+        this.items_str   = items_str;
+    };
+    this.OnItemClicked = function (item) {
+        var clicked_item = null;
+        this.tray.Hide();
+        this.selected_callback.bind(this.binder)(item);
+    };
     this.setup_styles = function () {
         this.icon = new Dash.Gui.Icon(
             this.color,
             this.icon_name,
             this.size,
-            this.icon_sm, // icon_size_mult
+            this.icon_sm,    // icon_size_mult
             this.icon_color, // icon_color
         );
         this.html.css({
@@ -27740,19 +27758,9 @@ function DashGuiSelectorMenu (binder, selected_callback, icon_name="unknown", op
     this.on_hover_stop = function () {
         this.hover.stop().animate({"opacity": 0}, 500);
     };
-
-
     this.toggle_menu = function () {
-        console.log("toggle_menu")
         this.tray.Show();
     };
-    this.open_menu = function () {
-        console.log("open")
-    };
-    this.close_menu = function () {
-        console.log("close")
-    };
-
     this.setup_styles();
 }
 
@@ -27760,6 +27768,10 @@ function DashGuiSelectorMenuTray (selector_menu) {
     this.selector_menu = selector_menu;
     this.color         = this.selector_menu.color;
     this.icon_size     = this.selector_menu.icon_size;
+    this.item_height = Dash.Size.RowHeight   * 2;
+    this.item_width  = Dash.Size.ColumnWidth * 2;
+    this.num_rows = 3;
+    this.num_cols = 1;
     this.html  = $("<div class='SelectorMenuTray'></div>");
     this.close_skirt = $("<div></div>");
     this.background  = $("<div></div>");
@@ -27796,15 +27808,23 @@ function DashGuiSelectorMenuTray (selector_menu) {
         });
         this.content.css({
             "position": "absolute",
+            "display":  "flex",
+            "flex-wrap": "wrap",
+            "justify-content": "left",
+            "align-items": "flex-start",
+            "align-content": "flex-start",
             "left":   0,
             "top":    0,
             "right":  0,
             "bottom": 0,
             "border-radius":  Dash.Size.BorderRadius,
             "background":     this.color.Background,
+            // "background":     "blue",
             "pointer-events": "auto",
             "user-select":    "none",
             "box-shadow": "0px 10px 30px 0px rgba(0, 0, 0, 0.5)",
+            "padding-left": Dash.Size.Padding,
+            "padding-top": Dash.Size.Padding,
         });
         this.background.append(this.content);
         (function(self){
@@ -27824,9 +27844,50 @@ function DashGuiSelectorMenuTray (selector_menu) {
         })(this);
     };
     this.get_content_size = function () {
-        return {"width": Dash.Size.ColumnWidth * 6, "height": Dash.Size.ColumnWidth * 3};
+        var row_padding = (Dash.Size.Padding * 1) + (Dash.Size.Padding * (this.num_rows - 1));
+        var col_padding = (Dash.Size.Padding * 1) + (Dash.Size.Padding * (this.num_cols - 1));
+        var content_size = {};
+        content_size["width"]  = (this.item_width * this.num_cols)  + col_padding;
+        content_size["height"] = (this.item_height * this.num_rows) + row_padding;
+        return content_size;
+    };
+    this.rebuild_items = function () {
+        if (this.selector_menu.items.length <= 3) {
+            this.num_rows = 3;
+            this.num_cols = 1;
+        }
+        else if (this.selector_menu.items.length <= 6) {
+            this.num_rows = 3;
+            this.num_cols = 2;
+        }
+        else if (this.selector_menu.items.length <= 9) {
+            this.num_rows = 3;
+            this.num_cols = 3;
+        }
+        else if (this.selector_menu.items.length <= 12) {
+            this.num_rows = 4;
+            this.num_cols = 3;
+        }
+        else if (this.selector_menu.items.length <= 15) {
+            this.num_rows = 5;
+            this.num_cols = 3;
+        }
+        else if (this.selector_menu.items.length <= 20) {
+            this.num_rows = 5;
+            this.num_cols = 4;
+        };
+        this.content.empty();
+        for (var x in this.selector_menu.items) {
+            var item_details = this.selector_menu.items[x];
+            var item = new DashGuiSelectorItem(this, item_details);
+            this.content.append(item.html);
+        };
+        this.selector_menu.items_built = true;
     };
     this.Show = function () {
+        if (!this.selector_menu.items_built) {
+            this.rebuild_items();
+        };
         this.close_skirt.stop();
         this.background.stop();
         this.content.stop();
@@ -27855,7 +27916,6 @@ function DashGuiSelectorMenuTray (selector_menu) {
         this.content.animate({"height": this.content_size["height"]}, 200);
     };
     this.Hide = function () {
-        console.log("Hide tray");
         (function(self){
             self.close_skirt.stop().animate({"opacity": 0}, 300, function(){
                 self.close_skirt.detach();
@@ -27864,6 +27924,89 @@ function DashGuiSelectorMenuTray (selector_menu) {
                 self.background.detach();
             });
         })(this);
+    };
+    this.setup_styles();
+}
+
+function DashGuiSelectorItem (tray, details) {
+    this.tray    = tray;
+    this.details = details;
+    this.color   = this.tray.color;
+    this.menu    = this.tray.selector_menu;
+    this.height  = this.tray.item_height;
+    this.width   = this.tray.item_width;
+    this.html    = $("<div class='SelectorMenuItem'></div>");
+    this.label   = $("<div>" + this.details["display_name"] + "</div>");
+    this.hover   = Dash.Gui.GetHTMLAbsContext();
+    this.setup_styles = function () {
+        this.icon_size = this.height - (Dash.Size.Padding);
+        this.icon_name = this.menu.options["item_icon"] || this.menu.icon_name;
+        this.icon = new Dash.Gui.Icon(
+            this.color,
+            this.icon_name,
+            this.icon_size,
+            0.5,    // icon_size_mult
+            this.color.Button.Text.Base, // icon_color
+        );
+        this.html.css({
+            "width":       this.width,
+            "height":      this.height,
+            "margin":      0,
+            "padding":     0,
+            "cursor":      "pointer",
+            "user-select": "none",
+            "background":  this.color.Button.Background.Base,
+            "border-radius": Dash.Size.BorderRadius,
+            "margin-bottom": Dash.Size.Padding,
+            "margin-right": Dash.Size.Padding,
+        });
+        this.icon.html.css({
+            "position":      "absolute",
+            "left":          Dash.Size.Padding * 0.5,
+            "top":           Dash.Size.Padding * 0.5,
+            "border-radius": this.icon_size * 0.5,
+            "background":    "black",
+            "pointer-events": "none",
+            "user-select":    "none",
+        });
+        this.hover.css({
+            "background":  this.menu.bg_color,
+            "opacity": 0,
+            "pointer-events": "none",
+            "user-select":    "none",
+        });
+        this.label.css({
+            "position": "absolute",
+            "left": this.icon_size + Dash.Size.Padding,
+            "top": 0,
+            "width": this.width - this.icon_size - (Dash.Size.Padding * 2),
+            "height": this.height,
+            "line-height": this.height + "px",
+            "color": this.color.Button.Text.Base,
+        });
+        this.html.append(this.hover);
+        this.html.append(this.icon.html);
+        this.html.append(this.label);
+        (function(self){
+            self.html.click(function(){
+                self.on_click();
+            });
+            self.html.on("mouseenter", function(){
+                self.on_hover_start();
+            });
+            self.html.on("mouseleave", function(){
+                self.on_hover_stop();
+            });
+        })(this);
+    };
+    this.on_hover_start = function () {
+        this.hover.stop().animate({"opacity": 1}, 250);
+    };
+    this.on_hover_stop = function () {
+        this.hover.stop().animate({"opacity": 0}, 500);
+    };
+    this.on_click = function () {
+        this.menu.OnItemClicked(this.details);
     };
     this.setup_styles();
 }
