@@ -19652,6 +19652,13 @@ function DashLocal (context) {
             bool_default
         );
     };
+    this.Remove = function (key, session=false, global_cb=null) {
+        if (key.indexOf(this.context["asset_path"] + "_") !== 0) {
+            key = this.context["asset_path"] + "_" + key;
+        };
+        localStorage.removeItem(key);
+        sessionStorage.removeItem(key);
+    };
     // Intended to be called by dash.js only
     this.on_global_storage_enabled = function () {
         if (!Dash.GlobalStorageEnabled) {
