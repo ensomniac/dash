@@ -10,15 +10,16 @@ function DashGuiInputRow (
     this.color = color || (on_click_bind && on_click_bind.color ? on_click_bind.color : Dash.Color.Light);
     this.data_key = data_key;
 
-    this.end_tag = null;
-    this.disabled = false;
-    this.icon_button_count = 0;
-    this.html = $("<div></div>");
-    this.save_button_visible = false;
-    this.height = Dash.Size.RowHeight;
-    this.highlight = $("<div></div>");
-    this.flash_save = $("<div></div>");
+    this.end_tag                 = null;
+    this.disabled                = false;
+    this.icon_button_count       = 0;
+    this.html                    = $("<div></div>");
+    this.save_button_visible     = false;
+    this.height                  = Dash.Size.RowHeight;
+    this.highlight               = $("<div></div>");
+    this.flash_save              = $("<div></div>");
     this.invalid_input_highlight = $("<div></div>");
+    this.on_label_click_url      = null;
 
     // For lock toggle
     this.locked = false;
@@ -120,6 +121,41 @@ function DashGuiInputRow (
         this.update_label_cursor();
     };
 
+    this.SetLabelURL = function (url) {
+
+        this.on_label_click_url = url;
+
+        if (!this.label_url_hover) {
+            this.setup_label_url_hover();
+        };
+
+    };
+
+    this.setup_label_url_hover = function () {
+
+        this.label.css({
+            "cursor": "pointer",
+        });
+
+        this.label_url_hover = $("<div></div>");
+        this.label_url_hover.css({
+            "width":          this.height,
+            "height":         this.height,
+            "position":       "absolute",
+            "left":           -(this.height + Dash.Size.Padding * 0.25),
+            "top":            -1,
+            "user-select":    "none",
+            "pointer-events": "none",
+            "opacity":        0,
+        });
+
+        this.html.append(this.label_url_hover);
+
+        var icon = new Dash.Gui.Icon(this.color, "arrow_right_circled", this.height, 0.8);
+        this.label_url_hover.append(icon.html);
+
+    };
+
     this.set_initial_text = function () {
         this.input.SetText(this.initial_value, this.data_key);
     };
@@ -185,6 +221,10 @@ function DashGuiInputRow (
             window.open(active_text, "_blank");
         }
 
+        else if (this.on_label_click_url) {
+            window.open(this.on_label_click_url, "_blank");
+        }
+
         else if (Dash.Validate.Email(active_text)) {
             if (check_validity) {
                 return true;
@@ -227,10 +267,34 @@ function DashGuiInputRow (
         }
     };
 
+    this.on_label_hover_in = function () {
+
+        if (this.label_url_hover) {
+            this.label_url_hover.stop().animate({"opacity": 1}, 250);
+        };
+
+    };
+
+    this.on_label_hover_out = function () {
+
+        if (this.label_url_hover) {
+            this.label_url_hover.stop().animate({"opacity": 0}, 1000);
+        };
+
+    };
+
     this.setup_connections = function () {
         (function (self) {
             self.label.on("click", function () {
                 self.on_label_clicked();
+            });
+
+            self.label.on("mouseenter", function () {
+                self.on_label_hover_in();
+            });
+
+            self.label.on("mouseleave", function () {
+                self.on_label_hover_out();
             });
 
             self.html.on("mouseenter", function () {
