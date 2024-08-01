@@ -244,6 +244,7 @@ function DashGuiIcons (icon) {
         "object_group":            new DashGuiIconDefinition(this.icon, "Object Group", this.weight["regular"], "object-group"),
         "open_folder":             new DashGuiIconDefinition(this.icon, "Open Folder", this.weight["regular"], "folder-open"),
         "paperclip":               new DashGuiIconDefinition(this.icon, "Paperclip", this.weight["regular"], "paperclip"),
+        "pause":                   new DashGuiIconDefinition(this.icon, "Pause", this.weight["regular"], "pause"),
         "pen":                     new DashGuiIconDefinition(this.icon, "Pen", this.weight["regular"], "pen"),
         "pencil_paintbrush":       new DashGuiIconDefinition(this.icon, "Pencil and Paintbrush", this.weight["regular"], "pencil-paintbrush"),
         "pencil_ruler":            new DashGuiIconDefinition(this.icon, "Pencil and Ruler", this.weight["regular"], "pencil-ruler"),
