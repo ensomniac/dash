@@ -19637,13 +19637,17 @@ function DashLocal (context) {
                 };
                 this.query_global_storage("DashGlobalStorageGet", key, {"callback_id": callback_id});
             }
-            else if (!Dash.InChromeExtension) {
-                console.warn(
-                      "Warning: Dash.Local.Get was called for '"
-                    + key
-                    + "' with 'global_cb' but 'Dash.GlobalStorageEnabled' is false"
-                );
-                global_cb("");
+            else {
+                if (Dash.InChromeExtension) {
+                    global_cb("");
+                }
+                else {
+                    console.warn(
+                          "Warning: Dash.Local.Get was called for '"
+                        + key
+                        + "' with 'global_cb' but 'Dash.GlobalStorageEnabled' is false"
+                    );
+                }
             }
             return;
         }
@@ -19652,12 +19656,16 @@ function DashLocal (context) {
             bool_default
         );
     };
-    this.Remove = function (key, session=false, global_cb=null) {
+    this.Remove = function (key, session=false) {
         if (key.indexOf(this.context["asset_path"] + "_") !== 0) {
             key = this.context["asset_path"] + "_" + key;
-        };
-        localStorage.removeItem(key);
-        sessionStorage.removeItem(key);
+        }
+        if (session) {
+            sessionStorage.removeItem(key);
+        }
+        else {
+            localStorage.removeItem(key);
+        }
     };
     // Intended to be called by dash.js only
     this.on_global_storage_enabled = function () {

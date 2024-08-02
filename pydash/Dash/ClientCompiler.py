@@ -260,23 +260,30 @@ class _ClientCompiler:
 
             os.makedirs(package[key], exist_ok=True)
 
-            expected_html_path = os.path.join(package[key], "index.html")
+            path = os.path.join(package[key], "index.html")
 
-            if not os.path.exists(expected_html_path):
+            if not os.path.exists(path):
                 self.initialize_root(package, key)
 
-            self.update_publish_index_source(package, expected_html_path, package[key])
+            self.update_publish_index_source(package, path, package[key])
 
         if package.get("chrome_extension_roots"):
             for root in package["chrome_extension_roots"]:
-                expected_html_path = os.path.join(root, "dash_init.js")
+                path = os.path.join(root, "dash_init.js")
 
-                if not os.path.exists(expected_html_path):
-                    print(f"Skipping chrome extension root, missing file: {expected_html_path}")
+                if not os.path.exists(path):
+                    print(f"Skipping chrome extension root, missing file: {path}")
 
                     continue
 
-                self.update_publish_index_source(package, expected_html_path, root)
+                self.update_publish_index_source(package, path, root)
+
+                path = os.path.join(root, "popup.html")
+
+                if not os.path.exists(path):
+                    continue
+
+                self.update_publish_index_source(package, path, root)
 
     # TODO: Test this code. During my refactor, I wasn't able to test the initialization of a new package.
     # Called for a new dash portal where there is no index / bin
@@ -357,170 +364,180 @@ class _ClientCompiler:
             '''</script>'''
         ]
 
+    # TODO: break this up
     def update_publish_index_source(self, package, html_path, path_root):
-        if os.path.exists(os.path.join(path_root, "dash/")):
-            rmtree(os.path.join(path_root, "dash/"), True)
-
-        copytree(
-            os.path.join(self.ClientPathMin, "dash/"),
-            os.path.join(path_root, "dash/")
-        )
-
-        clean_context = {}
-
-        skip = [
-            "git_repo",
-            "client_root",
-            "sync_client_root",
-            "chrome_extension_roots"
-        ]
-
-        for key in package:
-            if key in skip or key.startswith("usr_path_git") or key.startswith("srv_path_"):
-                continue
-
-            clean_context[key] = package.get(key) or ""
-
+        header = []
         for_chrome_extension = "/chrome_extensions/" in path_root
-        max_key_len = [len(x) for x in list(clean_context.keys())]
+        for_ce_popup = for_chrome_extension and html_path.endswith("popup.html")
 
-        max_key_len.sort()
+        if not for_ce_popup:
+            if os.path.exists(os.path.join(path_root, "dash/")):
+                rmtree(os.path.join(path_root, "dash/"), True)
 
-        var_indent = " " * (0 if for_chrome_extension else 4)
-        key_indent = " " * (4 if for_chrome_extension else 8)
-        max_key_len = max_key_len[-1]
-        key_order = list(clean_context.keys())
-
-        key_order.sort()
-
-        dash_authors = [
-            "Ryan Martin ryan@ensomniac.com",
-            "Andrew Stet stetandrew@gmail.com"
-        ]
-
-        header = [
-            '''// DO NOT MODIFY OR DELETE THIS FILE''' if for_chrome_extension else '''<!-- DASH START -->''',
-            '''''' if for_chrome_extension else '''<script type="text/javascript">''',
-            f'''{var_indent}var DASH_AUTHORS = "{", ".join(dash_authors)}";''',
-            f'''{var_indent}var DASH_VERSION = {self.VersionInfo["version"]};''',
-            f'''{var_indent}var DASH_VERSION_DATE = "{self.VersionInfo["date_hr"]}";''',
-            f'''{var_indent}var DASH_CONTEXT = ''' + '''{'''
-        ]
-
-        if not for_chrome_extension:
-            header.insert(0, '''''')
-
-        for key in key_order:
-            header.append(
-                f'{key_indent}"{key.zfill(len(key) - max_key_len)}": '
-                f'{" " * (max_key_len - len(key))}"{clean_context[key]}",'
+            copytree(
+                os.path.join(self.ClientPathMin, "dash/"),
+                os.path.join(path_root, "dash/")
             )
 
-        # Remove trailing comma from last dict line
-        header[-1] = header[-1].rstrip(",")
+            clean_context = {}
 
-        header.append(var_indent + '''};''')
+            skip = [
+                "git_repo",
+                "client_root",
+                "sync_client_root",
+                "chrome_extension_roots"
+            ]
 
-        if for_chrome_extension:
-            header.extend([
-                '''''',
-                '''var dash_script = document.createElement("script");''',
-                '''''',
-                '''dash_script.src = "dash/dash.js?v=" + DASH_VERSION;''',
-                '''''',
-                '''document.head.appendChild(dash_script);''',
-                '''''',
-                '''var dashStylesheet = document.createElement("link");''',
-                '''''',
-                '''dashStylesheet.rel = "stylesheet";''',
-                '''dashStylesheet.href = "dash/dash.css?v=" + DASH_VERSION;''',
-                '''''',
-                '''document.head.appendChild(dashStylesheet);'''
-            ])
-        else:
-            header.extend([
-                '''</script>''',
-                '''''',
-                f'''<script src="dash/dash.js?v={self.VersionInfo["version"]}"></script>''',
-                '''''',
-                f'''<link rel="stylesheet" href="dash/dash.css?v={self.VersionInfo["version"]}">'''
-            ])
-
-            header.extend(self.get_mobile_css_include())
-            header.append('''<!-- DASH END -->''')
-
-        header.append('''''')
-
-        # This file is dedicated to this data, so overwrite the whole file
-        if for_chrome_extension:
-            open(html_path, "w").write("\n".join(header))
-
-            print(f"{self.dist_tag} Wrote {html_path}")
-
-            return
-
-        found_title = False
-        injected_imports = False
-        start_token = "<!-- DASH START -->"
-        end_token = "<!-- DASH END -->"
-        index_orig = open(html_path).read()
-
-        if end_token in index_orig and start_token not in index_orig:
-            sys.exit(f"\nx12 Unable to modify index for \n")
-
-        if start_token in index_orig and end_token not in index_orig:
-            sys.exit(f"\nx78 Unable to modify index for {html_path}\n")
-
-        dash_free = []
-        dash_header_open = False
-
-        for line in index_orig.split("\n"):
-            if start_token in line and not dash_header_open:
-                dash_header_open = True
-
-                continue
-
-            if end_token in line and dash_header_open:
-                dash_header_open = False
-
-                continue
-
-            if dash_header_open:
-                continue
-
-            dash_free.append(line)
-
-        index_content = []
-
-        for x in range(len(dash_free)):
-            line = dash_free[x]
-
-            if x > 0 and not line.strip() and not dash_free[x - 1].strip():
-                continue
-
-            if "</title>" in line and not found_title:
-                found_title = True
-
-                index_content.append(line)
-
-                continue
-
-            if found_title and not injected_imports:
-                injected_imports = True
-
-                for header_line in header:
-                    index_content.append(f"        {header_line}")
-
-                if not line.strip():
+            for key in package:
+                if key in skip or key.startswith("usr_path_git") or key.startswith("srv_path_"):
                     continue
 
-            if ".js" in line and "dash/" not in line and "</script>" in line and 'type="module"' not in line:
-                line = self.version_arbitrary(line, True, False)
+                clean_context[key] = package.get(key) or ""
 
-            if ".css" in line and "dash/" not in line and "stylesheet" in line:
-                line = self.version_arbitrary(line, False, True)
+            max_key_len = [len(x) for x in list(clean_context.keys())]
 
-            index_content.append(line)
+            max_key_len.sort()
+
+            var_indent = " " * (0 if for_chrome_extension else 4)
+            key_indent = " " * (4 if for_chrome_extension else 8)
+            max_key_len = max_key_len[-1]
+            key_order = list(clean_context.keys())
+
+            key_order.sort()
+
+            dash_authors = [
+                "Ryan Martin ryan@ensomniac.com",
+                "Andrew Stet stetandrew@gmail.com"
+            ]
+
+            header = [
+                '''// DO NOT MODIFY OR DELETE THIS FILE''' if for_chrome_extension else '''<!-- DASH START -->''',
+                '''''' if for_chrome_extension else '''<script type="text/javascript">''',
+                f'''{var_indent}var DASH_AUTHORS = "{", ".join(dash_authors)}";''',
+                f'''{var_indent}var DASH_VERSION = {self.VersionInfo["version"]};''',
+                f'''{var_indent}var DASH_VERSION_DATE = "{self.VersionInfo["date_hr"]}";''',
+                f'''{var_indent}var DASH_CONTEXT = ''' + '''{'''
+            ]
+
+            if not for_chrome_extension:
+                header.insert(0, '''''')
+
+            for key in key_order:
+                header.append(
+                    f'{key_indent}"{key.zfill(len(key) - max_key_len)}": '
+                    f'{" " * (max_key_len - len(key))}"{clean_context[key]}",'
+                )
+
+            # Remove trailing comma from last dict line
+            header[-1] = header[-1].rstrip(",")
+
+            header.append(var_indent + '''};''')
+
+            if for_chrome_extension:
+                header.extend([
+                    '''''',
+                    '''var dash_script = document.createElement("script");''',
+                    '''''',
+                    '''dash_script.src = "dash/dash.js?v=" + DASH_VERSION;''',
+                    '''''',
+                    '''document.head.appendChild(dash_script);''',
+                    '''''',
+                    '''var dashStylesheet = document.createElement("link");''',
+                    '''''',
+                    '''dashStylesheet.rel = "stylesheet";''',
+                    '''dashStylesheet.href = "dash/dash.css?v=" + DASH_VERSION;''',
+                    '''''',
+                    '''document.head.appendChild(dashStylesheet);'''
+                ])
+            else:
+                header.extend([
+                    '''</script>''',
+                    '''''',
+                    f'''<script src="dash/dash.js?v={self.VersionInfo["version"]}"></script>''',
+                    '''''',
+                    f'''<link rel="stylesheet" href="dash/dash.css?v={self.VersionInfo["version"]}">'''
+                ])
+
+                header.extend(self.get_mobile_css_include())
+                header.append('''<!-- DASH END -->''')
+
+            header.append('''''')
+
+            # This file is dedicated to this data, so overwrite the whole file
+            if for_chrome_extension:
+                open(html_path, "w").write("\n".join(header))
+
+                print(f"{self.dist_tag} Wrote {html_path}")
+
+                return
+
+        dash_free = []
+        index_content = []
+        found_title = False
+        dash_header_open = False
+        injected_imports = False
+        end_token = "<!-- DASH END -->"
+        start_token = "<!-- DASH START -->"
+        index_orig = open(html_path).read()
+
+        if for_ce_popup:
+            for line in index_orig.split("\n"):
+                if ".js" in line and "dash/" not in line and "</script>" in line and 'type="module"' not in line:
+                    line = self.version_arbitrary(line, True, False)
+
+                index_content.append(line)
+        else:
+            if end_token in index_orig and start_token not in index_orig:
+                sys.exit(f"\nx12 Unable to modify index for \n")
+
+            if start_token in index_orig and end_token not in index_orig:
+                sys.exit(f"\nx78 Unable to modify index for {html_path}\n")
+
+            for line in index_orig.split("\n"):
+                if start_token in line and not dash_header_open:
+                    dash_header_open = True
+
+                    continue
+
+                if end_token in line and dash_header_open:
+                    dash_header_open = False
+
+                    continue
+
+                if dash_header_open:
+                    continue
+
+                dash_free.append(line)
+
+            for x in range(len(dash_free)):
+                line = dash_free[x]
+
+                if x > 0 and not line.strip() and not dash_free[x - 1].strip():
+                    continue
+
+                if "</title>" in line and not found_title:
+                    found_title = True
+
+                    index_content.append(line)
+
+                    continue
+
+                if found_title and not injected_imports:
+                    injected_imports = True
+
+                    for header_line in header:
+                        index_content.append(f"        {header_line}")
+
+                    if not line.strip():
+                        continue
+
+                if ".js" in line and "dash/" not in line and "</script>" in line and 'type="module"' not in line:
+                    line = self.version_arbitrary(line, True, False)
+
+                if ".css" in line and "dash/" not in line and "stylesheet" in line:
+                    line = self.version_arbitrary(line, False, True)
+
+                index_content.append(line)
 
         open(html_path, "w").write("\n".join(index_content))
 
