@@ -398,7 +398,10 @@ class Cron:
         self.User = Memory.SetUser(AdminEmails[0])
 
         try:
-            sys.path.append(os.path.join(self.DashContext["srv_path_git_oapi"], "server", "cgi-bin"))
+            if self.DashContext["asset_path"] == "fantom":
+                sys.path.append(os.path.join(self.DashContext["srv_path_git_oapi"], "factory", "server", "cgi-bin"))
+            else:
+                sys.path.append(os.path.join(self.DashContext["srv_path_git_oapi"], "server", "cgi-bin"))
         except:
             raise EnvironmentError("Error: This needs to be run on the server.")
 

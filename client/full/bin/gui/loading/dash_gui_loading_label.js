@@ -71,7 +71,7 @@ function DashGuiLoadingLabel (binder=null, label_text="Loading...", height=null,
     // really meant to be used to show while something is loading, once
     // loading is complete, this flow makes it easy to build the loaded
     // content without having to wait to fade out the label first and fire a callback.
-    this.Clear = function () {
+    this.Clear = function (anim_ms=250) {
         if (this.html) {
             this.html.css({
                 "position": "absolute",
@@ -83,7 +83,7 @@ function DashGuiLoadingLabel (binder=null, label_text="Loading...", height=null,
         this.Stop();
 
         if (this.label) {
-            this.label.stop().animate({"opacity": 0}, 250, this.destroy.bind(this));
+            this.label.stop().animate({"opacity": 0}, anim_ms, this.destroy.bind(this));
         }
     };
 
