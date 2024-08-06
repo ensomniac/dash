@@ -49118,15 +49118,18 @@ function DashLayoutDashboard (binder, color=null, vertical_space_percent=15) {
     this.binder = binder;
     this.color = color || this.binder.color || Dash.Color.Dark;
     this.vertical_space_percent = vertical_space_percent;
-    this.margin = 1;
     this.vsizes = {};
     this.modules = [];
     this.vmargins = {};
-    this.padding = 0.4;
     this.canvas_containers = [];
     this.rect_aspect_ratio = "2 / 1";
     this.square_aspect_ratio = "1 / 1";
     this.html = Dash.Gui.GetHTMLAbsContext();
+    // This system was originally written with VH/VW sizing, which isn't great in most cases. This is
+    // a way to override that and use this statically. As of writing, only tested on square modules.
+    this.use_v = this.vertical_space_percent !== "none";  // "none" is a quick hacky way to override
+    this.margin = this.use_v ? 1 : Dash.Size.Padding;
+    this.padding = this.use_v ? 0.4 : (Dash.Size.Padding * 0.4);
     this.VerticalSpaceTakenPercent = null;
     this.VerticalSpaceAvailablePercent = null;
     this.AddSquareTagModule = function (header_text="", label_header_text="", label_text="") {
@@ -49185,6 +49188,13 @@ function DashLayoutDashboard (binder, color=null, vertical_space_percent=15) {
         return divider;
     };
     this.SetVerticalSpacePercent = function (num) {
+        var data;
+        if (!this.use_v) {
+            for (data of this.modules) {
+                data["module"].setup_styles(true);  // CSS update only
+            }
+            return;
+        }
         num = parseInt(num);
         if (isNaN(num)) {
             console.error("Error: Invalid number passed to SetVerticalSpacePercent()");
@@ -49193,8 +49203,8 @@ function DashLayoutDashboard (binder, color=null, vertical_space_percent=15) {
         this.vertical_space_percent = num;
         this.VerticalSpaceTakenPercent = num.toString() + "%";
         this.VerticalSpaceAvailablePercent = this.get_available_vertical_space_percent();
-        for (var data of this.modules) {
-            this.modules["module"].setup_styles(true);  // CSS update only
+        for (data of this.modules) {
+            data["module"].setup_styles(true);  // CSS update only
         }
     };
     this.Empty = function () {
@@ -49203,14 +49213,22 @@ function DashLayoutDashboard (binder, color=null, vertical_space_percent=15) {
         this.html.empty();
     };
     this.get_text_vsize = function (percentage_decimal_of_dashboard_size) {
+        if (!this.use_v) {
+            return 150 * percentage_decimal_of_dashboard_size;
+        }
         var key = this.VerticalSpaceTakenPercent + "_" + percentage_decimal_of_dashboard_size;
         if (this.vsizes[key]) {
             return this.vsizes[key];
         }
-        this.vsizes[key] = this.get_rounded_single_decimal(this.vertical_space_percent) * percentage_decimal_of_dashboard_size;
+        this.vsizes[key] = this.get_rounded_single_decimal(
+            this.vertical_space_percent
+        ) * percentage_decimal_of_dashboard_size;
         return this.vsizes[key];
     };
     this.get_vmargin = function (margin_mult=1) {
+        if (!this.use_v) {
+            return Dash.Size.Padding * margin_mult;
+        }
         var key = this.VerticalSpaceTakenPercent + "_" + margin_mult;
         if (this.vmargins[key]) {
             return this.vmargins[key];
@@ -49299,8 +49317,8 @@ function DashLayoutDashboard (binder, color=null, vertical_space_percent=15) {
         top_container.style.display = "flex";
         top_container.style.position = "absolute";
         top_container.style.width = "100%";
-        top_container.style.top = parseInt(this.VerticalSpaceAvailablePercent) + "vh";  // TEMP
-        top_container.style.height = (parseInt(this.VerticalSpaceTakenPercent) - 0.1) + "vh";  // TEMP
+        top_container.style.top = this.use_v ? (parseInt(this.VerticalSpaceAvailablePercent) + "vh") : "0px";
+        top_container.style.height = this.use_v ? ((parseInt(this.VerticalSpaceTakenPercent) - 0.1) + "vh") : "100%";
         for (var i in styles) {
             if (parseInt(i) === index) {
                 top_container.appendChild(canvas_container);
@@ -49313,15 +49331,30 @@ function DashLayoutDashboard (binder, color=null, vertical_space_percent=15) {
         // IMPORTANT: Must be at document level (added dynamically) for Chart script objects to properly display
         document.body.appendChild(top_container);
         document.body.appendChild(canvas_script);
-        var new_container_data = {...canvas};
-        new_container_data["container"] = top_container;
-        this.canvas_containers.push(new_container_data);
+        this.canvas_containers.push({
+            ...canvas,
+            "container": top_container
+        });
+        if (this.use_v) {
+            return;
+        }
+        var container = $(top_container);
+        setTimeout(
+            () => {
+                container.detach();
+                container.css({
+                    "top": 0
+                });
+                this.html.append(container);
+            },
+            300
+        );
     };
     // Document scope
     this.get_placeholder_container = function (type, index) {
         var container = document.createElement("div");
-        container.style.padding = this.padding + "vh";  // TEMP
-        container.style.margin = this.get_vmargin() + "vh";  // TEMP
+        container.style.padding = this.padding + (this.use_v ? "vh" : "px");
+        container.style.margin = this.get_vmargin() + (this.use_v ? "vh" : "px");
         if (type === "square") {
             container.style.aspectRatio = this.square_aspect_ratio;
         }
@@ -49345,6 +49378,7 @@ function DashLayoutDashboardModule (dashboard, style, sub_style) {
     this.sub_style = sub_style;
     this.color = this.dashboard.color || Dash.Color.Dark;
     this.modules = this.dashboard.modules;
+    this.use_v = this.dashboard.use_v;
     this.rect_aspect_ratio = this.dashboard.rect_aspect_ratio;
     this.square_aspect_ratio = this.dashboard.square_aspect_ratio;
     this.html = null;
@@ -49415,8 +49449,8 @@ function DashLayoutDashboardModule (dashboard, style, sub_style) {
     this.modify_styles = function () {
         this.html.css({
             "background": this.color.BackgroundRaised,
-            "margin": this.dashboard.get_vmargin() + "vh",  // TEMP
-            "padding": this.padding + "vh"  // TEMP
+            "margin": this.dashboard.get_vmargin() + (this.use_v ? "vh" : 0),
+            "padding": this.padding + (this.use_v ? "vh" : 0)
         });
         if (this.modules && this.modules.length > 0) {
             this.html.css({
@@ -49429,8 +49463,8 @@ function DashLayoutDashboardModule (dashboard, style, sub_style) {
             ...this.centered_text_css,
             "color": this.secondary_color,
             "width": "95%",
-            "font-size": this.dashboard.get_text_vsize(0.06) + "vh",  // TEMP
-            "height": this.dashboard.get_text_vsize(0.06) + "vh",  // TEMP
+            "font-size": this.dashboard.get_text_vsize(0.06) + (this.use_v ? "vh" : 0),
+            "height": this.dashboard.get_text_vsize(0.06) + (this.use_v ? "vh" : 0)
         });
         if (this.header_text) {
             this.SetHeaderText(this.header_text);
@@ -49506,11 +49540,11 @@ function DashLayoutDashboardModuleFlex () {
             this.canvas = {"container": canvas_container, "script": script, "id": canvas_id};
         }
         var prev_mod_is_flex = this.modules.Last()["style"] === "flex";
-        this.canvas["container"].style.height = this.dashboard.get_text_vsize(0.75) + "vh";  // TEMP
-        this.canvas["container"].style.marginBottom = this.dashboard.get_vmargin() + "vh";  // TEMP
-        this.canvas["container"].style.marginTop = this.dashboard.get_vmargin(2.2) + "vh";  // TEMP
-        this.canvas["container"].style.marginLeft = this.dashboard.get_vmargin(prev_mod_is_flex ? 0.9 : 0.3) + "vw";  // TEMP
-        this.canvas["container"].style.marginRight = this.dashboard.get_vmargin(prev_mod_is_flex ? 1 : 1.25) + "vw";  // TEMP
+        this.canvas["container"].style.height = this.dashboard.get_text_vsize(0.75) + (this.use_v ? "vh" : "px");
+        this.canvas["container"].style.marginBottom = this.dashboard.get_vmargin() + (this.use_v ? "vh" : "px");
+        this.canvas["container"].style.marginTop = this.dashboard.get_vmargin(2.2) + (this.use_v ? "vh" : "px");
+        this.canvas["container"].style.marginLeft = this.dashboard.get_vmargin(prev_mod_is_flex ? 0.9 : 0.3) + (this.use_v ? "vw" : "px");
+        this.canvas["container"].style.marginRight = this.dashboard.get_vmargin(prev_mod_is_flex ? 1 : 1.25) + (this.use_v ? "vw" : "px");
         this.canvas["container"].style.overflow = "hidden";
         this.canvas["container"].style.opacity = "0";
         this.canvas["container"].style.flex = "1";
@@ -49707,28 +49741,28 @@ function DashLayoutDashboardModuleRect () {
             "margin-top": "3%",
             "margin-bottom": "3%",
             "opacity": 0,  // For animation
-            "height": this.dashboard.get_text_vsize(0.18) + "vh"  // TEMP
+            "height": this.dashboard.get_text_vsize(0.18) + (this.use_v ? "vh" : 0)
         });
         content.css({
             "display": "flex",
-            "height": this.dashboard.get_text_vsize(0.18) + "vh"  // TEMP
+            "height": this.dashboard.get_text_vsize(0.18) + (this.use_v ? "vh" : 0)
         });
         key_text.css({
             ...this.text_css,
             "color": this.primary_color,
-            "font-size": this.dashboard.get_text_vsize(0.1) + "vh",  // TEMP
-            "height": this.dashboard.get_text_vsize(0.18) + "vh",  // TEMP
-            "width": this.dashboard.get_text_vsize(1.13) + "vh",  // TEMP
-            "line-height": this.dashboard.get_text_vsize(0.18) + "vh"  // TEMP
+            "font-size": this.dashboard.get_text_vsize(0.1) + (this.use_v ? "vh" : 0),
+            "height": this.dashboard.get_text_vsize(0.18) + (this.use_v ? "vh" : 0),
+            "width": this.dashboard.get_text_vsize(1.13) + (this.use_v ? "vh" : 0),
+            "line-height": this.dashboard.get_text_vsize(0.18) + (this.use_v ? "vh" : "px")
         });
         value_text.css({
             ...this.text_css,
             "color": this.primary_color,
             "text-align": "right",
-            "font-size": this.dashboard.get_text_vsize(0.15) + "vh",  // TEMP
-            "height": this.dashboard.get_text_vsize(0.18) + "vh",  // TEMP
-            "width": this.dashboard.get_text_vsize(0.26) + "vh",  // TEMP
-            "line-height": this.dashboard.get_text_vsize(0.18) + "vh"  // TEMP
+            "font-size": this.dashboard.get_text_vsize(0.15) + (this.use_v ? "vh" : 0),
+            "height": this.dashboard.get_text_vsize(0.18) + (this.use_v ? "vh" : 0),
+            "width": this.dashboard.get_text_vsize(0.26) + (this.use_v ? "vh" : 0),
+            "line-height": this.dashboard.get_text_vsize(0.18) + (this.use_v ? "vh" : "px")
         });
         content.append(this.get_dot_icon().html);
         content.append(key_text);
@@ -49749,9 +49783,9 @@ function DashLayoutDashboardModuleRect () {
             "text-overflow": "ellipsis",
             "white-space": "nowrap",
             "color": this.primary_color,
-            "font-size": this.dashboard.get_text_vsize(0.8) + "vh",  // TEMP
-            "height": this.dashboard.get_text_vsize(0.18) + "vh",  // TEMP
-            "line-height": this.dashboard.get_text_vsize(0.18) + "vh"  // TEMP
+            "font-size": this.dashboard.get_text_vsize(0.8) + (this.use_v ? "vh" : 0),
+            "height": this.dashboard.get_text_vsize(0.18) + (this.use_v ? "vh" : 0),
+            "line-height": this.dashboard.get_text_vsize(0.18) + (this.use_v ? "vh" : "px")
         });
         return dot_icon;
     };
@@ -49759,7 +49793,7 @@ function DashLayoutDashboardModuleRect () {
         var line = $("<div></div>");
         line.css({
             "background": this.secondary_color,
-            "height": this.dashboard.get_text_vsize(0.06) + "vh"  // TEMP
+            "height": this.dashboard.get_text_vsize(0.06) + (this.use_v ? "vh" : 0)
         });
         return line;
     };
@@ -49850,28 +49884,28 @@ function DashLayoutDashboardModuleRect () {
             "margin-top": "3%",
             "margin-bottom": "3%",
             "opacity": 0,  // For animation
-            "height": this.dashboard.get_text_vsize(0.18) + "vh"  // TEMP
+            "height": this.dashboard.get_text_vsize(0.18) + (this.use_v ? "vh" : 0)
         });
         content.css({
             "display": "flex",
-            "height": this.dashboard.get_text_vsize(0.18) + "vh"  // TEMP
+            "height": this.dashboard.get_text_vsize(0.18) + (this.use_v ? "vh" : 0)
         });
         key_text.css({
             ...this.text_css,
             "color": this.primary_color,
-            "font-size": this.dashboard.get_text_vsize(0.1) + "vh",  // TEMP
-            "height": this.dashboard.get_text_vsize(0.18) + "vh",  // TEMP
-            "width": this.dashboard.get_text_vsize(1.13) + "vh",  // TEMP
-            "line-height": this.dashboard.get_text_vsize(0.18) + "vh"  // TEMP
+            "font-size": this.dashboard.get_text_vsize(0.1) + (this.use_v ? "vh" : 0),
+            "height": this.dashboard.get_text_vsize(0.18) + (this.use_v ? "vh" : 0),
+            "width": this.dashboard.get_text_vsize(1.13) + (this.use_v ? "vh" : 0),
+            "line-height": this.dashboard.get_text_vsize(0.18) + (this.use_v ? "vh" : "px")
         });
         value_text.css({
             ...this.text_css,
             "color": this.primary_color,
             "text-align": "right",
-            "font-size": this.dashboard.get_text_vsize(0.15) + "vh",  // TEMP
-            "height": this.dashboard.get_text_vsize(0.18) + "vh",  // TEMP
-            "width": this.dashboard.get_text_vsize(0.26) + "vh",  // TEMP
-            "line-height": this.dashboard.get_text_vsize(0.18) + "vh"  // TEMP
+            "font-size": this.dashboard.get_text_vsize(0.15) + (this.use_v ? "vh" : 0),
+            "height": this.dashboard.get_text_vsize(0.18) + (this.use_v ? "vh" : 0),
+            "width": this.dashboard.get_text_vsize(0.26) + (this.use_v ? "vh" : 0),
+            "line-height": this.dashboard.get_text_vsize(0.18) + (this.use_v ? "vh" : "px")
         });
         content.append(this.get_dot_icon().html);
         content.append(key_text);
@@ -49892,9 +49926,9 @@ function DashLayoutDashboardModuleRect () {
             "text-overflow": "ellipsis",
             "white-space": "nowrap",
             "color": this.primary_color,
-            "font-size": this.dashboard.get_text_vsize(0.8) + "vh",  // TEMP
-            "height": this.dashboard.get_text_vsize(0.18) + "vh",  // TEMP
-            "line-height": this.dashboard.get_text_vsize(0.18) + "vh"  // TEMP
+            "font-size": this.dashboard.get_text_vsize(0.8) + (this.use_v ? "vh" : 0),
+            "height": this.dashboard.get_text_vsize(0.18) + (this.use_v ? "vh" : 0),
+            "line-height": this.dashboard.get_text_vsize(0.18) + (this.use_v ? "vh" : "px")
         });
         return dot_icon;
     };
@@ -49902,7 +49936,7 @@ function DashLayoutDashboardModuleRect () {
         var line = $("<div></div>");
         line.css({
             "background": this.secondary_color,
-            "height": this.dashboard.get_text_vsize(0.06) + "vh"  // TEMP
+            "height": this.dashboard.get_text_vsize(0.06) + (this.use_v ? "vh" : 0)
         });
         return line;
     };
@@ -49981,6 +50015,15 @@ function DashLayoutDashboardModuleSquare () {
         this.SetLabelText(this.radial_fill_percent.toString() + "%");
         this.update_radial_fill_percent(percent);
     };
+    this.SetRadialFillColor = function (color) {
+        if (this.sub_style !== "radial") {
+            console.error("Error: SetRadialFillColor() only works for Square Radial Modules");
+            return;
+        }
+        this.canvas["gui"].data.datasets[0].borderColor = [color];
+        this.canvas["gui"].data.datasets[0].backgroundColor = [color, this.color.Stroke];
+        this.canvas["gui"].update();
+    };
     this.setup_styles = function (css_only=false) {
         this.html.css({
             "aspect-ratio": this.square_aspect_ratio
@@ -50003,8 +50046,8 @@ function DashLayoutDashboardModuleSquare () {
             "color": this.primary_color,
             "width": "95%",
             "margin-top": "18%",
-            "font-size": this.dashboard.get_text_vsize(0.1) + "vh",  // TEMP
-            "height": this.dashboard.get_text_vsize(0.1) + "vh",  // TEMP
+            "font-size": this.dashboard.get_text_vsize(0.1) + (this.use_v ? "vh" : 0),
+            "height": this.dashboard.get_text_vsize(0.1) + (this.use_v ? "vh" : 0)
         });
         this.label.css({
             ...this.centered_text_css,
@@ -50036,9 +50079,9 @@ function DashLayoutDashboardModuleSquare () {
             size = Math.max(0.1, size - (0.03 * (this.label_text.length - 1)));
         }
         this.label.css({
-            "font-size": this.dashboard.get_text_vsize(size) + "vh",  // TEMP
-            "height": this.dashboard.get_text_vsize(size) + "vh",  // TEMP
-            "line-height": this.dashboard.get_text_vsize(size * 1.11) + "vh"  // TEMP
+            "font-size": this.dashboard.get_text_vsize(size) + (this.use_v ? "vh" : 0),
+            "height": this.dashboard.get_text_vsize(size) + (this.use_v ? "vh" : 0),
+            "line-height": this.dashboard.get_text_vsize(size * 1.11) + (this.use_v ? "vh" : "px")
         });
     };
     this.setup_radial_style = function () {
@@ -50047,16 +50090,16 @@ function DashLayoutDashboardModuleSquare () {
             "color": this.primary_color,
             "width": "50%",
             "margin-top": "32%",
-            "font-size": this.dashboard.get_text_vsize(0.06) + "vh",  // TEMP
-            "height": this.dashboard.get_text_vsize(0.06) + "vh",  // TEMP
+            "font-size": this.dashboard.get_text_vsize(0.06) + (this.use_v ? "vh" : 0),
+            "height": this.dashboard.get_text_vsize(0.06) + (this.use_v ? "vh" : 0)
         });
         this.label.css({
             ...this.centered_text_css,
             "color": this.primary_color,
             "width": "50%",
-            "font-size": this.dashboard.get_text_vsize(0.18) + "vh",  // TEMP
-            "height": this.dashboard.get_text_vsize(0.18) + "vh",  // TEMP
-            "line-height": this.dashboard.get_text_vsize(0.21) + "vh",  // TEMP
+            "font-size": this.dashboard.get_text_vsize(0.18) + (this.use_v ? "vh" : 0),
+            "height": this.dashboard.get_text_vsize(0.18) + (this.use_v ? "vh" : 0),
+            "line-height": this.dashboard.get_text_vsize(0.21) + (this.use_v ? "vh" : "px")
         });
         this.setup_radial_gui();
     };
@@ -50074,12 +50117,12 @@ function DashLayoutDashboardModuleSquare () {
             this.canvas = {"container": canvas_container, "script": script, "id": canvas_id};
         }
         this.canvas["container"].style.overflow = "hidden";
-        this.canvas["container"].style.width = this.dashboard.get_text_vsize(0.7) + "vh";  // TEMP
-        this.canvas["container"].style.height = this.dashboard.get_text_vsize(0.7) + "vh";  // TEMP
-        this.canvas["container"].style.marginBottom = this.dashboard.get_vmargin() + "vh";  // TEMP
-        this.canvas["container"].style.marginTop = this.dashboard.get_vmargin(3) + "vh";// TEMP
-        this.canvas["container"].style.marginLeft = this.dashboard.get_vmargin(1.25) + "vh";// TEMP
-        this.canvas["container"].style.marginRight = this.dashboard.get_vmargin(2.45) + "vh";// TEMP
+        this.canvas["container"].style.width = this.dashboard.get_text_vsize(0.7) + (this.use_v ? "vh" : "px");
+        this.canvas["container"].style.height = this.dashboard.get_text_vsize(0.7) + (this.use_v ? "vh" : "px");
+        this.canvas["container"].style.marginBottom = this.dashboard.get_vmargin() + (this.use_v ? "vh" : "px");
+        this.canvas["container"].style.marginTop = this.dashboard.get_vmargin((this.use_v ? 3 : 2.5)) + (this.use_v ? "vh" : "px");
+        this.canvas["container"].style.marginLeft = this.dashboard.get_vmargin(1.25) + (this.use_v ? "vh" : "px");
+        this.canvas["container"].style.marginRight = this.dashboard.get_vmargin(2.45) + (this.use_v ? "vh" : "px");
     };
     this.get_radial_fill_data = function () {
         return [this.radial_fill_percent, 100 - this.radial_fill_percent];

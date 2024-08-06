@@ -3,15 +3,20 @@ function DashLayoutDashboard (binder, color=null, vertical_space_percent=15) {
     this.color = color || this.binder.color || Dash.Color.Dark;
     this.vertical_space_percent = vertical_space_percent;
 
-    this.margin = 1;
     this.vsizes = {};
     this.modules = [];
     this.vmargins = {};
-    this.padding = 0.4;
     this.canvas_containers = [];
     this.rect_aspect_ratio = "2 / 1";
     this.square_aspect_ratio = "1 / 1";
     this.html = Dash.Gui.GetHTMLAbsContext();
+
+    // This system was originally written with VH/VW sizing, which isn't great in most cases. This is
+    // a way to override that and use this statically. As of writing, only tested on square modules.
+    this.use_v = this.vertical_space_percent !== "none";  // "none" is a quick hacky way to override
+
+    this.margin = this.use_v ? 1 : Dash.Size.Padding;
+    this.padding = this.use_v ? 0.4 : (Dash.Size.Padding * 0.4);
 
     this.VerticalSpaceTakenPercent = null;
     this.VerticalSpaceAvailablePercent = null;
@@ -91,6 +96,16 @@ function DashLayoutDashboard (binder, color=null, vertical_space_percent=15) {
     };
 
     this.SetVerticalSpacePercent = function (num) {
+        var data;
+
+        if (!this.use_v) {
+            for (data of this.modules) {
+                data["module"].setup_styles(true);  // CSS update only
+            }
+
+            return;
+        }
+
         num = parseInt(num);
 
         if (isNaN(num)) {
@@ -103,8 +118,8 @@ function DashLayoutDashboard (binder, color=null, vertical_space_percent=15) {
         this.VerticalSpaceTakenPercent = num.toString() + "%";
         this.VerticalSpaceAvailablePercent = this.get_available_vertical_space_percent();
 
-        for (var data of this.modules) {
-            this.modules["module"].setup_styles(true);  // CSS update only
+        for (data of this.modules) {
+            data["module"].setup_styles(true);  // CSS update only
         }
     };
 
@@ -116,18 +131,28 @@ function DashLayoutDashboard (binder, color=null, vertical_space_percent=15) {
     };
 
     this.get_text_vsize = function (percentage_decimal_of_dashboard_size) {
+        if (!this.use_v) {
+            return 150 * percentage_decimal_of_dashboard_size;
+        }
+
         var key = this.VerticalSpaceTakenPercent + "_" + percentage_decimal_of_dashboard_size;
 
         if (this.vsizes[key]) {
             return this.vsizes[key];
         }
 
-        this.vsizes[key] = this.get_rounded_single_decimal(this.vertical_space_percent) * percentage_decimal_of_dashboard_size;
+        this.vsizes[key] = this.get_rounded_single_decimal(
+            this.vertical_space_percent
+        ) * percentage_decimal_of_dashboard_size;
 
         return this.vsizes[key];
     };
 
     this.get_vmargin = function (margin_mult=1) {
+        if (!this.use_v) {
+            return Dash.Size.Padding * margin_mult;
+        }
+
         var key = this.VerticalSpaceTakenPercent + "_" + margin_mult;
 
         if (this.vmargins[key]) {
@@ -240,11 +265,12 @@ function DashLayoutDashboard (binder, color=null, vertical_space_percent=15) {
         }
 
         var top_container = document.createElement("div");
+
         top_container.style.display = "flex";
         top_container.style.position = "absolute";
         top_container.style.width = "100%";
-        top_container.style.top = parseInt(this.VerticalSpaceAvailablePercent) + "vh";  // TEMP
-        top_container.style.height = (parseInt(this.VerticalSpaceTakenPercent) - 0.1) + "vh";  // TEMP
+        top_container.style.top = this.use_v ? (parseInt(this.VerticalSpaceAvailablePercent) + "vh") : "0px";
+        top_container.style.height = this.use_v ? ((parseInt(this.VerticalSpaceTakenPercent) - 0.1) + "vh") : "100%";
 
         for (var i in styles) {
             if (parseInt(i) === index) {
@@ -260,18 +286,37 @@ function DashLayoutDashboard (binder, color=null, vertical_space_percent=15) {
         document.body.appendChild(top_container);
         document.body.appendChild(canvas_script);
 
-        var new_container_data = {...canvas};
-        new_container_data["container"] = top_container;
+        this.canvas_containers.push({
+            ...canvas,
+            "container": top_container
+        });
 
-        this.canvas_containers.push(new_container_data);
+        if (this.use_v) {
+            return;
+        }
+
+        var container = $(top_container);
+
+        setTimeout(
+            () => {
+                container.detach();
+
+                container.css({
+                    "top": 0
+                });
+
+                this.html.append(container);
+            },
+            300
+        );
     };
 
     // Document scope
     this.get_placeholder_container = function (type, index) {
         var container = document.createElement("div");
 
-        container.style.padding = this.padding + "vh";  // TEMP
-        container.style.margin = this.get_vmargin() + "vh";  // TEMP
+        container.style.padding = this.padding + (this.use_v ? "vh" : "px");
+        container.style.margin = this.get_vmargin() + (this.use_v ? "vh" : "px");
 
         if (type === "square") {
             container.style.aspectRatio = this.square_aspect_ratio;

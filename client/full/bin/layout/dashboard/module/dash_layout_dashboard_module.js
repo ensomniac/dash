@@ -5,6 +5,7 @@ function DashLayoutDashboardModule (dashboard, style, sub_style) {
 
     this.color = this.dashboard.color || Dash.Color.Dark;
     this.modules = this.dashboard.modules;
+    this.use_v = this.dashboard.use_v;
     this.rect_aspect_ratio = this.dashboard.rect_aspect_ratio;
     this.square_aspect_ratio = this.dashboard.square_aspect_ratio;
     this.html = null;
@@ -94,8 +95,8 @@ function DashLayoutDashboardModule (dashboard, style, sub_style) {
     this.modify_styles = function () {
         this.html.css({
             "background": this.color.BackgroundRaised,
-            "margin": this.dashboard.get_vmargin() + "vh",  // TEMP
-            "padding": this.padding + "vh"  // TEMP
+            "margin": this.dashboard.get_vmargin() + (this.use_v ? "vh" : 0),
+            "padding": this.padding + (this.use_v ? "vh" : 0)
         });
 
         if (this.modules && this.modules.length > 0) {
@@ -110,8 +111,8 @@ function DashLayoutDashboardModule (dashboard, style, sub_style) {
             ...this.centered_text_css,
             "color": this.secondary_color,
             "width": "95%",
-            "font-size": this.dashboard.get_text_vsize(0.06) + "vh",  // TEMP
-            "height": this.dashboard.get_text_vsize(0.06) + "vh",  // TEMP
+            "font-size": this.dashboard.get_text_vsize(0.06) + (this.use_v ? "vh" : 0),
+            "height": this.dashboard.get_text_vsize(0.06) + (this.use_v ? "vh" : 0)
         });
 
         if (this.header_text) {

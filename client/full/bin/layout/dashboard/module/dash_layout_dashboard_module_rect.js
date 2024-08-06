@@ -110,31 +110,31 @@ function DashLayoutDashboardModuleRect () {
             "margin-top": "3%",
             "margin-bottom": "3%",
             "opacity": 0,  // For animation
-            "height": this.dashboard.get_text_vsize(0.18) + "vh"  // TEMP
+            "height": this.dashboard.get_text_vsize(0.18) + (this.use_v ? "vh" : 0)
         });
 
         content.css({
             "display": "flex",
-            "height": this.dashboard.get_text_vsize(0.18) + "vh"  // TEMP
+            "height": this.dashboard.get_text_vsize(0.18) + (this.use_v ? "vh" : 0)
         });
 
         key_text.css({
             ...this.text_css,
             "color": this.primary_color,
-            "font-size": this.dashboard.get_text_vsize(0.1) + "vh",  // TEMP
-            "height": this.dashboard.get_text_vsize(0.18) + "vh",  // TEMP
-            "width": this.dashboard.get_text_vsize(1.13) + "vh",  // TEMP
-            "line-height": this.dashboard.get_text_vsize(0.18) + "vh"  // TEMP
+            "font-size": this.dashboard.get_text_vsize(0.1) + (this.use_v ? "vh" : 0),
+            "height": this.dashboard.get_text_vsize(0.18) + (this.use_v ? "vh" : 0),
+            "width": this.dashboard.get_text_vsize(1.13) + (this.use_v ? "vh" : 0),
+            "line-height": this.dashboard.get_text_vsize(0.18) + (this.use_v ? "vh" : "px")
         });
 
         value_text.css({
             ...this.text_css,
             "color": this.primary_color,
             "text-align": "right",
-            "font-size": this.dashboard.get_text_vsize(0.15) + "vh",  // TEMP
-            "height": this.dashboard.get_text_vsize(0.18) + "vh",  // TEMP
-            "width": this.dashboard.get_text_vsize(0.26) + "vh",  // TEMP
-            "line-height": this.dashboard.get_text_vsize(0.18) + "vh"  // TEMP
+            "font-size": this.dashboard.get_text_vsize(0.15) + (this.use_v ? "vh" : 0),
+            "height": this.dashboard.get_text_vsize(0.18) + (this.use_v ? "vh" : 0),
+            "width": this.dashboard.get_text_vsize(0.26) + (this.use_v ? "vh" : 0),
+            "line-height": this.dashboard.get_text_vsize(0.18) + (this.use_v ? "vh" : "px")
         });
 
         content.append(this.get_dot_icon().html);
@@ -160,9 +160,9 @@ function DashLayoutDashboardModuleRect () {
             "text-overflow": "ellipsis",
             "white-space": "nowrap",
             "color": this.primary_color,
-            "font-size": this.dashboard.get_text_vsize(0.8) + "vh",  // TEMP
-            "height": this.dashboard.get_text_vsize(0.18) + "vh",  // TEMP
-            "line-height": this.dashboard.get_text_vsize(0.18) + "vh"  // TEMP
+            "font-size": this.dashboard.get_text_vsize(0.8) + (this.use_v ? "vh" : 0),
+            "height": this.dashboard.get_text_vsize(0.18) + (this.use_v ? "vh" : 0),
+            "line-height": this.dashboard.get_text_vsize(0.18) + (this.use_v ? "vh" : "px")
         });
 
         return dot_icon;
@@ -173,7 +173,7 @@ function DashLayoutDashboardModuleRect () {
 
         line.css({
             "background": this.secondary_color,
-            "height": this.dashboard.get_text_vsize(0.06) + "vh"  // TEMP
+            "height": this.dashboard.get_text_vsize(0.06) + (this.use_v ? "vh" : 0)
         });
 
         return line;

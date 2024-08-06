@@ -98,6 +98,19 @@ function DashLayoutDashboardModuleSquare () {
         this.update_radial_fill_percent(percent);
     };
 
+    this.SetRadialFillColor = function (color) {
+        if (this.sub_style !== "radial") {
+            console.error("Error: SetRadialFillColor() only works for Square Radial Modules");
+
+            return;
+        }
+
+        this.canvas["gui"].data.datasets[0].borderColor = [color];
+        this.canvas["gui"].data.datasets[0].backgroundColor = [color, this.color.Stroke];
+
+        this.canvas["gui"].update();
+    };
+
     this.setup_styles = function (css_only=false) {
         this.html.css({
             "aspect-ratio": this.square_aspect_ratio
@@ -125,8 +138,8 @@ function DashLayoutDashboardModuleSquare () {
             "color": this.primary_color,
             "width": "95%",
             "margin-top": "18%",
-            "font-size": this.dashboard.get_text_vsize(0.1) + "vh",  // TEMP
-            "height": this.dashboard.get_text_vsize(0.1) + "vh",  // TEMP
+            "font-size": this.dashboard.get_text_vsize(0.1) + (this.use_v ? "vh" : 0),
+            "height": this.dashboard.get_text_vsize(0.1) + (this.use_v ? "vh" : 0)
         });
 
         this.label.css({
@@ -166,9 +179,9 @@ function DashLayoutDashboardModuleSquare () {
         }
 
         this.label.css({
-            "font-size": this.dashboard.get_text_vsize(size) + "vh",  // TEMP
-            "height": this.dashboard.get_text_vsize(size) + "vh",  // TEMP
-            "line-height": this.dashboard.get_text_vsize(size * 1.11) + "vh"  // TEMP
+            "font-size": this.dashboard.get_text_vsize(size) + (this.use_v ? "vh" : 0),
+            "height": this.dashboard.get_text_vsize(size) + (this.use_v ? "vh" : 0),
+            "line-height": this.dashboard.get_text_vsize(size * 1.11) + (this.use_v ? "vh" : "px")
         });
     };
 
@@ -178,17 +191,17 @@ function DashLayoutDashboardModuleSquare () {
             "color": this.primary_color,
             "width": "50%",
             "margin-top": "32%",
-            "font-size": this.dashboard.get_text_vsize(0.06) + "vh",  // TEMP
-            "height": this.dashboard.get_text_vsize(0.06) + "vh",  // TEMP
+            "font-size": this.dashboard.get_text_vsize(0.06) + (this.use_v ? "vh" : 0),
+            "height": this.dashboard.get_text_vsize(0.06) + (this.use_v ? "vh" : 0)
         });
 
         this.label.css({
             ...this.centered_text_css,
             "color": this.primary_color,
             "width": "50%",
-            "font-size": this.dashboard.get_text_vsize(0.18) + "vh",  // TEMP
-            "height": this.dashboard.get_text_vsize(0.18) + "vh",  // TEMP
-            "line-height": this.dashboard.get_text_vsize(0.21) + "vh",  // TEMP
+            "font-size": this.dashboard.get_text_vsize(0.18) + (this.use_v ? "vh" : 0),
+            "height": this.dashboard.get_text_vsize(0.18) + (this.use_v ? "vh" : 0),
+            "line-height": this.dashboard.get_text_vsize(0.21) + (this.use_v ? "vh" : "px")
         });
 
         this.setup_radial_gui();
@@ -213,12 +226,12 @@ function DashLayoutDashboardModuleSquare () {
         }
 
         this.canvas["container"].style.overflow = "hidden";
-        this.canvas["container"].style.width = this.dashboard.get_text_vsize(0.7) + "vh";  // TEMP
-        this.canvas["container"].style.height = this.dashboard.get_text_vsize(0.7) + "vh";  // TEMP
-        this.canvas["container"].style.marginBottom = this.dashboard.get_vmargin() + "vh";  // TEMP
-        this.canvas["container"].style.marginTop = this.dashboard.get_vmargin(3) + "vh";// TEMP
-        this.canvas["container"].style.marginLeft = this.dashboard.get_vmargin(1.25) + "vh";// TEMP
-        this.canvas["container"].style.marginRight = this.dashboard.get_vmargin(2.45) + "vh";// TEMP
+        this.canvas["container"].style.width = this.dashboard.get_text_vsize(0.7) + (this.use_v ? "vh" : "px");
+        this.canvas["container"].style.height = this.dashboard.get_text_vsize(0.7) + (this.use_v ? "vh" : "px");
+        this.canvas["container"].style.marginBottom = this.dashboard.get_vmargin() + (this.use_v ? "vh" : "px");
+        this.canvas["container"].style.marginTop = this.dashboard.get_vmargin((this.use_v ? 3 : 2.5)) + (this.use_v ? "vh" : "px");
+        this.canvas["container"].style.marginLeft = this.dashboard.get_vmargin(1.25) + (this.use_v ? "vh" : "px");
+        this.canvas["container"].style.marginRight = this.dashboard.get_vmargin(2.45) + (this.use_v ? "vh" : "px");
     };
 
     this.get_radial_fill_data = function () {
