@@ -49197,6 +49197,11 @@ function DashLayoutDashboard (binder, color=null, vertical_space_percent=15) {
             this.modules["module"].setup_styles(true);  // CSS update only
         }
     };
+    this.Empty = function () {
+        this.modules = [];
+        this.canvas_containers = [];
+        this.html.empty();
+    };
     this.get_text_vsize = function (percentage_decimal_of_dashboard_size) {
         var key = this.VerticalSpaceTakenPercent + "_" + percentage_decimal_of_dashboard_size;
         if (this.vsizes[key]) {
@@ -49211,7 +49216,9 @@ function DashLayoutDashboard (binder, color=null, vertical_space_percent=15) {
             return this.vmargins[key];
         }
         // 15 is the default vertical_space_percent
-        this.vmargins[key] = this.get_rounded_single_decimal((this.margin * margin_mult) * (this.vertical_space_percent / 15));
+        this.vmargins[key] = this.get_rounded_single_decimal(
+            (this.margin * margin_mult) * (this.vertical_space_percent / 15)
+        );
         return this.vmargins[key];
     };
     this.get_rounded_single_decimal = function (value) {
@@ -49342,7 +49349,7 @@ function DashLayoutDashboardModule (dashboard, style, sub_style) {
     this.square_aspect_ratio = this.dashboard.square_aspect_ratio;
     this.html = null;
     this.styles = [];
-    this.header = $("<div>SetHeaderText()</div>");
+    this.header = $("<div></div>");
     this.header_text = null;
     this.bold_font = "sans_serif_bold";
     this.primary_color = this.color.AccentGood;

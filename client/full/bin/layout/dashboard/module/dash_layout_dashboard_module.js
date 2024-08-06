@@ -9,7 +9,7 @@ function DashLayoutDashboardModule (dashboard, style, sub_style) {
     this.square_aspect_ratio = this.dashboard.square_aspect_ratio;
     this.html = null;
     this.styles = [];
-    this.header = $("<div>SetHeaderText()</div>");
+    this.header = $("<div></div>");
     this.header_text = null;
     this.bold_font = "sans_serif_bold";
     this.primary_color = this.color.AccentGood;

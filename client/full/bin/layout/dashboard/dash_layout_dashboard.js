@@ -108,6 +108,13 @@ function DashLayoutDashboard (binder, color=null, vertical_space_percent=15) {
         }
     };
 
+    this.Empty = function () {
+        this.modules = [];
+        this.canvas_containers = [];
+
+        this.html.empty();
+    };
+
     this.get_text_vsize = function (percentage_decimal_of_dashboard_size) {
         var key = this.VerticalSpaceTakenPercent + "_" + percentage_decimal_of_dashboard_size;
 
@@ -128,7 +135,9 @@ function DashLayoutDashboard (binder, color=null, vertical_space_percent=15) {
         }
 
         // 15 is the default vertical_space_percent
-        this.vmargins[key] = this.get_rounded_single_decimal((this.margin * margin_mult) * (this.vertical_space_percent / 15));
+        this.vmargins[key] = this.get_rounded_single_decimal(
+            (this.margin * margin_mult) * (this.vertical_space_percent / 15)
+        );
 
         return this.vmargins[key];
     };
