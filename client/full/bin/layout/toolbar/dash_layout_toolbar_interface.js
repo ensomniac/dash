@@ -227,7 +227,7 @@ function DashLayoutToolbarInterface () {
     };
 
     // Intended to be the first item, if you want a header-style label starting the toolbar
-    this.AddLabel = function (text, add_end_border=true, color=null, include_start_border=true) {
+    this.AddLabel = function (text, add_end_border=true, color=null, include_start_border=true, track=false) {
         var header = new Dash.Gui.Header(text, color || this.color, include_start_border);
 
         if (!include_start_border) {
@@ -243,6 +243,16 @@ function DashLayoutToolbarInterface () {
         });
 
         this.html.append(header.html);
+
+        // This should've just been the default from the start
+        if (track) {
+            this.objects.push({
+                "html": header,
+                "html_elem": header.html,
+                "callback": null,
+                "index": this.objects.length
+            });
+        }
 
         if (!add_end_border) {
             return header;

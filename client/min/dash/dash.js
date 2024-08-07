@@ -44878,22 +44878,22 @@ function DashGuiLoadingOverlay (
     };
     this.Show = function () {
         if (this.is_showing) {
-            return;
+            return this;
         }
         if (this.simple) {
             this.modal.Show();
             this.is_showing = true;
-            return;
+            return this;
         }
         if (this.modal.background.is(":visible")) {
-            return;
+            return this;
         }
         if (!this.html_to_append_to) {
             Dash.Log.Warn(
                 "DashGuiLoadingOverlay Show() requires the 'html_to_append_to' param to be provided on init:",
                 this.html_to_append_to
             );
-            return;
+            return this;
         }
         if (this.removed) {
             this.AppendTo(this.html_to_append_to);
@@ -44902,13 +44902,15 @@ function DashGuiLoadingOverlay (
             this.modal.Show();
             this.is_showing = true;
         }
+        return this;
     };
     this.Hide = function () {
         if (!this.is_showing) {
-            return;
+            return this;
         }
         this.modal.Hide();
         this.is_showing = false;
+        return this;
     };
     this.Remove = function () {
         if (this.simple) {
@@ -44946,17 +44948,17 @@ function DashGuiLoadingOverlay (
     this.SetLabelPrefix = function (label_prefix="Loading") {
         this.label_prefix = label_prefix;
     };
-    this.Stop = function (label_prefix="") {
+    this.Stop = function (label_text="") {
         this.bubble_dots.Stop();
-        if (label_prefix) {
-            this.SetLabelText(label_prefix);
+        if (label_text) {
+            this.SetLabelText(label_text);
         }
         this.bubble_dots.html.hide();
     };
-    this.Start = function (label_prefix="") {
+    this.Start = function (label_text="") {
         this.bubble_dots.Start();
-        if (label_prefix) {
-            this.SetLabelText(label_prefix);
+        if (label_text) {
+            this.SetLabelText(label_text);
         }
         this.bubble_dots.html.show();
     };
@@ -53841,7 +53843,7 @@ function DashLayoutToolbarInterface () {
         return divider_line;
     };
     // Intended to be the first item, if you want a header-style label starting the toolbar
-    this.AddLabel = function (text, add_end_border=true, color=null, include_start_border=true) {
+    this.AddLabel = function (text, add_end_border=true, color=null, include_start_border=true, track=false) {
         var header = new Dash.Gui.Header(text, color || this.color, include_start_border);
         if (!include_start_border) {
             header.label.css({
@@ -53854,6 +53856,15 @@ function DashLayoutToolbarInterface () {
             "margin-right": Dash.Size.Padding,
         });
         this.html.append(header.html);
+        // This should've just been the default from the start
+        if (track) {
+            this.objects.push({
+                "html": header,
+                "html_elem": header.html,
+                "callback": null,
+                "index": this.objects.length
+            });
+        }
         if (!add_end_border) {
             return header;
         }

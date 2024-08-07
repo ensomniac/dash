@@ -93,7 +93,7 @@ function DashGuiLoadingOverlay (
 
     this.Show = function () {
         if (this.is_showing) {
-            return;
+            return this;
         }
 
         if (this.simple) {
@@ -101,11 +101,11 @@ function DashGuiLoadingOverlay (
 
             this.is_showing = true;
 
-            return;
+            return this;
         }
 
         if (this.modal.background.is(":visible")) {
-            return;
+            return this;
         }
 
         if (!this.html_to_append_to) {
@@ -114,7 +114,7 @@ function DashGuiLoadingOverlay (
                 this.html_to_append_to
             );
 
-            return;
+            return this;
         }
 
         if (this.removed) {
@@ -126,16 +126,20 @@ function DashGuiLoadingOverlay (
 
             this.is_showing = true;
         }
+
+        return this;
     };
 
     this.Hide = function () {
         if (!this.is_showing) {
-            return;
+            return this;
         }
 
         this.modal.Hide();
 
         this.is_showing = false;
+
+        return this;
     };
 
     this.Remove = function () {
@@ -191,21 +195,21 @@ function DashGuiLoadingOverlay (
         this.label_prefix = label_prefix;
     };
 
-    this.Stop = function (label_prefix="") {
+    this.Stop = function (label_text="") {
         this.bubble_dots.Stop();
 
-        if (label_prefix) {
-            this.SetLabelText(label_prefix);
+        if (label_text) {
+            this.SetLabelText(label_text);
         }
 
         this.bubble_dots.html.hide();
     };
 
-    this.Start = function (label_prefix="") {
+    this.Start = function (label_text="") {
         this.bubble_dots.Start();
 
-        if (label_prefix) {
-            this.SetLabelText(label_prefix);
+        if (label_text) {
+            this.SetLabelText(label_text);
         }
 
         this.bubble_dots.html.show();
