@@ -198,7 +198,7 @@ function DashGuiButtonInterface () {
         }
 
         else {
-            this.html.css({"background": this.color_set.Background.Base});
+            this.html.css({"background": this.base_color_override || this.color_set.Background.Base});
             this.highlight.css({"background": this.color_set.Background.BaseHover});
         }
 

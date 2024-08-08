@@ -27183,7 +27183,7 @@ function DashGuiButtonInterface () {
             this.highlight.css({"background": this.color_set.Background.SelectedHover});
         }
         else {
-            this.html.css({"background": this.color_set.Background.Base});
+            this.html.css({"background": this.base_color_override || this.color_set.Background.Base});
             this.highlight.css({"background": this.color_set.Background.BaseHover});
         }
         this.on_hover_out();
