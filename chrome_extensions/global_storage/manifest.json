@@ -3,6 +3,7 @@
     "name": "Dash - Global Storage",
     "version": "1.0",
     "description": "Enable storing of local storage items globally, regardless of site. This is integrated into Dash.User.Authenticate to have global access to tokens, specifically to assist other Dash Chrome extensions.",
+    "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAsbOhTHx/wIrXGhHg+8wAKbD1StZbIoD9cidVaUf9jLcMOb0+4S8QmNtDkK52vGUKEGZrtVlV2CJgG2oqUbFqPw8BvXsdrNWsxCk4Ww/c7p0ovSQ6krS5HS8pnm7tpD0Hd8riEq4abE0sT5/HWpeM0WV7nLB3dsT0N5r5c0Uww0SNz/aV5pSf2Ic/VmzanxtvQiZPFn2W3qiiQ4XqQraBC20qfHBK5qYHjYNH6IFwc2RGaYwS/gnZiIjRcKXaMMFgwd+u5CskjZ7d8TaA3kK/WFb6hNBhniOJqwYVPE4Gqi/msmK9nDwp/u1Brl8/n38zTnshgQzO4j1bWrDGb8b/gQIDAQAB",
     "permissions": [
         "tabs",
         "storage",
