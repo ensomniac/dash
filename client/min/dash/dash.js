@@ -47878,6 +47878,7 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="", color=null) {
     this.selected_index = -1;
     this.current_index = null;
     this.active_content = null;
+    this.fancy_show_content = [];
     this.html = $("<div></div>");
     this.on_tab_changed_cb = null;
     this.tab_top = $("<div></div>");
@@ -47920,35 +47921,20 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="", color=null) {
             this.init();
         });
     };
-    // This is a very specific function that is only intended to be called for new
-    // users that have not filled in their name yet. When this function is called,
-    // the username isn't set, but the user settings tab is loaded. Find the First Name
-    // field and highlight it so it's clear what the user is supposed to do.
-    this.on_autoload_user_settings = function () {
-        if (
-               this.all_content[this.current_index]["content_div_html_class"] !== DashUserView
-            || !this.active_content.user_profile
-        ) {
-            return;
-        }
-        this.active_content.user_profile.ShowNameSuggestion();
-    };
+    // Hide all tabs, then animate them fading in from top to bottom
     this.FancyShowTabs = function (transition_duration_ms=800) {
-        // Hide all tabs, then animate them fading in from top to bottom
-        var delay_slice_ms = transition_duration_ms / this.all_content.length;
         var delay_ms = 0;
-        for (var x in this.all_content) {
-            var content = this.all_content[x];
-            var button  = content["button"];
-            if (!button) {
-                continue;
-            };
-            button.html.css({"opacity": 0});
-            (function(self, button, delay_ms){
-                setTimeout(function(){
-                    button.html.stop().animate({"opacity": 1.0}, delay_slice_ms);
-                }, delay_ms);
-            })(this, button, delay_ms);
+        var delay_slice_ms = transition_duration_ms / this.fancy_show_content.length;
+        for (var html of this.fancy_show_content) {
+            html.css({"opacity": 0});
+            ((html) => {
+                setTimeout(
+                    () => {
+                        html.stop().animate({"opacity": 1}, delay_slice_ms);
+                    },
+                    delay_ms
+                );
+            })(html);
             delay_ms += delay_slice_ms;
         }
     };
@@ -48000,7 +47986,7 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="", color=null) {
             var content_data = this.all_content[i];
             if (!content_data["button"]) {
                 continue;
-            };
+            }
             if (parseInt(i) === parseInt(index)) {
                 content_data["button"].SetSelected(true);
                 button = content_data["button"];
@@ -48102,6 +48088,7 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="", color=null) {
         if (remove_on_tab_change) {
             this.temp_html.push(html);
         }
+        this.fancy_show_content.push(html);
         return html;
     };
     // DEPRECATED in favor of AddHTML to stay consistent with that naming across Dash
@@ -48118,6 +48105,7 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="", color=null) {
             "margin-bottom": bottom_margin
         });
         this.tab_middle.append(html);
+        this.fancy_show_content.push(html);
         return html;
     };
     this.PrependHTML = function (html, top_margin=1) {
@@ -48125,9 +48113,12 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="", color=null) {
             "margin-top": top_margin
         });
         this.tab_bottom.append(html);
+        this.fancy_show_content.push(html);
         return html;
     };
-    this.AppendImage = function (img_url, height=null, content_div_html_class=null, optional_args=null, additional_content_data={}) {
+    this.AppendImage = function (
+        img_url, height=null, content_div_html_class=null, optional_args=null, additional_content_data={}
+    ) {
         // TODO: Move the concept of an 'Image' into dash as a light abstraction for managing aspect ratios
         // TODO: This AppendImage is a hack. We need to revise the stack of objects in this
         //  container so they derive from some abstraction to simplify append/prepend
@@ -48142,7 +48133,10 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="", color=null) {
         this.tab_top.append(image);
         if (content_div_html_class) {
             this._add(image, content_div_html_class, null, optional_args, additional_content_data);
-        };
+        }
+        else {
+            this.fancy_show_content.push(image);
+        }
         return image;
     };
     this.Append = function (label_text, content_div_html_class, optional_args=null, additional_content_data={}) {
@@ -48380,8 +48374,7 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="", color=null) {
     };
     this.load_last_selection = function () {
         if (parseInt(this.selected_index) !== -1) {
-            // A selection was already made externally
-            return;
+            return;  // A selection was already made externally
         }
         if (this.all_content.length === 0) {
             return;
@@ -48396,25 +48389,43 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="", color=null) {
         }
         this.LoadIndex(last_index);
     };
-    this._add = function (label_text, content_div_html_class, anchor_div, optional_args=null, additional_content_data={}) {
+    // This is a very specific function that is only intended to be called for new
+    // users that have not filled in their name yet. When this function is called,
+    // the username isn't set, but the user settings tab is loaded. Find the First Name
+    // field and highlight it so it's clear what the user is supposed to do.
+    this.on_autoload_user_settings = function () {
+        if (
+            this.all_content[this.current_index]["content_div_html_class"] !== DashUserView
+            || !this.active_content.user_profile
+        ) {
+            return;
+        }
+        this.active_content.user_profile.ShowNameSuggestion();
+    };
+    this._add = function (
+        label_text, content_div_html_class, anchor_div, optional_args=null, additional_content_data={}
+    ) {
         var content_data = {
             "label_text": label_text,
             "content_div_html_class": content_div_html_class,
             "button": null,
-            // Any extra arg to pass to the class (if it's an array, it can be unpacked by passing "unpack_params": true (in additional_content_data))
+            // Any extra arg to pass to the class (if it's an array, it can be
+            // unpacked by passing "unpack_params": true (in additional_content_data))
             "optional_args": optional_args,
             // Extra data that doesn't belong in optional_args (since optional_args gets sent to the callback)
             ...additional_content_data
         };
+        // If anchor_div == null && label_text is not a string, this is some
+        // other element that needs to have clicks processed but
+        // isn't a traditional tab button
         if (anchor_div == null && typeof label_text != "string") {
-            // If anchor_div == null && label_text is not a string, this is some
-            // other element that needs to have clicks processed but
-            // isn't a traditional tab button
             (function (self, index) {
                 content_data["button"] = null;
                 content_data["html"] = label_text;
-                content_data["html"].css({"cursor": "pointer"});
-                content_data["html"].click(function(){
+                content_data["html"].css({
+                    "cursor": "pointer"
+                });
+                content_data["html"].on("click", function () {
                     self.LoadIndex(index, true);
                 });
             })(this, this.all_content.length);
@@ -48434,8 +48445,9 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="", color=null) {
             })(this, this.all_content.length);
             anchor_div = anchor_div || this.tab_top;
             anchor_div.append(content_data["button"].html);
-        };
+        }
         this.all_content.push(content_data);
+        this.fancy_show_content.push(content_data["html"] || content_data["button"].html);
         return content_data["button"];
     };
     this.setup_styles();
