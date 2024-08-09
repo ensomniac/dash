@@ -37936,7 +37936,7 @@ function DashGuiContext2DEditorPanelContentPreComps (content) {
 
 function DashGuiFileExplorer (
     color=null, api="", parent_obj_id="", supports_desktop_client=false, supports_folders=true,
-    include_modified_keys_columns=false, extra_params={}
+    include_modified_keys_columns=false, extra_params={}, print_mode=false
 ) {
     /**
      * File Explorer box element.
@@ -37969,6 +37969,7 @@ function DashGuiFileExplorer (
      *                                                  "modified_on" and "modified_by"
      * @param {object} extra_params - Dictionary with extra params for each request type above,
      *                                where the function name for the request is the key
+     * @param {boolean} print_mode - Removes interactive GUI and expands all folders for printing the page
      */
     this.color = color || Dash.Color.Light;
     this.api = api;
@@ -37977,6 +37978,7 @@ function DashGuiFileExplorer (
     this.supports_folders = supports_folders;
     this.include_modified_keys_columns = include_modified_keys_columns;
     this.extra_params = extra_params;
+    this.print_mode = print_mode;
     // This is a quick, non-responsive solution to ensure the viewport is big enough for the extra columns
     if (window.innerWidth < 1065) {
         this.include_modified_keys_columns = false;
@@ -38003,7 +38005,7 @@ function DashGuiFileExplorer (
     this.desktop_client_name = "desktop";
     this.include_uploaded_keys_columns = true;
     this.reset_upload_button_uploader = false;
-    this.read_only = !this.api || !this.parent_obj_id;
+    this.read_only = !this.api || !this.parent_obj_id || this.print_mode;
     this.html = Dash.Gui.GetHTMLBoxContext({}, this.color);
     this.request_failure_id = "dash_gui_file_explorer_on_files_data";
     this.loader = new Dash.Gui.FileExplorerDesktopLoader(
@@ -38026,12 +38028,12 @@ function DashGuiFileExplorer (
     DashGuiFileExplorerGUI.call(this);
     DashGuiFileExplorerData.call(this);
     this.setup_styles = function () {
-        if (this.read_only) {
+        if (this.read_only && !this.print_mode) {
             Dash.Log.Warn(
                 "(File Explorer) Using read-only mode because 'api' and/or 'parent_obj_id' were not provided"
             );
         }
-        if (!this.read_only) {
+        if (!this.read_only && !this.print_mode) {
             this.instantiate_button_configs();
             // Default button config
             this.buttons = [
@@ -38040,6 +38042,9 @@ function DashGuiFileExplorer (
                 this.DeleteButtonConfig
             ];
             Dash.SetInterval(this, this.get_files_data, 10000);
+        }
+        if (this.print_mode) {
+            this.get_files_data();
         }
         this.add_header();
         if (!this.read_only) {
@@ -38321,6 +38326,30 @@ function DashGuiFileExplorer (
         if (!this.display_folders_first) {
             this.draw_subfolders();
         }
+        if (!this.print_mode) {
+            return;
+        }
+        var queue = 1;
+        setTimeout(
+            () => {
+                for (var row_id in this.rows) {
+                    if (!this.rows[row_id].is_sublist) {
+                        continue;
+                    }
+                    (function (self, row_id) {
+                        setTimeout(
+                            () => {
+                                self.rows[row_id].column_box.trigger("click");
+                            },
+                            queue * (self.rows[row_id].anim_delay["expanded_content"] + 50)
+                        );
+                    })(this, row_id);
+                    queue += 1;
+                }
+            },
+            300
+        );
+
     };
     this.get_file_data = function (file_id) {
         return this.files_data["data"][file_id];
@@ -38383,6 +38412,9 @@ function DashGuiFileExplorerGUI () {
         this.html.append(this.subheader.html);
     };
     this.add_tool_row = function () {
+        if (this.print_mode) {
+            return;
+        }
         this.tool_row = new Dash.Gui.ToolRow(this, null, null, this.color);
         this.add_combo_to_tool_row(
             "Sort By:",

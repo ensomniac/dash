@@ -35,6 +35,10 @@ function DashGuiFileExplorerGUI () {
     };
 
     this.add_tool_row = function () {
+        if (this.print_mode) {
+            return;
+        }
+
         this.tool_row = new Dash.Gui.ToolRow(this, null, null, this.color);
 
         this.add_combo_to_tool_row(
