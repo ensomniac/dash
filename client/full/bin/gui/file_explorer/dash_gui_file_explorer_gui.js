@@ -199,21 +199,29 @@ function DashGuiFileExplorerGUI () {
             column_config.AddDivider(border_css);
         }
 
-        for (var button_config of this.buttons) {
-            column_config.AddIconButton(
-                button_config["icon_name"],
-                this,
-                button_config["callback"],
-                button_config["hover_preview"] || button_config["config_name"] || "",
-                0.85,
-                0.15,
-                {
-                    "margin-left": Dash.Size.Padding,
-                    "margin-right": button_config["right_margin"],
-                    "margin-top": Dash.Size.Padding * 0.15,
-                    "flex": "none"
-                }
-            );
+        if (this.print_mode) {
+            if (column_config.columns.Last()["type"] === "divider") {
+                column_config.columns.Pop();
+            }
+        }
+
+        else {
+            for (var button_config of this.buttons) {
+                column_config.AddIconButton(
+                    button_config["icon_name"],
+                    this,
+                    button_config["callback"],
+                    button_config["hover_preview"] || button_config["config_name"] || "",
+                    0.85,
+                    0.15,
+                    {
+                        "margin-left": Dash.Size.Padding,
+                        "margin-right": button_config["right_margin"],
+                        "margin-top": Dash.Size.Padding * 0.15,
+                        "flex": "none"
+                    }
+                );
+            }
         }
 
         this.column_config = column_config;
