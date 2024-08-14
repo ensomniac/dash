@@ -266,10 +266,23 @@ class ApiCore:
                 # This needs to be set again in order to capture the logged-in user's data
                 self.set_dash_globals()
                 self.run(self._private[self._params.get("f")])
+        elif self._params.get("f") == "excalidraw":
+
+            if self.User:
+                # This needs to be set again in order to capture the logged-in user's data
+                self.set_dash_globals()
+
+            self.run(self.dash_excalidraw)
+
         else:
             self.SetResponse({"error": "Unknown Function x4543"})
 
         self.ReturnResponse()
+
+    def dash_excalidraw(self):
+        from . Excalidraw import Excalidraw
+        instance = Excalidraw(self.Params, self.DashContext, self.User)
+        return self.SetResponse(instance.Run())
 
     def ReturnResponse(self):
         if self._render_html:

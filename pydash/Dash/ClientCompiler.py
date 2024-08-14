@@ -141,6 +141,11 @@ class _ClientCompiler:
 
         copytree(fonts_src, fonts_dst)
 
+        # Retain the dist folder (Added Aug 2024)
+        dist_src = os.path.join(self.ClientPathFull, "bin", "dist")
+        dist_dst = os.path.join(self.ClientPathMin, "dash", "dist")
+        copytree(dist_src, dist_dst)
+
         index_content = []
         js_source_paths = []
         css_source_paths = []

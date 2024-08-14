@@ -13,6 +13,7 @@ function DashGui () {
     this.FileExplorer              = DashGuiFileExplorer;
     this.FileExplorerDesktopLoader = DashGuiFileExplorerDesktopLoader;
     this.Flow                      = DashGuiFlow;
+    this.Graph                     = DashGuiGraph;
     this.Header                    = DashGuiHeader;
     this.Icon                      = DashGuiIcon;
     this.IconButton                = DashGuiIconButton;
