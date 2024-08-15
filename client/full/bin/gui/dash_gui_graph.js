@@ -117,8 +117,6 @@ class DashGuiGraph {
 
         this.active_editing = true;
 
-        console.log("EDIT START");
-
         if (this.active_editing_timeout) {
             clearTimeout(this.active_editing_timeout);
             this.active_editing_timeout = null;
@@ -127,11 +125,9 @@ class DashGuiGraph {
         (function(self){
 
             self.active_editing_timeout = setTimeout(function(){
-                console.log("EDIT STOP")
                 self.active_editing_timeout = null;
                 self.active_editing         = false;
-            }, 3000);
-
+            }, 8000);
 
         })(this);
 
@@ -252,6 +248,10 @@ class DashGuiGraph {
                 ExcalidrawLib.restoreElements(self.data["elements"]);
             }, 500);
 
+            setTimeout(function(){
+                ExcalidrawLib.restoreElements(self.data["elements"]);
+            }, 1500);
+
         })(this);
 
     };
@@ -289,8 +289,6 @@ class DashGuiGraph {
 
     load_excalidraw_p1 () {
 
-        console.log("LOAD 1a");
-
         window.EXCALIDRAW_ASSET_PATH = "dash/dist/excalidraw/";
 
         var script = document.createElement("script");
@@ -299,7 +297,6 @@ class DashGuiGraph {
         (function(self, script){
 
             script.onload = function() {
-                console.log("LOAD 1b");
                 self.load_excalidraw_p2();
             };
 
@@ -315,15 +312,12 @@ class DashGuiGraph {
 
     load_excalidraw_p2 () {
 
-        console.log("LOAD 2a");
-
         var script = document.createElement("script");
         script.src = "https://unpkg.com/react-dom/umd/react-dom.production.min.js";
 
         (function(self, script){
 
             script.onload = function() {
-                console.log("LOAD 2b");
                 self.load_excalidraw_p3();
             };
 
@@ -339,13 +333,10 @@ class DashGuiGraph {
 
     load_excalidraw_p3 () {
 
-        console.log("LOAD 3a");
-
         var script = document.createElement("script");
         script.src = "dash/dist/excalidraw/excalidraw.production.min.js";
 
         script.onload = () => {
-            console.log("LOAD 3b");
             this.load_excalidraw_p4(script);
         }
 
@@ -358,8 +349,6 @@ class DashGuiGraph {
     };
 
     load_excalidraw_p4 () {
-
-        console.log("LOAD 4a");
 
         this.app = null;
 
@@ -392,7 +381,6 @@ class DashGuiGraph {
     load_excalidraw_p5 (api) {
         // This is called when all modules are finally loaded
 
-        console.log("LOAD 5a");
         this.api = api;
 
         if (!this.initially_loaded) {
