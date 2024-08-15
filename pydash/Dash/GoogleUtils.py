@@ -1033,7 +1033,7 @@ class _YouTubeUtils:
 
         return self.Client.playlists().list(**params).execute()["items"]
 
-    # - For category_num, see self.video_categories 
+    # - For category_num, see self.video_categories
     # - search_query can include the NOT (-) and OR (|) operators, ex: "boating|sailing -fishing"
     def GetVideos(
         self, channel_id="", search_query="", category_num=0,
