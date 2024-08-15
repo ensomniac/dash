@@ -57318,6 +57318,9 @@ class DashGuiGraph {
                 self.excalidraw_layer.stop().animate({"opacity": 1}, 500);
                 self.load_scene_data();
             }, 250);
+            setTimeout(function(){
+                ExcalidrawLib.restoreElements(self.data["elements"]);
+            }, 500);
         })(this);
     };
     on_change (elements, app_state, files) {

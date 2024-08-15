@@ -248,6 +248,10 @@ class DashGuiGraph {
                 self.load_scene_data();
             }, 250);
 
+            setTimeout(function(){
+                ExcalidrawLib.restoreElements(self.data["elements"]);
+            }, 500);
+
         })(this);
 
     };
