@@ -87,7 +87,7 @@ class DashGuiGraph {
 
         Dash.Request(
             this,
-            this.on_data,
+            this.on_saved,
             "Api",
             params
         );
@@ -280,14 +280,24 @@ class DashGuiGraph {
         var script = document.createElement("script");
         script.src = "dash/dist/excalidraw/excalidraw.production.min.js";
 
-        (function(self, script){
-
-            script.onload = function() {
-                self.on_excalidraw_loaded(script);
-            };
+        script.onload = () => {
+            this.on_excalidraw_loaded(script);
+        }
 
 
-        })(this, script);
+        // ) function() {
+        //     self.on_excalidraw_loaded(script);
+        // };
+
+
+        // (function(self, script){
+
+        //     script.onload = function() {
+        //         self.on_excalidraw_loaded(script);
+        //     };
+
+
+        // })(this, script);
 
         script.onerror = function() {
             console.error("Failed to load Dash.Gui.Graph -> React p2");
