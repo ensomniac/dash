@@ -371,6 +371,29 @@ class GUtils:
 
         return self._youtube_utils_
 
+    def GetYouTubeChannels(self, handle="", username=""):
+        return self._youtube_utils.GetChannels(handle, username)
+
+    def GetYouTubePlaylists(self, channel_id=""):
+        return self._youtube_utils.GetPlaylists(channel_id)
+
+    def GetYouTubeVideos(
+        self, channel_id="", search_query="", category_num=0,
+        by_views=False, by_rating=False, by_date=False, by_name=False
+    ):
+        return self._youtube_utils.GetVideos(
+            channel_id, search_query, category_num, by_views, by_rating, by_date, by_name
+        )
+
+    def GetYouTubeVideo(self, video_id):
+        return self._youtube_utils.GetVideo(video_id)
+
+    def GetYouTubeComments(self, comment_ids):
+        return self._youtube_utils.GetComments(comment_ids)
+
+    def GetYouTubeCommentReplies(self, comment_id):
+        return self._youtube_utils.GetCommentReplies(comment_id)
+
 
 class _DriveUtils:
     _client: callable
@@ -905,6 +928,7 @@ class _DocsUtils:
 # Ref: https://developers.google.com/youtube/v3/docs
 class _YouTubeUtils:
     _client: callable
+    _video_categories: dict
 
     def __init__(self, gutils):
         self.gutils = gutils
@@ -918,12 +942,165 @@ class _YouTubeUtils:
 
         return self._client
 
-    # TODO: write API functions, ex:
-    # self.Client.channels().list(**{
-    #     "part": "id",
-    #     # "mine": True
-    #     "forHandle": "GoogleDevelopers"
-    # }).execute()
+    @property
+    def video_categories(self):
+        if not hasattr(self, "_video_categories"):
+            self._video_categories = {
+                1: "Film & Animation",
+                2: "Autos & Vehicles",
+                10: "Music",
+                15: "Pets & Animals",
+                17: "Sports",
+                18: "Short Movies",
+                19: "Travel & Events",
+                20: "Gaming",
+                21: "Videoblogging",
+                22: "People & Blogs",
+                23: "Comedy",
+                24: "Entertainment",
+                25: "News & Politics",
+                26: "Howto & Style",
+                27: "Education",
+                28: "Science & Technology",
+                29: "Nonprofits & Activism",
+                30: "Movies",
+                31: "Anime/Animation",
+                32: "Action/Adventure",
+                33: "Classics",
+                34: "Comedy",
+                35: "Documentary",
+                36: "Drama",
+                37: "Family",
+                38: "Foreign",
+                39: "Horror",
+                40: "Sci-Fi/Fantasy",
+                41: "Thriller",
+                42: "Shorts",
+                43: "Shows",
+                44: "Trailers"
+            }
+
+        return self._video_categories
+
+    def GetChannels(self, handle="", username=""):
+        params = {
+            "part": ", ".join([
+                "id",
+                "statistics",
+
+                # These are available but not useful
+                # "auditDetails",
+                # "brandingSettings",
+                # "contentDetails",  # Playlist-related IDs
+                # "contentOwnerDetails",  # Only relevant to partners
+                # "localizations",
+                # "snippet",  # Core details, like channel name
+                # "status",
+                # "topicDetails"
+            ])
+        }
+
+        if handle:
+            params["forHandle"] = handle
+
+        elif username:
+            params["forUsername"] = username
+
+        else:
+            params["mine"] = True
+
+        return self.Client.channels().list(**params).execute()
+
+    def GetPlaylists(self, channel_id=""):
+        params = {
+            "part": ", ".join([
+                "id",
+                "snippet",
+
+                # These are available but not useful
+                # "contentDetails",  # Playlist-related IDs
+                # "localizations",
+                # "player",  # For embedding
+                # "status"
+            ])
+        }
+
+        if channel_id:
+            params["channelId"] = channel_id
+
+        else:
+            params["mine"] = True
+
+        return self.Client.playlists().list(**params).execute()
+
+    # - For category_num, see self.video_categories
+    # - search_query can include the NOT (-) and OR (|) operators, ex: "boating|sailing -fishing"
+    def GetVideos(
+        self, channel_id="", search_query="", category_num=0,
+        by_views=False, by_rating=False, by_date=False, by_name=False
+    ):
+        params = {
+            "part": "id, snippet",  # Docs say to explicitly set this, doesn't seem like there are other options
+            "order": (
+                "viewCount" if by_views else
+                "rating" if by_rating else
+                "date" if by_date else
+                "title" if by_name else
+                "relevance"
+            ),
+            "safeSearch": "none",
+            "type": "video"
+        }
+
+        if category_num and category_num in self.video_categories:
+            params["videoCategoryId"] = str(category_num)
+
+        if search_query:
+            params["q"] = search_query
+
+        if channel_id:
+            params["channelId"] = channel_id
+
+        else:
+            params["forMine"] = True
+
+        return self.Client.search().list(**params).execute()
+
+    def GetVideo(self, video_id):
+        return self.Client.videos().list(**{
+            "part": ", ".join([
+                "id",
+                "snippet",
+                "statistics",
+
+                # These are available but not useful
+                # "contentDetails",
+                # "fileDetails",
+                # "liveStreamingDetails",
+                # "localizations",
+                # "player",  # For embedding
+                # "processingDetails",
+                # "recordingDetails",  # Physical recording info, like geolocation
+                # "status",
+                # "suggestions",
+                # "topicDetails"
+            ]),
+            "id": video_id
+        }).execute()
+
+    def GetComments(self, comment_ids):
+        return self.Client.comments().list(**{
+            "part": "id, snippet",
+            "id": ", ".join(comment_ids),
+            "textFormat": "plainText"
+        }).execute()
+
+    def GetCommentReplies(self, comment_id):
+        return self.Client.comments().list(**{
+            "part": "id, snippet",
+            "parentId": comment_id,
+            "textFormat": "plainText"
+        }).execute()
 
 
 class _AuthUtils:
