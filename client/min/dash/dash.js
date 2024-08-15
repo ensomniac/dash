@@ -57159,6 +57159,8 @@ class DashGuiGraph {
         this.initially_loaded = false;
         this.load_dots        = null;
         this.max_version      = 0;
+        this.active_editing   = false;
+        this.active_editing_timeout = null;
         this.data = {};
         this.data["id"]        = this.graph_id;
         this.data["version"]   = 0;
@@ -57167,7 +57169,7 @@ class DashGuiGraph {
         this.html             = $("<div></div>");
         this.excalidraw_layer = $("<div></div>");
         this.setup_styles();
-        Dash.SetInterval(this,  this.get_scene_data, 2000);
+        Dash.SetInterval(this,  this.get_scene_data, 3000);
         Dash.SetInterval(this,  this.manage_save,    500);
         Dash.SetInterval(this,  this.save_trigger,   2000);
     };
@@ -57223,10 +57225,27 @@ class DashGuiGraph {
         };
         this.needs_save = true;
     };
+    mark_editing_start () {
+        this.active_editing = true;
+        console.log("EDIT START");
+        if (this.active_editing_timeout) {
+            clearTimeout(this.active_editing_timeout);
+            this.active_editing_timeout = null;
+        };
+        (function(self){
+            self.active_editing_timeout = setTimeout(function(){
+                console.log("EDIT STOP")
+                self.active_editing_timeout = null;
+                self.active_editing         = false;
+            }, 3000);
+
+        })(this);
+    };
     save_trigger () {
         if (!this.needs_save || !this.api) {
             return;
         };
+        this.mark_editing_start();
         console.log("Saving to server...");
         this.needs_save = false;
         this.data["version"] += 1;
@@ -57292,32 +57311,43 @@ class DashGuiGraph {
             // The api isn't loaded yet
             return;
         };
-        this.load_dots.Stop();
-        this.load_scene_data();
-        this.excalidraw_layer.stop().animate({"opacity": 1}, 500);
         this.initially_loaded = true;
+        (function(self){
+            setTimeout(function(){
+                self.load_dots.Stop();
+                self.excalidraw_layer.stop().animate({"opacity": 1}, 500);
+                self.load_scene_data();
+            }, 250);
+        })(this);
     };
     on_change (elements, app_state, files) {
-        // console.log("ON CHANGE", elements, app_state, files);
-        // console.log(elements)
+        if (!this.api || !this.initially_loaded) {
+            return;
+        };
         this.check_save = true;
     };
     load_scene_data () {
+        if (this.active_editing) {
+            console.log("Debug: Skipping auto-update because of active editing");
+            return;
+        };
         var scene_data = {
             elements: this.data["elements"],
             appState: this.data["app_state"],
         };
         this.max_version = this.data["version"];
-        this.api.resetScene();
+        ExcalidrawLib.restoreElements(this.data["elements"]);
         this.api.updateScene(scene_data);
         this.last_json = ExcalidrawLib.serializeAsJSON(this.api.getSceneElements(), this.api.getAppState());
     };
     load_excalidraw_p1 () {
+        console.log("LOAD 1a");
         window.EXCALIDRAW_ASSET_PATH = "dash/dist/excalidraw/";
         var script = document.createElement("script");
         script.src = "https://unpkg.com/react/umd/react.production.min.js";
         (function(self, script){
             script.onload = function() {
+                console.log("LOAD 1b");
                 self.load_excalidraw_p2();
             };
         })(this, script);
@@ -57327,10 +57357,12 @@ class DashGuiGraph {
         document.head.appendChild(script);
     };
     load_excalidraw_p2 () {
+        console.log("LOAD 2a");
         var script = document.createElement("script");
         script.src = "https://unpkg.com/react-dom/umd/react-dom.production.min.js";
         (function(self, script){
             script.onload = function() {
+                console.log("LOAD 2b");
                 self.load_excalidraw_p3();
             };
         })(this, script);
@@ -57340,9 +57372,11 @@ class DashGuiGraph {
         document.head.appendChild(script);
     };
     load_excalidraw_p3 () {
+        console.log("LOAD 3a");
         var script = document.createElement("script");
         script.src = "dash/dist/excalidraw/excalidraw.production.min.js";
         script.onload = () => {
+            console.log("LOAD 3b");
             this.load_excalidraw_p4(script);
         }
         script.onerror = function() {
@@ -57351,6 +57385,7 @@ class DashGuiGraph {
         document.head.appendChild(script);
     };
     load_excalidraw_p4 () {
+        console.log("LOAD 4a");
         this.app = null;
         (function(self){
             self.app = () => {
@@ -57375,6 +57410,7 @@ class DashGuiGraph {
     };
     load_excalidraw_p5 (api) {
         // This is called when all modules are finally loaded
+        console.log("LOAD 5a");
         this.api = api;
         if (!this.initially_loaded) {
             this.check_initial_load_state();
