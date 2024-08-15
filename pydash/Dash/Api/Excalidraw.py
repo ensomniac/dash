@@ -59,29 +59,46 @@ class Excalidraw:
 
         return response
 
-    def get_scene_data(self):
-        from Dash.LocalStorage import Read
+    def get_default_scene_data(self):
+        scene_data = {}
+        scene_data["id"]        = self.ID
+        scene_data["version"]   = 1
+        scene_data["elements"]  = []
+        scene_data["app_state"] = {}
+        scene_data["app_state"]["viewBackgroundColor"] = "#9fa6d6"
 
-        response = {}
+        return scene_data
+
+    def get_scene_data(self):
 
         if os.path.exists(self.data_path):
-            response = Read(self.data_path)
+            from Dash.LocalStorage import Read
+            scene_data = Read(self.data_path)
+        else:
+            scene_data = self.get_default_scene_data()
 
-        # response["elements"]  = []
-        # response["app_state"] = {}
-        # response["root"] = os.path.exists(self.data_path)
+            from Dash.LocalStorage import Write
+            os.makedirs(os.path.dirname(self.data_path), exist_ok=True)
 
-        return response
+        return scene_data
 
     def set_scene_data(self):
-        from Dash.LocalStorage import Write
+        from Dash.LocalStorage import Read, Write
         import json
 
         if not os.path.exists(self.data_path):
             os.makedirs(os.path.dirname(self.data_path), exist_ok=True)
 
+        scene_data = self.get_scene_data()
+
         scene_data_json = self.Params.get("scene_data_json")
-        scene_data = json.loads(scene_data_json)
+
+        new_scene_data  = json.loads(scene_data_json)
+        new_app_state = new_scene_data["appState"]
+        new_elements = new_scene_data["elements"]
+
+        scene_data["app_state"] = new_scene_data["appState"]
+        scene_data["elements"] = new_scene_data["elements"]
 
         if "version" not in scene_data:
             scene_data["version"] = 1
@@ -92,6 +109,15 @@ class Excalidraw:
 
         response = {}
         response["f"] = "set_scene_data"
+        response["saved"] = scene_data
+        # response["new_scene_data"] = new_scene_data
+
+        # response["new_app_state"] = new_app_state
+        # response["new_elements"]  = new_elements
+
+
+
+        # response["saved"] = scene_data
         # response["scene_data_json"] = scene_data_json
         # response["scene_data"] = scene_data
         # response["ID"] = self.ID

@@ -2,55 +2,96 @@ class DashGuiGraph {
 
     constructor (graph_id_or_options=null) {
 
-        this.options = {};
-
         if (typeof(graph_id_or_options) === "object") {
             this.options = graph_id_or_options;
-            this.graph_id = this.options["graph_id"];
         }
         else {
-            this.graph_id = graph_id_or_options;
+            this.options = {};
+            this.options["graph_id"] = graph_id_or_options;
         };
 
-        this.app = null;
-        this.api = null;
-        this.check_save = false;
+        this.options["binder"] = this.options["binder"] || null;
+        this.options["color"]  = this.options["color"]  || Dash.Color.Light;
+
+        this.graph_id = this.options["graph_id"];
+        this.color    = this.options["color"];
+
+        this.app              = null;
+        this.api              = null;
+        this.check_save       = false;
         this.save_initialized = false;
-        this.last_json = null;
-        this.needs_save = false;
+        this.last_json        = null;
+        this.needs_save       = false;
         this.initially_loaded = false;
+        this.load_dots        = null;
+        this.max_version      = 0;
 
         this.data = {};
-        this.data["id"] = this.graph_id;
-        this.data["elements"] = [];
+        this.data["id"]        = this.graph_id;
+        this.data["version"]   = 0;
+        this.data["elements"]  = [];
         this.data["app_state"] = {};
 
-        this.html     = $("<div>Graph</div>");
+        this.html             = $("<div></div>");
+        this.excalidraw_layer = $("<div></div>");
 
         this.setup_styles();
-        Dash.SetInterval(this,  this.get_scene_data, 5000);
-        Dash.SetInterval(this,  this.manage_save, 500);
-        Dash.SetInterval(this,  this.save_trigger, 2000);
+
+        Dash.SetInterval(this,  this.get_scene_data, 2000);
+        Dash.SetInterval(this,  this.manage_save,    500);
+        Dash.SetInterval(this,  this.save_trigger,   2000);
+
+    };
+
+    setup_styles () {
+
+        this.load_dots = new Dash.Gui.LoadDots();
+        this.html.append(this.load_dots.html);
+        this.html.append(this.excalidraw_layer);
+        this.load_dots.Start();
+
+        this.load_dots.html.css({
+            "margin-left": "auto",
+            "margin-right": "auto",
+        });
+
+        this.html.css({
+            "background": this.color.Background,
+            "color":      this.color.Text,
+            "left":       0,
+            "right":      0,
+            "top":        0,
+            "bottom":     0,
+            "height":     "100%",
+        });
+
+        this.excalidraw_layer.css({
+            "position": "absolute",
+            "color":      this.color.Text,
+            "left":       0,
+            "right":      0,
+            "top":        0,
+            "bottom":     0,
+            "margin":     0,
+            "padding":    0,
+            "opacity":    0.0,
+        });
+
+        this.load_excalidraw_p1();
 
     };
 
     manage_save () {
 
-        if (!this.check_save) {
+        if (!this.check_save || !this.api) {
             return;
         };
 
-        // var scene_elements = this.api.getSceneElements();
-        // var app_state      = this.api.getSceneElements();
-
-        this.data["elements"] = this.api.getSceneElements();
-        this.data["app_state"] = this.api.getAppState();
-
         if (!this.last_json) {
-            this.last_json = ExcalidrawLib.serializeAsJSON(this.data["elements"], this.data["app_state"]);
+            this.last_json = ExcalidrawLib.serializeAsJSON(this.api.getSceneElements(), this.api.getAppState());
         };
 
-        var json = ExcalidrawLib.serializeAsJSON(this.data["elements"], this.data["app_state"]);
+        var json = ExcalidrawLib.serializeAsJSON(this.api.getSceneElements(), this.api.getAppState());
 
         if (json === this.last_json) {
             this.last_json = json;
@@ -72,18 +113,26 @@ class DashGuiGraph {
 
     save_trigger () {
 
-        if (!this.needs_save) {
+        if (!this.needs_save || !this.api) {
             return;
         };
 
-        console.log("[TRIGGER] SAVE TO SERVER");
+        console.log("Saving to server...");
+
         this.needs_save = false;
+
+        this.data["version"] += 1;
+
+        if (this.data["version"] > this.max_version) {
+            this.max_version = this.data["version"];
+        };
 
         var params         = {};
         params["f"]        = "excalidraw";
         params["graph_id"] = this.graph_id;
         params["set_scene_data"] = true;
-        params["scene_data_json"] = JSON.stringify(this.data);
+        params["scene_data_json"] = ExcalidrawLib.serializeAsJSON(this.api.getSceneElements(), this.api.getAppState());
+        this.last_json = params["scene_data_json"];
 
         Dash.Request(
             this,
@@ -95,8 +144,7 @@ class DashGuiGraph {
     };
 
     on_saved (result) {
-        console.log("** ON SAVE **")
-        console.log(result)
+        console.log("\tSave complete.", result);
     };
 
     get_scene_data () {
@@ -108,32 +156,66 @@ class DashGuiGraph {
 
         Dash.Request(
             this,
-            this.on_data,
+            this.on_scene_data,
             "Api",
             params
         );
 
     };
 
-    on_data (response) {
-        console.log("ON SCENE DATA!!!")
-        console.log(response);
+    on_scene_data (response) {
 
-        if (response["version"]) {
-            this.data = response;
+        if (!response["version"]) {
 
-            if (!this.initially_loaded) {
-                this.load_scene_data(this.data["elements"], this.data["app_state"]);
+            console.log("ERROR: Problem receiving scene data from server...")
+            console.log(response);
+
+            return;
+        };
+
+        var current_version = this.data["version"];
+
+        this.data = response;
+
+        if (!this.initially_loaded) {
+            this.check_initial_load_state();
+            return;
+        };
+
+        if (this.data["version"] > current_version && this.data["version"] > this.max_version) {
+
+            console.log("** Auto update from " + current_version + " to " + this.data["version"]);
+
+            if (this.data["version"] > this.max_version) {
+                this.max_version = this.data["version"];
             };
+
+            this.load_scene_data();
 
         };
 
     };
 
-    on_excalidraw_api (api) {
-        // This is called when everything is finally loaded
-        this.api = api;
+    check_initial_load_state () {
+        // Make sure we have both server data and the
+        // module loaded before actually loading
+
+        if (this.initially_loaded || this.data["version"] < 1) {
+            // We don't have server data yet
+            return;
+        };
+
+        if (!this.api) {
+            // The api isn't loaded yet
+            return;
+        };
+
+        this.load_dots.Stop();
         this.load_scene_data();
+
+        this.excalidraw_layer.stop().animate({"opacity": 1}, 500);
+        this.initially_loaded = true;
+
     };
 
     on_change (elements, app_state, files) {
@@ -142,95 +224,25 @@ class DashGuiGraph {
         this.check_save = true;
     };
 
-    load_scene_data (elements, app_state, files) {
-
-        if (!this.api) {
-            console.log("Api not loaded yet");
-            return;
-        };
-
-        console.log("version", this.data["version"])
-
-        if (!this.data["version"]) {
-            console.log("Data not ready yet");
-            return;
-        };
-
-        console.log("LOADING SCENE", this.data["version"]);
+    load_scene_data () {
 
         var scene_data = {
-          elements: elements,
-          // appState: app_state,
+            elements: this.data["elements"],
+            appState: this.data["app_state"],
         };
 
-        // var scene_data = {
-        //   elements: [
-        //     {
-        //       type: "rectangle",
-        //       version: 141,
-        //       versionNonce: 361174001,
-        //       isDeleted: false,
-        //       id: "oDVXy8D6rom3H1-LLH2-f",
-        //       fillStyle: "hachure",
-        //       strokeWidth: 1,
-        //       strokeStyle: "solid",
-        //       roughness: 1,
-        //       opacity: 100,
-        //       angle: 0,
-        //       x: 100.50390625,
-        //       y: 93.67578125,
-        //       strokeColor: "#c92a2a",
-        //       backgroundColor: "transparent",
-        //       width: 186.47265625,
-        //       height: 141.9765625,
-        //       seed: 1968410350,
-        //       groupIds: [],
-        //       boundElements: null,
-        //       locked: false,
-        //       link: null,
-        //       updated: 1,
-        //       roundness: {
-        //         type: 3,
-        //         value: 32,
-        //       },
-        //     },
-        //   ],
-        //   appState: {
-        //     viewBackgroundColor: "#edf2ff",
-        //   },
-        // };
+        this.max_version = this.data["version"];
 
-        console.log(scene_data)
+        this.api.resetScene();
 
         this.api.updateScene(scene_data);
         this.last_json = ExcalidrawLib.serializeAsJSON(this.api.getSceneElements(), this.api.getAppState());
 
-        if (!this.initially_loaded) {
-            console.log("INITIALLY LOADED >>>");
-            this.initially_loaded = true;
-        };
-
     };
 
-    setup_styles () {
+    load_excalidraw_p1 () {
 
-        this.html.css({
-            "background": "orange",
-            "color": "black",
-            "left":   0,
-            "right":  0,
-            "top":    0,
-            "bottom": 0,
-            "height": "100%",
-        });
-
-        var js_path = "dash/dist/excalidraw/excalidraw.production.min.js";
-
-        this.load_react_p1();
-
-    };
-
-    load_react_p1 () {
+        window.EXCALIDRAW_ASSET_PATH = "dash/dist/excalidraw/";
 
         var script = document.createElement("script");
         script.src = "https://unpkg.com/react/umd/react.production.min.js";
@@ -238,7 +250,7 @@ class DashGuiGraph {
         (function(self, script){
 
             script.onload = function() {
-                self.load_react_p2();
+                self.load_excalidraw_p2();
             };
 
         })(this, script);
@@ -251,7 +263,7 @@ class DashGuiGraph {
 
     };
 
-    load_react_p2 () {
+    load_excalidraw_p2 () {
 
         var script = document.createElement("script");
         script.src = "https://unpkg.com/react-dom/umd/react-dom.production.min.js";
@@ -259,7 +271,7 @@ class DashGuiGraph {
         (function(self, script){
 
             script.onload = function() {
-                self.load_excalidraw_module();
+                self.load_excalidraw_p3();
             };
 
         })(this, script);
@@ -272,32 +284,14 @@ class DashGuiGraph {
 
     };
 
-    load_excalidraw_module () {
-
-        console.log("load_excalidraw_module");
-
+    load_excalidraw_p3 () {
 
         var script = document.createElement("script");
         script.src = "dash/dist/excalidraw/excalidraw.production.min.js";
 
         script.onload = () => {
-            this.on_excalidraw_loaded(script);
+            this.load_excalidraw_p4(script);
         }
-
-
-        // ) function() {
-        //     self.on_excalidraw_loaded(script);
-        // };
-
-
-        // (function(self, script){
-
-        //     script.onload = function() {
-        //         self.on_excalidraw_loaded(script);
-        //     };
-
-
-        // })(this, script);
 
         script.onerror = function() {
             console.error("Failed to load Dash.Gui.Graph -> React p2");
@@ -307,7 +301,7 @@ class DashGuiGraph {
 
     };
 
-    on_excalidraw_loaded () {
+    load_excalidraw_p4 () {
 
         this.app = null;
 
@@ -323,7 +317,7 @@ class DashGuiGraph {
                     style: {height: "100%"},
                   },
                   React.createElement(ExcalidrawLib.Excalidraw, {
-                      excalidrawAPI: function(api){self.on_excalidraw_api(api)},
+                      excalidrawAPI: function(api){self.load_excalidraw_p5(api)},
                       onChange:      function(e, a, f){self.on_change(e, a, f)},
                   }),
                 ),
@@ -332,8 +326,18 @@ class DashGuiGraph {
 
         })(this);
 
-        var root = ReactDOM.createRoot(this.html[0]);
+        var root = ReactDOM.createRoot(this.excalidraw_layer[0]);
         root.render(React.createElement(this.app));
+
+    };
+
+    load_excalidraw_p5 (api) {
+        // This is called when all modules are finally loaded
+        this.api = api;
+
+        if (!this.initially_loaded) {
+            this.check_initial_load_state();
+        };
 
     };
 
