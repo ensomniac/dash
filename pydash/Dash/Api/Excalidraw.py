@@ -69,7 +69,7 @@ class Excalidraw:
         scene_data["version"]   = 1
         scene_data["elements"]  = []
         scene_data["app_state"] = {}
-        scene_data["app_state"]["viewBackgroundColor"] = "#9fa6d6"
+        scene_data["app_state"]["viewBackgroundColor"] = "#fcfcfc"
 
         return scene_data
 
