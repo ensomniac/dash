@@ -987,6 +987,7 @@ class _YouTubeUtils:
             "part": ", ".join([
                 "id",
                 "statistics",
+                "snippet",
 
                 # These are available but not useful
                 # "auditDetails",
@@ -994,7 +995,6 @@ class _YouTubeUtils:
                 # "contentDetails",  # Playlist-related IDs
                 # "contentOwnerDetails",  # Only relevant to partners
                 # "localizations",
-                # "snippet",  # Core details, like channel name
                 # "status",
                 # "topicDetails"
             ])
@@ -1009,7 +1009,7 @@ class _YouTubeUtils:
         else:
             params["mine"] = True
 
-        return self.Client.channels().list(**params).execute()
+        return self.Client.channels().list(**params).execute()["items"]
 
     def GetPlaylists(self, channel_id=""):
         params = {
@@ -1031,7 +1031,7 @@ class _YouTubeUtils:
         else:
             params["mine"] = True
 
-        return self.Client.playlists().list(**params).execute()
+        return self.Client.playlists().list(**params).execute()["items"]
 
     # - For category_num, see self.video_categories
     # - search_query can include the NOT (-) and OR (|) operators, ex: "boating|sailing -fishing"
