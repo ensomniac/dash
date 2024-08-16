@@ -57346,12 +57346,10 @@ class DashGuiGraph {
     };
     load_excalidraw () {
         var font_path = "dash/dist/excalidraw/excalidraw-assets/Virgil.woff2";
-        console.log("Loading fonts @ " + font_path);
         var font = new FontFace("Virgil", `url(${font_path})`);
         (function(self){
             font.load().then(function(loadedFont) {
                 document.fonts.add(loadedFont);
-                console.log("font is loaded!");
                 self.fonts_ready = true;
                 self.load_excalidraw_p1();
             }).catch(function(error) {
@@ -57397,22 +57395,92 @@ class DashGuiGraph {
         };
         document.head.appendChild(script);
     };
+    on_clear_canvas () {
+        if (!window.confirm("Clear the canvas?")) {
+            console.log("not today!")
+            return;
+        };
+        this.api.resetScene();
+    };
+    inject_custom_css() {
+        // As of Aug 16 '24 this isn't quite working yet
+        // but I am leaving it here to revisit... <3 Ryan
+        var style = document.createElement("style");
+        style.innerHTML = `
+            .custom-styles .excalidraw {
+                --color-primary: #ffffff;
+                --color-primary-darker: #f783ac;
+                --color-primary-darkest: #e64980;
+                --color-primary-light: #f2a9c4;
+                --color-disabled: #ffffff;
+            }
+            .custom-styles .excalidraw.theme--dark {
+                --color-primary: red;
+                --color-primary-darker: #d64c7e;
+                --color-primary-darkest: #e86e99;
+                --color-primary-light: #dcbec9;
+                --color-disabled: #ffffff;
+            }
+        `;
+        document.head.appendChild(style);
+    };
     load_excalidraw_p4 () {
+        this.inject_custom_css();
         this.app = null;
+        this.ui_options = {};
+        this.ui_options["canvasActions"] = {};
+        this.ui_options["canvasActions"]["changeViewBackgroundColor"] = true;
+        this.ui_options["canvasActions"]["clearCanvas"]      = false;
+        this.ui_options["canvasActions"]["export"]           = false;
+        this.ui_options["canvasActions"]["loadScene"]        = false;
+        this.ui_options["canvasActions"]["saveToActiveFile"] = false;
+        this.ui_options["canvasActions"]["toggleTheme"]      = false;
+        this.ui_options["canvasActions"]["saveAsImage"]      = false;
+        this.ui_options["tools"] = {};
+        this.ui_options["tools"]["image"] = false;
         (function(self){
+            var clear_item = React.createElement(
+                ExcalidrawLib.MainMenu.Item,
+                {
+                    shortcut: "Clear All",
+                    onSelect: function(){self.on_clear_canvas()},
+                }
+            );
+            var test_url_item = React.createElement(
+                ExcalidrawLib.MainMenu.ItemLink,
+                {
+                    shortcut: "Test Link",
+                    href: "https://www.ensomniac.com",
+                }
+            );
+            var main_menu_style = React.createElement(
+                  "div", {style: {width: Dash.Size.ColumnWidth}},
+                  clear_item,
+                  test_url_item,
+            );
+            var main_menu = React.createElement(
+                ExcalidrawLib.MainMenu, {},
+                main_menu_style,
+                // clear_item,
+                // test_url_item,
+            );
+
+
+
+
             self.app = () => {
               return React.createElement(
                 React.Fragment,
                 null,
                 React.createElement(
-                  "div",
-                  {
-                    style: {height: "100%"},
-                  },
+                  "div", {style: {height: "100%"}, className: "custom-styles"},
                   React.createElement(ExcalidrawLib.Excalidraw, {
                       excalidrawAPI: function(api){self.load_excalidraw_p5(api)},
                       onChange:      function(e, a, f){self.on_change(e, a, f)},
-                  }),
+                      UIOptions:     self.ui_options,
+                  },
+                      main_menu,
+                  ),
                 ),
               );
             };

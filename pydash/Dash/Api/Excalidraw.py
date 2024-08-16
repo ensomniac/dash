@@ -39,6 +39,10 @@ class Excalidraw:
     def data_path(self):
         return os.path.join(self.store_root, "data.json")
 
+    @property
+    def version_root(self):
+        return os.path.join(self.store_root, "versions/")
+
     def Run(self):
 
         if not self.ID:
@@ -110,21 +114,36 @@ class Excalidraw:
         response = {}
         response["f"] = "set_scene_data"
         response["saved"] = scene_data
-        # response["new_scene_data"] = new_scene_data
 
-        # response["new_app_state"] = new_app_state
-        # response["new_elements"]  = new_elements
+        if not os.path.exists(self.version_root):
+            os.makedirs(self.version_root)
 
+        version_filename = os.path.join(self.version_root, str(scene_data["version"]))
+        Write(version_filename, scene_data)
+        response["cleaned"] = self.clean_version_dir()
 
-
-        # response["saved"] = scene_data
-        # response["scene_data_json"] = scene_data_json
-        # response["scene_data"] = scene_data
-        # response["ID"] = self.ID
-        # response["Params"] = self.Params
-        # response["DashContext"] = self.DashContext
-        # response["User"] = self.User
         return response
+
+    def clean_version_dir(self):
+        max_revisions = 100
+
+        all_versions = os.listdir(self.version_root)
+        all_versions.sort()
+
+        keep_versions = all_versions[-max_revisions:]
+
+        for version in all_versions:
+            if version in keep_versions:
+                continue
+
+            os.remove(os.path.join(self.version_root, version))
+
+        return keep_versions
+
+
+
+
+
 
 
 
