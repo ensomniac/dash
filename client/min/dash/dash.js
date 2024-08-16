@@ -57152,6 +57152,7 @@ class DashGuiGraph {
         this.color    = this.options["color"];
         this.app              = null;
         this.api              = null;
+        this.fonts_ready      = false;
         this.check_save       = false;
         this.save_initialized = false;
         this.last_json        = null;
@@ -57202,7 +57203,7 @@ class DashGuiGraph {
             "padding":    0,
             "opacity":    0.0,
         });
-        this.load_excalidraw_p1();
+        this.load_excalidraw();
     };
     manage_save () {
         if (!this.check_save || !this.api) {
@@ -57342,6 +57343,21 @@ class DashGuiGraph {
         ExcalidrawLib.restoreElements(this.data["elements"]);
         this.api.updateScene(scene_data);
         this.last_json = ExcalidrawLib.serializeAsJSON(this.api.getSceneElements(), this.api.getAppState());
+    };
+    load_excalidraw () {
+        var font_path = "dash/dist/excalidraw/excalidraw-assets/Virgil.woff2";
+        console.log("Loading fonts @ " + font_path);
+        var font = new FontFace("Virgil", `url(${font_path})`);
+        (function(self){
+            font.load().then(function(loadedFont) {
+                document.fonts.add(loadedFont);
+                console.log("font is loaded!");
+                self.fonts_ready = true;
+                self.load_excalidraw_p1();
+            }).catch(function(error) {
+                console.error('Font loading failed:', error);
+            });
+        })(this);
     };
     load_excalidraw_p1 () {
         window.EXCALIDRAW_ASSET_PATH = "dash/dist/excalidraw/";
