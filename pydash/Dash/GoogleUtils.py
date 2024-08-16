@@ -374,8 +374,8 @@ class GUtils:
     def GetYouTubeChannels(self, handle="", username=""):
         return self._youtube_utils.GetChannels(handle, username)
 
-    def GetYouTubePlaylists(self, channel_id=""):
-        return self._youtube_utils.GetPlaylists(channel_id)
+    def GetYouTubePlaylists(self, channel_id="", single_playlist_id=""):
+        return self._youtube_utils.GetPlaylists(channel_id, single_playlist_id)
 
     def GetYouTubeVideos(
         self, channel_id="", search_query="", category_num=0,
@@ -1011,7 +1011,7 @@ class _YouTubeUtils:
 
         return self.Client.channels().list(**params).execute()["items"]
 
-    def GetPlaylists(self, channel_id=""):
+    def GetPlaylists(self, channel_id="", single_playlist_id=""):
         params = {
             "part": ", ".join([
                 "id",
@@ -1025,13 +1025,29 @@ class _YouTubeUtils:
             ])
         }
 
-        if channel_id:
+        if single_playlist_id:
+            params["id"] = single_playlist_id
+
+        elif channel_id:
             params["channelId"] = channel_id
 
         else:
             params["mine"] = True
 
-        return self.Client.playlists().list(**params).execute()["items"]
+        results = self.Client.playlists().list(**params).execute()["items"]
+
+        if not single_playlist_id:
+            return results
+
+        if not results:
+            raise ValueError(f"No playlists found for {single_playlist_id}")
+
+        if len(results) > 1:
+            raise ValueError(
+                f"Multiple playlists found for {single_playlist_id} (this shouldn't happen):\n{results}"
+            )
+
+        return results[0]
 
     # - For category_num, see self.video_categories
     # - search_query can include the NOT (-) and OR (|) operators, ex: "boating|sailing -fishing"
@@ -1064,10 +1080,10 @@ class _YouTubeUtils:
         else:
             params["forMine"] = True
 
-        return self.Client.search().list(**params).execute()
+        return self.Client.search().list(**params).execute()["items"]
 
     def GetVideo(self, video_id):
-        return self.Client.videos().list(**{
+        results = self.Client.videos().list(**{
             "part": ", ".join([
                 "id",
                 "snippet",
@@ -1086,21 +1102,37 @@ class _YouTubeUtils:
                 # "topicDetails"
             ]),
             "id": video_id
-        }).execute()
+        }).execute()["items"]
+
+        if not results:
+            raise ValueError(f"No videos found for {video_id}")
+
+        if len(results) > 1:
+            raise ValueError(f"Multiple videos found for {video_id} (this shouldn't happen):\n{results}")
+
+        return results[0]
 
     def GetComments(self, comment_ids):
-        return self.Client.comments().list(**{
+        results = self.Client.comments().list(**{
             "part": "id, snippet",
             "id": ", ".join(comment_ids),
             "textFormat": "plainText"
-        }).execute()
+        }).execute()["items"]
+
+        if len(comment_ids) != len(results):
+            raise ValueError(
+                "Not all comment IDs returned results, expected "
+                f"{len(comment_ids)} but got {len(results)}:\n{results}"
+            )
+
+        return results
 
     def GetCommentReplies(self, comment_id):
         return self.Client.comments().list(**{
             "part": "id, snippet",
             "parentId": comment_id,
             "textFormat": "plainText"
-        }).execute()
+        }).execute()["items"]
 
 
 class _AuthUtils:
