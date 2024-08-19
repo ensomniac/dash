@@ -36,8 +36,8 @@ function DashMath () {
         return random_id;
     };
 
-    this.Range = function (num) {
-        return [...new Array(num).keys()];
+    this.Range = function (num, zero_based=true) {
+        return [...new Array(num).keys()].map(n => zero_based ? n : n + 1);
     };
 
     // Can't think of a better name for this, nor do I know how to properly explain it...
