@@ -238,7 +238,7 @@ class Utils:
             if raise_if_none:
                 from Dash.Utils import ClientAlert
 
-                raise ClientAlert("This must be an integer/number")
+                raise ClientAlert("This must be an integer/number (don't include commas)")
 
             return None
 
