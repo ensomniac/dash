@@ -27885,7 +27885,7 @@ function DashGuiSelectorMenuTray (selector_menu) {
     this.color         = this.selector_menu.color;
     this.icon_size     = this.selector_menu.icon_size;
     this.item_height = Dash.Size.RowHeight   * 2;
-    this.item_width  = Dash.Size.ColumnWidth * 2;
+    this.item_width  = Dash.Size.ColumnWidth * 1.5;
     this.num_rows = 3;
     this.num_cols = 1;
     this.html  = $("<div class='SelectorMenuTray'></div>");
@@ -27991,7 +27991,28 @@ function DashGuiSelectorMenuTray (selector_menu) {
         else if (this.selector_menu.items.length <= 20) {
             this.num_rows = 5;
             this.num_cols = 4;
-        };
+        }
+        else if (this.selector_menu.items.length <= 24) {
+            this.num_rows = 6;
+            this.num_cols = 4;
+        }
+        else if (this.selector_menu.items.length <= 28) {
+            this.num_rows = 7;
+            this.num_cols = 4;
+        }
+        else if (this.selector_menu.items.length <= 32) {
+            this.num_rows = 8;
+            this.num_cols = 4;
+        }
+        else if (this.selector_menu.items.length <= 36) {
+            this.num_rows = 9;
+            this.num_cols = 4;
+        }
+        else {
+            this.num_rows = 10;
+            this.num_cols = 4;
+        }
+        console.log("Num items:", this.selector_menu.items.length);
         this.content.empty();
         for (var x in this.selector_menu.items) {
             var item_details = this.selector_menu.items[x];
@@ -57461,13 +57482,7 @@ class DashGuiGraph {
             var main_menu = React.createElement(
                 ExcalidrawLib.MainMenu, {},
                 main_menu_style,
-                // clear_item,
-                // test_url_item,
             );
-
-
-
-
             self.app = () => {
               return React.createElement(
                 React.Fragment,

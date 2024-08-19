@@ -454,17 +454,8 @@ class DashGuiGraph {
 
                 ExcalidrawLib.MainMenu, {},
                 main_menu_style,
-                // clear_item,
-                // test_url_item,
 
             );
-
-
-
-
-
-
-
 
             self.app = () => {
               return React.createElement(
@@ -477,9 +468,7 @@ class DashGuiGraph {
                       onChange:      function(e, a, f){self.on_change(e, a, f)},
                       UIOptions:     self.ui_options,
                   },
-
                       main_menu,
-
                   ),
                 ),
               );
