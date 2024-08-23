@@ -18926,8 +18926,8 @@ function DashMath () {
         random_id += Math.floor(Math.random() * 99).toString();
         return random_id;
     };
-    this.Range = function (num) {
-        return [...new Array(num).keys()];
+    this.Range = function (num, zero_based=true) {
+        return [...new Array(num).keys()].map(n => zero_based ? n : n + 1);
     };
     // Can't think of a better name for this, nor do I know how to properly explain it...
     // Ex: Dash.Math.GetPercentageIncrements(5) -> ['0.2', '0.4', '0.6', '0.8']
