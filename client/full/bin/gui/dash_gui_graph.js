@@ -462,7 +462,13 @@ class DashGuiGraph {
                 React.Fragment,
                 null,
                 React.createElement(
-                  "div", {style: {height: "100%"}, className: "custom-styles"},
+
+                  "div",
+                  {style: {height: "100%"}, className: "custom-styles"},
+
+
+
+
                   React.createElement(ExcalidrawLib.Excalidraw, {
                       excalidrawAPI: function(api){self.load_excalidraw_p5(api)},
                       onChange:      function(e, a, f){self.on_change(e, a, f)},

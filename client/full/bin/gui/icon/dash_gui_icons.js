@@ -109,6 +109,7 @@ function DashGuiIcons (icon) {
         "circle":                  new DashGuiIconDefinition(this.icon, "Circle", this.weight["regular"], "circle"),
         "circle_dot":              new DashGuiIconDefinition(this.icon, "Circle Dot", this.weight["regular"], "dot-circle"),
         "circle_arrow_right":      new DashGuiIconDefinition(this.icon, "Circle Arrow (Right)", this.weight["solid"], "chevron-circle-right"),
+        "circle_notch":            new DashGuiIconDefinition(this.icon, "Circle Notch (Top)", this.weight["solid"], "circle-notch"),
         "click":                   new DashGuiIconDefinition(this.icon, "Click", this.weight["regular"], "bullseye-pointer"),
         "clipboard":               new DashGuiIconDefinition(this.icon, "Clipboard", this.weight["regular"], "clipboard-list"),
         "cloud_logs":              new DashGuiIconDefinition(this.icon, "Cloud Logs", this.weight["regular"], "fog"),

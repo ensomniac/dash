@@ -110,9 +110,9 @@ function DashGuiSelectorMenuTray (selector_menu) {
 
     this.rebuild_items = function () {
 
-        if (this.selector_menu.items.length <= 3) {
-            this.num_rows = 3;
-            this.num_cols = 1;
+        if (this.selector_menu.items.length <= 4) {
+            this.num_rows = 2;
+            this.num_cols = 2;
         }
         else if (this.selector_menu.items.length <= 6) {
             this.num_rows = 3;

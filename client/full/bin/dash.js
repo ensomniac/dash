@@ -69,9 +69,11 @@ function Dash () {
     // going to skip the inclusion of Docs for mobile, because we really don't need it in that case anyway.
     else {
         this.Docs = {
-            Box:  DashDocsBox,
-            Help: DashDocsHelp,
-            View: DashDocsView
+            Box:    DashDocsBox,
+            Icons:  DashDocsIcons,
+            Colors: DashDocsColors,
+            Help:   DashDocsHelp,
+            View:   DashDocsView
         };
     }
 
