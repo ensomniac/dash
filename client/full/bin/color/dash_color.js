@@ -359,6 +359,19 @@ function DashColor (dark_mode_active=false) {
         return this.to_rgb(pcolor);
     };
 
+    this.Desaturate = function (cstr, desaturation_norm=0.5) {
+
+        var pcolor = this.Parse(cstr);
+        var grayscale = parseInt((pcolor[0] + pcolor[1] + pcolor[2])/3.0);
+
+        pcolor[0] = Dash.Math.Lerp(pcolor[0], grayscale, desaturation_norm);
+        pcolor[1] = Dash.Math.Lerp(pcolor[1], grayscale, desaturation_norm);
+        pcolor[2] = Dash.Math.Lerp(pcolor[2], grayscale, desaturation_norm);
+
+        return this.to_rgb(pcolor);
+
+    };
+
     // TODO: break this up
     this.Parse = function (cstr) {
         if (this.parsed_color_data[cstr]) {

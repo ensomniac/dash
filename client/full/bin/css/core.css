@@ -16,6 +16,14 @@
 }
 
 @font-face {
+    font-family: 'sans_serif_semibold';
+    src: url('fonts/proximanova-semibold-webfont.woff') format('woff2'),
+         url('fonts/proximanova-semibold-webfont.woff') format('woff');
+    font-weight: normal;
+    font-style: normal;
+}
+
+@font-face {
     font-family: 'sans_serif_italic';
     src: url('fonts/proximanova-lightitalic-webfont.woff2') format('woff2'),
          url('fonts/proximanova-lightitalic-webfont.woff') format('woff');
