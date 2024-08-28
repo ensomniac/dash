@@ -62,6 +62,7 @@ function DashGuiSelectorMenu (binder, selected_callback, icon_name="unknown", op
             "user-select": "none",
             "background":  this.bg_color,
             "border-radius": Dash.Size.BorderRadius,
+            "opacity": 0,
         });
 
         this.hover.css({
@@ -72,6 +73,8 @@ function DashGuiSelectorMenu (binder, selected_callback, icon_name="unknown", op
         this.html.append(this.hover);
         this.html.append(this.icon.html);
         this.html.append(this.tray.html);
+
+        this.html.animate({"opacity": 1});
 
         (function(self){
             self.html.click(function(){

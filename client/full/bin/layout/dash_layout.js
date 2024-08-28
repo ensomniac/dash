@@ -8,6 +8,7 @@ function DashLayout () {
     this.SearchableRevolvingList = DashLayoutSearchableRevolvingList;
     this.Toolbar                 = DashLayoutToolbar;
     this.UserProfile             = DashLayoutUserProfile;
+    this.SelectorTabs            = DashLayoutSelectorTabs;
 
     this.Tabs = {
         Side: class DashLayoutTabsSide extends DashLayoutTabs {
