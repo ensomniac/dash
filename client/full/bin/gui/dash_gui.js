@@ -745,10 +745,11 @@ function DashGui () {
                 tooltip.css({
                     ...additional_css,
                     "top": top,
-                    "left": left
+                    "left": left,
+                    "opacity": 0.0,
                 });
 
-                tooltip.show();
+                tooltip.show().animate({"opacity": 1.0}, 200);
 
                 if (text_getter) {
                     try {
@@ -778,6 +779,6 @@ function DashGui () {
 
         clearTimeout(timer);
 
-        tooltip.hide();
+        tooltip.stop().animate({"opacity": 0}, 200, function(){$(this).hide()});
     };
 }

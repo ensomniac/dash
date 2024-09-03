@@ -335,8 +335,16 @@ function DashColor (dark_mode_active=false) {
         return Math.sqrt(0.299 * (r * r) + 0.587 * (g * g) + 0.114 * (b * b)) > 127.5;
     };
 
-    this.ParseToRGBA = function (cstr) {
-        return this.to_rgba(this.Parse(cstr));
+    this.ParseToRGBA = function (cstr, opacity_override=null) {
+
+        var rgba = this.Parse(cstr);
+
+        if (opacity_override != null) {
+            rgba[3] = opacity_override;
+        };
+
+        return this.to_rgba(rgba);
+
     };
 
     this.Lighten = function (cstr, lighten_rgb=15) {  // How many units to add to r/g/b
