@@ -27,7 +27,7 @@ function Dash () {
     );
 
     try {
-        this.InChromeExtension = this.IsMobile ? false : chrome?.runtime;
+        this.InChromeExtension = this.IsMobile ? false : Boolean(chrome?.runtime);
     }
 
     catch {
@@ -145,6 +145,10 @@ function Dash () {
     };
 
     this.check_for_global_storage = function () {
+        if (Dash.IsMobile) {
+            return;
+        }
+
         var event_key = "DashGlobalStorageReady";
 
         if (this.InChromeExtension) {  // For extensions (using Dash)
@@ -241,8 +245,14 @@ function Dash () {
             "height": this.height
         });
 
-        if (this.IsMobile && !this.IsMobileiOS && !this.IsChrome) {
-            this.add_android_non_chrome_warning();
+        try {
+            if (this.IsMobile && !this.IsMobileiOS && !this.IsChrome) {
+                this.add_android_non_chrome_warning();
+            }
+        }
+
+        catch {
+            // Pass
         }
     };
 

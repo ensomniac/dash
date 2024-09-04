@@ -17501,7 +17501,7 @@ function Dash () {
         || window.matchMedia("(display-mode: standalone)").matches  // Android
     );
     try {
-        this.InChromeExtension = this.IsMobile ? false : chrome?.runtime;
+        this.InChromeExtension = this.IsMobile ? false : Boolean(chrome?.runtime);
     }
     catch {
         this.InChromeExtension = false;
@@ -17603,6 +17603,9 @@ function Dash () {
         })(this);
     };
     this.check_for_global_storage = function () {
+        if (Dash.IsMobile) {
+            return;
+        }
         var event_key = "DashGlobalStorageReady";
         if (this.InChromeExtension) {  // For extensions (using Dash)
             // This goes to the extension's background context (background.js)
@@ -17675,8 +17678,13 @@ function Dash () {
             "width": this.width,
             "height": this.height
         });
-        if (this.IsMobile && !this.IsMobileiOS && !this.IsChrome) {
-            this.add_android_non_chrome_warning();
+        try {
+            if (this.IsMobile && !this.IsMobileiOS && !this.IsChrome) {
+                this.add_android_non_chrome_warning();
+            }
+        }
+        catch {
+            // Pass
         }
     };
     this.add_android_non_chrome_warning = function () {
@@ -19601,7 +19609,7 @@ function DashLocal (context) {
         if (key.indexOf(this.context["asset_path"] + "_") !== 0) {
             key = this.context["asset_path"] + "_" + key;
         }
-        if (global) {
+        if (global && !Dash.IsMobile) {
             if (Dash.GlobalStorageEnabled) {
                 this.query_global_storage("DashGlobalStorageSet", key, {"value": value});
             }
@@ -19633,7 +19641,7 @@ function DashLocal (context) {
         if (key.indexOf(this.context["asset_path"] + "_") !== 0) {
             key = this.context["asset_path"] + "_" + key;
         }
-        if (global_cb) {
+        if (global_cb && !Dash.IsMobile) {
             if (Dash.GlobalStorageEnabled) {
                 var callback_id = Dash.Math.RandomID();
                 this.global_get_cbs[callback_id] = (value) => {

@@ -9,7 +9,7 @@ function DashLocal (context) {
             key = this.context["asset_path"] + "_" + key;
         }
 
-        if (global) {
+        if (global && !Dash.IsMobile) {
             if (Dash.GlobalStorageEnabled) {
                 this.query_global_storage("DashGlobalStorageSet", key, {"value": value});
             }
@@ -48,7 +48,7 @@ function DashLocal (context) {
             key = this.context["asset_path"] + "_" + key;
         }
 
-        if (global_cb) {
+        if (global_cb && !Dash.IsMobile) {
             if (Dash.GlobalStorageEnabled) {
                 var callback_id = Dash.Math.RandomID();
 
