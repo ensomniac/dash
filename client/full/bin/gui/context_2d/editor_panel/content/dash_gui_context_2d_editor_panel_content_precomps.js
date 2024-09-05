@@ -2,7 +2,6 @@ function DashGuiContext2DEditorPanelContentPreComps (content) {
     this.content = content;
 
     this.rows = [];
-    this.render_button = null;
     this.html = $("<div></div>");
     this.color = this.content.color;
     this.panel = this.content.panel;
@@ -38,8 +37,6 @@ function DashGuiContext2DEditorPanelContentPreComps (content) {
         for (var letter in this.get_data()) {
             this.draw_row(letter);
         }
-
-        this.add_buttons();
     };
 
     this.draw_row = function (letter) {
@@ -255,22 +252,6 @@ function DashGuiContext2DEditorPanelContentPreComps (content) {
         });
     };
 
-    this.add_buttons = function () {
-        var button_bar = new Dash.Gui.ButtonBar(this, null, "toolbar");
-
-        this.render_button = button_bar.AddButton("Render All Pre-Comps", this.render_all);
-
-        this.render_button.SetHoverHint(
-            "Render out pre-comps to see changes to layers tagged as pre-comps reflected in the CPE"
-        );
-
-        button_bar.html.css({
-            "margin-top": Dash.Size.Padding
-        });
-
-        this.html.append(button_bar.html);
-    };
-
     this.download = function (letter) {
         this.rows[letter]["download_button"].SetLoading(true);
         this.rows[letter]["download_button"].Disable();
@@ -304,34 +285,6 @@ function DashGuiContext2DEditorPanelContentPreComps (content) {
                     "f": "get_precomp",
                     "c2d_id": self.editor.c2d_id,
                     "letter": letter
-                }
-            );
-        })(this);
-    };
-
-    this.render_all = function () {
-        this.render_button.SetLoading(true);
-        this.render_button.Disable();
-
-        (function (self) {
-            Dash.Request(
-                self,
-                function (response) {
-                    self.render_button.SetLoading(false);
-                    self.render_button.Enable();
-
-                    if (!Dash.Validate.Response(response)) {
-                        return;
-                    }
-
-                    alert("Renders complete!");
-
-                    Dash.Log.Log("Pre-Comps rendered:", response);
-                },
-                self.editor.api,
-                {
-                    "f": "render_all_precomps",
-                    "c2d_id": self.editor.c2d_id
                 }
             );
         })(this);

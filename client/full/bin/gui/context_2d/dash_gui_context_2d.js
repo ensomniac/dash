@@ -14,7 +14,6 @@ function DashGuiContext2D (
      *         - "get_data":               Get data dict for provided object ID
      *         - "get_precomp":            Set rendered precomp data (must include "url" key) for provided object ID
      *         - "set_property":           Set property with a key/value for provided object ID
-     *         - "render_all_precomps":    Render all precomps for provided object ID
      *         - "set_precomp_property":   Set precomp property with a key/value/num for provided object ID
      *         - "set_layer_property":     Set layer property with a key/value for provided object ID
      *         - "set_layer_properties":   Set multiple layer properties with a single dict for provided object ID

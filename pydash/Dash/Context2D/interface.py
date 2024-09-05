@@ -386,11 +386,6 @@ class Interface:
         return {"letter": letter}
 
     # Intended to be overwritten whenever this class is abstracted or expanded upon.
-    # This is used to render all precomps.
-    def RenderAllPreComps(self):
-        return {}
-
-    # Intended to be overwritten whenever this class is abstracted or expanded upon.
     # This is used to customize the returned layer data for abstractions.
     def OnLayerLinkToDict(self, layer_link, data, save=False):  # noqa
         return data
