@@ -46,6 +46,7 @@ function DashGuiIcons (icon) {
         "arrow_left_long":         new DashGuiIconDefinition(this.icon, "Arrow Left Long", this.weight["regular"], "long-arrow-left"),
         "arrow_left_circled":      new DashGuiIconDefinition(this.icon, "Arrow Left Circled", this.weight["light"], "arrow-circle-left"),
         "arrow_left_from_right":   new DashGuiIconDefinition(this.icon, "Arrow Left From Right", this.weight["regular"], "arrow-from-right"),
+        "arrow_right_from_left":   new DashGuiIconDefinition(this.icon, "Arrow Right From Left", this.weight["regular"], "arrow-from-left"),
         "arrow_right":             new DashGuiIconDefinition(this.icon, "Arrow Right", this.weight["regular"], "angle-right"),
         "arrow_right_alt":         new DashGuiIconDefinition(this.icon, "Arrow Right Alt", this.weight["regular"], "arrow-right"),
         "arrow_right_alt_2":       new DashGuiIconDefinition(this.icon, "Arrow Right Alt 2", this.weight["regular"], "arrow-alt-right"),
