@@ -394,6 +394,9 @@ class GUtils:
     def GetYouTubeCommentReplies(self, comment_id):
         return self._youtube_utils.GetCommentReplies(comment_id)
 
+    def GetYouTubeSubscriberCount(self, channel_id="", channel_handle="", music_channel_id=""):
+        return self._youtube_utils.GetSubscriberCount(channel_id, channel_handle, music_channel_id)
+
 
 class _DriveUtils:
     _client: callable
@@ -1076,7 +1079,6 @@ class _YouTubeUtils:
 
         if channel_id:
             params["channelId"] = channel_id
-
         else:
             params["forMine"] = True
 
@@ -1133,6 +1135,32 @@ class _YouTubeUtils:
             "parentId": comment_id,
             "textFormat": "plainText"
         }).execute()["items"]
+
+    # Can't get this via API
+    def GetSubscriberCount(self, channel_id="", channel_handle="", music_channel_id=""):
+        if channel_id:
+            from requests import get
+
+            r = get(f"https://www.youtube.com/channel/{channel_id}")
+
+        elif channel_handle:
+            from requests import get
+
+            r = get(f"https://www.youtube.com/@{channel_handle}")
+
+        elif music_channel_id:
+            from curl_cffi.requests import get
+
+            r = get(f"https://music.youtube.com/channel/{music_channel_id}", impersonate="chrome")
+
+            # Can be in multiple formats, don't convert to int
+            return r.text.split(r" subscribers\x22")[-3].split(r"\x22")[-1]
+
+        else:
+            raise ValueError("Must provide either a channel ID, channel handle, or YT Music channel ID")
+
+        # Can be in multiple formats, don't convert to int
+        return r.text.split('{"metadataParts":[{"text":{"content":"')[-1].split(" subscribers")[0]
 
 
 class _AuthUtils:
