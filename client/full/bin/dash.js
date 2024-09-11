@@ -7,6 +7,7 @@ function Dash () {
     this.GlobalStorageEnabled = false;
     this.Daypart = "Morning/Afternoon/Evening"; // Managed by Dash.Utils -> 5-minute background update interval
     this.LocalDev = window.location.protocol === "file:";
+    this.AdminEmails = ["ryan@ensomniac.com", "stetandrew@gmail.com"];
 
     // TODO: Mozilla officially/explicitly recommends against userAgent sniffing, we should probably update this...
     //  https://developer.mozilla.org/en-US/docs/Web/HTTP/Browser_detection_using_the_user_agent#mobile_device_detection

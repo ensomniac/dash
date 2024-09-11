@@ -161,7 +161,7 @@ class DashGuiAddress extends DashGuiInputType {
         }
 
         // The API key won't be authorized for this scope, so it'll fail to initialize
-        if (Dash.LocalDev && !["stetandrew@gmail.com", "ryan@ensomniac.com"].includes(Dash.User.Init["email"])) {
+        if (Dash.LocalDev && !Dash.AdminEmails.includes(Dash.User.Init["email"])) {
             return;
         }
 

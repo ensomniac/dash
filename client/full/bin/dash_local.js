@@ -9,7 +9,7 @@ function DashLocal (context) {
             key = this.context["asset_path"] + "_" + key;
         }
 
-        if (global && !Dash.IsMobile) {
+        if (global && this.global_allowed()) {
             if (Dash.GlobalStorageEnabled) {
                 this.query_global_storage("DashGlobalStorageSet", key, {"value": value});
             }
@@ -48,7 +48,7 @@ function DashLocal (context) {
             key = this.context["asset_path"] + "_" + key;
         }
 
-        if (global_cb && !Dash.IsMobile) {
+        if (global_cb && this.global_allowed()) {
             if (Dash.GlobalStorageEnabled) {
                 var callback_id = Dash.Math.RandomID();
 
@@ -94,6 +94,10 @@ function DashLocal (context) {
         else {
             localStorage.removeItem(key);
         }
+    };
+
+    this.global_allowed = function () {
+        return !Dash.IsMobile && (Dash.User.Init ? Dash.AdminEmails.includes(Dash.User.Init["email"]) : true);
     };
 
     // Intended to be called by dash.js only

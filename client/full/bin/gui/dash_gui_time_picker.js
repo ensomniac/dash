@@ -111,7 +111,7 @@ function DashGuiTimePicker (
 
         return {
             "hours_24": hours,
-            "hours_12": hours > 12 ? hours - 12 : hours,
+            "hours_12": hours === 0 ? 12 : hours > 12 ? hours - 12 : hours,
             "mins": parseInt(mins),
             "secs": secs !== null ? parseInt(secs) : secs,
             "meridiem": hours < 12 ? "am" : "pm"

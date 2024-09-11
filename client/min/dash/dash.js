@@ -17486,6 +17486,7 @@ function Dash () {
     this.GlobalStorageEnabled = false;
     this.Daypart = "Morning/Afternoon/Evening"; // Managed by Dash.Utils -> 5-minute background update interval
     this.LocalDev = window.location.protocol === "file:";
+    this.AdminEmails = ["ryan@ensomniac.com", "stetandrew@gmail.com"];
     // TODO: Mozilla officially/explicitly recommends against userAgent sniffing, we should probably update this...
     //  https://developer.mozilla.org/en-US/docs/Web/HTTP/Browser_detection_using_the_user_agent#mobile_device_detection
     this.IsMobileiOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
@@ -19610,7 +19611,7 @@ function DashLocal (context) {
         if (key.indexOf(this.context["asset_path"] + "_") !== 0) {
             key = this.context["asset_path"] + "_" + key;
         }
-        if (global && !Dash.IsMobile) {
+        if (global && this.global_allowed()) {
             if (Dash.GlobalStorageEnabled) {
                 this.query_global_storage("DashGlobalStorageSet", key, {"value": value});
             }
@@ -19642,7 +19643,7 @@ function DashLocal (context) {
         if (key.indexOf(this.context["asset_path"] + "_") !== 0) {
             key = this.context["asset_path"] + "_" + key;
         }
-        if (global_cb && !Dash.IsMobile) {
+        if (global_cb && this.global_allowed()) {
             if (Dash.GlobalStorageEnabled) {
                 var callback_id = Dash.Math.RandomID();
                 this.global_get_cbs[callback_id] = (value) => {
@@ -19679,6 +19680,9 @@ function DashLocal (context) {
         else {
             localStorage.removeItem(key);
         }
+    };
+    this.global_allowed = function () {
+        return !Dash.IsMobile && (Dash.User.Init ? Dash.AdminEmails.includes(Dash.User.Init["email"]) : true);
     };
     // Intended to be called by dash.js only
     this.on_global_storage_enabled = function () {
@@ -20320,7 +20324,7 @@ class DashGuiAddress extends DashGuiInputType {
             return;
         }
         // The API key won't be authorized for this scope, so it'll fail to initialize
-        if (Dash.LocalDev && !["stetandrew@gmail.com", "ryan@ensomniac.com"].includes(Dash.User.Init["email"])) {
+        if (Dash.LocalDev && !Dash.AdminEmails.includes(Dash.User.Init["email"])) {
             return;
         }
         try {
@@ -21210,7 +21214,8 @@ function DashValidate () {
 
 function DashDateTime () {
     this.Readable = function (
-        iso_string, include_tz_label=true, raw=false, include_seconds=false, include_time=true, include_date=true
+        iso_string, include_tz_label=true, raw=false, include_seconds=false,
+        include_time=true, include_date=true, check_static=true
     ) {
         var date;
         var dt_obj;
@@ -21221,7 +21226,12 @@ function DashDateTime () {
         }
         else {
             timezone = Dash.Context["timezone"] ? Dash.Context["timezone"] : "UTC";
-            [dt_obj, is_static_date] = this.GetDateObjectFromISO(iso_string, timezone, true);
+            if (check_static) {
+                [dt_obj, is_static_date] = this.GetDateObjectFromISO(iso_string, timezone, check_static);
+            }
+            else {
+                dt_obj = this.GetDateObjectFromISO(iso_string, timezone, check_static);
+            }
         }
         if (include_date) {
             if (Dash.Context["ignore_locale_for_readable_dates"]) {
@@ -26834,7 +26844,7 @@ function DashGuiTimePicker (
         hours = parseInt(hours);
         return {
             "hours_24": hours,
-            "hours_12": hours > 12 ? hours - 12 : hours,
+            "hours_12": hours === 0 ? 12 : hours > 12 ? hours - 12 : hours,
             "mins": parseInt(mins),
             "secs": secs !== null ? parseInt(secs) : secs,
             "meridiem": hours < 12 ? "am" : "pm"

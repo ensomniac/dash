@@ -1,6 +1,7 @@
 function DashDateTime () {
     this.Readable = function (
-        iso_string, include_tz_label=true, raw=false, include_seconds=false, include_time=true, include_date=true
+        iso_string, include_tz_label=true, raw=false, include_seconds=false,
+        include_time=true, include_date=true, check_static=true
     ) {
         var date;
         var dt_obj;
@@ -14,7 +15,13 @@ function DashDateTime () {
         else {
             timezone = Dash.Context["timezone"] ? Dash.Context["timezone"] : "UTC";
 
-            [dt_obj, is_static_date] = this.GetDateObjectFromISO(iso_string, timezone, true);
+            if (check_static) {
+                [dt_obj, is_static_date] = this.GetDateObjectFromISO(iso_string, timezone, check_static);
+            }
+
+            else {
+                dt_obj = this.GetDateObjectFromISO(iso_string, timezone, check_static);
+            }
         }
 
         if (include_date) {
