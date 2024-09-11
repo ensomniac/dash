@@ -66,7 +66,7 @@ function DashGuiIcon (color=null, icon_name="unknown", container_size=null, icon
             }
 
             else {
-                this.size = container_size;
+                this.size = container_size * (Dash.Size.DesktopToMobileMode ? 0.8 : 1);
 
                 this.html.css({
                     "width": this.size,
@@ -89,7 +89,7 @@ function DashGuiIcon (color=null, icon_name="unknown", container_size=null, icon
         }
 
         this.icon_html.css({
-            "font-size": icon_size_percent_num.toString() + "%"
+            "font-size": (icon_size_percent_num * (Dash.Size.DesktopToMobileMode ? 0.8 : 1)).toString() + "%"
         });
 
         return this;

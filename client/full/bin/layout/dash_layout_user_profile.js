@@ -10,15 +10,16 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
     this.modal_profile = null;
     this.top_right_button = null;
     this.first_name_field = null;
+    this.pwa_reload_button = null;
     this.suggestion_visible = false;
     this.img_box = $("<div></div>");
     this.modal_of = this.options["modal_of"] || null;
     this.color = this.options["color"] || Dash.Color.Light;
     this.html = Dash.Gui.GetHTMLBoxContext({}, this.color);
 
-    this.img_box_size = this.options["img_box_size"] || (
+    this.img_box_size = (this.options["img_box_size"] || (
         this.view_mode === "preview" ? Dash.Size.ColumnWidth * 1.2 : Dash.Size.ColumnWidth
-    );
+    )) * (Dash.Size.DesktopToMobileMode ? 0.8 : 1);
 
     this.height = this.img_box_size + Dash.Size.Padding + Dash.Size.RowHeight;
 
@@ -168,6 +169,27 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
         );
 
         this.html.append(this.top_right_button.html);
+
+        if (this.view_mode !== "settings" || !Dash.IsMobileFromHomeScreen) {
+            return;
+        }
+
+        this.pwa_reload_button = Dash.Gui.GetTopRightIconButton(
+            this,
+            () => {
+                location.reload();
+            },
+            "refresh"
+        );
+
+        this.pwa_reload_button.html.css({
+            "margin-top": Dash.Size.Padding * 0.3,
+            "margin-right": Dash.Size.Padding * 5
+        });
+
+        this.pwa_reload_button.SetIconSize(160).AddHighlight().SetHoverHint("Refresh app");
+
+        this.html.append(this.pwa_reload_button.html);
     };
 
     this.show_modal = function () {

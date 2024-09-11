@@ -275,7 +275,7 @@ function DashGuiCheckbox (
     // Should this just be the default?
     this.AddHighlight = function (bottom=null, force_in_container=false, redraw_css={}) {
         if (Dash.IsMobile) {
-            return;
+            return null;
         }
 
         if (

@@ -65,7 +65,7 @@ function DashGuiIconButton (icon_name, callback, binder, color, options={}) {
 
     this.AddHighlight = function (force_in_container=false) {
         if (Dash.IsMobile) {
-            return;
+            return this;
         }
 
         var height = 3;

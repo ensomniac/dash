@@ -18316,6 +18316,7 @@ function DashGui () {
         binder, callback, icon_id="trash", data_key=null, additional_data=null, existing_top_right_label=null
     ) {
         callback = callback.bind(binder);
+        // This is so janky omg
         if (existing_top_right_label) {
             existing_top_right_label.css({
                 "right": Dash.Size.Padding * 5
@@ -25414,7 +25415,7 @@ function DashGuiCheckbox (
     // Should this just be the default?
     this.AddHighlight = function (bottom=null, force_in_container=false, redraw_css={}) {
         if (Dash.IsMobile) {
-            return;
+            return null;
         }
         if (
                !Dash.Validate.Object(redraw_css)
@@ -27198,7 +27199,7 @@ function DashGuiIconButton (icon_name, callback, binder, color, options={}) {
     };
     this.AddHighlight = function (force_in_container=false) {
         if (Dash.IsMobile) {
-            return;
+            return this;
         }
         var height = 3;
         this.highlight.css({
@@ -43325,7 +43326,7 @@ function DashGuiIcon (color=null, icon_name="unknown", container_size=null, icon
                 Dash.Log.Warn("Warning: DashGuiIcon SetSize requires a number for container_size");
             }
             else {
-                this.size = container_size;
+                this.size = container_size * (Dash.Size.DesktopToMobileMode ? 0.8 : 1);
                 this.html.css({
                     "width": this.size,
                     "height": this.size
@@ -43342,7 +43343,7 @@ function DashGuiIcon (color=null, icon_name="unknown", container_size=null, icon
             return this;
         }
         this.icon_html.css({
-            "font-size": icon_size_percent_num.toString() + "%"
+            "font-size": (icon_size_percent_num * (Dash.Size.DesktopToMobileMode ? 0.8 : 1)).toString() + "%"
         });
         return this;
     };
@@ -49083,14 +49084,15 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
     this.modal_profile = null;
     this.top_right_button = null;
     this.first_name_field = null;
+    this.pwa_reload_button = null;
     this.suggestion_visible = false;
     this.img_box = $("<div></div>");
     this.modal_of = this.options["modal_of"] || null;
     this.color = this.options["color"] || Dash.Color.Light;
     this.html = Dash.Gui.GetHTMLBoxContext({}, this.color);
-    this.img_box_size = this.options["img_box_size"] || (
+    this.img_box_size = (this.options["img_box_size"] || (
         this.view_mode === "preview" ? Dash.Size.ColumnWidth * 1.2 : Dash.Size.ColumnWidth
-    );
+    )) * (Dash.Size.DesktopToMobileMode ? 0.8 : 1);
     this.height = this.img_box_size + Dash.Size.Padding + Dash.Size.RowHeight;
     // True by default, but ideally, options["is_admin"] should be provided for added
     // security between non-admins. This is referenced by this.has_privileges when this element
@@ -49204,6 +49206,22 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
             ""
         );
         this.html.append(this.top_right_button.html);
+        if (this.view_mode !== "settings" || !Dash.IsMobileFromHomeScreen) {
+            return;
+        }
+        this.pwa_reload_button = Dash.Gui.GetTopRightIconButton(
+            this,
+            () => {
+                location.reload();
+            },
+            "refresh"
+        );
+        this.pwa_reload_button.html.css({
+            "margin-top": Dash.Size.Padding * 0.3,
+            "margin-right": Dash.Size.Padding * 5
+        });
+        this.pwa_reload_button.SetIconSize(160).AddHighlight().SetHoverHint("Refresh app");
+        this.html.append(this.pwa_reload_button.html);
     };
     this.show_modal = function () {
         if (this.modal) {

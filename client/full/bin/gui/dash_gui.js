@@ -335,6 +335,7 @@ function DashGui () {
     ) {
         callback = callback.bind(binder);
 
+        // This is so janky omg
         if (existing_top_right_label) {
             existing_top_right_label.css({
                 "right": Dash.Size.Padding * 5
