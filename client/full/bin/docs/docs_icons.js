@@ -1,38 +1,30 @@
 function DashDocsIcons () {
-    this.color = Dash.Color.Light;
-
-    this.html           = $("<div></div>");
-    this.opposite_color = Dash.Color.GetOpposite(this.color);
-    this.dash_icon_map  = new DashGuiIcons({"name": "icon_map"});
-    this.tile_size      = Dash.Size.ColumnWidth;
-    this.icon_size      = this.tile_size * 0.5;
+    this.html      = $("<div></div>");
+    this.color     = Dash.Color.Light;
+    this.tile_size = Dash.Size.ColumnWidth;
+    this.icon_size = this.tile_size * 0.5;
 
     this.setup_styles = function () {
-
         this.html.css({
             "padding":         Dash.Size.Padding,
             "display":         "flex",
             "flex-wrap":       "wrap",
             "align-content":   "flex-start",
             "align-items":     "center",
-            "justify-content": "center",
+            "justify-content": "center"
         });
 
-        for (var icon_name in this.dash_icon_map) {
+        for (var icon_name in DashGuiIconMap) {
             this.add_icon(icon_name);
-        };
-
+        }
     };
 
     this.add_icon = function (icon_name) {
-
-        var icon_details     = this.dash_icon_map[icon_name];
         var container        = $("<div></div>");
         var highlight        = $("<div></div>");
         var copied_highlight = $("<div>Copied!</div>");
-
-        var label_1 = $("<div>" + icon_details["label"] + "</div>");
-        var label_2 = $("<div>" + icon_name + "</div>");
+        var label_1          = $("<div>" + DashGuiIconMap[icon_name][0] + "</div>");
+        var label_2          = $("<div>" + icon_name + "</div>");
 
         var icon = new Dash.Gui.Icon(
             this.color,
@@ -55,7 +47,7 @@ function DashDocsIcons () {
             "height":        this.tile_size,
             "margin-right":  Dash.Size.Padding,
             "margin-bottom": Dash.Size.Padding,
-            "border-radius": Dash.Size.BorderRadius,
+            "border-radius": Dash.Size.BorderRadius
         });
 
         highlight.css({
@@ -67,39 +59,37 @@ function DashDocsIcons () {
             "background":     "rgba(255, 255, 255, 0.8)",
             "opacity":        0.0,
             "pointer-events": "none",
-            "border-radius":  Dash.Size.BorderRadius,
+            "border-radius":  Dash.Size.BorderRadius
         });
 
         label_1.css({
-            "color":         this.color.Text,
-            "position":      "absolute",
-            "overflow":      "hidden",
-            "text-overflow": "ellipsis",
-            "white-space":   "nowrap",
-            "left":          Dash.Size.Padding,
-            "text-align":    "center",
-            "bottom":        (Dash.Size.Padding * 1.2) + Dash.Size.RowHeight,
-            "width":         this.tile_size - (Dash.Size.Padding * 2),
-            "height":        Dash.Size.RowHeight,
-            "line-height":   Dash.Size.RowHeight + "px",
-            "font-size":     (Dash.Size.RowHeight * 0.8) + "px",
-            "pointer-events": "none",
-
+            "color":          this.color.Text,
+            "position":       "absolute",
+            "overflow":       "hidden",
+            "text-overflow":  "ellipsis",
+            "white-space":    "nowrap",
+            "left":           Dash.Size.Padding,
+            "text-align":     "center",
+            "bottom":         (Dash.Size.Padding * 1.2) + Dash.Size.RowHeight,
+            "width":          this.tile_size - (Dash.Size.Padding * 2),
+            "height":         Dash.Size.RowHeight,
+            "line-height":    Dash.Size.RowHeight + "px",
+            "font-size":      (Dash.Size.RowHeight * 0.8) + "px",
+            "pointer-events": "none"
         });
 
         label_2.css({
-            "color":       this.color.Text,
-            "position":    "absolute",
-            "left":        0,
-            "bottom":      Dash.Size.Padding,
-            "width":       this.tile_size,
-            "height":      Dash.Size.RowHeight,
-            "line-height": Dash.Size.RowHeight + "px",
-            "text-align":  "center",
-            "font-size":   (Dash.Size.RowHeight * 0.6) + "px",
-            "font-family": "sans_serif_bold",
-            "pointer-events": "none",
-
+            "color":          this.color.Text,
+            "position":       "absolute",
+            "left":           0,
+            "bottom":         Dash.Size.Padding,
+            "width":          this.tile_size,
+            "height":         Dash.Size.RowHeight,
+            "line-height":    Dash.Size.RowHeight + "px",
+            "text-align":     "center",
+            "font-size":      (Dash.Size.RowHeight * 0.6) + "px",
+            "font-family":    "sans_serif_bold",
+            "pointer-events": "none"
         });
 
         copied_highlight.css({
@@ -114,8 +104,7 @@ function DashDocsIcons () {
             "font-size":      (Dash.Size.RowHeight * 0.5) + "px",
             "font-family":    "sans_serif_bold",
             "pointer-events": "none",
-            "opacity":        0,
-
+            "opacity":        0
         });
 
         icon.html.css({
@@ -125,36 +114,38 @@ function DashDocsIcons () {
             "top":            Dash.Size.Padding,
             "border-radius":  Dash.Size.BorderRadius,
             "pointer-events": "none",
-            "user-select":    "none",
-
+            "user-select":    "none"
         });
 
-        (function(self, icon_name, container, highlight, copied_highlight){
-            container.click(function(){
-                self.copy_icon_name(icon_name, container, highlight, copied_highlight);
-            });
-        })(this, icon_name, container, highlight, copied_highlight);
+        container.on("click", () => {
+            this.copy_icon_name(icon_name, container, highlight, copied_highlight);
+        });
 
         this.html.append(container);
-
     };
 
     this.copy_icon_name = function (icon_name, container, highlight, copied_highlight) {
-
-        navigator.clipboard.writeText(icon_name);
-
-        var icon_details = this.dash_icon_map[icon_name];
-
-        highlight.stop().animate({"opacity": 1}, 150, function(){
-            $(this).animate({"opacity": 0}, 3000);
+        navigator.clipboard.writeText(icon_name).then(() => {
+            // Ignore returned promise
         });
 
-        copied_highlight.stop().animate({"opacity": 1}, 150, function(){
-            $(this).animate({"opacity": 0}, 4000);
-        });
+        highlight.stop().animate(
+            {"opacity": 1},
+            150,
+            function () {
+                $(this).animate({"opacity": 0}, 3000);
+            }
+        );
+
+        copied_highlight.stop().animate(
+            {"opacity": 1},
+            150,
+            function () {
+                $(this).animate({"opacity": 0}, 4000);
+            }
+        );
 
     };
 
     this.setup_styles();
-
 }

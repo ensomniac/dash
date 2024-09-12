@@ -7,6 +7,7 @@ function DashGuiIcon (color=null, icon_name="unknown", container_size=null, icon
 
     // this.theme = "light";
     this.icon_html = null;
+    this.icon_fill = null;
     this.icon_definition = new DashGuiIcons(this);
     this.html = $("<div class='GuiIcon'></div>");
 
@@ -23,7 +24,7 @@ function DashGuiIcon (color=null, icon_name="unknown", container_size=null, icon
             "height": this.size,
             "margin": 0,
             "padding": 0,
-            "cursor": "pointer",  // TODO: why is this the default?
+            "cursor": "pointer",  // Why is this the default?
             "user-select": "none"
         });
 
@@ -34,9 +35,69 @@ function DashGuiIcon (color=null, icon_name="unknown", container_size=null, icon
         this.html.append(this.icon_html);
     };
 
+    // TODO: write a function very similar to this to use a different icon as
+    //  the "background" to essentially "combine" two different icons into one
+    this.AddColorFill = function (color) {
+        if (this.icon_fill) {
+            console.warn("Warning: A color-fill already exists for this icon. Its color will be updated instead.");
+
+            this.icon_fill.css({
+                "color": color
+            });
+
+            return this.icon_fill;
+        }
+
+        var fill_icon_name = this.name + "_solid";
+
+        if (!(fill_icon_name in DashGuiIconMap)) {
+            fill_icon_name = this.name + "_heavy";
+
+            if (!(fill_icon_name in DashGuiIconMap)) {
+                console.error(
+                      "Error:\nCan't add color-fill to icon because there's no solid version in DashGuiIcons\n"
+                    + "(expecting an identically-named icon with a suffix of '_solid' or '_heavy' using the "
+                    + "'solid' weight).\nAdd a solid version of the icon to DashGuiIcons to resolve this."
+                );
+
+                return;
+            }
+        }
+
+        if (DashGuiIconMap[fill_icon_name][1] !== "s") {
+            console.error(
+                  "Error: Can't add color-fill to icon because the solid version of "
+                + "the icon that was found does not have its weight set to 'solid'."
+            );
+
+            return;
+        }
+
+        this.icon_fill = new Dash.Gui.Icon(this.color, icon_name + "_solid", this.size, this.size_mult, color);
+
+        this.icon_fill.html.css({
+            "position": "absolute",
+            "inset": 0
+        });
+
+        this.html.prepend(this.icon_fill.html);
+
+        return this.icon_fill;
+    };
+
     this.SetIcon = function (icon_name) {
         if (icon_name === this.name) {
             return this;
+        }
+
+        var fill_color = "";
+        
+        if (this.icon_fill) {
+            fill_color = this.icon_fill.icon_color;
+
+            this.icon_fill.html.remove();
+
+            this.icon_fill = null;
         }
 
         this.name = icon_name || "unknown";
@@ -53,6 +114,10 @@ function DashGuiIcon (color=null, icon_name="unknown", container_size=null, icon
         }
 
         this.icon_html = icon_html;
+
+        if (fill_color) {
+            this.AddColorFill(fill_color);
+        }
 
         return this;
     };
@@ -74,6 +139,17 @@ function DashGuiIcon (color=null, icon_name="unknown", container_size=null, icon
                 });
 
                 this.icon_html.css(this.icon_definition.get_css());
+
+                if (this.icon_fill) {
+                    this.icon_fill.size = this.size;
+
+                    this.icon_fill.html.css({
+                        "width": this.size,
+                        "height": this.size
+                    });
+
+                    this.icon_fill.icon_html.css(this.icon_fill.icon_definition.get_css());
+                }
             }
         }
 
@@ -88,25 +164,39 @@ function DashGuiIcon (color=null, icon_name="unknown", container_size=null, icon
             return this;
         }
 
-        this.icon_html.css({
+        var css = {
             "font-size": (icon_size_percent_num * (Dash.Size.DesktopToMobileMode ? 0.8 : 1)).toString() + "%"
-        });
+        };
+
+        this.icon_html.css(css);
+
+        if (this.icon_fill) {
+            this.icon_fill.icon_html.css(css);
+        }
 
         return this;
     };
 
     this.SetColor = function (color) {
-        this.icon_html.css({
-            "color": color
-        });
+        var css = {"color": color};
+
+        this.icon_html.css(css);
+
+        if (this.icon_fill) {
+            this.icon_fill.icon_html.css(css);
+        }
 
         return this;
     };
 
     this.Mirror = function () {
-        this.icon_html.css({
-            "transform": "scale(-1, 1)"
-        });
+        var css = {"transform": "scale(-1, 1)"};
+
+        this.icon_html.css(css);
+
+        if (this.icon_fill) {
+            this.icon_fill.icon_html.css(css);
+        }
 
         return this;
     };
@@ -130,18 +220,16 @@ function DashGuiIcon (color=null, icon_name="unknown", container_size=null, icon
             }
         }
 
-        this.icon_html.css({
-            "text-shadow": value
-        });
+        var css = {"text-shadow": value};
+
+        this.icon_html.css(css);
+
+        if (this.icon_fill) {
+            this.icon_fill.icon_html.css(css);
+        }
 
         return this;
     };
-
-    // this.update = function (icon_id) {
-    //     this.id = icon_id;
-    //     this.url = ICON_MAP["url_prefix"] + ICON_MAP["icons"][this.id][0];
-    //     this.default_size = ICON_MAP["icons"][this.id][1];
-    // };
 
     this.setup_styles();
 }
