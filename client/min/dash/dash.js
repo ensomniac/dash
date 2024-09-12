@@ -46053,9 +46053,12 @@ function DashGuiPropertyBoxInterface () {
         return row;
     };
     this.AddTextArea = function (
-        data_key, label_text="", can_edit=true, placeholder_text="",
-        callback=null, delay_cb=true, starting_height_mult=6, add_key_copy_button=false
+        data_key, label_text="", can_edit=true, placeholder_text="", callback=null,
+        delay_cb=true, starting_height_mult=6, add_key_copy_button=false, auto_height=false
     ) {
+        if (auto_height) {
+            starting_height_mult = 0;
+        }
         this.data = this.get_data_cb ? this.get_data_cb() : {};
         var value = this.get_formatted_data_cb ? this.get_formatted_data_cb(data_key) : this.data[data_key];
         if (label_text && !(label_text.endsWith(":"))) {
@@ -46127,12 +46130,17 @@ function DashGuiPropertyBoxInterface () {
             ),
             "border": text_area.border_size + "px solid " + this.color.StrokeLight
         });
-        text_area.SetHeight(label_height * starting_height_mult);
+        if (auto_height) {
+            text_area.EnableAutoHeight(value, label_height * 2, label_height);
+        }
+        else {
+            text_area.SetHeight((label_height * starting_height_mult) + (Dash.Size.Padding * 1.5));
+            if (value) {
+                text_area.SetText(value);
+            }
+        }
         if (!can_edit) {
             text_area.Lock(false);
-        }
-        if (value) {
-            text_area.SetText(value);
         }
         container.append(text_area.html);
         container._label = label;
@@ -55060,7 +55068,7 @@ function DashMobileTextBox (
         this.textarea.css(textarea_css);
         this.HideResizeHandle();
         if (starting_value) {
-            this.textarea.SetText(starting_value);
+            this.SetText(starting_value);
         }
     };
     this.auto_adjust_height = function () {
@@ -55070,24 +55078,27 @@ function DashMobileTextBox (
         var height;
         var value = this.GetText();
         if (value) {
-            // Reset to auto first to get an accurate scrollHeight
-            this.SetHeight("auto");
+            this.SetHeight("auto");  // Reset to auto first to get an accurate scrollHeight
             height = Math.max(this.textarea[0].scrollHeight, this.min_height) || this.min_height;
+            var lines = 0;
+            var line_breaks = value.Count("\n");
             // For some reason, textareas' scroll height will never be less
             // than the height of two rows without manual intervention, so
             // if it's two (ish) lines, we need to check if it should actually be one
             if (this.line_height < height <= (this.line_height * 2)) {
                 // This is only a rough estimate based on average char width, but it's the best option available
                 var max_chars_in_one_line = Math.floor(this.textarea.width() / this.get_average_char_width());
-                var lines = Math.ceil(value.length / max_chars_in_one_line);
+                lines = Math.ceil(value.length / max_chars_in_one_line);
                 if (lines < 2) {
                     height = this.min_height;
                 }
             }
+            if (line_breaks && (line_breaks + 1) >= lines) {
+                height = this.line_height * (line_breaks + 1);
+            }
             height += this.auto_height_buffer_px;
             if (height !== this.textarea.height()) {
-                // Have to set it to auto first for this to work
-                this.SetHeight("auto");
+                this.SetHeight("auto");  // Have to set it to auto first for this to work
                 this.SetHeight(height + this.auto_height_buffer_px);
             }
         }

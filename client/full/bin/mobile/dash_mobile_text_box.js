@@ -368,7 +368,7 @@ function DashMobileTextBox (
         this.HideResizeHandle();
 
         if (starting_value) {
-            this.textarea.SetText(starting_value);
+            this.SetText(starting_value);
         }
     };
 
@@ -381,10 +381,12 @@ function DashMobileTextBox (
         var value = this.GetText();
 
         if (value) {
-            // Reset to auto first to get an accurate scrollHeight
-            this.SetHeight("auto");
+            this.SetHeight("auto");  // Reset to auto first to get an accurate scrollHeight
 
             height = Math.max(this.textarea[0].scrollHeight, this.min_height) || this.min_height;
+
+            var lines = 0;
+            var line_breaks = value.Count("\n");
 
             // For some reason, textareas' scroll height will never be less
             // than the height of two rows without manual intervention, so
@@ -392,18 +394,22 @@ function DashMobileTextBox (
             if (this.line_height < height <= (this.line_height * 2)) {
                 // This is only a rough estimate based on average char width, but it's the best option available
                 var max_chars_in_one_line = Math.floor(this.textarea.width() / this.get_average_char_width());
-                var lines = Math.ceil(value.length / max_chars_in_one_line);
+
+                lines = Math.ceil(value.length / max_chars_in_one_line);
 
                 if (lines < 2) {
                     height = this.min_height;
                 }
             }
 
+            if (line_breaks && (line_breaks + 1) >= lines) {
+                height = this.line_height * (line_breaks + 1);
+            }
+
             height += this.auto_height_buffer_px;
 
             if (height !== this.textarea.height()) {
-                // Have to set it to auto first for this to work
-                this.SetHeight("auto");
+                this.SetHeight("auto");  // Have to set it to auto first for this to work
                 this.SetHeight(height + this.auto_height_buffer_px);
             }
         }

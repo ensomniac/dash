@@ -465,9 +465,13 @@ function DashGuiPropertyBoxInterface () {
     };
 
     this.AddTextArea = function (
-        data_key, label_text="", can_edit=true, placeholder_text="",
-        callback=null, delay_cb=true, starting_height_mult=6, add_key_copy_button=false
+        data_key, label_text="", can_edit=true, placeholder_text="", callback=null,
+        delay_cb=true, starting_height_mult=6, add_key_copy_button=false, auto_height=false
     ) {
+        if (auto_height) {
+            starting_height_mult = 0;
+        }
+
         this.data = this.get_data_cb ? this.get_data_cb() : {};
 
         var value = this.get_formatted_data_cb ? this.get_formatted_data_cb(data_key) : this.data[data_key];
@@ -561,14 +565,20 @@ function DashGuiPropertyBoxInterface () {
             "border": text_area.border_size + "px solid " + this.color.StrokeLight
         });
 
-        text_area.SetHeight(label_height * starting_height_mult);
+        if (auto_height) {
+            text_area.EnableAutoHeight(value, label_height * 2, label_height);
+        }
+
+        else {
+            text_area.SetHeight((label_height * starting_height_mult) + (Dash.Size.Padding * 1.5));
+
+            if (value) {
+                text_area.SetText(value);
+            }
+        }
 
         if (!can_edit) {
             text_area.Lock(false);
-        }
-
-        if (value) {
-            text_area.SetText(value);
         }
 
         container.append(text_area.html);
