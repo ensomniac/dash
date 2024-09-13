@@ -546,16 +546,18 @@ class DashLocalStorage:
 
             return
 
-        try:
-            os.chown(full_path, 10000, 1004)  # chmod 755, chown ensomniac, chgrp psacln
+        # try:
+        #     # This seems to no longer work. Doesn't throw any error, but doesn't consistently produce the correct result.
+        #     os.chown(full_path, 10000, 1004)  # chmod 755, chown ensomniac, chgrp psacln
+        #
+        # except Fil/
+        # sudeNotFoundError:
+        #     pass
+        #
+        # except PermissionError:  # Permission error when trying to fix permissions... smfh
+        from subprocess import check_output
 
-        except FileNotFoundError:
-            pass
-
-        except PermissionError:  # Permission error when trying to fix permissions... smfh
-            from subprocess import check_output
-
-            check_output(f"sudo chmod 755 {full_path}; sudo chown ensomniac {full_path}; sudo chgrp psacln {full_path}", shell=True)
+        check_output(f"sudo chmod 755 {full_path}; sudo chown ensomniac {full_path}; sudo chgrp psacln {full_path}", shell=True)
 
     def get_folder_possibilities(self, name):
         return [name, f"/{name}", f"{name}/", f"/{name}/"]
