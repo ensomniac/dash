@@ -1138,6 +1138,8 @@ class _YouTubeUtils:
 
     # Can't get this via API
     def GetSubscriberCount(self, channel_id="", channel_handle="", music_channel_id=""):
+        code_chars = ["{", "}", "[", "]", "(", ")", "'", '"', ":"]
+
         if channel_id:
             from requests import get
 
@@ -1154,13 +1156,25 @@ class _YouTubeUtils:
             r = get(f"https://music.youtube.com/channel/{music_channel_id}", impersonate="chrome")
 
             # Can be in multiple formats, don't convert to int
-            return r.text.split(r" subscribers\x22")[-3].split(r"\x22")[-1]
+            parsed = r.text.split(r" subscribers\x22")[-3].split(r"\x22")[-1]
+
+            for char in code_chars:
+                if char in parsed:
+                    raise ValueError(f"Failed to parse YouTube subscriber count from response:\n{r.text}")
+
+            return parsed
 
         else:
-            raise ValueError("Must provide either a channel ID, channel handle, or YT Music channel ID")
+            raise ValueError("Must provide either a channel ID, channel handle, or music channel ID")
 
         # Can be in multiple formats, don't convert to int
-        return r.text.split('{"metadataParts":[{"text":{"content":"')[-1].split(" subscribers")[0]
+        parsed = r.text.split('{"metadataParts":[{"text":{"content":"')[-1].split(" subscriber")[0]
+
+        for char in code_chars:
+            if char in parsed:
+                raise ValueError(f"Failed to parse YouTube subscriber count from response:\n{r.text}")
+
+        return parsed
 
 
 class _AuthUtils:
