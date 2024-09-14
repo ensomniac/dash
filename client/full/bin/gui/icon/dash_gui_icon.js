@@ -10,6 +10,8 @@ function DashGuiIcon (color=null, icon_name="unknown", container_size=null, icon
     this.icon_fill = null;
     this.icon_definition = new DashGuiIcons(this);
     this.html = $("<div class='GuiIcon'></div>");
+    this.set_color = null;
+    this.initialized = false;
 
     if (!this.color.Text) {
         console.error("Error: Incorrect color object passed to DashGuiIcon:", this.color);
@@ -33,6 +35,12 @@ function DashGuiIcon (color=null, icon_name="unknown", container_size=null, icon
         this.icon_html.css(this.icon_definition.get_css());
 
         this.html.append(this.icon_html);
+
+        (function(self){
+            requestAnimationFrame(function(){
+                self.initialized = true;
+            });
+        })(this);
     };
 
     // TODO: write a function very similar to this to use a different icon as
@@ -104,22 +112,50 @@ function DashGuiIcon (color=null, icon_name="unknown", container_size=null, icon
         this.icon_definition = new DashGuiIcons(this);
 
         var icon_html = $('<i class="' + this.icon_definition.get_class() + '"></i>');
+        var icon_css = this.icon_definition.get_css();
 
-        icon_html.css(this.icon_definition.get_css());
+        if (this.set_color) {
+            icon_css["color"] = this.set_color;
+        };
 
-        this.html.append(icon_html);
+        icon_html.css(icon_css);
 
         if (this.icon_html) {
-            this.icon_html.remove();
-        }
 
-        this.icon_html = icon_html;
+            if (this.initialized) {
+                // Animate icon change
+
+                icon_html.css({"opacity": 0});
+
+                (function(self, icon_html){
+
+                    self.icon_html.stop().animate({"opacity": 0}, 200, function(){
+                        self.icon_html.remove();
+                        self.html.append(icon_html);
+                        self.icon_html = icon_html;
+                        icon_html.stop().animate({"opacity": 1}, 300, function(){
+                            console.log("done");
+                        });
+                    });
+
+                })(this, icon_html);
+
+            }
+            else {
+                // No anim
+                this.html.append(icon_html);
+                this.icon_html.remove();
+                this.icon_html = icon_html;
+            };
+
+        };
 
         if (fill_color) {
             this.AddColorFill(fill_color);
-        }
+        };
 
         return this;
+
     };
 
     this.SetSize = function (icon_size_percent_num, container_size=null, enforce_container_size_num=true) {
@@ -179,7 +215,7 @@ function DashGuiIcon (color=null, icon_name="unknown", container_size=null, icon
 
     this.SetColor = function (color) {
         var css = {"color": color};
-
+        this.set_color = color;
         this.icon_html.css(css);
 
         if (this.icon_fill) {

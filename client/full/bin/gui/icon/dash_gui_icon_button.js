@@ -62,8 +62,16 @@ function DashGuiIconButton (icon_name, callback, binder, color, options={}) {
     };
 
     this.SetIcon = function (icon_name) {
-        this.icon_name = icon_name;
 
+        if (icon_name == this.icon_name) {
+            // WARNING: Ryan modified this on Sep 14 '24 and notes
+            // that it's possible this may have breaking implications
+            // for existing code and may need to be allowed past this
+            // return on initialization!
+            return;
+        };
+
+        this.icon_name = icon_name;
         this.icon.SetIcon(icon_name);
 
         return this;
