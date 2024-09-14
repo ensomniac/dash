@@ -27176,6 +27176,13 @@ function DashGuiIconButton (icon_name, callback, binder, color, options={}) {
     this.style = options["style"] || "default";
     this.additional_data = options["additional_data"] || null;
     DashGuiButton.call(this, "", callback, binder, color, options);
+    (function(self, options){
+        requestAnimationFrame(function(){
+            if (options["icon_color"]) {
+                self.SetIconColor(options["icon_color"]);
+            };
+        });
+    })(this, options);
     this.SetIconColor = function (color) {
         this.icon.SetColor(color);
         return this;

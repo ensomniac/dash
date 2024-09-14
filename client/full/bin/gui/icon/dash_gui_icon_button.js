@@ -9,6 +9,18 @@ function DashGuiIconButton (icon_name, callback, binder, color, options={}) {
 
     DashGuiButton.call(this, "", callback, binder, color, options);
 
+    (function(self, options){
+
+        requestAnimationFrame(function(){
+
+            if (options["icon_color"]) {
+                self.SetIconColor(options["icon_color"]);
+            };
+
+        });
+
+    })(this, options);
+
     this.SetIconColor = function (color) {
         this.icon.SetColor(color);
 
