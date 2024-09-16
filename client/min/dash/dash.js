@@ -43407,7 +43407,7 @@ function DashGuiIcon (color=null, icon_name="unknown", container_size=null, icon
                         self.html.append(icon_html);
                         self.icon_html = icon_html;
                         icon_html.stop().animate({"opacity": 1}, 300, function(){
-                            console.log("done");
+                            // ...
                         });
                     });
                 })(this, icon_html);
