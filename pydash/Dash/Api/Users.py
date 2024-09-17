@@ -22,8 +22,10 @@ class ApiUsers:
     def __init__(self, execute_as_module, asset_path):
         self._execute_as_module = execute_as_module
         self._asset_path = asset_path
+
         self._on_init_callback = None
         self._on_termination_callback = None
+        self._pre_init_callback_response = None
 
         # (Intended to be overwritten)
         # Emails that can bypass DashContext's specified 'user_email_domain' and create an account regardless of domain
@@ -226,7 +228,13 @@ class ApiUsers:
         if not self._on_init_callback:
             return response
 
+        # Ideally, the response gets passed in as a param, but
+        # don't want any contexts to break, so this is a workaround
+        self._pre_init_callback_response = response
+
         additional = self._on_init_callback()
+
+        self._pre_init_callback_response = None
 
         for key in additional:
             response["init"][key] = additional[key]
