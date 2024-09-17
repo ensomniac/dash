@@ -22,7 +22,7 @@ class DashGuiFile {
         this.preview_height = this.preview_size;
 
         // Override these upload attrs for use cases that don't follow the standardized VDB.upload_file convention
-        this.upload_api = this.entry.list_view.api;
+        this.upload_api = this.entry.api || this.entry.list_view?.api;
 
         this.upload_params = {
             "f": "upload_file",
@@ -69,13 +69,17 @@ class DashGuiFile {
 
     // Override this for use cases that don't follow the standardized "files" structure
     get_data () {
-        return this.entry.get_data()["files"][this.type]?.[this.key] || {};
+        return this.entry.get_data()["files"]?.[this.type]?.[this.key] || {};
     }
 
     // Override this for use cases that don't follow the standardized "files" structure
     on_update (file_data=null) {
         if (!file_data) {
             return;
+        }
+
+        if (!this.entry.full_data) {
+            this.entry.full_data = {"files": {}};
         }
 
         if (!(this.type in this.entry.full_data["files"])) {
