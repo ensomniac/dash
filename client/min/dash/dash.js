@@ -47426,7 +47426,7 @@ class DashGuiVDBFile {
         entry, type, key, label_text="", preview_size=0,
         include_upload_button=true, include_download_button=true, color=null
     ) {
-        this.entry = entry;
+        this.entry = entry;  // Parent/binder
         this.type = type;
         this.key = key;
         this.label_text = label_text || key.Title();
@@ -47446,10 +47446,10 @@ class DashGuiVDBFile {
         this.upload_api = this.entry.list_view.api;
         this.upload_params = {
             "f": "upload_file",
-            "key": this.key,
-            "type": this.type,
+            "key": this.key,  // File name/asset-path, ex: cover_art, profile_9x16, banner
+            "type": this.type,  // Ex: video, image, audio
             "obj_id": this.entry.obj_id,
-            "vdb_type": this.entry.vdb_type
+            "vdb_type": this.entry.vdb_type  // Override/remove/repurpose this for non-VDB uses
         };
         this._setup_styles();
     }
@@ -47480,11 +47480,11 @@ class DashGuiVDBFile {
             );
         }
     }
-    // Override this for use cases that don't follow the standardized "files" convention
+    // Override this for use cases that don't follow the standardized "files" structure
     get_data () {
         return this.entry.get_data()["files"][this.type]?.[this.key] || {};
     }
-    // Override this for use cases that don't follow the standardized "files" convention
+    // Override this for use cases that don't follow the standardized "files" structure
     on_update (file_data=null) {
         if (!file_data) {
             return;
