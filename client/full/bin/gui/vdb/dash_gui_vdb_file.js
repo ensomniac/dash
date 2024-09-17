@@ -1,4 +1,4 @@
-class DashGuiVDBFile {
+class DashGuiFile {
     constructor (
         entry, type, key, label_text="", preview_size=0,
         include_upload_button=true, include_download_button=true, color=null

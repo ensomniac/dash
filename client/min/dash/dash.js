@@ -18055,6 +18055,7 @@ function DashGui () {
     this.Context2D                 = DashGuiContext2D;
     this.CopyButton                = DashGuiCopyButton;
     this.DatePicker                = DashGuiDatePicker;
+    this.File                      = DashGuiFile;
     this.FileExplorer              = DashGuiFileExplorer;
     this.FileExplorerDesktopLoader = DashGuiFileExplorerDesktopLoader;
     this.Flow                      = DashGuiFlow;
@@ -18080,7 +18081,6 @@ function DashGui () {
     this.ToolRow                   = DashGuiToolRow;
     this.VDB                       = DashGuiVDB;
     this.VDBEntry                  = DashGuiVDBEntry;
-    this.VDBFile                   = DashGuiVDBFile;
     this.VDBList                   = DashGuiVDBList;
     this.VDBListRow                = DashGuiVDBListRow;
     this.VDB3D                     = DashGuiVDB3D;
@@ -47421,7 +47421,7 @@ function DashGuiVDBEntry (
     this.setup_loader();
 }
 
-class DashGuiVDBFile {
+class DashGuiFile {
     constructor (
         entry, type, key, label_text="", preview_size=0,
         include_upload_button=true, include_download_button=true, color=null
