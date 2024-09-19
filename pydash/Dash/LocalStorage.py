@@ -532,32 +532,62 @@ class DashLocalStorage:
             return 0
 
     def ConformPermissions(self, full_path, recursive=False):
+        from time import sleep
+
+        sleep(0.1)  # Buffer for new files/dirs
+
+        mode = "755"
+        group = "psacln"
+        user = "ensomniac"
+
         if recursive:
             if not os.path.isdir(full_path):
                 raise NotADirectoryError(f"When recursive is true, {full_path} must be a directory")
 
-            try:  # There doesn't appear to be a more simple way to do this using python's os module like there is for non-recursive
-                from subprocess import check_output
+            from subprocess import run, CalledProcessError
 
-                check_output(f"sudo chmod 755 -R {full_path}; sudo chown ensomniac -R {full_path}; sudo chgrp psacln -R {full_path}", shell=True)
+            for command in [
+                ["sudo", "chmod", "-R", mode, full_path],
+                ["sudo", "chown", "-R", user, full_path],
+                ["sudo", "chgrp", "-R", group, full_path]
+            ]:
+                try:
+                    run(command, check=True)
 
-            except FileNotFoundError:
-                pass
+                except CalledProcessError as e:
+                    raise Exception(f"Failed to change permissions ({' '.join(command)}) for dir: {full_path}.\n\nError:\n{e}")
+
+                except FileNotFoundError:
+                    continue
 
             return
 
-        # try:
-        #     # This seems to no longer work. Doesn't throw any error, but doesn't consistently produce the correct result.
-        #     os.chown(full_path, 10000, 1004)  # chmod 755, chown ensomniac, chgrp psacln
-        #
-        # except Fil/
-        # sudeNotFoundError:
-        #     pass
-        #
-        # except PermissionError:  # Permission error when trying to fix permissions... smfh
-        from subprocess import check_output
+        try:
+            from shutil import chown
 
-        check_output(f"sudo chmod 755 {full_path}; sudo chown ensomniac {full_path}; sudo chgrp psacln {full_path}", shell=True)
+            os.chmod(full_path, int(mode, 8))  # Octal representation of mode
+
+            chown(full_path, user=user, group=group)
+
+        except FileNotFoundError:
+            pass
+
+        except PermissionError:
+            from subprocess import run, CalledProcessError
+
+            for command in [
+                ["sudo", "chmod", mode, full_path],
+                ["sudo", "chown", user, full_path],
+                ["sudo", "chgrp", group, full_path]
+            ]:
+                try:
+                    run(command, check=True)
+
+                except CalledProcessError as e:
+                    raise Exception(f"Failed to change permissions ({' '.join(command)}) for path: {full_path}.\n\nError:\n{e}")
+
+                except FileNotFoundError:
+                    continue
 
     def get_folder_possibilities(self, name):
         return [name, f"/{name}", f"{name}/", f"/{name}/"]
