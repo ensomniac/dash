@@ -780,6 +780,6 @@ function DashGui () {
 
         clearTimeout(timer);
 
-        tooltip.stop().animate({"opacity": 0}, 200, function(){$(this).hide()});
+        tooltip.stop().animate({"opacity": 0}, 200, function () {$(this).hide()});
     };
 }

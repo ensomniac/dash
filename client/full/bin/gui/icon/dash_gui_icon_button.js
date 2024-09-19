@@ -9,9 +9,9 @@ function DashGuiIconButton (icon_name, callback, binder, color, options={}) {
 
     DashGuiButton.call(this, "", callback, binder, color, options);
 
-    (function(self, options){
+    (function (self, options) {
 
-        requestAnimationFrame(function(){
+        requestAnimationFrame(function () {
 
             if (options["icon_color"]) {
                 self.SetIconColor(options["icon_color"]);

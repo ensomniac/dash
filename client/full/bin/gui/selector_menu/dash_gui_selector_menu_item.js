@@ -70,16 +70,16 @@ function DashGuiSelectorItem (tray, details) {
         this.html.append(this.icon.html);
         this.html.append(this.label);
 
-        (function(self){
-            self.html.click(function(){
+        (function (self) {
+            self.html.on("click", function () {
                 self.on_click();
             });
 
-            self.html.on("mouseenter", function(){
+            self.html.on("mouseenter", function () {
                 self.on_hover_start();
             });
 
-            self.html.on("mouseleave", function(){
+            self.html.on("mouseleave", function () {
                 self.on_hover_stop();
             });
 

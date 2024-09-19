@@ -1,4 +1,6 @@
-function DashMobileUserProfile (binder, on_exit_callback, user_data=null, context_logo_img_url="", include_refresh_button=true) {
+function DashMobileUserProfile (
+    binder, on_exit_callback, user_data=null, context_logo_img_url="", include_refresh_button=true
+) {
     this.binder = binder;
     this.on_exit_callback = on_exit_callback.bind(binder);
     this.user_data = user_data || Dash.User.Data;
@@ -8,6 +10,8 @@ function DashMobileUserProfile (binder, on_exit_callback, user_data=null, contex
     this.html = null;
     this.stack = null;
     this.profile_button = null;
+    this.first_name_field = null;
+    this.suggestion_highlight = false;
     this.color = this.binder.color || Dash.Color.Dark;
 
     this.setup_styles = function () {
@@ -22,6 +26,69 @@ function DashMobileUserProfile (binder, on_exit_callback, user_data=null, contex
         }
 
         this.add_context_logo_img();
+    };
+
+    this.show_name_suggestion = function () {
+        if (this.first_name_field.GetText() || this.suggestion_highlight) {
+            return;
+        }
+
+        this.suggestion_highlight = $("<div></div>");
+
+        this.suggestion_highlight.css({
+            "position": "absolute",
+            "background": this.color.AccentBad,
+            "inset": 0,
+            "bottom": Dash.Size.Padding * 0.25,
+            "border-radius": this.first_name_field.border_radius,
+            "pointer-events": "none",
+            "opacity": 0
+        });
+
+        this.first_name_field.html.prepend(this.suggestion_highlight);
+
+        if (window._DashMobileProfileSettingsIconButton) {
+            window._DashMobileProfileSettingsIconButton._add_suggestion_badge();
+        }
+
+        this.pulse_name_label();
+    };
+
+    this.hide_name_suggestion = function () {
+        if (!this.suggestion_highlight || !this.first_name_field.GetText()) {
+            return;
+        }
+
+        this.suggestion_highlight.stop().animate(
+            {"opacity": 0},
+            () => {
+                this.suggestion_highlight.remove();
+
+                this.suggestion_highlight = null;
+            }
+        );
+
+        if (window._DashMobileProfileSettingsIconButton?._suggestion_badge) {
+            window._DashMobileProfileSettingsIconButton._suggestion_badge.remove();
+
+            window._DashMobileProfileSettingsIconButton._suggestion_badge = null;
+        }
+    };
+
+    this.pulse_name_label = function () {
+        if (!this.suggestion_highlight) {
+            return;
+        }
+
+        this.suggestion_highlight.animate(
+            {
+                "opacity": parseFloat(this.suggestion_highlight.css("opacity")) > 0.5 ? 0.1 : 1.0
+            },
+            1000,
+            () => {
+                this.pulse_name_label();
+            }
+        );
     };
 
     this.setup_banner = function () {
@@ -103,17 +170,23 @@ function DashMobileUserProfile (binder, on_exit_callback, user_data=null, contex
     };
 
     this.add_input = function (card, key, can_edit=true) {
-        var text_box = (function (self) {
-            return new Dash.Mobile.TextBox(
-                self.color,
-                key === "password" ? "Update Password" : key.Title(),
-                this,
-                function (value, text_box) {
-                    self.set_data(key, value, text_box);
-                },
-                true
-            );
-        })(this);
+        var text_box = new Dash.Mobile.TextBox(
+            this.color,
+            key === "password" ? "Update Password" : key.Title(),
+            this,
+            (value, text_box) => {
+                this.set_data(key, value, text_box);
+            },
+            true
+        );
+
+        if (key === "first_name") {
+            this.first_name_field = text_box;
+
+            if (!this.get_data()["first_name"]) {
+                this.show_name_suggestion();
+            }
+        }
 
         text_box.SetText(this.get_data()[key]);
         text_box.StyleAsRow();
@@ -159,22 +232,34 @@ function DashMobileUserProfile (binder, on_exit_callback, user_data=null, contex
             params["email"] = email;
         }
 
-        (function (self) {
-            Dash.Request(
-                self,
-                function (response) {
-                    Dash.Validate.Response(response);
+        Dash.Request(
+            this,
+            (response) => {
+                if (!Dash.Validate.Response(response)) {
+                    return;
+                }
 
-                    Dash.Log.Log("User settings updated:", response);
+                Dash.Log.Log("User settings updated:", response);
 
-                    if (params["f"] === "update_password") {
-                        text_box.SetText("");
+                this.user_data = response["updated_data"];
+
+                if (params["f"] === "update_password") {
+                    text_box.SetText("");
+                }
+
+                if (key === "first_name") {
+                    if (this.get_data()["first_name"]) {
+                        this.hide_name_suggestion();
                     }
-                },
-                "Users",
-                params
-            );
-        })(this);
+
+                    else {
+                        this.show_name_suggestion();
+                    }
+                }
+            },
+            "Users",
+            params
+        );
     };
 
     this.on_profile_changed = function () {

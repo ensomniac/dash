@@ -410,10 +410,6 @@ function DashGuiButtonInterface () {
     this.AddIcon = function (icon_name, icon_size_mult=0.75, icon_color=null, right=true) {
         var side = right ? "right" : "left";
 
-        this.html.css({
-            "display": "flex"
-        });
-
         var icon = new Dash.Gui.Icon(
             this.color,
             icon_name,
@@ -422,12 +418,21 @@ function DashGuiButtonInterface () {
             icon_color || this.color_set.Text.Base
         );
 
-        var html_css = {};
         var icon_css = {};
+        var html_css = {"display": "flex"};
         var min_pad = Dash.Size.Padding * 0.5;
         var side_padding = parseInt(this.html.css("padding-" + side));
 
-        icon_css["margin-" + (right ? "left" : "right")] = side_padding * 0.5;
+        if (this.style === "tab_side") {
+            icon_css["position"] = "absolute";
+            icon_css["top"] = 0;
+            icon_css["bottom"] = 0;
+            icon_css[right ? "right" : "left"] = Dash.Size.Padding * 0.5;
+        }
+
+        else {
+            icon_css["margin-" + (right ? "left" : "right")] = side_padding * 0.5;
+        }
 
         icon.html.css(icon_css);
 
@@ -436,7 +441,7 @@ function DashGuiButtonInterface () {
         this.html.css(html_css);
         this.html.append(icon.html);
 
-        if (!right){
+        if (!right) {
             this.label.detach();
 
             this.html.append(this.label);

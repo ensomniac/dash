@@ -123,9 +123,9 @@ class DashGuiGraph {
             this.active_editing_timeout = null;
         };
 
-        (function(self){
+        (function (self) {
 
-            self.active_editing_timeout = setTimeout(function(){
+            self.active_editing_timeout = setTimeout(function () {
                 self.active_editing_timeout = null;
                 self.active_editing         = false;
             }, 8000);
@@ -237,19 +237,19 @@ class DashGuiGraph {
 
         this.initially_loaded = true;
 
-        (function(self){
+        (function (self) {
 
-            setTimeout(function(){
+            setTimeout(function () {
                 self.load_dots.Stop();
                 self.excalidraw_layer.stop().animate({"opacity": 1}, 500);
                 self.load_scene_data();
             }, 250);
 
-            setTimeout(function(){
+            setTimeout(function () {
                 ExcalidrawLib.restoreElements(self.data["elements"]);
             }, 500);
 
-            setTimeout(function(){
+            setTimeout(function () {
                 ExcalidrawLib.restoreElements(self.data["elements"]);
             }, 1500);
 
@@ -293,13 +293,13 @@ class DashGuiGraph {
         var font_path = "dash/dist/excalidraw/excalidraw-assets/Virgil.woff2";
         var font = new FontFace("Virgil", `url(${font_path})`);
 
-        (function(self){
+        (function (self) {
 
-            font.load().then(function(loadedFont) {
+            font.load().then(function (loadedFont) {
                 document.fonts.add(loadedFont);
                 self.fonts_ready = true;
                 self.load_excalidraw_p1();
-            }).catch(function(error) {
+            }).catch(function (error) {
                 console.error('Font loading failed:', error);
             });
 
@@ -314,15 +314,15 @@ class DashGuiGraph {
         var script = document.createElement("script");
         script.src = "https://unpkg.com/react/umd/react.production.min.js";
 
-        (function(self, script){
+        (function (self, script) {
 
-            script.onload = function() {
+            script.onload = function () {
                 self.load_excalidraw_p2();
             };
 
         })(this, script);
 
-        script.onerror = function() {
+        script.onerror = function () {
             console.error("Failed to load Dash.Gui.Graph -> React p1");
         };
 
@@ -335,15 +335,15 @@ class DashGuiGraph {
         var script = document.createElement("script");
         script.src = "https://unpkg.com/react-dom/umd/react-dom.production.min.js";
 
-        (function(self, script){
+        (function (self, script) {
 
-            script.onload = function() {
+            script.onload = function () {
                 self.load_excalidraw_p3();
             };
 
         })(this, script);
 
-        script.onerror = function() {
+        script.onerror = function () {
             console.error("Failed to load Dash.Gui.Graph -> React p2");
         };
 
@@ -360,7 +360,7 @@ class DashGuiGraph {
             this.load_excalidraw_p4(script);
         }
 
-        script.onerror = function() {
+        script.onerror = function () {
             console.error("Failed to load Dash.Gui.Graph -> React p2");
         };
 
@@ -426,13 +426,13 @@ class DashGuiGraph {
         this.ui_options["tools"] = {};
         this.ui_options["tools"]["image"] = false;
 
-        (function(self){
+        (function (self) {
 
             var clear_item = React.createElement(
                 ExcalidrawLib.MainMenu.Item,
                 {
                     shortcut: "Clear All",
-                    onSelect: function(){self.on_clear_canvas()},
+                    onSelect: function () {self.on_clear_canvas()},
                 }
             );
 
@@ -470,8 +470,8 @@ class DashGuiGraph {
 
 
                   React.createElement(ExcalidrawLib.Excalidraw, {
-                      excalidrawAPI: function(api){self.load_excalidraw_p5(api)},
-                      onChange:      function(e, a, f){self.on_change(e, a, f)},
+                      excalidrawAPI: function (api) {self.load_excalidraw_p5(api)},
+                      onChange:      function (e, a, f) {self.on_change(e, a, f)},
                       UIOptions:     self.ui_options,
                   },
                       main_menu,

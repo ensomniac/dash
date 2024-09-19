@@ -72,31 +72,28 @@ function DashGuiSelectorMenuTray (selector_menu) {
 
         this.background.append(this.content);
 
-        (function(self){
-
-            self.close_skirt.click(function(){
+        (function (self) {
+            self.close_skirt.on("click", function () {
                 self.Hide();
             });
 
-            self.content.click(function(event){
+            self.content.on("click", function (event) {
                 event.preventDefault();
+
                 return false;
             });
 
-            self.background.click(function(){
+            self.background.on("click", function () {
                 self.Hide();
             });
 
-            self.background.on("mouseleave", function(){
+            self.background.on("mouseleave", function () {
                 self.Hide();
             });
-
         })(this);
-
     };
 
     this.get_content_size = function () {
-
         var row_padding = (Dash.Size.Padding * 1) + (Dash.Size.Padding * (this.num_rows - 1));
         var col_padding = (Dash.Size.Padding * 1) + (Dash.Size.Padding * (this.num_cols - 1));
 
@@ -214,13 +211,13 @@ function DashGuiSelectorMenuTray (selector_menu) {
 
     this.Hide = function () {
 
-        (function(self){
+        (function (self) {
 
-            self.close_skirt.stop().animate({"opacity": 0}, 300, function(){
+            self.close_skirt.stop().animate({"opacity": 0}, 300, function () {
                 self.close_skirt.detach();
             });
 
-            self.content.stop().animate({"height": 1}, 200, function(){
+            self.content.stop().animate({"height": 1}, 200, function () {
                 self.background.detach();
             });
 

@@ -76,16 +76,16 @@ function DashGuiSelectorMenu (binder, selected_callback, icon_name="unknown", op
 
         this.html.animate({"opacity": 1});
 
-        (function(self){
-            self.html.click(function(){
+        (function (self) {
+            self.html.on("click", function () {
                 self.toggle_menu();
             });
 
-            self.html.on("mouseenter", function(){
+            self.html.on("mouseenter", function () {
                 self.on_hover_start();
             });
 
-            self.html.on("mouseleave", function(){
+            self.html.on("mouseleave", function () {
                 self.on_hover_stop();
             });
 

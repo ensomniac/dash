@@ -11,8 +11,9 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
     this.top_right_button = null;
     this.first_name_field = null;
     this.pwa_reload_button = null;
-    this.suggestion_visible = false;
+    this.suggestion_badge = false;
     this.img_box = $("<div></div>");
+    this.suggestion_highlight = false;
     this.modal_of = this.options["modal_of"] || null;
     this.color = this.options["color"] || Dash.Color.Light;
     this.html = Dash.Gui.GetHTMLBoxContext({}, this.color);
@@ -64,77 +65,61 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
         }
     };
 
+    // This is a very specific function that is only intended to be called for new
+    // users that have not filled in their name yet. When this function is called,
+    // the username isn't set, but the user settings tab is loaded. Find the First Name
+    // field and highlight it so it's clear what the user is supposed to do
     this.ShowNameSuggestion = function () {
-        // This is a very specific function that is only intended to be called for new
-        // users that have not filled in their name yet. When this function is called,
-        // the username isn't set, but the user settings tab is loaded. Find the First Name
-        // field and highlight it so it's clear what the user is supposed to do
-
-        if (this.first_name_field.Text() || this.suggestion_visible) {
+        if (this.first_name_field.Text() || this.suggestion_highlight) {
             return;
         }
 
-        this.suggestion_visible = $("<div></div>");
-        this.suggestion_visible.css({
+        this.suggestion_highlight = $("<div></div>");
+
+        this.suggestion_highlight.css({
             "position": "absolute",
-            "background": "rgba(255, 0, 0, 0.2)",
-            "left": 0,
-            "right": 0,
-            "top": 0,
-            "bottom": 0,
+            "background": this.color.AccentBad,
+            "inset": 0,
             "pointer-events": "none",
-            "opacity": 0,
+            "opacity": 0
         });
 
         this.first_name_field.FlashSave();
-        this.first_name_field.html.prepend(this.suggestion_visible);
 
-        (function(self){
+        this.first_name_field.html.prepend(this.suggestion_highlight);
 
-            self.pulse_name_label = function () {
+        if (window._DashProfileSettingsTabButton) {
+            this.suggestion_badge = window._DashProfileSettingsTabButton.AddIcon(
+                "alert_square_solid",
+                0.75,
+                window._DashProfileSettingsTabButton.color.AccentBad
+            );
+        }
 
-                if (!self.suggestion_visible) {
-                    return;
-                }
-
-                var opacity = parseFloat(self.suggestion_visible.css("opacity"));
-
-                if (opacity > 0.5) {
-                    opacity = 0.1;
-                }
-                else {
-                    opacity = 1.0;
-                }
-
-                self.suggestion_visible.animate({"opacity": opacity}, 1000, function(){
-                    self.pulse_name_label();
-                });
-
-            };
-
-            self.pulse_name_label();
-
-        })(this);
-
+        this.pulse_name_label();
     };
 
     this.HideNameSuggestion = function () {
-
-        if (!this.suggestion_visible || !this.first_name_field.Text()) {
+        if (!this.suggestion_highlight || !this.first_name_field.Text()) {
             return;
         }
 
-        (function(self){
+        this.suggestion_highlight.stop().animate(
+            {"opacity": 0},
+            () => {
+                this.suggestion_highlight.remove();
 
-            self.suggestion_visible.stop().animate({
-                "opacity": 0,
-            }, function(){
-                self.suggestion_visible.remove();
-                self.suggestion_visible = null;
+                this.suggestion_highlight = null;
+            }
+        );
+
+        if (this.suggestion_badge) {
+            this.suggestion_badge.html.hide(() => {
+                this.suggestion_badge.html.remove();
+
+                this.suggestion_badge = null;
             });
-
-        })(this);
-
+        }
     };
 
     this.HasPrivileges = function () {
@@ -252,7 +237,7 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
         this.modal.AddHTML(this.modal_profile.html);
     };
 
-    this.add_header = function () {
+    this.get_header_label_text = function () {
         var label = "User";
 
         if (this.view_mode === "settings") {
@@ -278,7 +263,11 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
             }
         }
 
-        this.header = new Dash.Gui.Header(label, this.color);
+        return label;
+    };
+
+    this.add_header = function () {
+        this.header = new Dash.Gui.Header(this.get_header_label_text(), this.color);
 
         this.header.ReplaceBorderWithIcon("user").AddShadow();
 
@@ -319,9 +308,27 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
             //  the right things are in place on the back-end, like renaming the user's folder etc
             this.property_box.AddInput("email", "Email Address", "", null, false);
 
-            this.first_name_field = this.property_box.AddInput("first_name", "First Name", "", null, this.modal_of ? false : this.has_privileges);
+            this.first_name_field = this.property_box.AddInput(
+                "first_name",
+                "First Name",
+                "",
+                null,
+                this.modal_of ? false : this.has_privileges,
+                {"placeholder_text": "Please enter a name"}
+            );
 
-            this.property_box.AddInput("last_name", "Last Name", "", null, this.modal_of ? false : this.has_privileges);
+            this.property_box.AddInput(
+                "last_name",
+                "Last Name",
+                "",
+                null,
+                this.modal_of ? false : this.has_privileges,
+                {"placeholder_text": "Please enter a name"}
+            );
+
+            if (!this.get_data()["first_name"]) {
+                this.ShowNameSuggestion();
+            }
         }
 
         if (this.options["property_box"] && this.options["property_box"]["properties"]) {
@@ -333,11 +340,16 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
                     property_details["label_text"] || property_details["display_name"],
                     "",
                     null,
-                    this.modal_of ? false : "editable" in property_details ? property_details["editable"] : this.has_privileges,
+                    (
+                          this.modal_of ? false
+                        : "editable" in property_details ? property_details["editable"]
+                        : this.has_privileges
+                    ),
                     property_details["options"] || {}
                 );
 
-                // Extra callback if something else needs to happen in addition to the standard/basic set_data behavior
+                // Extra callback if something else needs to happen
+                // in addition to the standard/basic set_data behavior
                 if (property_details["callback"]) {
                     this.callbacks[property_details["key"]] = property_details["callback"];
                 }
@@ -347,7 +359,9 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
         if (!this.options["property_box"] || !this.options["property_box"]["replace"] && this.has_privileges) {
             this.property_box.AddLineBreak();
 
-            this.property_box.AddInput("password", "Update Password", "", null, !this.modal_of, {"placeholder_text": "New Password"}).html.css({
+            this.property_box.AddInput(
+                "password", "Update Password", "", null, !this.modal_of, {"placeholder_text": "New Password"}
+            ).html.css({
                 "background": Dash.Color.GetTransparent(this.color.AccentBad, 0.1)
             });
         }
@@ -444,10 +458,13 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
         (function (user_image_upload_button) {
             user_image_upload_button.html.on("mouseenter", function () {
                 user_image_upload_button.highlight.stop().animate({"opacity": 0.25}, 50);
+
                 user_image_upload_button.label.stop().animate({"opacity": 0.65}, 50);
 
                 if (user_image_upload_button.is_selected) {
-                    user_image_upload_button.label.css("color", user_image_upload_button.color_set.Text.SelectedHover);
+                    user_image_upload_button.label.css(
+                        "color", user_image_upload_button.color_set.Text.SelectedHover
+                    );
                 }
 
                 else {
@@ -466,17 +483,43 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
     };
 
     // Basic/standard setting of data is taken care of in DashGuiPropertyBox
-    this.set_data = function (updated_data_or_key, value) {
+    this.set_data = function (updated_data_or_key) {
         var key = typeof updated_data_or_key === "string" ? updated_data_or_key : updated_data_or_key["key"];
 
-        if (key == "first_name" && this.suggestion_visible) {
-            this.HideNameSuggestion();
-        };
+        if (key === "first_name") {
+            this.user_data["first_name"] = this.first_name_field.Text();
+
+            if (this.user_data["first_name"]) {
+                this.HideNameSuggestion();
+            }
+
+            else {
+                this.ShowNameSuggestion();
+            }
+
+            this.header.SetText(this.get_header_label_text());
+        }
 
         // This is an extra, optional follow-up to that
         if (key in this.callbacks) {
             this.callbacks[key](updated_data_or_key);
         }
+    };
+
+    this.pulse_name_label = function () {
+        if (!this.suggestion_highlight) {
+            return;
+        }
+
+        this.suggestion_highlight.animate(
+            {
+                "opacity": parseFloat(this.suggestion_highlight.css("opacity")) > 0.5 ? 0.1 : 1.0
+            },
+            1000,
+            () => {
+                this.pulse_name_label();
+            }
+        );
     };
 
     this.log_out = function () {

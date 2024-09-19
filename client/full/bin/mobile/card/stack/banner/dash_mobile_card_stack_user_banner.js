@@ -10,8 +10,33 @@ function DashMobileCardStackUserBanner (stack, include_refresh_button=true) {
 
     this.setup_styles = function () {
         this.SetBackground(Dash.Color.Mobile.BackgroundGradient);
-
         this.SetLeftIcon("user_settings", this.on_user_clicked);
+
+        window._DashMobileProfileSettingsIconButton = this.header_row.left_icon;
+
+        this.header_row.left_icon._add_suggestion_badge = function () {
+            if (window._DashMobileProfileSettingsIconButton._suggestion_badge) {
+                return;
+            }
+
+            window._DashMobileProfileSettingsIconButton._suggestion_badge = Dash.Gui.GetMobileNotificationIcon(
+                window._DashMobileProfileSettingsIconButton.size * 0.3,
+                false
+            );
+
+            window._DashMobileProfileSettingsIconButton._suggestion_badge.css({
+                "top": Dash.Size.Padding * 0.5,
+                "right": -Dash.Size.Padding * 0.5
+            });
+
+            window._DashMobileProfileSettingsIconButton.html.append(
+                window._DashMobileProfileSettingsIconButton._suggestion_badge
+            );
+        };
+
+        if (Dash.User.Data && !Dash.User.Data["first_name"]) {
+            this.header_row.left_icon._add_suggestion_badge();
+        }
     };
 
     this.SetContextLogoImg = function (url) {
