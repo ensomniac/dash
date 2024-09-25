@@ -109,14 +109,12 @@ function DashLayoutDashboardModuleFlex () {
 
         // Try again if gui hasn't loaded yet (should only happen when initializing)
         if (!bar_gui.data) {
-            (function (self, data) {
-                setTimeout(
-                    function () {
-                        self.SetBarData(data);
-                    },
-                    250
-                );
-            })(this, data);
+            setTimeout(
+                () => {
+                    this.SetBarData(data);
+                },
+                250
+            );
 
             return;
         }
@@ -141,11 +139,15 @@ function DashLayoutDashboardModuleFlex () {
             data = this.bar_data;
         }
 
-        var labels = data["order"];
-        var values = [];
+        if (!data["order"]) {
+            return [[], []];
+        }
 
-        for (var i in data["order"]) {
-            var key = data["order"][i];
+        var labels = [];
+        var values = [];
+        var label_char_limit = 10;
+
+        for (var key of data["order"]) {
             var value = parseInt(data["data"][key]);
 
             if (isNaN(value)) {
@@ -155,6 +157,8 @@ function DashLayoutDashboardModuleFlex () {
             }
 
             values.push(value);
+
+            labels.push(key.length > label_char_limit ? (key.slice(0, label_char_limit - 3) + "...") : key);
         }
 
         return [labels, values];

@@ -46,6 +46,7 @@ DashGuiIconMap = {
     "admin_tools":             ["Admin Tools", DashGuiIconWeights["regular"], "shield-alt"],
     "alert":                   ["Alert", DashGuiIconWeights["solid"], "exclamation"],
     "alert_square":            ["Alert Square", DashGuiIconWeights["regular"], "exclamation-square"],
+    "alert_square_solid":      ["Alert Square Solid", DashGuiIconWeights["solid"], "exclamation-square"],
     "alert_triangle":          ["Alert Triangle", DashGuiIconWeights["solid"], "exclamation-triangle"],
     "align_left":              ["Align Left", DashGuiIconWeights["regular"], "align-left"],
     "align_right":             ["Align Right", DashGuiIconWeights["regular"], "align-right"],

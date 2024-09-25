@@ -165,7 +165,7 @@ class DashGuiFile {
             "margin-top": top_margin
         });
 
-        this.toolbar.AddLabel(this.label_text, false, null, false);
+        this.toolbar.AddLabel(this.label_text, false, null, false, true);
 
         if (this.include_upload_button || this.include_download_button) {
             this.toolbar.AddExpander();

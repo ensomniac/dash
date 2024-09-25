@@ -18675,7 +18675,7 @@ function DashGui () {
             }
         }
         clearTimeout(timer);
-        tooltip.stop().animate({"opacity": 0}, 200, function(){$(this).hide()});
+        tooltip.stop().animate({"opacity": 0}, 200, function () {$(this).hide()});
     };
 }
 
@@ -21620,11 +21620,16 @@ function DashAdminColor () {
     this.setup_styles();
 }
 
-function DashAdminSettings (admin_view) {
+function DashAdminSettings (admin_view=null) {
     this.admin_view = admin_view;
     this.data = null;
     this.property_box = null;
-    this.html = Dash.Gui.GetHTMLContext("Loading Admin View...", {"margin": Dash.Size.Padding});
+    this.color = this.admin_view.color || Dash.Color.Light;
+    this.html = Dash.Gui.GetHTMLContext(
+        "Loading Admin View...",
+        {"margin": Dash.Size.Padding},
+        this.color
+    );
     this.setup_styles = function () {
         this.reload_data();
     };
@@ -24099,7 +24104,7 @@ class DashGuiFile {
             "border-radius": Dash.Size.BorderRadius,
             "margin-top": top_margin
         });
-        this.toolbar.AddLabel(this.label_text, false, null, false);
+        this.toolbar.AddLabel(this.label_text, false, null, false, true);
         if (this.include_upload_button || this.include_download_button) {
             this.toolbar.AddExpander();
             if (this.include_upload_button) {
@@ -27458,8 +27463,8 @@ function DashGuiIconButton (icon_name, callback, binder, color, options={}) {
     this.style = options["style"] || "default";
     this.additional_data = options["additional_data"] || null;
     DashGuiButton.call(this, "", callback, binder, color, options);
-    (function(self, options){
-        requestAnimationFrame(function(){
+    (function (self, options) {
+        requestAnimationFrame(function () {
             if (options["icon_color"]) {
                 self.SetIconColor(options["icon_color"]);
             };
@@ -27928,9 +27933,6 @@ function DashGuiButtonInterface () {
     };
     this.AddIcon = function (icon_name, icon_size_mult=0.75, icon_color=null, right=true) {
         var side = right ? "right" : "left";
-        this.html.css({
-            "display": "flex"
-        });
         var icon = new Dash.Gui.Icon(
             this.color,
             icon_name,
@@ -27938,16 +27940,24 @@ function DashGuiButtonInterface () {
             icon_size_mult,
             icon_color || this.color_set.Text.Base
         );
-        var html_css = {};
         var icon_css = {};
+        var html_css = {"display": "flex"};
         var min_pad = Dash.Size.Padding * 0.5;
         var side_padding = parseInt(this.html.css("padding-" + side));
-        icon_css["margin-" + (right ? "left" : "right")] = side_padding * 0.5;
+        if (this.style === "tab_side") {
+            icon_css["position"] = "absolute";
+            icon_css["top"] = 0;
+            icon_css["bottom"] = 0;
+            icon_css[right ? "right" : "left"] = Dash.Size.Padding * 0.5;
+        }
+        else {
+            icon_css["margin-" + (right ? "left" : "right")] = side_padding * 0.5;
+        }
         icon.html.css(icon_css);
         html_css["padding-" + side] = side_padding > min_pad ? min_pad : 0;
         this.html.css(html_css);
         this.html.append(icon.html);
-        if (!right){
+        if (!right) {
             this.label.detach();
             this.html.append(this.label);
         }
@@ -28336,13 +28346,13 @@ function DashGuiButtonStyleTabSide () {
             "padding-right": Dash.Size.Padding,
             "padding": 0,
             "margin": 0,
-            "margin-bottom": 1,
+            "margin-bottom": 1
         });
         this.highlight.css({
             "position": "absolute",
             "inset": 0,
             "background": this.default_highlight_background,
-            "opacity": 0,
+            "opacity": 0
         });
         this.load_bar.css({
             "position": "absolute",
@@ -28350,13 +28360,13 @@ function DashGuiButtonStyleTabSide () {
             "top": 0,
             "bottom": 0,
             "width": 0,
-            "background": this.default_load_bar_background,
+            "background": this.default_load_bar_background
         });
         this.click_highlight.css({
             "position": "absolute",
             "inset": 0,
             "background": this.default_click_highlight_background,
-            "opacity": 0,
+            "opacity": 0
         });
         this.label.css({
             "position": "absolute",
@@ -28435,14 +28445,14 @@ function DashGuiSelectorMenu (binder, selected_callback, icon_name="unknown", op
         this.html.append(this.icon.html);
         this.html.append(this.tray.html);
         this.html.animate({"opacity": 1});
-        (function(self){
-            self.html.click(function(){
+        (function (self) {
+            self.html.on("click", function () {
                 self.toggle_menu();
             });
-            self.html.on("mouseenter", function(){
+            self.html.on("mouseenter", function () {
                 self.on_hover_start();
             });
-            self.html.on("mouseleave", function(){
+            self.html.on("mouseleave", function () {
                 self.on_hover_stop();
             });
         })(this);
@@ -28522,18 +28532,18 @@ function DashGuiSelectorMenuTray (selector_menu) {
             "padding-top": Dash.Size.Padding,
         });
         this.background.append(this.content);
-        (function(self){
-            self.close_skirt.click(function(){
+        (function (self) {
+            self.close_skirt.on("click", function () {
                 self.Hide();
             });
-            self.content.click(function(event){
+            self.content.on("click", function (event) {
                 event.preventDefault();
                 return false;
             });
-            self.background.click(function(){
+            self.background.on("click", function () {
                 self.Hide();
             });
-            self.background.on("mouseleave", function(){
+            self.background.on("mouseleave", function () {
                 self.Hide();
             });
         })(this);
@@ -28632,11 +28642,11 @@ function DashGuiSelectorMenuTray (selector_menu) {
         this.content.animate({"height": this.content_size["height"]}, 200);
     };
     this.Hide = function () {
-        (function(self){
-            self.close_skirt.stop().animate({"opacity": 0}, 300, function(){
+        (function (self) {
+            self.close_skirt.stop().animate({"opacity": 0}, 300, function () {
                 self.close_skirt.detach();
             });
-            self.content.stop().animate({"height": 1}, 200, function(){
+            self.content.stop().animate({"height": 1}, 200, function () {
                 self.background.detach();
             });
         })(this);
@@ -28703,14 +28713,14 @@ function DashGuiSelectorItem (tray, details) {
         this.html.append(this.hover);
         this.html.append(this.icon.html);
         this.html.append(this.label);
-        (function(self){
-            self.html.click(function(){
+        (function (self) {
+            self.html.on("click", function () {
                 self.on_click();
             });
-            self.html.on("mouseenter", function(){
+            self.html.on("mouseenter", function () {
                 self.on_hover_start();
             });
-            self.html.on("mouseleave", function(){
+            self.html.on("mouseleave", function () {
                 self.on_hover_stop();
             });
         })(this);
@@ -41452,7 +41462,7 @@ class DashGuiFlowStep {
             return;
         }
         var is_last_step = this.is_last_step();
-        if (!is_last_step && typeof step_id_override === "function"){
+        if (!is_last_step && typeof step_id_override === "function") {
             step_id_override = step_id_override();
         }
         if (!is_last_step && !step_id_override) {
@@ -43587,7 +43597,9 @@ class DashGuiFlowToggle {
     }
 }
 
-function DashGuiIcon (color=null, icon_name="unknown", container_size=null, icon_size_mult=1, icon_color=null) {
+function DashGuiIcon (
+    color=null, icon_name="unknown", container_size=null, icon_size_mult=1, icon_color=null
+) {
     this.color = color || Dash.Color.Light;
     this.name = icon_name;
     this.size = container_size || Dash.Size.RowHeight;
@@ -43617,8 +43629,8 @@ function DashGuiIcon (color=null, icon_name="unknown", container_size=null, icon
         this.icon_html = $('<i class="' + this.icon_definition.get_class() + '"></i>');
         this.icon_html.css(this.icon_definition.get_css());
         this.html.append(this.icon_html);
-        (function(self){
-            requestAnimationFrame(function(){
+        (function (self) {
+            requestAnimationFrame(function () {
                 self.initialized = true;
             });
         })(this);
@@ -43683,12 +43695,12 @@ function DashGuiIcon (color=null, icon_name="unknown", container_size=null, icon
             if (this.initialized) {
                 // Animate icon change
                 icon_html.css({"opacity": 0});
-                (function(self, icon_html){
-                    self.icon_html.stop().animate({"opacity": 0}, 200, function(){
+                (function (self, icon_html) {
+                    self.icon_html.stop().animate({"opacity": 0}, 200, function () {
                         self.icon_html.remove();
                         self.html.append(icon_html);
                         self.icon_html = icon_html;
-                        icon_html.stop().animate({"opacity": 1}, 300, function(){
+                        icon_html.stop().animate({"opacity": 1}, 300, function () {
                             // ...
                         });
                     });
@@ -43832,6 +43844,7 @@ DashGuiIconMap = {
     "admin_tools":             ["Admin Tools", DashGuiIconWeights["regular"], "shield-alt"],
     "alert":                   ["Alert", DashGuiIconWeights["solid"], "exclamation"],
     "alert_square":            ["Alert Square", DashGuiIconWeights["regular"], "exclamation-square"],
+    "alert_square_solid":      ["Alert Square Solid", DashGuiIconWeights["solid"], "exclamation-square"],
     "alert_triangle":          ["Alert Triangle", DashGuiIconWeights["solid"], "exclamation-triangle"],
     "align_left":              ["Align Left", DashGuiIconWeights["regular"], "align-left"],
     "align_right":             ["Align Right", DashGuiIconWeights["regular"], "align-right"],
@@ -48465,7 +48478,11 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="", color=null) {
             var html_class = this.all_content[index]["content_div_html_class"];
             var callback = this.all_content[index]["content_div_html_class"].bind(this.binder);
             var optional_args = this.all_content[index]["optional_args"];
-            var unpack = this.all_content[index]["unpack_params"] && Dash.Validate.Object(optional_args) && Array.isArray(optional_args);
+            var unpack = (
+                   this.all_content[index]["unpack_params"]
+                && Dash.Validate.Object(optional_args)
+                && Array.isArray(optional_args)
+            );
             if (this.is_class(html_class)) {
                 if (unpack) {
                     inst_class = new callback(...optional_args);
@@ -48683,14 +48700,12 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="", color=null) {
             if (this.init_attempts > 25) {
                 return;
             }
-            (function (self) {
-                setTimeout(
-                    function () {
-                        self.init();
-                    },
-                    100
-                );
-            })(this);
+            setTimeout(
+                () => {
+                    this.init();
+                },
+                100
+            );
             this.init_attempts += 1;
             return;
         }
@@ -48705,8 +48720,18 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="", color=null) {
         // If the user is new and hasn't yet at least entered their first name, gently
         // nudge them to do so every time they load the main view by loading their user view
         for (var i in this.all_content) {
-            if (this.all_content[i]["content_div_html_class"] !== DashUserView) {
+            if (
+                   this.all_content[i]["content_div_html_class"] !== DashUserView
+                && (
+                       typeof this.all_content[i]["label_text"] !== "string"
+                    || !(this.all_content[i]["label_text"].includes("Profile"))
+                )
+            ) {
                 continue;
+            }
+
+            if (this.all_content[i]["button"]) {
+                window._DashProfileSettingsTabButton = this.all_content[i]["button"];
             }
             try {
                 this.LoadIndex(i);
@@ -48841,7 +48866,7 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="", color=null) {
     // field and highlight it so it's clear what the user is supposed to do.
     this.on_autoload_user_settings = function () {
         if (
-            this.all_content[this.current_index]["content_div_html_class"] !== DashUserView
+               this.all_content[this.current_index]["content_div_html_class"] !== DashUserView
             || !this.active_content.user_profile
         ) {
             return;
@@ -49221,8 +49246,9 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
     this.top_right_button = null;
     this.first_name_field = null;
     this.pwa_reload_button = null;
-    this.suggestion_visible = false;
+    this.suggestion_badge = false;
     this.img_box = $("<div></div>");
+    this.suggestion_highlight = false;
     this.modal_of = this.options["modal_of"] || null;
     this.color = this.options["color"] || Dash.Color.Light;
     this.html = Dash.Gui.GetHTMLBoxContext({}, this.color);
@@ -49262,58 +49288,50 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
             });
         }
     };
+    // This is a very specific function that is only intended to be called for new
+    // users that have not filled in their name yet. When this function is called,
+    // the username isn't set, but the user settings tab is loaded. Find the First Name
+    // field and highlight it so it's clear what the user is supposed to do
     this.ShowNameSuggestion = function () {
-        // This is a very specific function that is only intended to be called for new
-        // users that have not filled in their name yet. When this function is called,
-        // the username isn't set, but the user settings tab is loaded. Find the First Name
-        // field and highlight it so it's clear what the user is supposed to do
-        if (this.first_name_field.Text() || this.suggestion_visible) {
+        if (this.first_name_field.Text() || this.suggestion_highlight) {
             return;
         }
-        this.suggestion_visible = $("<div></div>");
-        this.suggestion_visible.css({
+        this.suggestion_highlight = $("<div></div>");
+        this.suggestion_highlight.css({
             "position": "absolute",
-            "background": "rgba(255, 0, 0, 0.2)",
-            "left": 0,
-            "right": 0,
-            "top": 0,
-            "bottom": 0,
+            "background": this.color.AccentBad,
+            "inset": 0,
             "pointer-events": "none",
-            "opacity": 0,
+            "opacity": 0
         });
         this.first_name_field.FlashSave();
-        this.first_name_field.html.prepend(this.suggestion_visible);
-        (function(self){
-            self.pulse_name_label = function () {
-                if (!self.suggestion_visible) {
-                    return;
-                }
-                var opacity = parseFloat(self.suggestion_visible.css("opacity"));
-                if (opacity > 0.5) {
-                    opacity = 0.1;
-                }
-                else {
-                    opacity = 1.0;
-                }
-                self.suggestion_visible.animate({"opacity": opacity}, 1000, function(){
-                    self.pulse_name_label();
-                });
-            };
-            self.pulse_name_label();
-        })(this);
+        this.first_name_field.html.prepend(this.suggestion_highlight);
+        if (window._DashProfileSettingsTabButton) {
+            this.suggestion_badge = window._DashProfileSettingsTabButton.AddIcon(
+                "alert_square_solid",
+                0.75,
+                window._DashProfileSettingsTabButton.color.AccentBad
+            );
+        }
+        this.pulse_name_label();
     };
     this.HideNameSuggestion = function () {
-        if (!this.suggestion_visible || !this.first_name_field.Text()) {
+        if (!this.suggestion_highlight || !this.first_name_field.Text()) {
             return;
         }
-        (function(self){
-            self.suggestion_visible.stop().animate({
-                "opacity": 0,
-            }, function(){
-                self.suggestion_visible.remove();
-                self.suggestion_visible = null;
+        this.suggestion_highlight.stop().animate(
+            {"opacity": 0},
+            () => {
+                this.suggestion_highlight.remove();
+                this.suggestion_highlight = null;
+            }
+        );
+        if (this.suggestion_badge) {
+            this.suggestion_badge.html.hide(() => {
+                this.suggestion_badge.html.remove();
+                this.suggestion_badge = null;
             });
-        })(this);
+        }
     };
     this.HasPrivileges = function () {
         return this.has_privileges;
@@ -49408,7 +49426,7 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
         });
         this.modal.AddHTML(this.modal_profile.html);
     };
-    this.add_header = function () {
+    this.get_header_label_text = function () {
         var label = "User";
         if (this.view_mode === "settings") {
             label = (this.user_data["first_name"] ? this.user_data["first_name"] + "'s " : "") + "User Settings";
@@ -49428,7 +49446,10 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
                 }
             }
         }
-        this.header = new Dash.Gui.Header(label, this.color);
+        return label;
+    };
+    this.add_header = function () {
+        this.header = new Dash.Gui.Header(this.get_header_label_text(), this.color);
         this.header.ReplaceBorderWithIcon("user").AddShadow();
         this.header.label.css({
             "flex": 1,
@@ -49460,8 +49481,25 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
             // TODO: Ideally, this should also be editable (with this.has_privileges), but I don't think
             //  the right things are in place on the back-end, like renaming the user's folder etc
             this.property_box.AddInput("email", "Email Address", "", null, false);
-            this.first_name_field = this.property_box.AddInput("first_name", "First Name", "", null, this.modal_of ? false : this.has_privileges);
-            this.property_box.AddInput("last_name", "Last Name", "", null, this.modal_of ? false : this.has_privileges);
+            this.first_name_field = this.property_box.AddInput(
+                "first_name",
+                "First Name",
+                "",
+                null,
+                this.modal_of ? false : this.has_privileges,
+                {"placeholder_text": "Please enter a name"}
+            );
+            this.property_box.AddInput(
+                "last_name",
+                "Last Name",
+                "",
+                null,
+                this.modal_of ? false : this.has_privileges,
+                {"placeholder_text": "Please enter a name"}
+            );
+            if (!this.get_data()["first_name"]) {
+                this.ShowNameSuggestion();
+            }
         }
         if (this.options["property_box"] && this.options["property_box"]["properties"]) {
             var additional_props = this.options["property_box"]["properties"];
@@ -49471,10 +49509,15 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
                     property_details["label_text"] || property_details["display_name"],
                     "",
                     null,
-                    this.modal_of ? false : "editable" in property_details ? property_details["editable"] : this.has_privileges,
+                    (
+                          this.modal_of ? false
+                        : "editable" in property_details ? property_details["editable"]
+                        : this.has_privileges
+                    ),
                     property_details["options"] || {}
                 );
-                // Extra callback if something else needs to happen in addition to the standard/basic set_data behavior
+                // Extra callback if something else needs to happen
+                // in addition to the standard/basic set_data behavior
                 if (property_details["callback"]) {
                     this.callbacks[property_details["key"]] = property_details["callback"];
                 }
@@ -49482,7 +49525,9 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
         }
         if (!this.options["property_box"] || !this.options["property_box"]["replace"] && this.has_privileges) {
             this.property_box.AddLineBreak();
-            this.property_box.AddInput("password", "Update Password", "", null, !this.modal_of, {"placeholder_text": "New Password"}).html.css({
+            this.property_box.AddInput(
+                "password", "Update Password", "", null, !this.modal_of, {"placeholder_text": "New Password"}
+            ).html.css({
                 "background": Dash.Color.GetTransparent(this.color.AccentBad, 0.1)
             });
         }
@@ -49560,7 +49605,9 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
                 user_image_upload_button.highlight.stop().animate({"opacity": 0.25}, 50);
                 user_image_upload_button.label.stop().animate({"opacity": 0.65}, 50);
                 if (user_image_upload_button.is_selected) {
-                    user_image_upload_button.label.css("color", user_image_upload_button.color_set.Text.SelectedHover);
+                    user_image_upload_button.label.css(
+                        "color", user_image_upload_button.color_set.Text.SelectedHover
+                    );
                 }
                 else {
                     user_image_upload_button.label.css("color", user_image_upload_button.color_set.Text.BaseHover);
@@ -49575,15 +49622,36 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
         return this.user_data;
     };
     // Basic/standard setting of data is taken care of in DashGuiPropertyBox
-    this.set_data = function (updated_data_or_key, value) {
+    this.set_data = function (updated_data_or_key) {
         var key = typeof updated_data_or_key === "string" ? updated_data_or_key : updated_data_or_key["key"];
-        if (key == "first_name" && this.suggestion_visible) {
-            this.HideNameSuggestion();
-        };
+        if (key === "first_name") {
+            this.user_data["first_name"] = this.first_name_field.Text();
+            if (this.user_data["first_name"]) {
+                this.HideNameSuggestion();
+            }
+            else {
+                this.ShowNameSuggestion();
+            }
+            this.header.SetText(this.get_header_label_text());
+        }
         // This is an extra, optional follow-up to that
         if (key in this.callbacks) {
             this.callbacks[key](updated_data_or_key);
         }
+    };
+    this.pulse_name_label = function () {
+        if (!this.suggestion_highlight) {
+            return;
+        }
+        this.suggestion_highlight.animate(
+            {
+                "opacity": parseFloat(this.suggestion_highlight.css("opacity")) > 0.5 ? 0.1 : 1.0
+            },
+            1000,
+            () => {
+                this.pulse_name_label();
+            }
+        );
     };
     this.log_out = function () {
         Dash.Logout();
@@ -50033,14 +50101,12 @@ function DashLayoutDashboardModuleFlex () {
         var bar_gui = this.canvas["gui"] || window[this.canvas["id"]];
         // Try again if gui hasn't loaded yet (should only happen when initializing)
         if (!bar_gui.data) {
-            (function (self, data) {
-                setTimeout(
-                    function () {
-                        self.SetBarData(data);
-                    },
-                    250
-                );
-            })(this, data);
+            setTimeout(
+                () => {
+                    this.SetBarData(data);
+                },
+                250
+            );
             return;
         }
         if (!this.canvas["gui"]) {
@@ -50057,16 +50123,20 @@ function DashLayoutDashboardModuleFlex () {
         if (!Dash.Validate.Object(data)) {
             data = this.bar_data;
         }
-        var labels = data["order"];
+        if (!data["order"]) {
+            return [[], []];
+        }
+        var labels = [];
         var values = [];
-        for (var i in data["order"]) {
-            var key = data["order"][i];
+        var label_char_limit = 10;
+        for (var key of data["order"]) {
             var value = parseInt(data["data"][key]);
             if (isNaN(value)) {
                 console.error("Error: Bar data object values must be numbers");
                 return [["ERROR", "SEE", "CONSOLE"], [1, 2, 3]];
             }
             values.push(value);
+            labels.push(key.length > label_char_limit ? (key.slice(0, label_char_limit - 3) + "...") : key);
         }
         return [labels, values];
     };
@@ -54664,8 +54734,8 @@ class DashLayoutSelectorTabs {
         this.html.css({
             // "padding": Dash.Size.Padding,
         });
-        (function(self){
-            requestAnimationFrame(function(){
+        (function (self) {
+            requestAnimationFrame(function () {
                 self.new_button.html.css({"margin-top": Dash.Size.Padding * 0.5});
                 self.new_button.html.stop().animate({"opacity": 1});
             });
@@ -55685,7 +55755,9 @@ function DashMobileCard (stack) {
     this.setup_styles();
 }
 
-function DashMobileUserProfile (binder, on_exit_callback, user_data=null, context_logo_img_url="", include_refresh_button=true) {
+function DashMobileUserProfile (
+    binder, on_exit_callback, user_data=null, context_logo_img_url="", include_refresh_button=true
+) {
     this.binder = binder;
     this.on_exit_callback = on_exit_callback.bind(binder);
     this.user_data = user_data || Dash.User.Data;
@@ -55694,6 +55766,8 @@ function DashMobileUserProfile (binder, on_exit_callback, user_data=null, contex
     this.html = null;
     this.stack = null;
     this.profile_button = null;
+    this.first_name_field = null;
+    this.suggestion_highlight = false;
     this.color = this.binder.color || Dash.Color.Dark;
     this.setup_styles = function () {
         this.stack = new Dash.Mobile.CardStack(this);
@@ -55704,6 +55778,56 @@ function DashMobileUserProfile (binder, on_exit_callback, user_data=null, contex
             this.user_banner.SetBackground(this.user_data["img"]["thumb_url"]);
         }
         this.add_context_logo_img();
+    };
+    this.show_name_suggestion = function () {
+        if (this.first_name_field.GetText() || this.suggestion_highlight) {
+            return;
+        }
+        this.suggestion_highlight = $("<div></div>");
+        this.suggestion_highlight.css({
+            "position": "absolute",
+            "background": this.color.AccentBad,
+            "inset": 0,
+            "bottom": Dash.Size.Padding * 0.25,
+            "border-radius": this.first_name_field.border_radius,
+            "pointer-events": "none",
+            "opacity": 0
+        });
+        this.first_name_field.html.prepend(this.suggestion_highlight);
+        if (window._DashMobileProfileSettingsIconButton) {
+            window._DashMobileProfileSettingsIconButton._add_suggestion_badge();
+        }
+        this.pulse_name_label();
+    };
+    this.hide_name_suggestion = function () {
+        if (!this.suggestion_highlight || !this.first_name_field.GetText()) {
+            return;
+        }
+        this.suggestion_highlight.stop().animate(
+            {"opacity": 0},
+            () => {
+                this.suggestion_highlight.remove();
+                this.suggestion_highlight = null;
+            }
+        );
+        if (window._DashMobileProfileSettingsIconButton?._suggestion_badge) {
+            window._DashMobileProfileSettingsIconButton._suggestion_badge.remove();
+            window._DashMobileProfileSettingsIconButton._suggestion_badge = null;
+        }
+    };
+    this.pulse_name_label = function () {
+        if (!this.suggestion_highlight) {
+            return;
+        }
+        this.suggestion_highlight.animate(
+            {
+                "opacity": parseFloat(this.suggestion_highlight.css("opacity")) > 0.5 ? 0.1 : 1.0
+            },
+            1000,
+            () => {
+                this.pulse_name_label();
+            }
+        );
     };
     this.setup_banner = function () {
         this.user_banner = this.stack.AddBanner();
@@ -55766,17 +55890,21 @@ function DashMobileUserProfile (binder, on_exit_callback, user_data=null, contex
         this.add_input(card, "password");
     };
     this.add_input = function (card, key, can_edit=true) {
-        var text_box = (function (self) {
-            return new Dash.Mobile.TextBox(
-                self.color,
-                key === "password" ? "Update Password" : key.Title(),
-                this,
-                function (value, text_box) {
-                    self.set_data(key, value, text_box);
-                },
-                true
-            );
-        })(this);
+        var text_box = new Dash.Mobile.TextBox(
+            this.color,
+            key === "password" ? "Update Password" : key.Title(),
+            this,
+            (value, text_box) => {
+                this.set_data(key, value, text_box);
+            },
+            true
+        );
+        if (key === "first_name") {
+            this.first_name_field = text_box;
+            if (!this.get_data()["first_name"]) {
+                this.show_name_suggestion();
+            }
+        }
         text_box.SetText(this.get_data()[key]);
         text_box.StyleAsRow();
         if (key.includes("password")) {
@@ -55811,20 +55939,29 @@ function DashMobileUserProfile (binder, on_exit_callback, user_data=null, contex
             params["p"] = value;
             params["email"] = email;
         }
-        (function (self) {
-            Dash.Request(
-                self,
-                function (response) {
-                    Dash.Validate.Response(response);
-                    Dash.Log.Log("User settings updated:", response);
-                    if (params["f"] === "update_password") {
-                        text_box.SetText("");
+        Dash.Request(
+            this,
+            (response) => {
+                if (!Dash.Validate.Response(response)) {
+                    return;
+                }
+                Dash.Log.Log("User settings updated:", response);
+                this.user_data = response["updated_data"];
+                if (params["f"] === "update_password") {
+                    text_box.SetText("");
+                }
+                if (key === "first_name") {
+                    if (this.get_data()["first_name"]) {
+                        this.hide_name_suggestion();
                     }
-                },
-                "Users",
-                params
-            );
-        })(this);
+                    else {
+                        this.show_name_suggestion();
+                    }
+                }
+            },
+            "Users",
+            params
+        );
     };
     this.on_profile_changed = function () {
         // Dummy/placeholder function
@@ -57068,6 +57205,26 @@ function DashMobileCardStackUserBanner (stack, include_refresh_button=true) {
     this.setup_styles = function () {
         this.SetBackground(Dash.Color.Mobile.BackgroundGradient);
         this.SetLeftIcon("user_settings", this.on_user_clicked);
+        window._DashMobileProfileSettingsIconButton = this.header_row.left_icon;
+        this.header_row.left_icon._add_suggestion_badge = function () {
+            if (window._DashMobileProfileSettingsIconButton._suggestion_badge) {
+                return;
+            }
+            window._DashMobileProfileSettingsIconButton._suggestion_badge = Dash.Gui.GetMobileNotificationIcon(
+                window._DashMobileProfileSettingsIconButton.size * 0.3,
+                false
+            );
+            window._DashMobileProfileSettingsIconButton._suggestion_badge.css({
+                "top": Dash.Size.Padding * 0.5,
+                "right": -Dash.Size.Padding * 0.5
+            });
+            window._DashMobileProfileSettingsIconButton.html.append(
+                window._DashMobileProfileSettingsIconButton._suggestion_badge
+            );
+        };
+        if (Dash.User.Data && !Dash.User.Data["first_name"]) {
+            this.header_row.left_icon._add_suggestion_badge();
+        }
     };
     this.SetContextLogoImg = function (url) {
         this.context_logo_img_url = url;
@@ -57805,8 +57962,8 @@ class DashGuiGraph {
             clearTimeout(this.active_editing_timeout);
             this.active_editing_timeout = null;
         };
-        (function(self){
-            self.active_editing_timeout = setTimeout(function(){
+        (function (self) {
+            self.active_editing_timeout = setTimeout(function () {
                 self.active_editing_timeout = null;
                 self.active_editing         = false;
             }, 8000);
@@ -57883,16 +58040,16 @@ class DashGuiGraph {
             return;
         };
         this.initially_loaded = true;
-        (function(self){
-            setTimeout(function(){
+        (function (self) {
+            setTimeout(function () {
                 self.load_dots.Stop();
                 self.excalidraw_layer.stop().animate({"opacity": 1}, 500);
                 self.load_scene_data();
             }, 250);
-            setTimeout(function(){
+            setTimeout(function () {
                 ExcalidrawLib.restoreElements(self.data["elements"]);
             }, 500);
-            setTimeout(function(){
+            setTimeout(function () {
                 ExcalidrawLib.restoreElements(self.data["elements"]);
             }, 1500);
         })(this);
@@ -57920,12 +58077,12 @@ class DashGuiGraph {
     load_excalidraw () {
         var font_path = "dash/dist/excalidraw/excalidraw-assets/Virgil.woff2";
         var font = new FontFace("Virgil", `url(${font_path})`);
-        (function(self){
-            font.load().then(function(loadedFont) {
+        (function (self) {
+            font.load().then(function (loadedFont) {
                 document.fonts.add(loadedFont);
                 self.fonts_ready = true;
                 self.load_excalidraw_p1();
-            }).catch(function(error) {
+            }).catch(function (error) {
                 console.error('Font loading failed:', error);
             });
         })(this);
@@ -57934,12 +58091,12 @@ class DashGuiGraph {
         window.EXCALIDRAW_ASSET_PATH = "dash/dist/excalidraw/";
         var script = document.createElement("script");
         script.src = "https://unpkg.com/react/umd/react.production.min.js";
-        (function(self, script){
-            script.onload = function() {
+        (function (self, script) {
+            script.onload = function () {
                 self.load_excalidraw_p2();
             };
         })(this, script);
-        script.onerror = function() {
+        script.onerror = function () {
             console.error("Failed to load Dash.Gui.Graph -> React p1");
         };
         document.head.appendChild(script);
@@ -57947,12 +58104,12 @@ class DashGuiGraph {
     load_excalidraw_p2 () {
         var script = document.createElement("script");
         script.src = "https://unpkg.com/react-dom/umd/react-dom.production.min.js";
-        (function(self, script){
-            script.onload = function() {
+        (function (self, script) {
+            script.onload = function () {
                 self.load_excalidraw_p3();
             };
         })(this, script);
-        script.onerror = function() {
+        script.onerror = function () {
             console.error("Failed to load Dash.Gui.Graph -> React p2");
         };
         document.head.appendChild(script);
@@ -57963,7 +58120,7 @@ class DashGuiGraph {
         script.onload = () => {
             this.load_excalidraw_p4(script);
         }
-        script.onerror = function() {
+        script.onerror = function () {
             console.error("Failed to load Dash.Gui.Graph -> React p2");
         };
         document.head.appendChild(script);
@@ -58011,12 +58168,12 @@ class DashGuiGraph {
         this.ui_options["canvasActions"]["saveAsImage"]      = false;
         this.ui_options["tools"] = {};
         this.ui_options["tools"]["image"] = false;
-        (function(self){
+        (function (self) {
             var clear_item = React.createElement(
                 ExcalidrawLib.MainMenu.Item,
                 {
                     shortcut: "Clear All",
-                    onSelect: function(){self.on_clear_canvas()},
+                    onSelect: function () {self.on_clear_canvas()},
                 }
             );
             var test_url_item = React.createElement(
@@ -58045,8 +58202,8 @@ class DashGuiGraph {
 
 
                   React.createElement(ExcalidrawLib.Excalidraw, {
-                      excalidrawAPI: function(api){self.load_excalidraw_p5(api)},
-                      onChange:      function(e, a, f){self.on_change(e, a, f)},
+                      excalidrawAPI: function (api) {self.load_excalidraw_p5(api)},
+                      onChange:      function (e, a, f) {self.on_change(e, a, f)},
                       UIOptions:     self.ui_options,
                   },
                       main_menu,

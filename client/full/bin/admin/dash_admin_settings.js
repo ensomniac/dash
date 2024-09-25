@@ -1,9 +1,15 @@
-function DashAdminSettings (admin_view) {
+function DashAdminSettings (admin_view=null) {
     this.admin_view = admin_view;
 
     this.data = null;
     this.property_box = null;
-    this.html = Dash.Gui.GetHTMLContext("Loading Admin View...", {"margin": Dash.Size.Padding});
+    this.color = this.admin_view.color || Dash.Color.Light;
+
+    this.html = Dash.Gui.GetHTMLContext(
+        "Loading Admin View...",
+        {"margin": Dash.Size.Padding},
+        this.color
+    );
 
     this.setup_styles = function () {
         this.reload_data();
@@ -21,22 +27,27 @@ function DashAdminSettings (admin_view) {
         // this.add_site_settings_box();
         // this.add_user_groups_box();
         this.add_users_box();
+
         // Dash.Log.Log(response);
     };
 
     this.add_users_box = function () {
         // this.users_box = Dash.Gui.GetHTMLBoxContext({});
         this.users_box = Dash.Gui.GetHTMLContext();
+
         this.html.append(this.users_box);
 
         // var users_header = new Dash.Gui.Header("Users").html;
+
         // this.users_box.append(users_header);
 
         for (var i in this.data["users"]["order"]) {
             var email = this.data["users"]["order"][i];
             var user_data = this.data["users"]["data"][email];
             var user_box = new Dash.Layout.UserProfile(user_data);
+
             this.users_box.append(user_box.html);
+
             // user_box.html.css({
             //     "margin": Dash.Size.Padding * 2,
             // });

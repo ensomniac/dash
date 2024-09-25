@@ -21,14 +21,14 @@ function DashGuiButtonStyleTabSide () {
             "padding-right": Dash.Size.Padding,
             "padding": 0,
             "margin": 0,
-            "margin-bottom": 1,
+            "margin-bottom": 1
         });
 
         this.highlight.css({
             "position": "absolute",
             "inset": 0,
             "background": this.default_highlight_background,
-            "opacity": 0,
+            "opacity": 0
         });
 
         this.load_bar.css({
@@ -37,14 +37,14 @@ function DashGuiButtonStyleTabSide () {
             "top": 0,
             "bottom": 0,
             "width": 0,
-            "background": this.default_load_bar_background,
+            "background": this.default_load_bar_background
         });
 
         this.click_highlight.css({
             "position": "absolute",
             "inset": 0,
             "background": this.default_click_highlight_background,
-            "opacity": 0,
+            "opacity": 0
         });
 
         this.label.css({

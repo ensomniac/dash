@@ -68,9 +68,9 @@ class DashLayoutSelectorTabs {
             // "padding": Dash.Size.Padding,
         });
 
-        (function(self){
+        (function (self) {
 
-            requestAnimationFrame(function(){
+            requestAnimationFrame(function () {
                 self.new_button.html.css({"margin-top": Dash.Size.Padding * 0.5});
                 self.new_button.html.stop().animate({"opacity": 1});
             });

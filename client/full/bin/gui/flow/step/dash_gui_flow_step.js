@@ -386,7 +386,7 @@ class DashGuiFlowStep {
 
         var is_last_step = this.is_last_step();
 
-        if (!is_last_step && typeof step_id_override === "function"){
+        if (!is_last_step && typeof step_id_override === "function") {
             step_id_override = step_id_override();
         }
 

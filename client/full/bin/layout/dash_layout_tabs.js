@@ -174,6 +174,7 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="", color=null) {
         }
 
         this.content_area.empty();
+
         this.active_content = null;
 
         var inst_class;
@@ -192,7 +193,12 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="", color=null) {
             var html_class = this.all_content[index]["content_div_html_class"];
             var callback = this.all_content[index]["content_div_html_class"].bind(this.binder);
             var optional_args = this.all_content[index]["optional_args"];
-            var unpack = this.all_content[index]["unpack_params"] && Dash.Validate.Object(optional_args) && Array.isArray(optional_args);
+
+            var unpack = (
+                   this.all_content[index]["unpack_params"]
+                && Dash.Validate.Object(optional_args)
+                && Array.isArray(optional_args)
+            );
 
             if (this.is_class(html_class)) {
                 if (unpack) {
@@ -483,14 +489,12 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="", color=null) {
                 return;
             }
 
-            (function (self) {
-                setTimeout(
-                    function () {
-                        self.init();
-                    },
-                    100
-                );
-            })(this);
+            setTimeout(
+                () => {
+                    this.init();
+                },
+                100
+            );
 
             this.init_attempts += 1;
 
@@ -512,8 +516,19 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="", color=null) {
         // If the user is new and hasn't yet at least entered their first name, gently
         // nudge them to do so every time they load the main view by loading their user view
         for (var i in this.all_content) {
-            if (this.all_content[i]["content_div_html_class"] !== DashUserView) {
+            if (
+                   this.all_content[i]["content_div_html_class"] !== DashUserView
+                && (
+                       typeof this.all_content[i]["label_text"] !== "string"
+                    || !(this.all_content[i]["label_text"].includes("Profile"))
+                )
+            ) {
                 continue;
+            }
+
+
+            if (this.all_content[i]["button"]) {
+                window._DashProfileSettingsTabButton = this.all_content[i]["button"];
             }
 
             try {
@@ -677,7 +692,7 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="", color=null) {
     // field and highlight it so it's clear what the user is supposed to do.
     this.on_autoload_user_settings = function () {
         if (
-            this.all_content[this.current_index]["content_div_html_class"] !== DashUserView
+               this.all_content[this.current_index]["content_div_html_class"] !== DashUserView
             || !this.active_content.user_profile
         ) {
             return;

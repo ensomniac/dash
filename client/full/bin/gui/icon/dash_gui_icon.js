@@ -1,4 +1,6 @@
-function DashGuiIcon (color=null, icon_name="unknown", container_size=null, icon_size_mult=1, icon_color=null) {
+function DashGuiIcon (
+    color=null, icon_name="unknown", container_size=null, icon_size_mult=1, icon_color=null
+) {
     this.color = color || Dash.Color.Light;
     this.name = icon_name;
     this.size = container_size || Dash.Size.RowHeight;
@@ -36,8 +38,8 @@ function DashGuiIcon (color=null, icon_name="unknown", container_size=null, icon
 
         this.html.append(this.icon_html);
 
-        (function(self){
-            requestAnimationFrame(function(){
+        (function (self) {
+            requestAnimationFrame(function () {
                 self.initialized = true;
             });
         })(this);
@@ -127,13 +129,13 @@ function DashGuiIcon (color=null, icon_name="unknown", container_size=null, icon
 
                 icon_html.css({"opacity": 0});
 
-                (function(self, icon_html){
+                (function (self, icon_html) {
 
-                    self.icon_html.stop().animate({"opacity": 0}, 200, function(){
+                    self.icon_html.stop().animate({"opacity": 0}, 200, function () {
                         self.icon_html.remove();
                         self.html.append(icon_html);
                         self.icon_html = icon_html;
-                        icon_html.stop().animate({"opacity": 1}, 300, function(){
+                        icon_html.stop().animate({"opacity": 1}, 300, function () {
                             // ...
                         });
                     });
