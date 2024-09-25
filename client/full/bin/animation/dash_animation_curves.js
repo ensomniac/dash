@@ -11,6 +11,10 @@ function DashAnimationCurves() {
         return t * (2 - t);
     };
 
+    this.EaseOutExpo = function (t) {
+        return (t===1) ? 1 : -Math.pow(2, -10 * t) + 1;
+    };
+
     this.EaseOutBounce = function (t) {
         var b1 = 4 / 11;
         var b2 = 6 / 11;
