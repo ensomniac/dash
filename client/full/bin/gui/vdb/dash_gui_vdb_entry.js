@@ -263,7 +263,7 @@ function DashGuiVDBEntry (
                 },
                 include_label ? ("Color #" + color_num.toString()) : "none",
                 self.color,
-                self.get_data()[self.get_color_key(color_num, key_prefix)] || "#00ff00"
+                self.get_data()[self.get_color_key(color_num, key_prefix)]
             );
         })(this);
 

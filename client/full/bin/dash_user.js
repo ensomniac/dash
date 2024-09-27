@@ -74,6 +74,14 @@ function DashUser () {
             this.Data = server_response["user"];
             this.Init = server_response["init"];
 
+            if (Dash.Validate.Object(server_response["dash_context"])) {
+                Dash.UpdateDashContext(server_response["dash_context"]);
+            }
+
+            if (Dash.Validate.Object(server_response["analog_data"])) {
+                Dash.SetAnalogData(server_response["analog_data"]);
+            }
+
             Dash.Local.Set("email", email, false, true);
             Dash.Local.Set("token", server_response["token"], false, true);
             Dash.Local.Set("user_json", JSON.stringify(server_response["user"]), false, true);

@@ -6,8 +6,9 @@ function DashColor (dark_mode_active=false) {
     this.Primary = "#95ae6c";
     this.Warning = "#fab964";
     this.parsed_color_data = {};
+    this.PickerDefault = "#00ff00";
     this.SaveHighlight = "rgb(255, 255, 255, 0.5)";
-    
+
     // This is a temporary way to centralize the orange palette
     // that was originally defined and used throughout the mobile code
     this.Mobile = {
@@ -714,8 +715,16 @@ function DashColor (dark_mode_active=false) {
         var gradient_dark = this.Lighten(window["ColorDarkBG"], 15);
         var gradient_light = this.Lighten(window["ColorDarkBG"], 45);
 
-        this.Mobile.AccentSecondary = this.Lighten(window["ColorButton"], 45);
-        this.Mobile.AccentPrimary = this.Lighten(window["ColorButtonSelected"], 45);
+        this.Mobile.AccentPrimary = (
+               window["ColorMobileAccentPrimary"]
+            || this.Lighten(window["ColorButtonSelected"], 45)
+        );
+
+        this.Mobile.AccentSecondary = (
+               window["ColorMobileAccentSecondary"]
+            || this.Lighten(window["ColorButton"], 45)
+        );
+
         this.Mobile.BackgroundGradient = this.GetVerticalGradient(gradient_light, gradient_dark);
         this.Mobile.ButtonGradient = this.GetHorizontalGradient(gradient_light, gradient_dark);
     };

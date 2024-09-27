@@ -10,27 +10,49 @@ from Dash.Utils import Memory, OapiRoot
 
 
 class PackageContext:
+    _all_packages: dict
     _package_data: dict
 
-    def __init__(self, asset_path):
+    def __init__(self, asset_path="", ctx_id=""):
         self._asset_path = asset_path
+        self._ctx_id = ctx_id
+
         self.logs_root = os.path.join(OapiRoot, "logs")
+        self.pkg_root = os.path.join(OapiRoot, "dash", "local", "packages")
         
     @property
     def AssetPath(self):
         return self._asset_path
 
     @property
+    def ID(self):
+        return self._ctx_id
+
+    @property
     def PackageData(self):
         if not hasattr(self, "_package_data"):
             if os.path.exists(self.logs_root):
-                # Get the data directly from the server
                 self._package_data = self.get_pkg_data_from_server()
             else:
-                # Make a request to https://dash.guide/ to get the data
                 self._package_data = self.get_pkg_data_from_request()
 
+            if not self._asset_path and self._ctx_id:
+                self._asset_path = self._package_data.get("asset_path", "")
+
+            if not self._ctx_id and self._asset_path:
+                self._ctx_id = self._package_data.get("id", "")
+
         return self._package_data
+
+    @property
+    def AllPackages(self):
+        if not hasattr(self, "_all_packages"):
+            if os.path.exists(self.logs_root):
+                self._all_packages = self.get_all_pkgs_from_server()
+            else:
+                self._all_packages = self.get_all_pkgs_from_request()
+
+        return self._all_packages
 
     def ToDict(self):
         if not self.PackageData:
@@ -51,7 +73,7 @@ class PackageContext:
 
         data = {
             "is_valid": True,
-            "is_server": self.logs_root
+            "is_server": self.logs_root  # What?
         }
 
         for key in required_keys:
@@ -61,7 +83,12 @@ class PackageContext:
                 break
 
         for key in self.PackageData:
-            if key.startswith("created_") or key.startswith("modified_") or key.startswith("usr_path_") or key.startswith("git_"):
+            if (
+                key.startswith("created_")
+                or key.startswith("modified_")
+                or key.startswith("usr_path_")
+                or key.startswith("git_")
+            ):
                 continue
 
             if key == "sync_state":
@@ -73,44 +100,60 @@ class PackageContext:
 
         return data
 
-    # TODO: Make a lookup for asset path / package ids
     def get_pkg_data_from_server(self):
-        from json import loads
+        if not self._asset_path and not self._ctx_id:
+            return None
 
-        package_data = None
-        root = os.path.join(OapiRoot, "dash", "local", "packages/")
+        from Dash.LocalStorage import Read
 
-        for filename in os.listdir(root):
-            record_path = os.path.join(root, filename)
-            pkg_data = loads(open(record_path, "r").read())
+        for ctx_id in os.listdir(self.pkg_root):
+            pkg_data = Read(os.path.join(self.pkg_root, ctx_id))
 
             if not pkg_data.get("asset_path"):
                 continue
 
-            if self._asset_path == pkg_data.get("asset_path").lower().strip():
-                package_data = pkg_data
+            if (
+                (self._asset_path and self._asset_path == pkg_data.get("asset_path", "").lower().strip())
+                or (self._ctx_id and self._ctx_id == pkg_data.get("id", ""))
+            ):
+                return pkg_data
 
-                break
+        return None
 
-        if not package_data:
-            return None
+    def get_all_pkgs_from_server(self):
+        from Dash.LocalStorage import Read
 
-        return package_data
-
-    def get_pkg_data_from_request(self):
-        from json import loads
-        from requests import post
-
-        params = {
-            "f": "get_full_data",
-            "asset_path": self._asset_path,
-            "token": Memory.UserToken
+        packages = {
+            "data": {},
+            "order": []
         }
 
-        response = post("https://dash.guide/PackageContext", data=params)
+        for ctx_id in os.listdir(self.pkg_root):
+            pkg_data = Read(os.path.join(self.pkg_root, ctx_id))
+
+            if not pkg_data.get("asset_path"):
+                continue
+
+            packages["order"].append(pkg_data["id"])
+
+            packages["data"][pkg_data["id"]] = pkg_data
+
+        return packages
+
+    def get_pkg_data_from_request(self):
+        from requests import post
+
+        response = post(
+            "https://dash.guide/PackageContext",
+            data={
+                "f": "get_full_data",
+                "asset_path": self._asset_path,
+                "token": Memory.UserToken
+            }
+        )
 
         try:
-            response = loads(response.text)
+            response = response.json()
         except:
             sys.exit(f"== SERVER ERROR ==\n{response.text}")
 
@@ -119,14 +162,57 @@ class PackageContext:
 
         return response["full_data"]
 
+    def get_all_pkgs_from_request(self):
+        from requests import post
 
-def Get(asset_path):
-    return PackageContext(asset_path).ToDict()
+        response = post(
+            "https://dash.guide/Packages",
+            data={
+                "f": "get",
+                "token": Memory.UserToken
+            }
+        )
+
+        try:
+            response = response.json()
+        except:
+            sys.exit(f"== SERVER ERROR ==\n{response.text}")
+
+        if "data" not in response:
+            sys.exit(response)
+
+        return response
 
 
-def GetFullData(asset_path):
-    return PackageContext(asset_path).PackageData
+def Get(asset_path="", ctx_id=""):
+    return PackageContext(asset_path, ctx_id).ToDict()
+
+
+def GetFullData(asset_path="", ctx_id=""):
+    return PackageContext(asset_path, ctx_id).PackageData
 
 
 def GetAssetPath():
     return os.getcwd().lstrip(f"{OapiRoot}{os.path.sep}").split(os.path.sep)[0]
+
+
+def GetAllPackages():
+    return PackageContext().AllPackages
+
+
+# Not sure where this should live so putting it here for now
+def GetAnalogIndex(domain=""):
+    if not domain:
+        domain = os.environ.get("HTTP_HOST")
+
+    if not domain:
+        raise EnvironmentError("Failed to parse domain from os.environ, must provide domain")
+
+    from Dash.LocalStorage import Read
+
+    data = Read(os.path.join(OapiRoot, "analog", "local", "index.json")).get(domain)
+
+    if not data:
+        raise KeyError(f"The domain '{domain}' does not exist in the Analog index")
+
+    return data

@@ -1,9 +1,10 @@
 function Dash () {
     this.width = 0;
     this.height = 0;
-    this.html = $("<div></div>");
+    this.AnalogData = null;
     this.TabIsVisible = true;
     this.Context = DASH_CONTEXT;
+    this.html = $("<div></div>");
     this.GlobalStorageEnabled = false;
     this.Daypart = "Morning/Afternoon/Evening"; // Managed by Dash.Utils -> 5-minute background update interval
     this.LocalDev = window.location.protocol === "file:";
@@ -143,6 +144,46 @@ function Dash () {
                 self.draw();
             });
         })(this);
+    };
+
+    this.UpdateDashContext = function (new_context={}, full_replace=false) {
+        this.Log.Log("Update Dash context:", new_context);
+
+        if (full_replace) {
+            this.Context = new_context;
+        }
+
+        else {
+            for (var key in new_context) {
+                this.Context[key] = new_context[key];
+            }
+        }
+
+        this.Local.context = this.Context;
+    };
+
+    this.SetAnalogData = function (data={}) {
+        this.Log.Log("Analog data:", data);
+
+        this.AnalogData = data;
+
+        if (this.Validate.Object(data["color"])) {
+            // Required base set of colors
+            window.ColorAccentPrimary = data["color"]["accent_primary"] || window.ColorAccentPrimary || "#edca5c"; // Github-inspired yellow
+            window.ColorAccentSecondary = data["color"]["accent_secondary"] || window.ColorAccentSecondary || "#cc615c"; // Github-inspired red
+            window.ColorDarkBG = data["color"]["dark_bg"] || window.ColorDarkBG || "#1C1C1E";  // Very dark grey
+            window.ColorLightBG = data["color"]["light_bg"] || window.ColorLightBG || "#f0f0f0";  // Very light grey
+            window.ColorDarkText = data["color"]["dark_text"] || window.ColorDarkText || "#4F4F4F";  // Medium-dark grey
+            window.ColorLightText = data["color"]["light_text"] || window.ColorLightText || "#F2F2F2";  // Very light grey, nearly white
+            window.ColorButton = data["color"]["button"] || window.ColorButton || "#5e99cc";  // Github-inspired blue
+            window.ColorButtonSelected = data["color"]["button_selected"] || window.ColorButtonSelected || "#58c472"; // Github-inspired green
+
+            // Optional
+            window.ColorMobileAccentPrimary = data["color"]["mobile_accent_primary"] || "";
+            window.ColorMobileAccentSecondary = data["color"]["mobile_accent_secondary"] || "";
+
+            Dash.Color.InitColors();
+        }
     };
 
     this.check_for_global_storage = function () {

@@ -186,7 +186,7 @@ class DashGuiContext2DLayerLinks {
             null,
             "",
             this.color,
-            this.linked_color || "#00ff00",
+            this.linked_color,
             false,
             null,
             toolbar.height
@@ -329,7 +329,7 @@ class DashGuiContext2DLayerLinks {
 
         var color = this.color_picker.input.val();
 
-        if (!this.linked_color && color === "#00ff00") {
+        if (!this.linked_color && color === Dash.Color.PickerDefault) {
             color = "";  // If color not chosen, a random color will be assigned on the backend
         }
 

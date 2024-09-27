@@ -226,6 +226,7 @@ DashGuiIconMap = {
     "google_drive":            ["Google Drive", DashGuiIconWeights["brand"], "google-drive"],
     "graph":                   ["Graph", DashGuiIconWeights["solid"], "bezier-curve"],
     "group":                   ["Group", DashGuiIconWeights["solid"], "layer-group"],
+    "hand_pointer":            ["Hand Pointer", DashGuiIconWeights["regular"], "hand-pointer"],
     "handshake":               ["Handshake", DashGuiIconWeights["regular"], "handshake"],
     "hashtag":                 ["Hashtag", DashGuiIconWeights["solid"], "hashtag"],
     "headphones":              ["Audio", DashGuiIconWeights["regular"], "headphones"],

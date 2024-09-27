@@ -228,6 +228,8 @@ class ApiUsers:
         if not self._on_init_callback:
             return response
 
+        from Dash.PackageContext import GetAnalogIndex
+
         # Ideally, the response gets passed in as a param, but
         # don't want any contexts to break, so this is a workaround
         self._pre_init_callback_response = response
@@ -238,6 +240,12 @@ class ApiUsers:
 
         for key in additional:
             response["init"][key] = additional[key]
+
+        try:
+            response.update(GetAnalogIndex())
+
+        except KeyError:
+            pass
 
         return response
 

@@ -17480,9 +17480,10 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
 function Dash () {
     this.width = 0;
     this.height = 0;
-    this.html = $("<div></div>");
+    this.AnalogData = null;
     this.TabIsVisible = true;
     this.Context = DASH_CONTEXT;
+    this.html = $("<div></div>");
     this.GlobalStorageEnabled = false;
     this.Daypart = "Morning/Afternoon/Evening"; // Managed by Dash.Utils -> 5-minute background update interval
     this.LocalDev = window.location.protocol === "file:";
@@ -17602,6 +17603,37 @@ function Dash () {
                 self.draw();
             });
         })(this);
+    };
+    this.UpdateDashContext = function (new_context={}, full_replace=false) {
+        this.Log.Log("Update Dash context:", new_context);
+        if (full_replace) {
+            this.Context = new_context;
+        }
+        else {
+            for (var key in new_context) {
+                this.Context[key] = new_context[key];
+            }
+        }
+        this.Local.context = this.Context;
+    };
+    this.SetAnalogData = function (data={}) {
+        this.Log.Log("Analog data:", data);
+        this.AnalogData = data;
+        if (this.Validate.Object(data["color"])) {
+            // Required base set of colors
+            window.ColorAccentPrimary = data["color"]["accent_primary"] || window.ColorAccentPrimary || "#edca5c"; // Github-inspired yellow
+            window.ColorAccentSecondary = data["color"]["accent_secondary"] || window.ColorAccentSecondary || "#cc615c"; // Github-inspired red
+            window.ColorDarkBG = data["color"]["dark_bg"] || window.ColorDarkBG || "#1C1C1E";  // Very dark grey
+            window.ColorLightBG = data["color"]["light_bg"] || window.ColorLightBG || "#f0f0f0";  // Very light grey
+            window.ColorDarkText = data["color"]["dark_text"] || window.ColorDarkText || "#4F4F4F";  // Medium-dark grey
+            window.ColorLightText = data["color"]["light_text"] || window.ColorLightText || "#F2F2F2";  // Very light grey, nearly white
+            window.ColorButton = data["color"]["button"] || window.ColorButton || "#5e99cc";  // Github-inspired blue
+            window.ColorButtonSelected = data["color"]["button_selected"] || window.ColorButtonSelected || "#58c472"; // Github-inspired green
+            // Optional
+            window.ColorMobileAccentPrimary = data["color"]["mobile_accent_primary"] || "";
+            window.ColorMobileAccentSecondary = data["color"]["mobile_accent_secondary"] || "";
+            Dash.Color.InitColors();
+        }
     };
     this.check_for_global_storage = function () {
         if (Dash.IsMobile) {
@@ -18227,8 +18259,11 @@ function DashGui () {
     // TODO: This needs to be its own class/element
     this.GetColorPicker = function (
         binder=null, callback=null, label_text="Color Picker", dash_color=null,
-        default_picker_hex_color="#00ff00", include_clear_button=false, clear_button_cb=null, height=null
+        default_picker_hex_color="", include_clear_button=false, clear_button_cb=null, height=null
     ) {
+        if (!default_picker_hex_color) {
+            default_picker_hex_color = Dash.Color.PickerDefault;  // Using it as a default above doesn't cut it
+        }
         if (!dash_color) {
             dash_color = binder?.color || Dash.Color.Light;
         }
@@ -18238,7 +18273,8 @@ function DashGui () {
         var color_picker = {
             "height": height,
             "html": $("<div></div>"),
-            "input": $("<input type='color' id='" + id + "' value='" + default_picker_hex_color + "'>")
+            "input": $("<input type='color' id='" + id + "' value='" + default_picker_hex_color + "'>"),
+            "default_hex_color": default_picker_hex_color
         };
         if (include_label) {
             color_picker["label"] = $("<label for='" + id + "'>" + label_text + "</label>");
@@ -18275,6 +18311,7 @@ function DashGui () {
         }
         color_picker.html.append(color_picker.input);
         if (include_clear_button) {
+            var small = height < Dash.Size.RowHeight;
             color_picker.html.css({
                 "display": "flex"
             });
@@ -18293,13 +18330,20 @@ function DashGui () {
                 dash_color,
                 {
                     "container_size": height,
-                    "size_mult": 0.5
+                    "size_mult": small ? 0.75 : 0.5
                 }
             );
             color_picker["clear_button"].SetIconColor(dash_color.AccentBad);
-            color_picker["clear_button"].html.css({
-                "padding-top": Dash.Size.Padding * 0.1
-            });
+            if (small) {
+                color_picker["clear_button"].html.css({
+                    "margin-left": Dash.Size.Padding * 0.1
+                });
+            }
+            else {
+                color_picker["clear_button"].html.css({
+                    "padding-top": Dash.Size.Padding * 0.1
+                });
+            }
             color_picker.html.append(color_picker.clear_button.html);
         }
         if (callback) {
@@ -18738,6 +18782,12 @@ function DashUser () {
         if (email && server_response["token"]) {
             this.Data = server_response["user"];
             this.Init = server_response["init"];
+            if (Dash.Validate.Object(server_response["dash_context"])) {
+                Dash.UpdateDashContext(server_response["dash_context"]);
+            }
+            if (Dash.Validate.Object(server_response["analog_data"])) {
+                Dash.SetAnalogData(server_response["analog_data"]);
+            }
             Dash.Local.Set("email", email, false, true);
             Dash.Local.Set("token", server_response["token"], false, true);
             Dash.Local.Set("user_json", JSON.stringify(server_response["user"]), false, true);
@@ -21810,8 +21860,8 @@ function DashColor (dark_mode_active=false) {
     this.Primary = "#95ae6c";
     this.Warning = "#fab964";
     this.parsed_color_data = {};
+    this.PickerDefault = "#00ff00";
     this.SaveHighlight = "rgb(255, 255, 255, 0.5)";
-    
     // This is a temporary way to centralize the orange palette
     // that was originally defined and used throughout the mobile code
     this.Mobile = {
@@ -22399,8 +22449,14 @@ function DashColor (dark_mode_active=false) {
     this.init_color_mobile = function () {
         var gradient_dark = this.Lighten(window["ColorDarkBG"], 15);
         var gradient_light = this.Lighten(window["ColorDarkBG"], 45);
-        this.Mobile.AccentSecondary = this.Lighten(window["ColorButton"], 45);
-        this.Mobile.AccentPrimary = this.Lighten(window["ColorButtonSelected"], 45);
+        this.Mobile.AccentPrimary = (
+               window["ColorMobileAccentPrimary"]
+            || this.Lighten(window["ColorButtonSelected"], 45)
+        );
+        this.Mobile.AccentSecondary = (
+               window["ColorMobileAccentSecondary"]
+            || this.Lighten(window["ColorButton"], 45)
+        );
         this.Mobile.BackgroundGradient = this.GetVerticalGradient(gradient_light, gradient_dark);
         this.Mobile.ButtonGradient = this.GetHorizontalGradient(gradient_light, gradient_dark);
     };
@@ -32611,7 +32667,7 @@ class DashGuiContext2DLayerLinks {
             null,
             "",
             this.color,
-            this.linked_color || "#00ff00",
+            this.linked_color,
             false,
             null,
             toolbar.height
@@ -32721,7 +32777,7 @@ class DashGuiContext2DLayerLinks {
         this.save_button.SetLoading(true);
         this.disable();
         var color = this.color_picker.input.val();
-        if (!this.linked_color && color === "#00ff00") {
+        if (!this.linked_color && color === Dash.Color.PickerDefault) {
             color = "";  // If color not chosen, a random color will be assigned on the backend
         }
         Dash.Request(
@@ -44028,6 +44084,7 @@ DashGuiIconMap = {
     "google_drive":            ["Google Drive", DashGuiIconWeights["brand"], "google-drive"],
     "graph":                   ["Graph", DashGuiIconWeights["solid"], "bezier-curve"],
     "group":                   ["Group", DashGuiIconWeights["solid"], "layer-group"],
+    "hand_pointer":            ["Hand Pointer", DashGuiIconWeights["regular"], "hand-pointer"],
     "handshake":               ["Handshake", DashGuiIconWeights["regular"], "handshake"],
     "hashtag":                 ["Hashtag", DashGuiIconWeights["solid"], "hashtag"],
     "headphones":              ["Audio", DashGuiIconWeights["regular"], "headphones"],
@@ -45793,7 +45850,15 @@ function DashGuiPropertyBox (
     };
     this.update_color_pickers = function () {
         for (var data_key in this.color_pickers) {
-            this.color_pickers[data_key].input.val(this.get_update_value(data_key));
+            var og_val = this.color_pickers[data_key].input.val();
+            var new_val = this.get_update_value(data_key);
+            if (!new_val) {
+                new_val = this.color_pickers[data_key].default_hex_color;
+            }
+            if (og_val === new_val) {
+                continue;
+            }
+            this.color_pickers[data_key].input.val(new_val);
         }
     };
     this.update_text_areas = function () {
@@ -46695,7 +46760,7 @@ function DashGuiPropertyBoxInterface () {
     };
     this.AddColorPicker = function (
         data_key, label_text="Color", can_edit=false, include_clear_button=true,
-        end_tag_text="", default_picker_hex_color="#00ff00"
+        end_tag_text="", default_picker_hex_color=""
     ) {
         this.data = this.get_data_cb ? this.get_data_cb() : {};
         // var value = this.get_formatted_data_cb ? this.get_formatted_data_cb(data_key) : this.data[data_key];
@@ -46730,13 +46795,16 @@ function DashGuiPropertyBoxInterface () {
             this.color_pickers[data_key].html.css({
                 "display": "flex"
             });
-            this.color_pickers[data_key].html.append(Dash.Gui.GetFlexSpacer());
+            var spacer = Dash.Gui.GetFlexSpacer();
+            this.color_pickers[data_key].html.append(spacer);
+            this.color_pickers[data_key]["end_tag_spacer"] = spacer;
             var tag = $("<div>" + end_tag_text + "</div>");
             tag.css({
                 "color": this.color.Stroke,
                 "font-family": "sans_serif_italic",
                 "height": this.color_pickers[data_key].height,
                 "line-height": this.color_pickers[data_key].height + "px",
+                "font-size": "95%",
                 "user-select": "none",
                 "pointer-events": "none",
                 "flex": "none"
@@ -47609,7 +47677,7 @@ function DashGuiVDBEntry (
                 },
                 include_label ? ("Color #" + color_num.toString()) : "none",
                 self.color,
-                self.get_data()[self.get_color_key(color_num, key_prefix)] || "#00ff00"
+                self.get_data()[self.get_color_key(color_num, key_prefix)]
             );
         })(this);
         if (this.read_only) {

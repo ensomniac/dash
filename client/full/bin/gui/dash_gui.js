@@ -221,8 +221,12 @@ function DashGui () {
     // TODO: This needs to be its own class/element
     this.GetColorPicker = function (
         binder=null, callback=null, label_text="Color Picker", dash_color=null,
-        default_picker_hex_color="#00ff00", include_clear_button=false, clear_button_cb=null, height=null
+        default_picker_hex_color="", include_clear_button=false, clear_button_cb=null, height=null
     ) {
+        if (!default_picker_hex_color) {
+            default_picker_hex_color = Dash.Color.PickerDefault;  // Using it as a default above doesn't cut it
+        }
+
         if (!dash_color) {
             dash_color = binder?.color || Dash.Color.Light;
         }
@@ -236,7 +240,8 @@ function DashGui () {
         var color_picker = {
             "height": height,
             "html": $("<div></div>"),
-            "input": $("<input type='color' id='" + id + "' value='" + default_picker_hex_color + "'>")
+            "input": $("<input type='color' id='" + id + "' value='" + default_picker_hex_color + "'>"),
+            "default_hex_color": default_picker_hex_color
         };
 
         if (include_label) {
@@ -282,6 +287,8 @@ function DashGui () {
         color_picker.html.append(color_picker.input);
 
         if (include_clear_button) {
+            var small = height < Dash.Size.RowHeight;
+
             color_picker.html.css({
                 "display": "flex"
             });
@@ -303,15 +310,23 @@ function DashGui () {
                 dash_color,
                 {
                     "container_size": height,
-                    "size_mult": 0.5
+                    "size_mult": small ? 0.75 : 0.5
                 }
             );
 
             color_picker["clear_button"].SetIconColor(dash_color.AccentBad);
 
-            color_picker["clear_button"].html.css({
-                "padding-top": Dash.Size.Padding * 0.1
-            });
+            if (small) {
+                color_picker["clear_button"].html.css({
+                    "margin-left": Dash.Size.Padding * 0.1
+                });
+            }
+
+            else {
+                color_picker["clear_button"].html.css({
+                    "padding-top": Dash.Size.Padding * 0.1
+                });
+            }
 
             color_picker.html.append(color_picker.clear_button.html);
         }
