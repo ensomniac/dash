@@ -28585,7 +28585,6 @@ function DashGuiSelectorMenuTray (selector_menu) {
             "bottom": 0,
             "border-radius":  Dash.Size.BorderRadius,
             "background":     this.color.Background,
-            "background":     "blue",
             "pointer-events": "auto",
             "user-select":    "none",
             "box-shadow": "0px 10px 30px 0px rgba(0, 0, 0, 0.5)",
