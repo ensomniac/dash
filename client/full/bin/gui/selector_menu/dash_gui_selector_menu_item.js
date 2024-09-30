@@ -70,6 +70,21 @@ function DashGuiSelectorItem (tray, details) {
         this.html.append(this.icon.html);
         this.html.append(this.label);
 
+        if (this.details["thumbnail_url"]) {
+
+            this.icon.icon_html.css({
+                "opacity": 0,
+            });
+
+            this.icon.html.css({
+                "background-image":    "url('" + this.details["thumbnail_url"] + "')",
+                "background-size":     "cover",
+                "background-position": "center",
+                "background-repeat":   "no-repeat"
+            });
+
+        };
+
         (function (self) {
             self.html.on("click", function () {
                 self.on_click();

@@ -36,6 +36,7 @@ function DashGuiSelectorMenuTray (selector_menu) {
             "background": "rgba(255, 255, 255, 0.0)",
             "pointer-events": "auto",
             "user-select":    "none",
+            "z-index": 10,
         });
 
         this.close_skirt.css({
@@ -62,7 +63,7 @@ function DashGuiSelectorMenuTray (selector_menu) {
             "bottom": 0,
             "border-radius":  Dash.Size.BorderRadius,
             "background":     this.color.Background,
-            // "background":     "blue",
+            "background":     "blue",
             "pointer-events": "auto",
             "user-select":    "none",
             "box-shadow": "0px 10px 30px 0px rgba(0, 0, 0, 0.5)",
@@ -150,9 +151,7 @@ function DashGuiSelectorMenuTray (selector_menu) {
         else {
             this.num_rows = 10;
             this.num_cols = 4;
-        }
-
-        console.log("Num items:", this.selector_menu.items.length);
+        };
 
         this.content.empty();
 
@@ -198,6 +197,7 @@ function DashGuiSelectorMenuTray (selector_menu) {
             "width":  this.content_size["width"],
             "height": 1,
             "overflow": "hidden",
+            "z-index": 100,
         });
 
         $("body").append(this.close_skirt);

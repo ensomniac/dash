@@ -28560,6 +28560,7 @@ function DashGuiSelectorMenuTray (selector_menu) {
             "background": "rgba(255, 255, 255, 0.0)",
             "pointer-events": "auto",
             "user-select":    "none",
+            "z-index": 10,
         });
         this.close_skirt.css({
             "position": "fixed",
@@ -28584,7 +28585,7 @@ function DashGuiSelectorMenuTray (selector_menu) {
             "bottom": 0,
             "border-radius":  Dash.Size.BorderRadius,
             "background":     this.color.Background,
-            // "background":     "blue",
+            "background":     "blue",
             "pointer-events": "auto",
             "user-select":    "none",
             "box-shadow": "0px 10px 30px 0px rgba(0, 0, 0, 0.5)",
@@ -28660,8 +28661,7 @@ function DashGuiSelectorMenuTray (selector_menu) {
         else {
             this.num_rows = 10;
             this.num_cols = 4;
-        }
-        console.log("Num items:", this.selector_menu.items.length);
+        };
         this.content.empty();
         for (var x in this.selector_menu.items) {
             var item_details = this.selector_menu.items[x];
@@ -28695,6 +28695,7 @@ function DashGuiSelectorMenuTray (selector_menu) {
             "width":  this.content_size["width"],
             "height": 1,
             "overflow": "hidden",
+            "z-index": 100,
         });
         $("body").append(this.close_skirt);
         $("body").append(this.background);
@@ -28773,6 +28774,17 @@ function DashGuiSelectorItem (tray, details) {
         this.html.append(this.hover);
         this.html.append(this.icon.html);
         this.html.append(this.label);
+        if (this.details["thumbnail_url"]) {
+            this.icon.icon_html.css({
+                "opacity": 0,
+            });
+            this.icon.html.css({
+                "background-image":    "url('" + this.details["thumbnail_url"] + "')",
+                "background-size":     "cover",
+                "background-position": "center",
+                "background-repeat":   "no-repeat"
+            });
+        };
         (function (self) {
             self.html.on("click", function () {
                 self.on_click();
