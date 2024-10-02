@@ -7,21 +7,32 @@ import os
 import sys
 
 
-# It's unclear if this should be inheriting from ApiCore - it uses ApiCore's
-# functionality, but I'm unsure, so just adding the below type hints for now
 class ApiUsers:
+    # This seems to only ever be used to extend a Users class that is
+    # instantiated with ApiCore, so adding these here to resolve ApiCore's variables
     User: dict
     Params: dict
     RandomID: str
     Add: callable
     DashContext: dict
+    AnalogContext: dict
     ParseParam: callable
     SetResponse: callable
     ValidateParams: callable
 
-    def __init__(self, execute_as_module, asset_path):
-        self._execute_as_module = execute_as_module
-        self._asset_path = asset_path
+    # These params don't need to be passed in here since they're already
+    # passed into ApiCore, but leaving them to not break any other code
+    def __init__(self, execute_as_module=False, asset_path=""):
+        if not hasattr(self, "_execute_as_module"):
+            self._execute_as_module = execute_as_module
+
+        if not hasattr(self, "_asset_path"):
+            self._asset_path = asset_path
+
+            if not self._asset_path:
+                from Dash.Utils import ParseDashContextAssetPath
+
+                self._asset_path = ParseDashContextAssetPath()
 
         self._on_init_callback = None
         self._on_termination_callback = None
@@ -228,8 +239,6 @@ class ApiUsers:
         if not self._on_init_callback:
             return response
 
-        from Dash.PackageContext import GetAnalogIndex
-
         # Ideally, the response gets passed in as a param, but
         # don't want any contexts to break, so this is a workaround
         self._pre_init_callback_response = response
@@ -241,10 +250,13 @@ class ApiUsers:
         for key in additional:
             response["init"][key] = additional[key]
 
-        try:
-            response.update(GetAnalogIndex())
+        if self.AnalogContext:
+            response["analog_context"] = self.AnalogContext
+            response["dash_context"] = self.DashContext
 
-        except KeyError:
+        try:
+            response.update(self.AnalogContext)
+        except:
             pass
 
         return response

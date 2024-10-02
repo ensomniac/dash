@@ -15,10 +15,19 @@ class ApiAdmin:
     DashContext: dict
     SetResponse: callable
 
+    # These params don't need to be passed in here since they're already
+    # passed into ApiCore, but leaving them to not break any other code
     def __init__(self, execute_as_module=False, asset_path=""):
-        # These don't need to be here, they're already passed into ApiCore, making this is redundant
-        self._execute_as_module = execute_as_module
-        self._asset_path = asset_path
+        if not hasattr(self, "_execute_as_module"):
+            self._execute_as_module = execute_as_module
+
+        if not hasattr(self, "_asset_path"):
+            self._asset_path = asset_path
+
+            if not self._asset_path:
+                from Dash.Utils import ParseDashContextAssetPath
+
+                self._asset_path = ParseDashContextAssetPath()
 
         self.Add(self.get, requires_authentication=True)
 

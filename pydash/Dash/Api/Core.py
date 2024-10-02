@@ -14,20 +14,26 @@ from Dash.Utils import GetRandomID
 class ApiCore:
     _user: dict
     _dash_context: dict
+    _analog_context: dict
     _dash_global: callable
 
-    def __init__(self, execute_as_module, asset_path, send_email_on_error=False):
+    def __init__(self, execute_as_module=False, asset_path="", send_email_on_error=False):
         self._execute_as_module = execute_as_module
         self._asset_path = asset_path
         self._send_email_on_error = send_email_on_error
 
+        if not self._asset_path:
+            from Dash.Utils import ParseDashContextAssetPath
+
+            self._asset_path = ParseDashContextAssetPath()
+
         self._params = {}
         self._public = {}
         self._private = {}  # Requires an authenticated user
+        self._raw_body = None
         self._render_html = None
         self._additional_notify_emails = []
         self._proceeding_with_empty_fs = False
-        self._raw_body = None
         self._missing_return_data_tag = "Missing return data x8765"
 
         try:
@@ -112,14 +118,63 @@ class ApiCore:
         """
 
         if not hasattr(self, "_dash_context"):
-            if self._execute_as_module and hasattr(self.dash_global, "Context") and self.dash_global.Context:
-                self._dash_context = self.dash_global.Context
-            else:
-                from Dash.PackageContext import Get
+            if not hasattr(self, "_analog_context"):
+                # Explicitly evaluate AnalogContext to trigger its logic, since it could populate _dash_context
+                _ = self.AnalogContext
 
-                self._dash_context = Get(self._asset_path)
+            if not hasattr(self, "_dash_context"):
+                if (
+                    self._execute_as_module
+                    and self.dash_global
+                    and hasattr(self.dash_global, "Context")
+                    and self.dash_global.Context
+                ):
+                    self._dash_context = self.dash_global.Context
+                else:
+                    from Dash.PackageContext import Get
+
+                    self._dash_context = Get(self._asset_path)
+
+            elif self._dash_context.get("asset_path"):
+                self._asset_path = self._dash_context["asset_path"]
+
+            if hasattr(self, "_analog_context"):
+                self._dash_context["analog_context"] = self._analog_context
 
         return self._dash_context
+
+    @property
+    def AnalogContext(self):
+        if not hasattr(self, "_analog_context"):
+            if (
+                self._execute_as_module
+                and self.dash_global
+                and hasattr(self.dash_global, "AnalogContext")
+                and self.dash_global.AnalogContext
+            ):
+                self._analog_context = self.dash_global.AnalogContext
+            else:
+                from Dash.PackageContext import GetAnalogIndex
+
+                self._analog_context = {}
+
+                try:
+                    analog_index = GetAnalogIndex()
+
+                    if analog_index.get("dash_context"):
+                        self._dash_context = analog_index["dash_context"]
+
+                    if analog_index.get("analog_context"):
+                        self._analog_context = analog_index["analog_context"]
+
+                except KeyError:
+                    pass
+
+            # Expose access for older code without requiring adding support for this new context
+            if hasattr(self, "_dash_context"):
+                self._dash_context["analog_context"] = self._analog_context
+
+        return self._analog_context
 
     @property
     def User(self):
@@ -142,7 +197,10 @@ class ApiCore:
                 if self.Params.get("dash_context_auth_asset_path"):
                     from Dash.PackageContext import Get
 
-                    self._user = DashUsers(self._params, Get(self.Params["dash_context_auth_asset_path"])).ValidateUser()
+                    self._user = DashUsers(
+                        self._params,
+                        Get(self.Params["dash_context_auth_asset_path"])
+                    ).ValidateUser()
                 else:
                     if not self.DashContext:
                         raise Exception("Dash Context is missing x8136")
@@ -503,7 +561,7 @@ class ApiCore:
             return {}
 
         if not subject:
-            subject = f"{self._asset_path.title()} Error - {self.__class__.__name__}.{self.Params.get('f')}()"
+            subject = f"{self.DashContext['display_name']} Error - {self.__class__.__name__}.{self.Params.get('f')}()"
 
         if not strict_msg:
             msg = self.get_msg_for_email(msg)
@@ -666,6 +724,7 @@ class ApiCore:
         self.dash_global.RequestData = self._params
         self.dash_global.RequestUser = self.User
         self.dash_global.Context = self.DashContext
+        self.dash_global.AnalogContext = self.AnalogContext
 
     def get_field_storage_data(self):
         data = {}

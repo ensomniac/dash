@@ -13,9 +13,15 @@ from Dash.Properties.SharedProperty import SharedProperty
 class Configuration:
     _dash_context: dict
 
-    def __init__(self, dash_context_asset_path, config_type):
+    def __init__(self, dash_context_asset_path="", config_type=""):
         self.asset_path = dash_context_asset_path
         self.config_type = config_type  # Ex: vibe / billing_status / component
+
+        if not self.asset_path:
+            from Dash.Utils import ParseDashContextAssetPath
+
+            self.asset_path = ParseDashContextAssetPath()
+
         self.shared_property_objects = []
 
     @property

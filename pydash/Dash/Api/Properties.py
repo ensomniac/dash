@@ -7,17 +7,25 @@ import os
 import sys
 
 
-# It's unclear if this should be inheriting from ApiCore - it uses ApiCore's
-# functionality, but I'm unsure, so just adding the below type hints for now
 class ApiProperties:
+    # This seems to only ever be used to extend a class that is instantiated
+    # with ApiCore, so adding these here to resolve ApiCore's variables
     Params: dict
     Add: callable
     DashContext: dict
     SetResponse: callable
 
-    def __init__(self, execute_as_module, asset_path):
-        self._execute_as_module = execute_as_module
-        self._asset_path = asset_path
+    def __init__(self, execute_as_module=False, asset_path=""):
+        if not hasattr(self, "_execute_as_module"):
+            self._execute_as_module = execute_as_module
+
+        if not hasattr(self, "_asset_path"):
+            self._asset_path = asset_path
+
+            if not self._asset_path:
+                from Dash.Utils import ParseDashContextAssetPath
+
+                self._asset_path = ParseDashContextAssetPath()
 
         self.Add(self.set_property,     requires_authentication=True)
         self.Add(self.get_property_set, requires_authentication=True)
@@ -25,23 +33,18 @@ class ApiProperties:
     def get_property_set(self):
         from Dash.LocalStorage import GetRecordPath, GetData
 
-        record_path = GetRecordPath(
+        if not os.path.exists(GetRecordPath(
             dash_context=self.DashContext,
             store_path="properties",
             obj_id=self.Params["obj_id"]
-        )
+        )):
+            return self.SetResponse({"msg": "Record does not exist"})
 
-        property_set = {}
-        if not os.path.exists(record_path):
-            property_set["msg"] = "Record does not exist"
-        else:
-            property_set = GetData(
-                dash_context=self.DashContext,
-                store_path="properties",
-                obj_id=self.Params["obj_id"],
-            )
-
-        return self.SetResponse(property_set)
+        return self.SetResponse(GetData(
+            dash_context=self.DashContext,
+            store_path="properties",
+            obj_id=self.Params["obj_id"]
+        ))
 
     def set_property(self):
         from Dash.LocalStorage import SetProperty
@@ -49,13 +52,11 @@ class ApiProperties:
         if "_bool" in self.Params["key"]:
             self.Params["value"] = str(self.Params["value"]).lower() == "true"
 
-        result = SetProperty(
+        return self.SetResponse(SetProperty(
             dash_context=self.DashContext,
             store_path="properties",
             obj_id=self.Params["obj_id"],
             key=self.Params["key"],
             value=self.Params["value"],
-            create=True,  # Create the record if it doesn't exist
-        )
-
-        return self.SetResponse(result)
+            create=True  # Create the record if it doesn't exist
+        ))

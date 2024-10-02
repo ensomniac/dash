@@ -17480,7 +17480,7 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
 function Dash () {
     this.width = 0;
     this.height = 0;
-    this.AnalogData = null;
+    this.AnalogContext = {};
     this.TabIsVisible = true;
     this.Context = DASH_CONTEXT;
     this.html = $("<div></div>");
@@ -17616,9 +17616,9 @@ function Dash () {
         }
         this.Local.context = this.Context;
     };
-    this.SetAnalogData = function (data={}) {
-        this.Log.Log("Analog data:", data);
-        this.AnalogData = data;
+    this.SetAnalogContext = function (data={}) {
+        this.Log.Log("Set Analog context:", data);
+        this.AnalogContext = data;
         if (this.Validate.Object(data["color"])) {
             // Required base set of colors
             window.ColorAccentPrimary = data["color"]["accent_primary"] || window.ColorAccentPrimary || "#edca5c"; // Github-inspired yellow
@@ -18782,11 +18782,12 @@ function DashUser () {
         if (email && server_response["token"]) {
             this.Data = server_response["user"];
             this.Init = server_response["init"];
+            Dash.Log.Log("Authentication response:", server_response);
             if (Dash.Validate.Object(server_response["dash_context"])) {
                 Dash.UpdateDashContext(server_response["dash_context"]);
             }
-            if (Dash.Validate.Object(server_response["analog_data"])) {
-                Dash.SetAnalogData(server_response["analog_data"]);
+            if (Dash.Validate.Object(server_response["analog_context"])) {
+                Dash.SetAnalogContext(server_response["analog_context"]);
             }
             Dash.Local.Set("email", email, false, true);
             Dash.Local.Set("token", server_response["token"], false, true);

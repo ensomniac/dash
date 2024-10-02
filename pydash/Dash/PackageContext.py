@@ -185,10 +185,20 @@ class PackageContext:
 
 
 def Get(asset_path="", ctx_id=""):
+    if not asset_path and not ctx_id:
+        from Dash.Utils import ParseDashContextAssetPath
+
+        asset_path = ParseDashContextAssetPath()
+
     return PackageContext(asset_path, ctx_id).ToDict()
 
 
 def GetFullData(asset_path="", ctx_id=""):
+    if not asset_path and not ctx_id:
+        from Dash.Utils import ParseDashContextAssetPath
+
+        asset_path = ParseDashContextAssetPath()
+
     return PackageContext(asset_path, ctx_id).PackageData
 
 
@@ -202,17 +212,43 @@ def GetAllPackages():
 
 # Not sure where this should live so putting it here for now
 def GetAnalogIndex(domain=""):
+    asset_path = ""
+
     if not domain:
         domain = os.environ.get("HTTP_HOST")
 
     if not domain:
-        raise EnvironmentError("Failed to parse domain from os.environ, must provide domain")
+        from Dash.Utils import ParseDashContextAssetPath
+
+        asset_path = ParseDashContextAssetPath()
+
+        if not asset_path:
+            raise EnvironmentError(
+                "Failed to parse domain from os.environ, must provide domain:\n\n"
+                f"os.environ:\n{dict(os.environ)}\n\nsys.path:\n{sys.path}"
+            )
 
     from Dash.LocalStorage import Read
 
-    data = Read(os.path.join(OapiRoot, "analog", "local", "index.json")).get(domain)
+    data = {}
+    index_data = Read(os.path.join(OapiRoot, "analog", "local", "index.json"))
+
+    if domain:
+        data = index_data.get(domain)
+
+    elif asset_path:
+        for _domain in index_data:
+            if asset_path in _domain:
+                data = index_data[_domain]
+
+                break
 
     if not data:
-        raise KeyError(f"The domain '{domain}' does not exist in the Analog index")
+        error = f"The domain '{domain}' does not exist in the Analog index"
+
+        if asset_path:
+            error += f" (asset path: {asset_path})"
+
+        raise KeyError(error)
 
     return data

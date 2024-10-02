@@ -10,5 +10,5 @@ from Dash.Properties.Configuration import Configuration
 
 
 class Components(Configuration):
-    def __init__(self, dash_context_asset_path):
+    def __init__(self, dash_context_asset_path=""):
         Configuration.__init__(self, dash_context_asset_path, "configuration")

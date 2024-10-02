@@ -12,10 +12,20 @@ from .errors import ClientAlert
 # relative import errors, we'll have to adjust all the below imports to match this format:
 #     try:
 #         from .number import GetRandomID
+#
 #     except ImportError:
 #         from number import GetRandomID
 
 OapiRoot = os.path.join("/var", "www", "vhosts", "oapi.co")
+
+
+def ParseDashContextAssetPath():
+    try:
+        return sys.path[0].replace(
+            OapiRoot, ""
+        ).strip().lstrip(os.path.sep).split(os.path.sep)[0]
+    except:
+        return ""
 
 
 # ------------------------------------------------- FILE ----------------------------------------------------
@@ -391,11 +401,15 @@ def CenterTextVerticallyInAllCells(worksheet, min_height=30, min_height_mults={}
 
 # Intended to be used as a base for any cron scripts' classes
 class Cron:
-    def __init__(self, dash_context_asset_path):
+    def __init__(self, dash_context_asset_path="", analog_context_domain=""):
         from Dash import AdminEmails
+
+        if not dash_context_asset_path:
+            dash_context_asset_path = ParseDashContextAssetPath()
 
         self.DashContext = Memory.SetContext(dash_context_asset_path)
         self.User = Memory.SetUser(AdminEmails[0])
+        self.AnalogContext = Memory.SetAnalogContext(analog_context_domain or self.DashContext["domain"])
 
         try:
             if self.DashContext["asset_path"] == "fantom":
@@ -475,6 +489,10 @@ class _Memory:
         return self.Global.Context
 
     @property
+    def AnalogContext(self):  # Wrapper
+        return self.Global.AnalogContext
+
+    @property
     def UserToken(self):
         if not hasattr(self, "_usr_token"):
             try:
@@ -482,7 +500,7 @@ class _Memory:
                 from os.path import expanduser
 
                 dash_data_path = os.path.join(expanduser("~"), ".dash")
-                dash_data = loads(open(dash_data_path, "r").read())
+                dash_data = loads(open(dash_data_path).read())
 
                 self._usr_token = dash_data["user"]["token"]
             except:
@@ -500,6 +518,9 @@ class _Memory:
 
         if not hasattr(self.global_memory, "Context"):
             self.global_memory.Context = None
+
+        if not hasattr(self.global_memory, "AnalogContext"):
+            self.global_memory.AnalogContext = None
 
         return self.global_memory
 
@@ -525,6 +546,29 @@ class _Memory:
         self.global_memory.Context = GetContext(asset_path)
 
         return self.global_memory.Context
+
+    def SetAnalogContext(self, domain):
+        from Dash.PackageContext import GetAnalogIndex
+
+        self.global_memory.AnalogContext = {}
+
+        try:
+            analog_index = GetAnalogIndex(domain)
+
+            if analog_index.get("dash_context"):
+                self.global_memory.Context = analog_index["dash_context"]
+
+            if analog_index.get("analog_context"):
+                self.global_memory.AnalogContext = analog_index["analog_context"]
+
+        except KeyError:
+            pass
+
+        # Expose access for older code without requiring adding support for this new context
+        if hasattr(self.global_memory, "Context") and type(self.global_memory.Context) is dict:
+            self.global_memory.Context["analog_context"] = self.global_memory.AnalogContext
+
+        return self.global_memory.AnalogContext
 
 
 Memory = _Memory()

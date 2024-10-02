@@ -1,7 +1,7 @@
 function Dash () {
     this.width = 0;
     this.height = 0;
-    this.AnalogData = null;
+    this.AnalogContext = {};
     this.TabIsVisible = true;
     this.Context = DASH_CONTEXT;
     this.html = $("<div></div>");
@@ -162,10 +162,10 @@ function Dash () {
         this.Local.context = this.Context;
     };
 
-    this.SetAnalogData = function (data={}) {
-        this.Log.Log("Analog data:", data);
+    this.SetAnalogContext = function (data={}) {
+        this.Log.Log("Set Analog context:", data);
 
-        this.AnalogData = data;
+        this.AnalogContext = data;
 
         if (this.Validate.Object(data["color"])) {
             // Required base set of colors

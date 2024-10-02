@@ -14,17 +14,17 @@
 # from Dash import Users
 # from Dash import ApiCore
 # from Dash import GitHub
-from Dash import Context
+# from Dash import Context
 
 
 class TestDash:
     def __init__(self):
         # print(Dash)
 
-        dash_context = Context.Create("altona")
+        # dash_context = Context.Create("altona")
         # print(dir(dash_context))
 
-        print(dash_context.AssetPath)
+        # print(dash_context.AssetPath)
 
         # print(dash_context._asset_path)
         # print(dash_context.RootStore)
@@ -32,6 +32,8 @@ class TestDash:
         # print(dash_context.Domain)
         # print(dash_context.DisplayName)
         # print(dash_context.AdminFromEmail)
+
+        pass
 
 
 if __name__ == "__main__":

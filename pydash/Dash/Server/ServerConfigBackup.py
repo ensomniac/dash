@@ -97,12 +97,11 @@ class ServerConfigBackup:
 
     def find_broken_domain_configs(self):
         print("find_broken_domain_configs")
+
         self.gather_all()
 
     def gather_all(self):
-
         for domain in os.listdir(self.backup_root):
-            # if "altona" not in domain: continue
             self.process_domain(domain)
 
     def process_domain(self, domain):
