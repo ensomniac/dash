@@ -11,6 +11,7 @@ class Interface:
     Type: str
     ObjID: str
     User: dict
+    temp: dict
     sort_by_key: str
     collections: dict
     DashContext: dict
@@ -183,6 +184,8 @@ class Interface:
         if not obj_data or not obj_data.get("id"):
             raise ValueError(f"No data available for vdb_type: {self.Type} and obj_id {self.ObjID}")
 
+        from copy import deepcopy
+
         response = self.add_details(
             collection=collection,
             obj_data=obj_data,
@@ -190,10 +193,14 @@ class Interface:
         )
 
         if combo_options:
+            self.temp["response"] = deepcopy(response)
+
             response["combo_options"] = self.GetComboOptions(
                 combo_types=combo_options,
                 combos_kwargs=self.get_details_combos_kwargs(response)
             )
+
+            del self.temp["response"]
 
         if unset_temp:
             self.unset_temp_attrs()

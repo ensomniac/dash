@@ -161,7 +161,7 @@ function DashLayoutSearchableListRow (slist, row_id, optional_row_data) {
             return data;
         }
 
-        return data[this.row_id]["display_name"] || this.row_id || "";
+        return data[this.row_id]["display_name"] || data[this.row_id]["label_text"] || this.row_id || "";
     };
 
     this.SetActive = function (is_active) {

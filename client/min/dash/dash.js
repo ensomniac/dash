@@ -17615,6 +17615,21 @@ function Dash () {
             }
         }
         this.Local.context = this.Context;
+        var title = $("title");
+        if (title.length) {
+            title.text(this.Context["display_name"]);
+        }
+        var ios_title = $('meta[name="apple-mobile-web-app-title"]');
+        if (ios_title.length) {
+            ios_title.attr("content", this.Context["display_name"]);
+        }
+        var ios_icon = $('link[rel="apple-touch-icon"]');
+        if (ios_icon.length) {
+            ios_icon.attr(
+                "href",
+                "https://" + Dash.Context["domain"] + "/local/images/apple-touch-icon.png"
+            );
+        }
     };
     this.SetAnalogContext = function (data={}) {
         this.Log.Log("Set Analog context:", data);
@@ -54068,7 +54083,7 @@ function DashLayoutSearchableListRow (slist, row_id, optional_row_data) {
         if (typeof data === "string") {
             return data;
         }
-        return data[this.row_id]["display_name"] || this.row_id || "";
+        return data[this.row_id]["display_name"] || data[this.row_id]["label_text"] || this.row_id || "";
     };
     this.SetActive = function (is_active) {
         if (is_active) {
