@@ -58,6 +58,22 @@ class ApiUsers:
 
         return self._user_email_domain_bypass_emails
 
+    def SetUserEmailDomainBypassEmails(self, new_emails, replace=False):
+        if replace:
+            self._user_email_domain_bypass_emails = new_emails
+
+            return self._user_email_domain_bypass_emails
+
+        emails = self.UserEmailDomainBypassEmails
+
+        for email in new_emails:
+            if email not in emails:
+                emails.append(email)
+
+        self._user_email_domain_bypass_emails = emails
+
+        return self._user_email_domain_bypass_emails
+
     def OnInit(self, callback):
         # When passed a callback, this function will be called whenever portal
         # init data is passed back, so that custom data can be included in the response.

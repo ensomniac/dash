@@ -411,6 +411,8 @@ class Cron:
         self.User = Memory.SetUser(AdminEmails[0])
         self.AnalogContext = Memory.SetAnalogContext(analog_context_domain or self.DashContext["domain"])
 
+        self.DashContext["analog_context"] = self.AnalogContext
+
         try:
             if self.DashContext["asset_path"] == "fantom":
                 sys.path.append(os.path.join(self.DashContext["srv_path_git_oapi"], "factory", "server", "cgi-bin"))
