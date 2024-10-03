@@ -45,6 +45,18 @@ class Utils:
                 collection
             )
 
+        bools = {}
+
+        for key, value in (validated_properties or properties).items():
+            if value == "true":
+                bools[key] = True
+
+            elif value == "false":
+                bools[key] = False
+
+        if bools:
+            (validated_properties or properties).update(bools)
+
         return validated_properties or properties
 
     # Intended to be extended (see Candy's VDB module for example)
