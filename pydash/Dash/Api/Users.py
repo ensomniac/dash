@@ -19,6 +19,7 @@ class ApiUsers:
     ParseParam: callable
     SetResponse: callable
     ValidateParams: callable
+    _user_email_domain_bypass_emails: list
 
     # These params don't need to be passed in here since they're already
     # passed into ApiCore, but leaving them to not break any other code
@@ -38,15 +39,6 @@ class ApiUsers:
         self._on_termination_callback = None
         self._pre_init_callback_response = None
 
-        # (Intended to be overwritten)
-        # Emails that can bypass DashContext's specified 'user_email_domain' and create an account regardless of domain
-        try:
-            self.UserEmailDomainBypassEmails = []
-
-        # This will happen if the above is overridden as a property, in which case, safe to ignore
-        except AttributeError:
-            pass
-
         self.Add(self.r,                    requires_authentication=False)
         self.Add(self.reset,                requires_authentication=False)
         self.Add(self.login,                requires_authentication=False)
@@ -58,6 +50,13 @@ class ApiUsers:
         self.Add(self.set_property,         requires_authentication=True)
         self.Add(self.update_password,      requires_authentication=True)
         self.Add(self.validate_credentials, requires_authentication=True)
+
+    @property
+    def UserEmailDomainBypassEmails(self):
+        if not hasattr(self, "_user_email_domain_bypass_emails"):
+            self._user_email_domain_bypass_emails = self.AnalogContext.get("user_email_domain_bypass_emails", [])
+
+        return self._user_email_domain_bypass_emails
 
     def OnInit(self, callback):
         # When passed a callback, this function will be called whenever portal
