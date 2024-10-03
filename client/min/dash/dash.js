@@ -24336,6 +24336,7 @@ function DashGuiLogin (on_login_binder=null, on_login_callback=null, color=null,
     this.on_login_callback = on_login_binder && on_login_callback ? on_login_callback.bind(on_login_binder) : null;
     this.color = color || (on_login_binder && on_login_binder.color ? on_login_binder.color : Dash.Color.Dark);
     this.optional_params = optional_params;
+    this.shop_io = false;
     this.email_input = null;
     this.reset_button = null;
     this.login_button = null;
@@ -24345,8 +24346,12 @@ function DashGuiLogin (on_login_binder=null, on_login_callback=null, color=null,
     this.email_row = $("<div></div>");
     this.button_bar = $("<div></div>");
     this.password_row = $("<div></div>");
-    this.header_label = $("<div>" + Dash.Context["display_name"] + "</div>");
+    this.header_label = $("<div></div>");
     this.setup_styles = function () {
+        var title = $("title");
+        // Don't have a better way of handling this, since we don't have analog context before auth
+        this.shop_io = title.length && title.text() === "Shop IO";
+        this.header_label.text(this.shop_io ? title.text() : Dash.Context["display_name"]);
         var row_css = {
             "margin-bottom": Dash.Size.Padding,
             "margin-top": 0
@@ -24453,7 +24458,7 @@ function DashGuiLogin (on_login_binder=null, on_login_callback=null, color=null,
     };
     this.add_inputs = function () {
         this.password_input = new Dash.Gui.Input("Password", this.color);
-        this.email_input = new Dash.Gui.Input("email@" + Dash.Context["domain"], this.color);
+        this.email_input = new Dash.Gui.Input("email@" + (this.shop_io ? "shop.io" : Dash.Context["domain"]), this.color);
         for (var input of [this.email_input, this.password_input]) {
             input.html.css({
                 "padding": Dash.Size.Padding * (Dash.IsMobile ? 0.25 : 0.5),
