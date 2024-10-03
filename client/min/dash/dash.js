@@ -17649,6 +17649,15 @@ function Dash () {
             window.ColorMobileAccentSecondary = data["color"]["mobile_accent_secondary"] || "";
             Dash.Color.InitColors();
         }
+        if (this.Validate.Object(data["permissions"])) {
+            Dash.User.Init["roles"] = [];
+            for (var key in data["permissions"]) {
+                if (!data["permissions"][key] || !(data["permissions"][key].includes(Dash.User.Data["email"]))) {
+                    continue;
+                }
+                Dash.User.Init["roles"].push(key);
+            }
+        }
     };
     this.check_for_global_storage = function () {
         if (Dash.IsMobile) {
