@@ -31,6 +31,7 @@ class _JSLinter(LintUtils, Copyright):
             # compile(open(self.code_path, "r").read(), self.code_path, "exec")
 
             return True, "(DashLint) Success!"
+
         except Exception as e:
             return False, e
 

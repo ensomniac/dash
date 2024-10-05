@@ -16,10 +16,10 @@ import requests
 from httplib2 import Http
 from base64 import encodestring
 
-# Assurance, since this can be called not only as a module from Dash, but also externally
 try:
     from .services import get_by_name
-except:
+
+except ImportError:
     from services import get_by_name
 
 

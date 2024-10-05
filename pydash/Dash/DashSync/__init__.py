@@ -15,7 +15,8 @@ import sys
 try:
     from .utils import SyncUtils
     from .sync_thread import SyncThread
-except:
+
+except ImportError:
     from utils import SyncUtils
     from sync_thread import SyncThread
 

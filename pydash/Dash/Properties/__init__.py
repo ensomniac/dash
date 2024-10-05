@@ -72,8 +72,9 @@ def ValidateConfigModule(property_set_key, config_module):
     if isinstance(config_module, FunctionType):
         try:
             config_module = config_module(property_set_key)
+
         except Exception as e:
-            raise Exception(f"Failed to get config/property module for: '{property_set_key}' ({e})")
+            raise Exception(f"Failed to get config/property module for: '{property_set_key}'") from e
 
     return config_module
 

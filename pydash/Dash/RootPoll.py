@@ -253,16 +253,11 @@ class PollRequests:
         sleep(0.1)
 
     def run_task_command(self, command):
-
-        result = None
-
         try:
-            result = check_output([command], shell=True, stderr=STDOUT).decode().strip()
-        except CalledProcessError as e:
-            result = e.output.decode() or e.stdout.decode()
-            result += " || " + str(e)
+            return check_output([command], shell=True, stderr=STDOUT).decode().strip()
 
-        return result
+        except CalledProcessError as e:
+            return f"{(e.output.decode() or e.stdout.decode())} || {e}"
 
     def check_process_running(self):
         from psutil import Process
@@ -280,6 +275,7 @@ class PollRequests:
                 continue
 
             another_process_running = True
+
             break
 
         if another_process_running:

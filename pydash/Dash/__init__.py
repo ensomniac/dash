@@ -47,7 +47,8 @@ PersonalContexts = {
 def Sync():
     try:
         from DashSync import DashSync
-    except:
-        from.DashSync import DashSync
+
+    except ImportError:
+        from .DashSync import DashSync
 
     DashSync()

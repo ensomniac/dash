@@ -48,8 +48,9 @@ class DashLocalStorage:
         try:
             for key in additional_data:
                 data[key] = additional_data[key]
-        except:
-            raise Exception("--> " + str(type(data)) + "<--")
+
+        except Exception as e:
+            raise Exception(f"-->{type(data)}<--") from e
 
         data["modified_by"] = Memory.Global.RequestUser["email"]
         data["modified_on"] = datetime.now().isoformat()
@@ -188,8 +189,8 @@ class DashLocalStorage:
                         missing.append(f"{obj_id}: {record_path}")
 
                     continue
-                else:
-                    raise Exception(str(e))
+
+                raise
 
             if not data:
                 continue
@@ -329,7 +330,7 @@ class DashLocalStorage:
             "record_path": record_path
         }
 
-        error = ""
+        error = None
         attempts = 0
 
         while attempts < 5:
@@ -357,7 +358,12 @@ class DashLocalStorage:
                 sleep(0.2)
 
         if os.path.exists(record_path):
-            raise Exception(f"Failed to delete: {record_path}, error: {error}, ({attempts} attempts)")
+            msg = f"Failed to delete: {record_path}, ({attempts} attempts)"
+
+            if error:
+                raise OSError(msg) from error
+
+            raise Exception(msg)
 
         result["exists_now"] = False
 
@@ -398,8 +404,8 @@ class DashLocalStorage:
         from json import loads
         from time import sleep
 
-        error = ""
         data = None
+        error = None
         attempts = 0
 
         while attempts < 3:
@@ -420,7 +426,12 @@ class DashLocalStorage:
                 sleep(0.2)
 
         if attempts >= 3 and data is None:
-            raise Exception(f"Failed to read: {full_path}, error: {error}, ({attempts} attempts)")
+            msg = f"Failed to read: {full_path}, ({attempts} attempts)"
+
+            if error:
+                raise OSError(msg) from error
+
+            raise Exception(msg)
 
         return data
 
@@ -554,8 +565,13 @@ class DashLocalStorage:
                 try:
                     run(command, check=True)
 
-                except CalledProcessError as e:
-                    raise Exception(f"Failed to change permissions ({' '.join(command)}) for dir: {full_path}.\n\nError:\n{e}")
+                except CalledProcessError as ce1:
+                    raise CalledProcessError(
+                        ce1.returncode,
+                        ce1.cmd,
+                        output=ce1.output,
+                        stderr=ce1.stderr
+                    ) from Exception(f"Failed to change permissions ({' '.join(command)}) for dir: {full_path}")
 
                 except FileNotFoundError:
                     continue
@@ -572,7 +588,7 @@ class DashLocalStorage:
         except FileNotFoundError:
             pass
 
-        except PermissionError:
+        except PermissionError as pe:
             from subprocess import run, CalledProcessError
 
             for command in [
@@ -583,8 +599,19 @@ class DashLocalStorage:
                 try:
                     run(command, check=True)
 
-                except CalledProcessError as e:
-                    raise Exception(f"Failed to change permissions ({' '.join(command)}) for path: {full_path}.\n\nError:\n{e}")
+                except CalledProcessError as ce1:
+                    try:
+                        raise CalledProcessError(
+                            ce1.returncode,
+                            ce1.cmd,
+                            output=ce1.output,
+                            stderr=ce1.stderr
+                        ) from pe
+
+                    except CalledProcessError as ce2:
+                        raise Exception(
+                            f"Failed to change permissions ({' '.join(command)}) for path: {full_path}"
+                        ) from ce2
 
                 except FileNotFoundError:
                     continue
@@ -730,7 +757,7 @@ class DashLocalStorage:
             open(tmp_file_path, "w").write(dumps(data))
 
         except Exception as e:
-            raise Exception(f"Write fail at {tmp_file_path} from {full_path}\n\nException: {e}")
+            raise IOError(f"Write fail at {tmp_file_path} from {full_path}") from e
 
         os.rename(tmp_file_path, full_path)
 

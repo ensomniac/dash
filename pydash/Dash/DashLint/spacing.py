@@ -101,11 +101,12 @@ class GlobalSpacing:
                     try:
                         if len(self.source_code[index + num].strip()):
                             next_statement_index = index + num
+
                             break
                     except:
                         break
 
-                if not type(next_statement_index) == int:
+                if not type(next_statement_index) is int:
                     continue
 
                 spaces = (next_statement_index - 1) - index
@@ -114,7 +115,9 @@ class GlobalSpacing:
                     if spaces > 1:
                         try:
                             self.source_code.pop(index + 1)
+
                             altered = True
+
                             spaces -= 1
                         except:
                             break

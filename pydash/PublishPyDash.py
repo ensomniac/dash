@@ -160,9 +160,11 @@ class PublishDash:
 
         try:
             r = response.json()
+
             if r.get("accepted"):
                 print(f"\tSuccessfully published v{str(r.get('version'))}!")
                 print(f"\tpip install {r.get('url')}")
+
                 return
         except:
             pass

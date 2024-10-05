@@ -54,10 +54,14 @@ class Interface:
 
         return data
 
-    def Delete(self):
+    def Delete(self, _vdb_type="", _obj_id=""):
+        self.set_temp_attrs(_vdb_type, _obj_id)
+
         response = self.GetCollection().Delete(obj_id=self.ObjID)
 
         response["vdb_type"] = self.Type
+
+        self.unset_temp_attrs()
 
         return response
 

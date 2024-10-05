@@ -418,8 +418,9 @@ class Cron:
                 sys.path.append(os.path.join(self.DashContext["srv_path_git_oapi"], "factory", "server", "cgi-bin"))
             else:
                 sys.path.append(os.path.join(self.DashContext["srv_path_git_oapi"], "server", "cgi-bin"))
-        except:
-            raise EnvironmentError("Error: This needs to be run on the server.")
+
+        except Exception as e:
+            raise EnvironmentError("Error: This needs to be run on the server.") from e
 
     def Run(self):
         try:

@@ -112,8 +112,9 @@ class Measurement:
     def validate_value(self, value):
         try:
             return float(value)
-        except:
-            raise Exception("Invalid measurement value type, must be float or int")
+
+        except Exception as e:
+            raise ValueError("Invalid measurement value type, must be float or int") from e
 
 
 def Convert(system, source_unit, source_unit_value, target_unit, readable=False):

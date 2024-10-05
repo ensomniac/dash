@@ -586,10 +586,11 @@ class Users:
 
         try:
             return b64decode(data, altchars)
-        except:
+
+        except Exception as e:
             from traceback import format_exc
 
-            raise Exception(f"Parse error x32489\n{format_exc()}")
+            raise Exception(f"Parse error x32489\n{format_exc()}") from e
 
     # create_if_missing should probably default to False, but don't want to break anything
     def get_user_info(self, email, create_if_missing=True):

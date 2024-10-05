@@ -55,8 +55,9 @@ class ServerMonitor:
 
         try:
             percent_used = int(percent_used)
-        except:
-            raise Exception("Failed to parse output of df -h!")
+
+        except Exception as e:
+            raise Exception("Failed to parse output of df -h!") from e
 
         return percent_used
 

@@ -21,7 +21,7 @@ class TestDash:
     def __init__(self):
         # print(Dash)
 
-        # dash_context = Context.Create("altona")
+        # dash_context = Context.Create("analog")
         # print(dir(dash_context))
 
         # print(dash_context.AssetPath)

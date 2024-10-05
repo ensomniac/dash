@@ -379,15 +379,21 @@ class PyDoc:
 
                 if next_line.strip().startswith(init):
                     self.current_block_params = next_line.strip().split("(")[1].split(")")[0].split(",")
+
                     break
 
         if "self" in self.current_block_params:
             self.current_block_params.remove("self")
 
-        self.params_with_defaults = {bp.split("=")[0].strip(): bp.split("=")[1].strip()
-                                     for bp in self.current_block_params if "=" in bp}
-        self.current_block_params = [p.split("=")[0].strip() if "=" in p else p.strip()
-                                     for p in self.current_block_params if len(p)]
+        self.params_with_defaults = {
+            bp.split("=")[0].strip(): bp.split("=")[1].strip()
+            for bp in self.current_block_params if "=" in bp
+        }
+
+        self.current_block_params = [
+            p.split("=")[0].strip() if "=" in p else p.strip()
+            for p in self.current_block_params if len(p)
+        ]
 
     def get_docstring_end_index(self, line_index):
         for num in self.iter_limit_range:

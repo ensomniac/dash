@@ -13,7 +13,7 @@ from dateutil.parser import isoparse
 from Dash.Utils import GetRandomID, FormatTime
 
 
-# This is old and was never fully written out, but Altona uses it to a minor capacity
+# This is old and was never fully written out, but it's used in a minor capacity
 class CSV:
     def __init__(self, csv_root="", dash_context={}, all_data={}, exclude_keys=[], file=None):
         """

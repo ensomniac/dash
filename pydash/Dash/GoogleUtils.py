@@ -16,7 +16,7 @@ def ParseHTTPError(http_error, params={}):
 
     # Should never happen
     if not isinstance(http_error, HttpError):
-        raise Exception(http_error)
+        raise TypeError(f"Expected HttpError, got {type(http_error).__name__}: {http_error}")
 
     from json import loads
 
@@ -28,11 +28,7 @@ def ParseHTTPError(http_error, params={}):
     except Exception as e:
         msg = ""
 
-        errors.append(str(e))
-
-    # This was causing vague errors to be raised, needed more detail
-    # if msg:
-    #     raise Exception(msg)
+        errors.append(f"Error parsing message from HttpError content: {e}")
 
     error = str(http_error).strip().strip("\n").strip()
 
@@ -43,7 +39,7 @@ def ParseHTTPError(http_error, params={}):
         )
 
     except Exception as e:
-        errors.append(str(e))
+        errors.append(f"Error constructing HttpError details: {e}")
 
         try:
             message = (
@@ -52,11 +48,10 @@ def ParseHTTPError(http_error, params={}):
             )
 
         except Exception as e:
-            errors.append(str(e))
+            errors.append(f"Error constructing fallback HttpError details: {e}")
 
             if len(error) and error != "Exception:":
                 message = error
-
             else:
                 message = (
                     "The Google API returned an error that was either empty, had no information, "
@@ -73,7 +68,7 @@ def ParseHTTPError(http_error, params={}):
 
     message += f"\n{error}"
 
-    if len(errors):
+    if errors:
         errors = "\n>>".join(errors)
 
         message += f"\n\n***Parser Errors***:\n{errors}"
@@ -83,7 +78,7 @@ def ParseHTTPError(http_error, params={}):
 
         message += f"\n\n***Params***:\n{dumps(params, indent=4, sort_keys=True)}"
 
-    raise Exception(message)
+    raise Exception(message) from http_error
 
 
 class GUtils:
@@ -196,11 +191,9 @@ class GUtils:
                         "was uploaded to, please reach out to the dev team for assistance."
                     )
 
-                msg += f"\n\nFull error:\n{error}"
+                raise ClientAlert(msg) from error
 
-                raise ClientAlert(msg)
-
-            raise Exception(error)
+            raise error
 
         return download_path
 
@@ -500,9 +493,9 @@ class _DriveUtils:
 
                     raise ClientAlert(
                         f"'.{file_ext}' files cannot be uploaded due to encoding restrictions of the Google API"
-                    )
+                    ) from e
 
-            raise UnicodeEncodeError(e.encoding, e.object, e.start, e.end, e.reason)
+            raise UnicodeEncodeError(e.encoding, e.object, e.start, e.end, e.reason) from e
 
     def DeleteFile(self, file_id, in_shared_drive=False, fields=""):
         params = {
@@ -1219,7 +1212,7 @@ class _AuthUtils:
                 token_json = GetTokenData(service_name=self.service_name, user_email=self.gutils.UserEmail)
 
             except Exception as e:
-                raise Exception(f"Failed to get Google credentials, error:\n\n{e}")
+                raise Exception(f"Failed to get Google credentials") from e
 
             from oauth2client.client import OAuth2Credentials
 

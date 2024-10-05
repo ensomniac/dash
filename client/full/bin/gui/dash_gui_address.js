@@ -7,7 +7,7 @@
  *  - Enable Maps JavaScript API
  *  - Enable Geocoding API
  *  - Create an API key, restrict it to this specific website
- *    (ex: https://altona.io), and restrict it to the three APIs above
+ *    (ex: https://analog.technology), and restrict it to the three APIs above
  *
  * TO ENABLE: <br>
  *  - Add script to index.html, replacing API_KEY with your API key:

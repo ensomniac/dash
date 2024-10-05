@@ -38,7 +38,8 @@ class ApiCore:
 
         try:
             self._fs = cgi.FieldStorage()
-        except:
+
+        except Exception as e:
             from traceback import format_exc
 
             error = format_exc()
@@ -48,10 +49,10 @@ class ApiCore:
                     self.process_raw_body_content()
                 except:
                     # Ref: https://bugs.python.org/issue27777
-                    raise Exception(f"Failed to process request using Python's cgi.FieldStorage(). Traceback:\n{error}")
+                    raise Exception(f"Failed to process request using Python's cgi.FieldStorage(). Traceback:\n{error}") from e
             else:
                 # Ref: https://bugs.python.org/issue27777
-                raise Exception(f"Failed to process request using Python's cgi.FieldStorage(). Traceback:\n{error}")
+                raise Exception(f"Failed to process request using Python's cgi.FieldStorage(). Traceback:\n{error}") from e
 
         self._response = {"error": "Unauthorized"}
 
@@ -103,7 +104,7 @@ class ApiCore:
         - "display_name"         : "Candy",
         - "domain"               : "realtimecandy.com",
         - "email_access_csv"     : "ryan@ensomniac.com, stetandrew@gmail.com",
-        - "email_git_webhook_csv": "ryan@ensomniac.com, rmartin@candy.com, stetandrew@gmail.com",
+        - "email_git_webhook_csv": "ryan@ensomniac.com, rmartin@candy.io, stetandrew@gmail.com",
         - "id"                   : "2021102719491527462",
         - "is_server"            : "/var/www/vhosts/oapi.co/logs",
         - "is_valid"             : True,
@@ -111,7 +112,7 @@ class ApiCore:
         - "srv_path_http_root"   : "/var/www/vhosts/oapi.co/candy/",
         - "srv_path_local"       : "/var/www/vhosts/oapi.co/candy/local/"
         - "timezone"             : "EST"
-        - "user_email_domain"    : "candy.com"
+        - "user_email_domain"    : "candy.io"
 
         :return: self._dash_context
         :rtype: dict
@@ -454,8 +455,8 @@ class ApiCore:
                 except Exception as e:
                     raise Exception(
                         f"Failed to parse param for key '{key}' and type '{target_type.__name__}' (default "
-                        f"value '{default_value}')\n\nValue (type: {type(value).__name__}): {value}\n\nError: {e}"
-                    )
+                        f"value '{default_value}')\n\nValue (type: {type(value).__name__}): {value}"
+                    ) from e
 
             if set_param:
                 self._params[key] = value

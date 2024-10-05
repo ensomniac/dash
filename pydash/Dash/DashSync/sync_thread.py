@@ -162,11 +162,13 @@ class SyncThread:
         except:
             print("== SERVER ERROR == x43")
             print(response.text)
+
             return
 
         if response.get("error"):
             print("== SERVER ERROR == x87")
             print(response)
+
             return
 
         if not response.get("success"):
@@ -179,6 +181,7 @@ class SyncThread:
             msg += "GitHub > Needs commit/push"
             # msg += "GitHub > Needs commit/push ("
             # msg += self.context.get("usr_path_git") + ")"
+
             print(msg)
 
         if response.get("livesync_git_commit_request"):
@@ -235,12 +238,14 @@ class SyncThread:
             print("== SERVER ERROR == x81")
             print(response.text)
             print("*************************\n\n\n")
+
             return
 
         if response.get("error"):
             print("== SERVER ERROR == x82")
             print(response.text)
             print("*************************\n\n\n")
+
             return
 
         print("Success!")
@@ -334,6 +339,7 @@ class SyncThread:
         except:
             print("\n**** Server Sync Error ****\n")
             print(response)
+
             return
 
         if response.get("success"):

@@ -297,6 +297,7 @@ def GetAssetPath(string):
                     asset_path += "_"
                 except:
                     pass
+
             except IndexError:
                 pass
 
@@ -313,6 +314,7 @@ def GetAssetPath(string):
                     asset_path += "_"
                 except:
                     pass
+
             except IndexError:
                 pass
 

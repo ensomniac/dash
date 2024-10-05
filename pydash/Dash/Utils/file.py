@@ -156,10 +156,8 @@ def ValidateImageAspectRatio(
 
 
 def ValidateVideoAspectRatio(video_bytes_or_existing_path, target_aspect_ratio, return_video_details=False):
-    error = ""
     temp = False
     valid = True
-    video_details = {}
 
     if type(video_bytes_or_existing_path) is not bytes:
         if type(video_bytes_or_existing_path) is not str:
@@ -174,7 +172,7 @@ def ValidateVideoAspectRatio(video_bytes_or_existing_path, target_aspect_ratio, 
         from Dash.LocalStorage import Write
 
         temp = True
-        path = f"/var/tmp/dash_video_aspect_validation_{GetRandomID()}"
+        path = os.path.join("/var", "tmp", f"dash_video_aspect_validation_{GetRandomID()}")
 
         Write(path, video_bytes_or_existing_path)
 
@@ -183,15 +181,9 @@ def ValidateVideoAspectRatio(video_bytes_or_existing_path, target_aspect_ratio, 
 
         if abs(video_details["aspect"] - target_aspect_ratio) > 0.01:
             valid = False
-
-    except Exception as e:
-        error = str(e)
-
-    if temp and os.path.exists(path):
-        os.remove(path)
-
-    if error:
-        raise Exception(error)
+    finally:
+        if temp and os.path.exists(path):
+            os.remove(path)
 
     if return_video_details:
         return valid, video_details

@@ -132,10 +132,12 @@ class _SyncUtils:
             for line in result.split("\n"):
                 if script_name not in line:
                     continue
+
                 if "terminated" in line.lower():
                     continue
 
                 pid = str(line.split()[1].strip())
+
                 pids.append(pid)
         except:
             pass

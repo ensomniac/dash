@@ -17,11 +17,11 @@ from datetime import datetime
 from Dash.Utils import OapiRoot
 from traceback import format_exc
 
-# Assurance, since this can be called not only as a module from Dash, but also externally
 try:
     from .auth import Auth
     from .services import get_by_name
-except:
+
+except ImportError:
     from auth import Auth
     from services import get_by_name
 
@@ -228,8 +228,9 @@ class Api:
             auth = Auth(self.data.get("service_name"))
             auth_data = self.read_data(self.get_data_path(auth.service.name, self.data.get("user_email")))
             token_data = auth_data.get("token_data")
-        except:
-            raise Exception(format_exc())
+
+        except Exception as e:
+            raise Exception(format_exc()) from e
 
         if not token_data:
             raise Exception(f"No token data: {token_data}")
@@ -314,8 +315,9 @@ class Api:
                 if "T" in value and ":" in value and "-" in value:
                     try:
                         value = parser.parse(value)
-                    except:
-                        raise Exception(f"Failed to parse date {value}")
+
+                    except Exception as e:
+                        raise Exception(f"Failed to parse date {value}") from e
 
             elif "list" in str(type(value)):
                 value = self.iso_to_datetime(value)
@@ -340,9 +342,10 @@ class Api:
             raise Exception(f"Auth path does not exist: {full_path}")
 
         try:
-            data = open(full_path, "r").read()
-        except:
-            raise Exception(f"Failed to read file: {full_path}")
+            data = open(full_path).read()
+
+        except Exception as e:
+            raise Exception(f"Failed to read file: {full_path}") from e
 
         return self.iso_to_datetime(json.loads(data))
 

@@ -246,11 +246,12 @@ class Utils:
     def validate_int_prop(self, value, raise_if_none=False):
         try:
             return int(str(value))
-        except:
+
+        except Exception as e:
             if raise_if_none:
                 from Dash.Utils import ClientAlert
 
-                raise ClientAlert("This must be an integer/number (don't include commas)")
+                raise ClientAlert("This must be an integer/number (don't include commas)") from e
 
             return None
 
