@@ -44270,6 +44270,7 @@ DashGuiIconMap = {
     "user":                    ["User", DashGuiIconWeights["regular"], "user"],
     "user_solid":              ["User (Solid)", DashGuiIconWeights["solid"], "user"],
     "users":                   ["Users", DashGuiIconWeights["regular"], "users"],
+    "users_solid":             ["Users (Solid)", DashGuiIconWeights["solid"], "users"],
     "user_settings":           ["User Settings", DashGuiIconWeights["regular"], "user-cog"],
     "video":                   ["Video", DashGuiIconWeights["regular"], "video"],
     "video_solid":             ["Video (Solid)", DashGuiIconWeights["solid"], "video"],
@@ -46923,8 +46924,8 @@ function DashGuiPropertyBoxInterface () {
 }
 
 function DashGuiVDB (
-    vdb_types={}, can_view_type_cb=null, on_load_view_cb=null,
-    get_obj_view_cb=null, get_row_text_cb=null, get_combo_types_cb=null, color=null
+    vdb_types={}, can_view_type_cb=null, on_load_view_cb=null, get_obj_view_cb=null,
+    get_row_text_cb=null, get_combo_types_cb=null, color=null, req_domain_override=""
 ) {
     this.vdb_types = vdb_types;
     this.can_view_type_cb = can_view_type_cb;
@@ -46933,6 +46934,7 @@ function DashGuiVDB (
     this.get_row_text_cb = get_row_text_cb;
     this.get_combo_types_cb = get_combo_types_cb;
     this.color = color;
+    this.req_domain_override = req_domain_override;
     this.last_vdb_type = "";
     this.last_list_view = null;
     this.layout = new Dash.Layout.Tabs.Top(this, "dash_gui_vdb", this.color);
@@ -46974,7 +46976,8 @@ function DashGuiVDB (
             this.vdb_types[vdb_type]["list_width"] || null,
             this.vdb_types[vdb_type]["include_toolbar"] || true,
             this.vdb_types[vdb_type]["single_mode_data"] || null,
-            this.vdb_types[vdb_type]["extra_params"] || {}
+            this.vdb_types[vdb_type]["extra_params"] || {},
+            this.req_domain_override
         );
         if (this.on_load_view_cb) {
             this.on_load_view_cb(this.last_list_view, vdb_type);
@@ -47804,7 +47807,8 @@ function DashGuiVDBEntry (
                 "vdb_type": this.vdb_type,
                 "obj_id": this.obj_id,
                 ...extra_params
-            }
+            },
+            this.list_view.req_domain_override
         );
     };
     this._set_data = function (key, value, extra_params={}) {
@@ -47830,7 +47834,7 @@ function DashGuiVDBEntry (
 function DashGuiVDBList (
     vdb_type, vdb_title, get_obj_view_cb=null, get_row_text_cb=null,
     get_combo_types_cb=null, vdb_description="", color=null, list_column_width=null,
-    include_toolbar=true, single_mode_data=null, extra_params={}
+    include_toolbar=true, single_mode_data=null, extra_params={}, req_domain_override=""
 ) {
     this.vdb_type = vdb_type;
     this.vdb_title = vdb_title;
@@ -47843,6 +47847,7 @@ function DashGuiVDBList (
     this.include_toolbar = include_toolbar;
     this.single_mode_data = single_mode_data;
     this.extra_params = extra_params;
+    this.req_domain_override = req_domain_override;
     this.rows = {};
     this.api = "VDB";
     this.data = null;
@@ -47876,22 +47881,21 @@ function DashGuiVDBList (
         if (this.single_mode_data) {
             this.data = this.single_mode_data;
             if (this.data["get_combo_options"]) {
-                (function (self) {
-                    Dash.Request(
-                        self,
-                        function (response) {
-                            if (!Dash.Validate.Response(response)) {
-                                return;
-                            }
-                            self.data["combo_options"] = response["combo_options"];
-                        },
-                        self.api,
-                        {
-                            "f": "get_combo_options",
-                            "combo_types": JSON.stringify(self.get_combo_types())
+                Dash.Request(
+                    this,
+                    (response) => {
+                        if (!Dash.Validate.Response(response)) {
+                            return;
                         }
-                    );
-                })(this);
+                        this.data["combo_options"] = response["combo_options"];
+                    },
+                    this.api,
+                    {
+                        "f": "get_combo_options",
+                        "combo_types": JSON.stringify(this.get_combo_types())
+                    },
+                    this.req_domain_override
+                );
             }
             return;
         }
@@ -47940,12 +47944,13 @@ function DashGuiVDBList (
             "value": value,
             ...extra_params
         };
-        if (this.new_button) {
-            this.new_button.Request(this.api, params, this.on_data, this);
-        }
-        else {
-            Dash.Request(this, this.on_data, this.api, params);
-        }
+        // if (this.new_button) {
+        //     this.new_button.Request(this.api, params, this.on_data, this);
+        // }
+        //
+        // else {
+        Dash.Request(this, this.on_data, this.api, params, this.req_domain_override);
+        // }
     };
     this.SetProperties = function (obj_id, properties, extra_params={}) {
         for (var key in properties) {
@@ -47960,12 +47965,13 @@ function DashGuiVDBList (
             "properties": JSON.stringify(properties),
             ...extra_params
         };
-        if (this.new_button) {
-            this.new_button.Request(this.api, params, this.on_data, this);
-        }
-        else {
-            Dash.Request(this, this.on_data, this.api, params);
-        }
+        // if (this.new_button) {
+        //     this.new_button.Request(this.api, params, this.on_data, this);
+        // }
+        //
+        // else {
+        Dash.Request(this, this.on_data, this.api, params, this.req_domain_override);
+        // }
     };
     this.ViewObj = function (obj_id, force_set_active=false) {
         if (this.current_item != null && this.current_item.obj_id === obj_id) {
@@ -48003,37 +48009,36 @@ function DashGuiVDBList (
             button.Disable();
             button.SetLoading(true);
         }
-        (function (self) {
-            self.rows[obj_id].html.stop().animate(
-                {
-                    "height": 0,
-                    "margin-top": 0,
-                    "margin-bottom": 0,
-                    "padding-top": 0,
-                    "padding-bottom": 0
-                },
-                500,
-                function () {
-                    self.pending_user_action = false;
+        this.rows[obj_id].html.stop().animate(
+            {
+                "height": 0,
+                "margin-top": 0,
+                "margin-bottom": 0,
+                "padding-top": 0,
+                "padding-bottom": 0
+            },
+            500,
+            () => {
+                this.pending_user_action = false;
+            }
+        );
+        Dash.Request(
+            this,
+            (response) => {
+                this.on_data(response);
+                if (button) {
+                    button.SetLoading(false);
+                    button.Enable();
                 }
-            );
-            Dash.Request(
-                self,
-                function (response) {
-                    self.on_data(response);
-                    if (button) {
-                        button.SetLoading(false);
-                        button.Enable();
-                    }
-                },
-                self.api,
-                {
-                    "f": "delete",
-                    "vdb_type": self.vdb_type,
-                    "obj_id": obj_id
-                }
-            );
-        })(this);
+            },
+            this.api,
+            {
+                "f": "delete",
+                "vdb_type": this.vdb_type,
+                "obj_id": obj_id
+            },
+            this.req_domain_override
+        );
     };
     // Intended to be overridden
     this.get_no_new_button_types = function () {
@@ -48217,12 +48222,13 @@ function DashGuiVDBList (
         if (this.filter_key) {
             params["additional_data"] = JSON.stringify({"filter_key": this.filter_key});
         }
-        if (this.new_button) {
-            this.new_button.Request(this.api, params, this.on_data, this);
-        }
-        else {
-            Dash.Request(this, this.on_data, this.api, params);
-        }
+        // if (this.new_button) {
+        //     this.new_button.Request(this.api, params, this.on_data, this);
+        // }
+        //
+        // else {
+        Dash.Request(this, this.on_data, this.api, params, this.req_domain_override);
+        // }
     };
     this.redraw_rows = function () {
         if (this.pending_user_action || !this.searchable_list) {
@@ -48288,21 +48294,20 @@ function DashGuiVDBList (
             // Dash.Log.Warn("Missing VDB type");
             return;
         }
-        (function (self) {
-            Dash.Request(
-                self,
-                function (response) {
-                    self.on_data(response, false);
-                },
-                self.api,
-                {
-                    "f": "get_all",
-                    "vdb_type": self.vdb_type,
-                    "combo_types": JSON.stringify(self.get_combo_types()),
-                    ...self.extra_params
-                }
-            );
-        })(this);
+        Dash.Request(
+            this,
+            (response) => {
+                this.on_data(response, false);
+            },
+            this.api,
+            {
+                "f": "get_all",
+                "vdb_type": this.vdb_type,
+                "combo_types": JSON.stringify(this.get_combo_types()),
+                ...this.extra_params
+            },
+            this.req_domain_override
+        );
     };
     this._set_active_list_item = function (obj_id) {
         for (var id in this.rows) {

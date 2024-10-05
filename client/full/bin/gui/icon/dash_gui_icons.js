@@ -373,6 +373,7 @@ DashGuiIconMap = {
     "user":                    ["User", DashGuiIconWeights["regular"], "user"],
     "user_solid":              ["User (Solid)", DashGuiIconWeights["solid"], "user"],
     "users":                   ["Users", DashGuiIconWeights["regular"], "users"],
+    "users_solid":             ["Users (Solid)", DashGuiIconWeights["solid"], "users"],
     "user_settings":           ["User Settings", DashGuiIconWeights["regular"], "user-cog"],
     "video":                   ["Video", DashGuiIconWeights["regular"], "video"],
     "video_solid":             ["Video (Solid)", DashGuiIconWeights["solid"], "video"],

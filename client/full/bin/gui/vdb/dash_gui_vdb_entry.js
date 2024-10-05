@@ -381,7 +381,8 @@ function DashGuiVDBEntry (
                 "vdb_type": this.vdb_type,
                 "obj_id": this.obj_id,
                 ...extra_params
-            }
+            },
+            this.list_view.req_domain_override
         );
     };
 

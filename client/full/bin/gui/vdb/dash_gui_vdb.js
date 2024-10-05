@@ -1,6 +1,6 @@
 function DashGuiVDB (
-    vdb_types={}, can_view_type_cb=null, on_load_view_cb=null,
-    get_obj_view_cb=null, get_row_text_cb=null, get_combo_types_cb=null, color=null
+    vdb_types={}, can_view_type_cb=null, on_load_view_cb=null, get_obj_view_cb=null,
+    get_row_text_cb=null, get_combo_types_cb=null, color=null, req_domain_override=""
 ) {
     this.vdb_types = vdb_types;
     this.can_view_type_cb = can_view_type_cb;
@@ -9,6 +9,7 @@ function DashGuiVDB (
     this.get_row_text_cb = get_row_text_cb;
     this.get_combo_types_cb = get_combo_types_cb;
     this.color = color;
+    this.req_domain_override = req_domain_override;
 
     this.last_vdb_type = "";
     this.last_list_view = null;
@@ -58,7 +59,8 @@ function DashGuiVDB (
             this.vdb_types[vdb_type]["list_width"] || null,
             this.vdb_types[vdb_type]["include_toolbar"] || true,
             this.vdb_types[vdb_type]["single_mode_data"] || null,
-            this.vdb_types[vdb_type]["extra_params"] || {}
+            this.vdb_types[vdb_type]["extra_params"] || {},
+            this.req_domain_override
         );
 
         if (this.on_load_view_cb) {
