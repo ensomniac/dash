@@ -674,6 +674,12 @@ class Users:
             # any accounts for older sites from before that sanitation was added
             user_email = user_email.lower()
 
+            user_data_path = self.GetUserDataPath(user_email)
+            is_link        = os.path.islink(os.path.dirname(user_data_path))
+
+            if is_link:
+                continue
+
             try:
                 team[user_email] = self.get_user_info(user_email)
 
