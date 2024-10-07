@@ -47854,9 +47854,11 @@ function DashGuiVDBList (
     this.sort_key = "";
     this.toolbar = null;
     this.filter_key = "";
+    this.interval_id = "";
     this.filter_keys = {};
     this.new_button = null;
     this.filter_combos = [];
+    this.initialized = false;
     this.current_item = null;
     this.loading_label = null;
     this.loading_overlay = null;
@@ -47899,7 +47901,7 @@ function DashGuiVDBList (
             }
             return;
         }
-        Dash.SetInterval(this, this.refresh_data, 10000);
+        this.interval_id = Dash.SetInterval(this, this.refresh_data, 10000);
         if (this.include_toolbar) {
             this.add_toolbar();
         }
@@ -48190,6 +48192,7 @@ function DashGuiVDBList (
         if (this.loading_overlay) {
             this.loading_overlay.Hide();
         }
+        this.initialized = true;
     };
     this.reset_filters = function () {
         this.filter_key = "";
