@@ -7,171 +7,29 @@ function DashColor (dark_mode_active=false) {
     this.Warning = "#fab964";
     this.parsed_color_data = {};
     this.PickerDefault = "#00ff00";
+    this.Mobile = {"BannerButton": "#f7f7f7"};
     this.SaveHighlight = "rgb(255, 255, 255, 0.5)";
 
-    // This is a temporary way to centralize the orange palette
-    // that was originally defined and used throughout the mobile code
-    this.Mobile = {
-        AccentPrimary: "#ff684c",    // Orange
-        AccentSecondary: "#ffae4c",  // Yellow
-        BannerButton: "white"
-    };
-
     this.setup_color_sets = function () {
-        this.Mobile.BackgroundGradient = this.GetVerticalGradient(this.Mobile.AccentSecondary, this.Mobile.AccentPrimary);
-        this.Mobile.ButtonGradient = this.GetHorizontalGradient(this.Mobile.AccentSecondary, this.Mobile.AccentPrimary);
+        Dash.Color = this;
 
-        var dark_bg_text = "rgb(245, 245, 245)";
-        var light_bg_text = "rgb(30, 30, 30)";
-        var button_color = "#4d505f";
-        var button_hover_color = this.Lighten(button_color);
-        var button_text_color = "rgb(230, 230, 230)";
-        var button_selected = "#95ae6c";
-        var button_selected_hover = this.Lighten(button_selected);
-        var dark_input_background = "rgba(255, 255, 255, 0.8)";
-        var light_input_background = "rgba(0, 0, 0, 0)";
-        var dark_input_text = "rgba(255, 255, 255, 0.8)";
-        var light_input_text = "rgba(0, 0, 0, 0.8)";
+        this.Light = new DashColorSet();
+        this.Dark = new DashColorSet();
 
-        var light = new DashSiteColors(
-            {
-                // TODO: "background" and "background_raised" need to be different
-                //  - "background" should be something like "#d7dcde", or "background_raised" should be "white"
-                //  - changing one breaks a lot of stuff because BackgroundRaised is used in many places where Background should've been used instead
-                "background": "#e3e8ea",
-                "background_raised": "#e3e8ea",
-                "button": "#659cba",
-                "button_text": "rgb(234, 239, 255)",
-                "accent_good": "#f2c96c",
-                "accent_bad": "#f9663c",
-                "text_header": "#2b323c",
-                "tab_area_background": "#333",
-            },
-            this
-        );
+        // Required base set of colors
+        window.ColorAccentPrimary = "#f2c96c";
+        window.ColorAccentSecondary = "#ff624c";
+        window.ColorDarkBG = "#1C1C1E";  // Very dark grey
+        window.ColorLightBG = "#f0f0f0";  // Very light grey
+        window.ColorDarkText = "#4F4F4F";  // Medium-dark grey
+        window.ColorLightText = "#F2F2F2";  // Very light grey, nearly white
+        window.ColorButton = "#659cba";
+        window.ColorButtonSelected = "#95ae6c";
 
-        var dark = new DashSiteColors(
-            {
-                "background": "#23262b",
-                "background_raised": "#444b54",
-                "button": "#5c9fb7",
-                "button_text": "rgb(234, 239, 255)",
-                "accent_good": "#ffc74d",
-                "accent_bad": "#ff624c",
-                "text_header": "#c4d4dd",
-                "tab_area_background": "#333",
-            },
-            this
-        );
+        window.ColorMobileAccentPrimary = "#ff684c";  // Orange
+        window.ColorMobileAccentSecondary = "#ffae4c";  // Yellow
 
-        this.Light = new DashColorSet(
-            light.Background,       // Background color
-            light.BackgroundRaised, // Background color for raised boxes
-            light_bg_text,          // Text color
-            light.TextHeader,       // Text header color
-            light.AccentGood,
-            light.AccentBad,
-            new DashColorButtonSet( // Button
-                "none",                    // The color of the area behind a set of buttons, if applicable
-                new DashColorStateSet(
-                    light.Button,          // Button.Background.Base
-                    button_selected,       // Button.Background.Selected
-                    button_hover_color,    // Button.Background.BaseHover
-                    button_selected_hover, // Button.Background.SelectedHover
-                ),
-                new DashColorStateSet(
-                    light.ButtonText,   // Button.Text.Base
-                    button_text_color,  // Button.Text.Selected
-                    button_text_color,  // Button.Text.BaseHover
-                    button_text_color,  // Button.Text.SelectedHover
-                ),
-            ),
-            new DashColorButtonSet(     // Tab
-                // light.TabAreaBackground,
-                "none",
-                new DashColorStateSet(  // Tab Background
-                    "rgba(0, 0, 0, 0)", // Tab.Background.Base
-                    "rgba(0, 0, 0, 0)", // Tab.Background.Selected
-                    "rgba(0, 0, 0, 0)",  // Tab.Background.BaseHover
-                    light.AccentGood,      // Tab.Background.SelectedHover
-                ),
-                new DashColorStateSet(    // Tab Text
-                    "rgba(255, 255, 255, 0.6)", // Tab.Text.Base
-                    "rgba(255, 255, 255, 0.9)", // Tab.Text.Selected
-                    "rgba(255, 255, 255, 0.7)",     // Tab.Text.BaseHover
-                    "rgba(255, 255, 255, 1.0)",     // Tab.Text.SelectedHover
-                ),
-            ),
-            new DashColorButtonSet(     // Input
-                light.TabAreaBackground, // area background
-                new DashColorStateSet(  // Input Background
-                    light_input_background, // Input.Background.Base
-                    light_input_background, // Input.Background.Selected
-                    light_input_background,  // Input.Background.BaseHover
-                    light_input_background,      // Input.Background.SelectedHover
-                ),
-                new DashColorStateSet(    // Input Text
-                    light_input_text, // Input.Text.Base
-                    light_input_text, // Input.Text.Selected
-                    light_input_text,     // Input.Text.BaseHover
-                    light_input_text,     // Input.Text.SelectedHover
-                ),
-            ),
-        );
-
-        this.Dark = new DashColorSet(
-            dark.Background, // Background color
-            dark.BackgroundRaised, // Background color for raised boxes
-            dark_bg_text, // Text color
-            dark.TextHeader, // Text header color
-            dark.AccentGood,
-            dark.AccentBad,
-            new DashColorButtonSet( // Button
-                "none", // The color of the area behind a set of buttons, if applicable
-                new DashColorStateSet(
-                    dark.Button, // Button.Background.Base
-                    button_selected, // Button.Background.Selected
-                    button_hover_color, // Button.Background.BaseHover
-                    button_selected_hover, // Button.Background.SelectedHover
-                ),
-                new DashColorStateSet( // Button Text
-                    dark.ButtonText, // Button.Text.Base
-                    dark.ButtonText, // Button.Text.Selected
-                    dark.ButtonText, // Button.Text.BaseHover
-                    dark.ButtonText, // Button.Text.SelectedHover
-                ),
-            ),
-            new DashColorButtonSet(    // Tab
-                dark.TabAreaBackground, // The color of the area behind a set of tabs, if applicable
-                new DashColorStateSet( // Tab Background
-                    dark.Button,    // Tab.Background.Base
-                    button_selected,    // Tab.Background.Selected
-                    button_hover_color, // Tab.Background.BaseHover
-                    button_selected_hover, // Tab.Background.SelectedHover
-                ),
-                new DashColorStateSet( // Tab Text
-                    dark.ButtonText,   // Tab.Text.Base
-                    dark.ButtonText,  // Tab.Text.Selected
-                    dark.ButtonText,  // Tab.Text.BaseHover
-                    dark.ButtonText, // Tab.Text.SelectedHover
-                ),
-            ),
-            new DashColorButtonSet(     // Input
-                light.TabAreaBackground, // area background
-                new DashColorStateSet(  // Input Background
-                    dark_input_background, // Input.Background.Base
-                    dark_input_background, // Input.Background.Selected
-                    dark_input_background,  // Input.Background.BaseHover
-                    dark_input_background,      // Input.Background.SelectedHover
-                ),
-                new DashColorStateSet(    // Input Text
-                    dark_input_text, // Input.Text.Base
-                    dark_input_text, // Input.Text.Selected
-                    dark_input_text,     // Input.Text.BaseHover
-                    dark_input_text,     // Input.Text.SelectedHover
-                ),
-            ),
-        );
+        this.InitColors();
 
         this.Light.SetPlaceholderClass("placeholder_light");
         this.Dark.SetPlaceholderClass("placeholder_dark");
@@ -337,15 +195,13 @@ function DashColor (dark_mode_active=false) {
     };
 
     this.ParseToRGBA = function (cstr, opacity_override=null) {
-
         var rgba = this.Parse(cstr);
 
         if (opacity_override != null) {
             rgba[3] = opacity_override;
-        };
+        }
 
         return this.to_rgba(rgba);
-
     };
 
     this.Lighten = function (cstr, lighten_rgb=15) {  // How many units to add to r/g/b
@@ -369,7 +225,6 @@ function DashColor (dark_mode_active=false) {
     };
 
     this.Desaturate = function (cstr, desaturation_norm=0.5) {
-
         var pcolor = this.Parse(cstr);
         var grayscale = parseInt((pcolor[0] + pcolor[1] + pcolor[2])/3.0);
 
@@ -378,7 +233,6 @@ function DashColor (dark_mode_active=false) {
         pcolor[2] = Dash.Math.Lerp(pcolor[2], grayscale, desaturation_norm);
 
         return this.to_rgb(pcolor);
-
     };
 
     // TODO: break this up

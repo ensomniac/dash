@@ -54,7 +54,7 @@ class PackageContext:
 
         return self._all_packages
 
-    def ToDict(self):
+    def ToDict(self, include_mod_keys=False):
         if not self.PackageData:
             return None
 
@@ -84,9 +84,11 @@ class PackageContext:
 
         for key in self.PackageData:
             if (
-                key.startswith("created_")
-                or key.startswith("modified_")
+                (not include_mod_keys and key.startswith("created_"))
+                or (not include_mod_keys and key.startswith("modified_"))
                 or key.startswith("usr_path_")
+                or key.startswith("path_usr_")
+                or key.startswith("usr_local_repo_path_")
                 or key.startswith("git_")
             ):
                 continue
@@ -184,13 +186,13 @@ class PackageContext:
         return response
 
 
-def Get(asset_path="", ctx_id=""):
+def Get(asset_path="", ctx_id="", include_mod_keys=False):
     if not asset_path and not ctx_id:
         from Dash.Utils import ParseDashContextAssetPath
 
         asset_path = ParseDashContextAssetPath()
 
-    return PackageContext(asset_path, ctx_id).ToDict()
+    return PackageContext(asset_path, ctx_id).ToDict(include_mod_keys)
 
 
 def GetFullData(asset_path="", ctx_id=""):

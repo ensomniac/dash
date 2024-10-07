@@ -40,19 +40,15 @@ class ApiCore:
             self._fs = cgi.FieldStorage()
 
         except Exception as e:
-            from traceback import format_exc
-
-            error = format_exc()
-
-            if "write() argument must be str, not bytes" in error:
+            if "write() argument must be str, not bytes" in str(e):
                 try:
                     self.process_raw_body_content()
                 except:
                     # Ref: https://bugs.python.org/issue27777
-                    raise Exception(f"Failed to process request using Python's cgi.FieldStorage(). Traceback:\n{error}") from e
+                    raise Exception(f"Failed to process request using Python's cgi.FieldStorage().") from e
             else:
                 # Ref: https://bugs.python.org/issue27777
-                raise Exception(f"Failed to process request using Python's cgi.FieldStorage(). Traceback:\n{error}") from e
+                raise Exception(f"Failed to process request using Python's cgi.FieldStorage().") from e
 
         self._response = {"error": "Unauthorized"}
 

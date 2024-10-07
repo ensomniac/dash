@@ -3,8 +3,8 @@ function Dash () {
     this.height = 0;
     this.AnalogContext = {};
     this.TabIsVisible = true;
-    this.Context = DASH_CONTEXT;
     this.html = $("<div></div>");
+    this.Context = {...DASH_CONTEXT};
     this.GlobalStorageEnabled = false;
     this.Daypart = "Morning/Afternoon/Evening"; // Managed by Dash.Utils -> 5-minute background update interval
     this.LocalDev = window.location.protocol === "file:";
@@ -190,14 +190,14 @@ function Dash () {
 
         if (this.Validate.Object(data["color"])) {
             // Required base set of colors
-            window.ColorAccentPrimary = data["color"]["accent_primary"] || window.ColorAccentPrimary || "#edca5c"; // Github-inspired yellow
-            window.ColorAccentSecondary = data["color"]["accent_secondary"] || window.ColorAccentSecondary || "#cc615c"; // Github-inspired red
-            window.ColorDarkBG = data["color"]["dark_bg"] || window.ColorDarkBG || "#1C1C1E";  // Very dark grey
-            window.ColorLightBG = data["color"]["light_bg"] || window.ColorLightBG || "#f0f0f0";  // Very light grey
-            window.ColorDarkText = data["color"]["dark_text"] || window.ColorDarkText || "#4F4F4F";  // Medium-dark grey
-            window.ColorLightText = data["color"]["light_text"] || window.ColorLightText || "#F2F2F2";  // Very light grey, nearly white
-            window.ColorButton = data["color"]["button"] || window.ColorButton || "#5e99cc";  // Github-inspired blue
-            window.ColorButtonSelected = data["color"]["button_selected"] || window.ColorButtonSelected || "#58c472"; // Github-inspired green
+            window.ColorAccentPrimary = data["color"]["accent_primary"] || window.ColorAccentPrimary;
+            window.ColorAccentSecondary = data["color"]["accent_secondary"] || window.ColorAccentSecondary;
+            window.ColorDarkBG = data["color"]["dark_bg"] || window.ColorDarkBG;
+            window.ColorLightBG = data["color"]["light_bg"] || window.ColorLightBG;
+            window.ColorDarkText = data["color"]["dark_text"] || window.ColorDarkText;
+            window.ColorLightText = data["color"]["light_text"] || window.ColorLightText;
+            window.ColorButton = data["color"]["button"] || window.ColorButton;
+            window.ColorButtonSelected = data["color"]["button_selected"] || window.ColorButtonSelected;
 
             // Optional
             window.ColorMobileAccentPrimary = data["color"]["mobile_accent_primary"] || "";
