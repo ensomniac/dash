@@ -23934,7 +23934,8 @@ class DashGuiFile {
         this.html = $("<div></div>");
         this.preview_width = this.preview_size;
         this.preview_height = this.preview_size;
-        // Override these upload attrs for use cases that don't follow the standardized VDB.upload_file convention
+        // Override these upload attrs by calling UpdateFileUploader for use
+        // cases that don't follow the standardized VDB.upload_file convention
         this.upload_api = this.entry.api || this.entry.list_view?.api;
         this.upload_params = {
             "f": "upload_file",
@@ -24000,6 +24001,20 @@ class DashGuiFile {
         }
         else {
             this.preview.attr("src", url);
+        }
+    }
+    UpdateFileUploader (api="", params={}) {
+        if (api) {
+            this.upload_api = api;
+        }
+        if (Dash.Validate.Object(params)) {
+            this.upload_params = params;
+        }
+        if (this.upload_button) {
+            this.upload_button.SetFileUploader(
+                this.upload_api,
+                this.upload_params
+            );
         }
     }
     parse_aspect () {
