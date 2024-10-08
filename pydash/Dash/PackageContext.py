@@ -54,7 +54,7 @@ class PackageContext:
 
         return self._all_packages
 
-    def ToDict(self, include_mod_keys=False):
+    def ToDict(self, include_mod_keys=True):
         if not self.PackageData:
             return None
 
@@ -186,7 +186,7 @@ class PackageContext:
         return response
 
 
-def Get(asset_path="", ctx_id="", include_mod_keys=False):
+def Get(asset_path="", ctx_id="", include_mod_keys=True):
     if not asset_path and not ctx_id:
         from Dash.Utils import ParseDashContextAssetPath
 
