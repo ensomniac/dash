@@ -182,28 +182,32 @@ def FormatTime(dt_obj, time_format=1, tz="utc", update_tz=True):
 
 
 def GetReadableHoursMins(secs, include_secs=False):
-    mins = secs // 60
-    hours = mins // 60
-
-    secs %= 60
-    mins %= 60
-
-    secs = max(secs, 0)
-    mins = max(mins, 0)
-    hours = max(hours, 0)
-
-    if not include_secs:
-        if secs >= 30:
-            mins += 1
-
-        if mins == 0 and secs:
-            mins += 1
-
-    # Adjust for overflow
-    if mins == 60:
+    if not secs:
         mins = 0
+        hours = 0
+    else:
+        mins = secs // 60
+        hours = mins // 60
 
-        hours += 1
+        secs %= 60
+        mins %= 60
+
+        secs = max(secs, 0)
+        mins = max(mins, 0)
+        hours = max(hours, 0)
+
+        if not include_secs:
+            if secs >= 30:
+                mins += 1
+
+            if mins == 0 and secs:
+                mins += 1
+
+        # Adjust for overflow
+        if mins == 60:
+            mins = 0
+
+            hours += 1
 
     readable = f"{int(hours)}h {int(mins)}m"
 
