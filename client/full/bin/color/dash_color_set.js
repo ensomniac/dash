@@ -157,7 +157,7 @@ class DashColorSet {
         // is still referenced in the code, auto-update BackgroundRaised when
         // Background is updated - otherwise, the new Background will not work
         // well with the default, hard-coded BackgroundRaised.
-        this._background_raised = Dash.Color._get_background_raised(color);
+        this.set_background_raised();
     };
 
     set Text (color) {
@@ -191,4 +191,19 @@ class DashColorSet {
     SetPlaceholderClass (placeholder_class_name) {
         this._placeholder_class = placeholder_class_name;
     };
+
+    set_background_raised () {
+        if (!window.Dash || !Dash.Color) {
+            setTimeout(
+                () => {
+                    this.set_background_raised();
+                },
+                10
+            );
+
+            return;
+        }
+
+        this._background_raised = Dash.Color._get_background_raised(this._background);
+    }
 }

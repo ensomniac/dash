@@ -5,7 +5,8 @@
 class DashLog {
     constructor () {
         this.remote_debug_ls_key = "_dash_remote_debug_mode_enabled";
-        this.remote_debug_mode_enabled = Dash.LocalDev ? false : null;
+
+        this.check_remote_debug_mode_enabled();
     }
 
     Log (...msg) {
@@ -82,5 +83,20 @@ class DashLog {
                 "\n**********************************************************"
             );
         }
+    }
+
+    check_remote_debug_mode_enabled () {
+        if (!window.Dash || !Dash.Color) {
+            setTimeout(
+                () => {
+                    this.check_remote_debug_mode_enabled();
+                },
+                10
+            );
+
+            return;
+        }
+
+        this.remote_debug_mode_enabled = Dash.LocalDev ? false : null;
     }
 }

@@ -1,4 +1,4 @@
-function Dash () {
+function _Dash () {
     this.width = 0;
     this.height = 0;
     this.AnalogContext = {};
@@ -46,7 +46,7 @@ function Dash () {
     this.Gui       = new DashGui();
     this.History   = new DashHistory();
     this.Layout    = new DashLayout();
-    this.Log       = new DashLog(this);
+    this.Log       = new DashLog();
     this.Math      = new DashMath();
     this.RegEx     = new DashRegEx();
     this.Requests  = new DashRequest();
@@ -708,8 +708,8 @@ function Dash () {
 }
 
 function WindowInitDash () {
-    window.Dash = new Dash();
-    window.d = window.Dash;  // TODO: deprecate this
+    window.Dash = new _Dash();
+    // window.d = window.Dash;  // Deprecated
 
     window.Dash.Initialize();
 
@@ -741,7 +741,7 @@ function WindowInitDash () {
 }
 
 $(document).on("ready", function () {
-    $.fn.extend({  // TODO: are these extensions used?
+    $.fn.extend({
         "animateStep": function (options) {
             return this.each(function () {
                 var elementOptions = $.extend({}, options, {step: options.step.bind($(this))});
@@ -760,23 +760,23 @@ $(document).on("ready", function () {
         window.location.href = window.location.href.replace("https://www.", "https://");
     }
 
-    // TODO: Do we really need this as a window variable rather than just calling it from Dash.Math?
-    window.InverseLerp = function (min, max, val) {
-        return (val - min) / (max - min);
-    };
+    // Deprecated: Use Dash.Math.InverseLerp instead
+    // window.InverseLerp = function (min, max, val) {
+    //     return (val - min) / (max - min);
+    // };
 
-    // TODO: Do we really need this as a window variable rather than just calling it from Dash.Math?
-    window.Lerp = function (valA, valB, t) {
-        if (t > 1) {
-            t = 1;
-        }
-
-        if (t < 0) {
-            t = 0;
-        }
-
-        return valA + t * (valB - valA);
-    };
+    // Deprecated: Use Dash.Math.Lerp instead
+    // window.Lerp = function (valA, valB, t) {
+    //     if (t > 1) {
+    //         t = 1;
+    //     }
+    //
+    //     if (t < 0) {
+    //         t = 0;
+    //     }
+    //
+    //     return valA + t * (valB - valA);
+    // };
 
     WindowInitDash();
 });

@@ -11,8 +11,6 @@ function DashColor (dark_mode_active=false) {
     this.SaveHighlight = "rgb(255, 255, 255, 0.5)";
 
     this.setup_color_sets = function () {
-        Dash.Color = this;
-
         this.Light = new DashColorSet();
         this.Dark = new DashColorSet();
 
