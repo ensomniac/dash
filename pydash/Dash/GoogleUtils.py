@@ -259,8 +259,11 @@ class GUtils:
 
         return self._drive_utils_
 
-    def CreateDriveFile(self, params, file_path=None, in_shared_drive=False, fields=""):
-        return self._drive_utils.CreateFile(params, file_path, in_shared_drive, fields)
+    def CreateDriveFile(self, params, file_path=None, in_shared_drive=False, fields="", file_url=""):
+        return self._drive_utils.CreateFile(params, file_path, in_shared_drive, fields, file_url)
+
+    def CreateDriveFolder(self, name, parent_id="", in_shared_drive=False, fields=""):
+        return self._drive_utils.CreateFolder(name, parent_id, in_shared_drive, fields)
 
     def DeleteDriveFile(self, file_id, in_shared_drive=False, fields=""):
         return self._drive_utils.DeleteFile(file_id, in_shared_drive, fields)
@@ -283,10 +286,11 @@ class GUtils:
         )
 
     def GetAllDriveFiles(
-        self, drive_id, extra_query="", fields_override="", is_shared_drive=False, include_deleted=False
+        self, drive_id, extra_query="", fields_override="", is_shared_drive=False,
+        include_deleted=False, parent_folder_id="", mime_type=""
     ):
         return self._drive_utils.GetAllFiles(
-            drive_id, extra_query, fields_override, is_shared_drive, include_deleted
+            drive_id, extra_query, fields_override, is_shared_drive, include_deleted, parent_folder_id, mime_type
         )
 
     def GetDriveFilePermissions(self, file_id, in_shared_drive=False, fields="id, emailAddress, role"):
@@ -393,6 +397,7 @@ class GUtils:
 
 class _DriveUtils:
     _client: callable
+    _drafting_file_exts: list
 
     def __init__(self, gutils):
         self.gutils = gutils
@@ -409,6 +414,15 @@ class _DriveUtils:
     @property
     def FolderMimeType(self):
         return "application/vnd.google-apps.folder"
+
+    @property
+    def drafting_file_exts(self):
+        if not hasattr(self, "_drafting_file_exts"):
+            from Dash.Utils import GetDraftingExtensions
+
+            self._drafting_file_exts = GetDraftingExtensions()
+
+        return self._drafting_file_exts
 
     @property
     def Fields(self):
@@ -436,28 +450,28 @@ class _DriveUtils:
 
         return ", ".join(fields)
 
-    def CreateFile(self, params, file_path=None, in_shared_drive=False, fields=""):
+    def CreateFile(self, params, file_path=None, in_shared_drive=False, fields="", file_url=""):
         """
         | Update file data or metadata, such as file/folder description.
         |
         | Params ref: https://developers.google.com/drive/api/v3/reference/files/create#request-body
 
         :param dict params: Request parameters that match accepted keys for request body
-        :param str file_path: Path to optional file for upload (default=None)
+        :param str file_path: Path, instead of URL, to optional file for upload (default=None)
         :param bool in_shared_drive: File lives in a shared drive (default=False)
         :param str fields: Requested fields, if different than self.fields (default="")
+        :param str file_url: URL, instead of path, for optional file to upload (default="")
 
         :return: New file/folder data
         :rtype: dict
         """
 
-        if not params.get("mimeType") and file_path:
-            from Dash.Utils import GetDraftingExtensions
-
-            ext = file_path.split(".")[-1].strip().lower()
-
-            if ext in GetDraftingExtensions():
-                params["mimeType"] = "application/x-autocad"
+        if (
+            (file_path or file_url)
+            and not params.get("mimeType")
+            and (file_path or file_url).split(".")[-1].strip().lower() in self.drafting_file_exts
+        ):
+            params["mimeType"] = "application/x-autocad"
 
         file = None
 
@@ -465,6 +479,17 @@ class _DriveUtils:
             from googleapiclient.http import MediaFileUpload
 
             file = MediaFileUpload(file_path)
+
+        elif file_url:
+            from io import BytesIO
+            from requests import get
+            from googleapiclient.http import MediaIoBaseUpload
+
+            response = get(file_url)
+
+            response.raise_for_status()
+
+            file = MediaIoBaseUpload(BytesIO(response.content))
 
         _params = {
             "supportsAllDrives": in_shared_drive,
@@ -496,6 +521,21 @@ class _DriveUtils:
                     ) from e
 
             raise UnicodeEncodeError(e.encoding, e.object, e.start, e.end, e.reason) from e
+
+    def CreateFolder(self, name, parent_id="", in_shared_drive=False, fields=""):
+        params = {
+            "name": name,
+            "mimeType": self.FolderMimeType
+        }
+
+        if parent_id:
+            params["parents"] = [parent_id]
+
+        return self.CreateFile(
+            params=params,
+            in_shared_drive=in_shared_drive,
+            fields=fields
+        )
 
     def DeleteFile(self, file_id, in_shared_drive=False, fields=""):
         params = {
@@ -624,7 +664,8 @@ class _DriveUtils:
         return None
 
     def GetAllFiles(
-        self, drive_id, extra_query="", fields_override="", is_shared_drive=False, include_deleted=False
+        self, drive_id, extra_query="", fields_override="", is_shared_drive=False,
+        include_deleted=False, parent_folder_id="", mime_type=""
     ):
         """
         | ** THIS IS A HEAVY PULL IF NO EXTRA QUERY **
@@ -639,18 +680,31 @@ class _DriveUtils:
         :param str fields_override: Fields to override the default return fields (default="")
         :param bool is_shared_drive: Drive to get files from is a shared drive, or includes a shared drive (default=False)
         :param bool include_deleted: Fields to override the default return fields (default=False)
+        :param str parent_folder_id: Specific folder ID to search in
+        :param str mime_type: Specific MIME type to look for
 
         :return: List of data dictionaries for each file/folder
         :rtype: list
         """
 
-        if include_deleted:
-            query = extra_query
-        else:
-            query = "trashed=false"
+        query = []
 
-            if extra_query:
-                query += f" and {extra_query}"
+        if not include_deleted:
+            query.append("trashed=false")
+
+        if parent_folder_id:
+            query.append(f"'{parent_folder_id}' in parents")
+
+        if mime_type:
+            query.append(f"mimeType='{mime_type}'")
+
+        query = " and ".join(query)
+
+        if extra_query:
+            if query:
+                query += " and "
+
+            query += extra_query
 
         params = {
             "driveId": drive_id,
