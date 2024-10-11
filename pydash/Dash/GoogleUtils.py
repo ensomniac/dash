@@ -481,15 +481,31 @@ class _DriveUtils:
             file = MediaFileUpload(file_path)
 
         elif file_url:
-            from io import BytesIO
+            from mimetypes import guess_type
+
+            filename = file_url.split("/")[-1]
+
+            if "?" in filename:
+                filename = filename.split("?")[0]
+
+            mime_type = guess_type(filename)[0]
+
+            if not mime_type:
+                raise ValueError(f"Failed to get mime type for url: {file_url}")
+
             from requests import get
-            from googleapiclient.http import MediaIoBaseUpload
 
             response = get(file_url)
 
             response.raise_for_status()
 
-            file = MediaIoBaseUpload(BytesIO(response.content))
+            from io import BytesIO
+            from googleapiclient.http import MediaIoBaseUpload
+
+            file = MediaIoBaseUpload(
+                BytesIO(response.content),
+                mimetype=mime_type
+            )
 
         _params = {
             "supportsAllDrives": in_shared_drive,

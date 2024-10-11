@@ -17903,12 +17903,19 @@ function _Dash () {
     this.extend_string_prototype = function () {
         String.prototype.Title = function () {
             try {
+                var spaced = "";
+                
                 if (this.includes("_")) {
-                    var asset_path = this.replaceAll("_", " ").toLowerCase().split(" ");
-                    for (var i = 0; i < asset_path.length; i++) {
-                        asset_path[i] = asset_path[i].charAt(0).toUpperCase() + asset_path[i].slice(1);
+                    spaced = this.replaceAll("_", " ").toLowerCase().split(" ");
+                }
+                else if (this.includes(" ")) {
+                    spaced = this.toLowerCase().split(" ");
+                }
+                if (spaced) {
+                    for (var i = 0; i < spaced.length; i++) {
+                        spaced[i] = spaced[i].charAt(0).toUpperCase() + spaced[i].slice(1);
                     }
-                    return asset_path.join(" ");
+                    return spaced.join(" ");
                 }
                 return this.slice(0, 1).toUpperCase() + this.slice(1, this.length);
             }
