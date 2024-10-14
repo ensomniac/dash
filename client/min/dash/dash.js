@@ -48042,7 +48042,7 @@ function DashGuiVDBList (
         return (this.get_combo_types_cb ? this.get_combo_types_cb() : []) || [];
     };
     this.on_data = function (response, track=true) {
-        if (track) {
+        if (!track) {
             if (!Dash.Validate.Response(response)) {
                 return;
             }

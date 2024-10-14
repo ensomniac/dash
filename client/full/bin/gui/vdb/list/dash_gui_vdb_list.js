@@ -369,7 +369,7 @@ function DashGuiVDBList (
     };
 
     this.on_data = function (response, track=true) {
-        if (track) {
+        if (!track) {
             if (!Dash.Validate.Response(response)) {
                 return;
             }
