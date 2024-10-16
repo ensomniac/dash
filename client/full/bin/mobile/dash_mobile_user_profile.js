@@ -112,6 +112,16 @@ function DashMobileUserProfile (
 
         this.profile_button = this.user_banner.AddFooterIcon("image", "Change Profile", this.on_profile_changed.bind(this));
 
+        // Use this to test if a user has anything that will block popups like window.confirm or window.alert
+        this.user_banner.AddFooterIcon(
+            "alert_bulb",
+            "Test Popups",
+            () => {
+                window.confirm("This is a confirmation prompt");
+                window.alert("This is an alert");
+            }
+        );
+
         this.profile_button.AddUploader(
             this,
             this.on_user_img_uploaded,

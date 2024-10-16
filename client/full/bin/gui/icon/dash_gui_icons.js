@@ -45,6 +45,7 @@ DashGuiIconMap = {
     "add_to_cart":             ["Add To Cart", DashGuiIconWeights["regular"], "cart-plus"],
     "admin_tools":             ["Admin Tools", DashGuiIconWeights["regular"], "shield-alt"],
     "alert":                   ["Alert", DashGuiIconWeights["solid"], "exclamation"],
+    "alert_bulb":              ["Alert Bulb", DashGuiIconWeights["regular"], "lightbulb-exclamation"],
     "alert_square":            ["Alert Square", DashGuiIconWeights["regular"], "exclamation-square"],
     "alert_square_solid":      ["Alert Square Solid", DashGuiIconWeights["solid"], "exclamation-square"],
     "alert_triangle":          ["Alert Triangle", DashGuiIconWeights["solid"], "exclamation-triangle"],
