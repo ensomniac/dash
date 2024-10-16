@@ -55873,14 +55873,14 @@ function DashMobileUserProfile (
         this.user_banner.header_row.right_icon.AddShadow("1px 1px 3px rgba(0, 0, 0, 1)");
         this.profile_button = this.user_banner.AddFooterIcon("image", "Change Profile", this.on_profile_changed.bind(this));
         // Use this to test if a user has anything that will block popups like window.confirm or window.alert
-        this.user_banner.AddFooterIcon(
-            "alert_bulb",
-            "Test Popups",
-            () => {
-                window.confirm("This is a confirmation prompt");
-                window.alert("This is an alert");
-            }
-        );
+        // this.user_banner.AddFooterIcon(
+        //     "alert_bulb",
+        //     "Test Popups",
+        //     () => {
+        //         window.confirm("This is a confirmation prompt");
+        //         window.alert("This is an alert");
+        //     }
+        // );
         this.profile_button.AddUploader(
             this,
             this.on_user_img_uploaded,
