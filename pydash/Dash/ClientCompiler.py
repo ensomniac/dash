@@ -578,6 +578,8 @@ def CompileAndDistribute():
 
 
 if __name__ == "__main__":
+    ClientCompiler = None
+
     _ClientCompiler().CompileAndDistribute()
 else:
     ClientCompiler = _ClientCompiler()
