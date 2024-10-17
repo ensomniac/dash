@@ -467,6 +467,7 @@ function DashMobileTextBox (
 
     this.fire_change_cb = function (submit_override=false) {
         this.auto_adjust_height();
+        this._on_fire_change_cb();
 
         if (!this.on_change_cb || (this.submit_override_only && !submit_override)) {
             return;
@@ -543,6 +544,10 @@ function DashMobileTextBox (
         }
 
         this.on_change_cb(text, this);
+    };
+
+    this._on_fire_change_cb = function () {
+        // Intended to be overridden
     };
 
     this.setup_styles();

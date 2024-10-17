@@ -10,6 +10,23 @@ function DashGuiPropertyBoxInterface () {
         this.update_color_pickers();
     };
 
+    this.Empty = function () {
+        this.html.empty();
+
+        this.rows = [];
+        this.combos= {};
+        this.inputs = {};
+        this.headers = [];
+        this.addresses = {};
+        this.tool_rows = [];
+        this.text_areas = {};
+        this.num_headers = 0;
+        this.custom_html = [];
+        this.color_pickers = {};
+        this.bottom_divider = null;
+        this.top_right_delete_button = null;
+    };
+
     this.Disable = function (opacity=0.5) {
         if (this.disabled) {
             return;

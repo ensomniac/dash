@@ -26435,9 +26435,56 @@ function DashGuiTextArea (
     // element that exists in Dash and was created with the 'Mobile' name because I thought
     // it was going to be specific to mobile, but that ended up not being the case.
     DashMobileTextBox.call(this, color, placeholder_text, binder, on_change_cb, delay_change_cb);
+    this.counter = null;
     this.textarea.css({
         "line-height": Dash.Size.RowHeight + "px"
     });
+    // Override
+    this.SetMaxCharacters = function (num, include_counter=true, enforce=true) {
+        if (!enforce && !include_counter) {
+            Dash.Log.Warn(
+                "SetMaxCharacters will have no effect with 'enforce' and 'include_counter' both set to false"
+            );
+        }
+        if (enforce) {
+            this.textarea.attr("maxlength", num);
+        }
+        if (!include_counter) {
+            return;
+        }
+        this.counter = $(
+              "<div>"
+            + (this.GetText().length + " / " + num)
+            + "</div>"
+        );
+        this.counter.css({
+            "position": "absolute",
+            "top": -Dash.Size.RowHeight,
+            "right": 0,
+            "text-align": "right",
+            "height": Dash.Size.RowHeight,
+            "line-height": Dash.Size.RowHeight + "px",
+            "color": this.color.Text,
+            "font-family": "sans_serif_normal"
+        });
+        this.html.append(this.counter);
+    };
+    // Override
+    this._on_fire_change_cb = function () {
+        this.update_counter();
+    };
+    this.update_counter = function () {
+        if (!this.counter) {
+            return "";
+        }
+        var counter_text = this.GetText().length + " / " + this.textarea.attr("maxlength");
+        var valid = eval(counter_text) <= 1;
+        this.counter.text(counter_text);
+        this.counter.css({
+            "font-family": "sans_serif_" + (valid ? "normal" : "bold"),
+            "color": valid ? this.color.Text : this.color.AccentBad
+        });
+    };
 }
 
 function DashGuiLoadDots (size=null, color=null) {
@@ -46131,6 +46178,21 @@ function DashGuiPropertyBoxInterface () {
         this.update_tool_rows();
         this.update_color_pickers();
     };
+    this.Empty = function () {
+        this.html.empty();
+        this.rows = [];
+        this.combos= {};
+        this.inputs = {};
+        this.headers = [];
+        this.addresses = {};
+        this.tool_rows = [];
+        this.text_areas = {};
+        this.num_headers = 0;
+        this.custom_html = [];
+        this.color_pickers = {};
+        this.bottom_divider = null;
+        this.top_right_delete_button = null;
+    };
     this.Disable = function (opacity=0.5) {
         if (this.disabled) {
             return;
@@ -55359,6 +55421,7 @@ function DashMobileTextBox (
     };
     this.fire_change_cb = function (submit_override=false) {
         this.auto_adjust_height();
+        this._on_fire_change_cb();
         if (!this.on_change_cb || (this.submit_override_only && !submit_override)) {
             return;
         }
@@ -55415,6 +55478,9 @@ function DashMobileTextBox (
             this.Flash();
         }
         this.on_change_cb(text, this);
+    };
+    this._on_fire_change_cb = function () {
+        // Intended to be overridden
     };
     this.setup_styles();
 }
