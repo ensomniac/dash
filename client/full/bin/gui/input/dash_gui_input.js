@@ -5,15 +5,12 @@ function DashGuiInput (placeholder_text="", color=null) {
 
     DashGuiInputBase.call(this, color, true, true);
 
-    this.input = $(
-          "<input class='"
-        + this.color.PlaceholderClass
-        + "' placeholder='"
-        + this.placeholder
-        + "'>"
-    );
+    this.input = $("<input class='" + this.color.PlaceholderClass + "'>");
 
     this.setup_styles = function () {
+        // Have to do it here instead of inline to solve for any single quotations (escaping doesn't work inline)
+        this.input.attr("placeholder", this.placeholder);
+
         this.html.css({
             "height": this.height,
             "background": this.color.Input.Background.Base,
