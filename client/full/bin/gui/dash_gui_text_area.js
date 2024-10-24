@@ -38,16 +38,26 @@ function DashGuiTextArea (
 
         this.counter.css({
             "position": "absolute",
-            "top": -Dash.Size.RowHeight,
             "right": 0,
+            "top": -Dash.Size.RowHeight * 0.75,
+            "height": Dash.Size.RowHeight * 0.75,
+            "line-height": (Dash.Size.RowHeight * 0.75) + "px",
             "text-align": "right",
-            "height": Dash.Size.RowHeight,
-            "line-height": Dash.Size.RowHeight + "px",
             "color": this.color.Text,
-            "font-family": "sans_serif_normal"
+            "font-family": "sans_serif_normal",
+            "font-size": "90%",
+            "background": this.textarea.css("background-color"),
+            "padding-left": Dash.Size.Padding * 0.5,
+            "padding-right": Dash.Size.Padding * 0.5,
+            "border": "1px solid " + this.color.StrokeLight,
+            "border-bottom": "",
+            "border-top-left-radius": Dash.Size.BorderRadius,
+            "border-top-right-radius": Dash.Size.BorderRadius
         });
 
         this.html.append(this.counter);
+
+        return this.counter;
     };
 
     // Override
