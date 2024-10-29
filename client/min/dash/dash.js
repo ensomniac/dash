@@ -31081,22 +31081,28 @@ function DashGuiComboInterface () {
     // Only tested using the Default style
     this.UseAsIconButtonCombo = function (icon_name=null, icon_size_mult=null, icon_color=null) {
         if (icon_name || icon_size_mult) {
-            this.dropdown_icon.html.remove();
+            if (this.dropdown_icon) {
+                this.dropdown_icon.html.remove();
+            }
             this.add_dropdown_icon(icon_size_mult || 0.75, icon_name);
         }
         this.html.css({
             "margin-left": Dash.Size.Padding * 0.5
         });
-        this.inner_html.css({
-            "background": "none"
-        });
-        this.dropdown_icon.html.css({
-            "margin-left": 0,
-            "inset": 0
-        });
+        if (this.inner_html) {
+            this.inner_html.css({
+                "background": "none"
+            });
+        }
         this.label.remove();
         this.highlight.remove();
-        this.dropdown_icon.SetColor(icon_color || this.color_set.Background.Base);
+        if (this.dropdown_icon) {
+            this.dropdown_icon.html.css({
+                "margin-left": 0,
+                "inset": 0
+            });
+            this.dropdown_icon.SetColor(icon_color || this.color_set.Background.Base);
+        }
     };
     // Only tested using the Row style
     this.UseAsButtonCombo = function (label_text) {
@@ -51538,7 +51544,7 @@ function DashLayoutListColumnConfig () {
     this.AddCombo = function (
         label_text, combo_options, binder, callback, data_key="", width_mult=null,
         css={}, header_css={}, is_user_list=false, multi_select=false, footer_css={},
-        hover_text="", can_edit=true, max_rows_before_scroll=0
+        hover_text="", can_edit=true, max_rows_before_scroll=0, icon_name=null, icon_size_mult=1, icon_color=null
     ) {
         this.AddColumn(
             label_text,
@@ -51555,7 +51561,10 @@ function DashLayoutListColumnConfig () {
                     "combo_options": combo_options,
                     "is_user_list": is_user_list,
                     "multi_select": multi_select,
-                    "max_rows_before_scroll": max_rows_before_scroll
+                    "max_rows_before_scroll": max_rows_before_scroll,
+                    "icon_name": icon_name,
+                    "icon_size_mult": icon_size_mult,
+                    "icon_color": icon_color
                 },
                 "css": css,
                 "header_css": header_css,
@@ -52119,6 +52128,9 @@ function DashLayoutListRowElements () {
         );
         if (options["max_rows_before_scroll"]) {
             combo.SetMaxRowsBeforeScroll(options["max_rows_before_scroll"]);
+        }
+        if (options["icon_name"]) {
+            combo.UseAsIconButtonCombo(options["icon_name"], options["icon_size_mult"], options["icon_color"]);
         }
         var css = {
             "height": this.height,

@@ -218,6 +218,10 @@ function DashLayoutListRowElements () {
             combo.SetMaxRowsBeforeScroll(options["max_rows_before_scroll"]);
         }
 
+        if (options["icon_name"]) {
+            combo.UseAsIconButtonCombo(options["icon_name"], options["icon_size_mult"], options["icon_color"]);
+        }
+
         var css = {
             "height": this.height,
             "width": column_config_data["width"]

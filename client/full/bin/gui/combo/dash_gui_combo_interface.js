@@ -158,7 +158,9 @@ function DashGuiComboInterface () {
     // Only tested using the Default style
     this.UseAsIconButtonCombo = function (icon_name=null, icon_size_mult=null, icon_color=null) {
         if (icon_name || icon_size_mult) {
-            this.dropdown_icon.html.remove();
+            if (this.dropdown_icon) {
+                this.dropdown_icon.html.remove();
+            }
 
             this.add_dropdown_icon(icon_size_mult || 0.75, icon_name);
         }
@@ -167,19 +169,23 @@ function DashGuiComboInterface () {
             "margin-left": Dash.Size.Padding * 0.5
         });
 
-        this.inner_html.css({
-            "background": "none"
-        });
-
-        this.dropdown_icon.html.css({
-            "margin-left": 0,
-            "inset": 0
-        });
+        if (this.inner_html) {
+            this.inner_html.css({
+                "background": "none"
+            });
+        }
 
         this.label.remove();
         this.highlight.remove();
 
-        this.dropdown_icon.SetColor(icon_color || this.color_set.Background.Base);
+        if (this.dropdown_icon) {
+            this.dropdown_icon.html.css({
+                "margin-left": 0,
+                "inset": 0
+            });
+
+            this.dropdown_icon.SetColor(icon_color || this.color_set.Background.Base);
+        }
     };
 
     // Only tested using the Row style
