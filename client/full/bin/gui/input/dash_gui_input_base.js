@@ -278,7 +278,7 @@ function DashGuiInputBase (
             }
 
             if (
-                this.previous_submitted_text
+                   this.previous_submitted_text
                 && this.Text().toString() === this.previous_submitted_text.toString()
             ) {
                 return;

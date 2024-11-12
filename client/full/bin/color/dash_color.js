@@ -549,7 +549,7 @@ function DashColor (dark_mode_active=false) {
         this.Dark.Input = new DashColorButtonSet(
             "none",  // Dark.Input.AreaBackground (If applicable)
             new DashColorStateSet(
-                this.Lighten(window["ColorLightBG"], 5),  // Dark.Input.Background.Base
+                this.Lighten(window["ColorDarkBG"], 5),  // Dark.Input.Background.Base
                 "none",  // Dark.Input.Background.Selected
                 "none",  // Dark.Input.Background.BaseHover
                 "none"  // Dark.Input.Background.SelectedHover

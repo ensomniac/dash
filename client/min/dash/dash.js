@@ -22338,7 +22338,7 @@ function DashColor (dark_mode_active=false) {
         this.Dark.Input = new DashColorButtonSet(
             "none",  // Dark.Input.AreaBackground (If applicable)
             new DashColorStateSet(
-                this.Lighten(window["ColorLightBG"], 5),  // Dark.Input.Background.Base
+                this.Lighten(window["ColorDarkBG"], 5),  // Dark.Input.Background.Base
                 "none",  // Dark.Input.Background.Selected
                 "none",  // Dark.Input.Background.BaseHover
                 "none"  // Dark.Input.Background.SelectedHover
@@ -24386,42 +24386,12 @@ function DashGuiLogin (on_login_binder=null, on_login_callback=null, color=null,
         this.email_row.append(this.email_input.html);
         this.password_row.append(this.password_input.html);
         this.email_input.SetText(Dash.Local.Get("email") || "");
-        var toggle = new Dash.Gui.Checkbox(
-            "",
-            true,
-            this.color,
-            "Toggle",
-            this,
-            (toggle) => {
-                this.password_input.input.attr("type", toggle.IsChecked() ? "password" : "text");
-            }
-        );
-        toggle.SetTrueIconName("hidden", "Show password");
-        toggle.SetFalseIconName("visible", "Hide password");
-        toggle.AddHighlight(
-            0,
-            false,
-            {
-                "left": Dash.Size.Padding * 0.5,
-                "right": Dash.Size.Padding * 0.5
-            }
-        );
-        toggle.html.css({
-            "position": "absolute",
-            "top": 0,
-            "border-radius": Dash.Size.BorderRadius
+        var comp = this.password_input.get_vis_toggle_pad();
+        this.password_input.visibility_toggle.html.css({
+            "top": comp,
+            "right": comp
         });
-        this.password_row.append(toggle.html);
-        requestAnimationFrame(() => {
-            var comp = Dash.Size.Padding * (Dash.IsMobile ? 0.5 : 0.5);
-            toggle.SetIconSize(Dash.IsMobile ? 140 : 110, this.password_row.height());
-            toggle.html.css({
-                "right": -comp
-            });
-            this.password_row.css({
-                "padding-right": Dash.Size.ButtonHeight - (comp * (Dash.IsMobile ? 2 : 1))
-            });
-        });
+        this.password_input.DisableAuthForVisToggle();
     };
     this.add_login_box = function () {
         var side_margin = Dash.IsMobile ? 0 : "auto";
@@ -27510,13 +27480,11 @@ function DashGuiIconButton (icon_name, callback, binder, color, options={}) {
     this.style = options["style"] || "default";
     this.additional_data = options["additional_data"] || null;
     DashGuiButton.call(this, "", callback, binder, color, options);
-    (function (self, options) {
-        requestAnimationFrame(function () {
-            if (options["icon_color"]) {
-                self.SetIconColor(options["icon_color"]);
-            };
-        });
-    })(this, options);
+    requestAnimationFrame(() => {
+        if (options["icon_color"]) {
+            this.SetIconColor(options["icon_color"]);
+        }
+    });
     this.SetIconColor = function (color) {
         this.icon.SetColor(color);
         return this;
@@ -27545,13 +27513,13 @@ function DashGuiIconButton (icon_name, callback, binder, color, options={}) {
         return this;
     };
     this.SetIcon = function (icon_name) {
-        if (icon_name == this.icon_name) {
+        if (icon_name === this.icon_name) {
             // WARNING: Ryan modified this on Sep 14 '24 and notes
             // that it's possible this may have breaking implications
             // for existing code and may need to be allowed past this
             // return on initialization!
             return;
-        };
+        }
         this.icon_name = icon_name;
         this.icon.SetIcon(icon_name);
         return this;
@@ -43697,11 +43665,9 @@ function DashGuiIcon (
         this.icon_html = $('<i class="' + this.icon_definition.get_class() + '"></i>');
         this.icon_html.css(this.icon_definition.get_css());
         this.html.append(this.icon_html);
-        (function (self) {
-            requestAnimationFrame(function () {
-                self.initialized = true;
-            });
-        })(this);
+        requestAnimationFrame(() => {
+            this.initialized = true;
+        });
     };
     // TODO: write a function very similar to this to use a different icon as
     //  the "background" to essentially "combine" two different icons into one
@@ -43757,33 +43723,31 @@ function DashGuiIcon (
         var icon_css = this.icon_definition.get_css();
         if (this.set_color) {
             icon_css["color"] = this.set_color;
-        };
+        }
         icon_html.css(icon_css);
         if (this.icon_html) {
-            if (this.initialized) {
-                // Animate icon change
+            if (this.initialized) {  // Animate icon change
                 icon_html.css({"opacity": 0});
-                (function (self, icon_html) {
-                    self.icon_html.stop().animate({"opacity": 0}, 200, function () {
-                        self.icon_html.remove();
-                        self.html.append(icon_html);
-                        self.icon_html = icon_html;
-                        icon_html.stop().animate({"opacity": 1}, 300, function () {
-                            // ...
-                        });
-                    });
-                })(this, icon_html);
+                this.icon_html.stop().animate(
+                    {"opacity": 0},
+                    200,
+                    () => {
+                        this.icon_html.remove();
+                        this.html.append(icon_html);
+                        this.icon_html = icon_html;
+                        icon_html.stop().animate({"opacity": 1}, 300);
+                    }
+                );
             }
-            else {
-                // No anim
+            else {  // No anim
                 this.html.append(icon_html);
                 this.icon_html.remove();
                 this.icon_html = icon_html;
-            };
-        };
+            }
+        }
         if (fill_color) {
             this.AddColorFill(fill_color);
-        };
+        }
         return this;
     };
     this.SetSize = function (icon_size_percent_num, container_size=null, enforce_container_size_num=true) {
@@ -44025,6 +43989,7 @@ DashGuiIconMap = {
     "comments":                ["Multiple Conversations Bubble", DashGuiIconWeights["solid"], "comments"],
     "comments_square":         ["Multiple Conversations Boxes", DashGuiIconWeights["regular"], "comments-alt"],
     "complete":                ["Complete", DashGuiIconWeights["regular"], "check"],
+    "contacts":                ["Contacts", DashGuiIconWeights["regular"], "address-book"],
     "copy":                    ["Copy", DashGuiIconWeights["regular"], "copy"],
     "crown":                   ["Crown", DashGuiIconWeights["regular"], "crown"],
     "cube":                    ["Cube", DashGuiIconWeights["regular"], "cube"],
@@ -44093,6 +44058,7 @@ DashGuiIconMap = {
     "google_drive":            ["Google Drive", DashGuiIconWeights["brand"], "google-drive"],
     "graph":                   ["Graph", DashGuiIconWeights["solid"], "bezier-curve"],
     "group":                   ["Group", DashGuiIconWeights["solid"], "layer-group"],
+    "hand_holding_box":        ["Hand Holding Box", DashGuiIconWeights["regular"], "hand-holding-box"],
     "hand_pointer":            ["Hand Pointer", DashGuiIconWeights["regular"], "hand-pointer"],
     "handshake":               ["Handshake", DashGuiIconWeights["regular"], "handshake"],
     "hashtag":                 ["Hashtag", DashGuiIconWeights["solid"], "hashtag"],
@@ -44296,20 +44262,27 @@ function DashGuiIconDefinition (icon, label, fa_style, fa_id) {
 function DashGuiInput (placeholder_text="", color=null) {
     this.placeholder = placeholder_text;
     DashGuiInputBase.call(this, color, true, true);
+    this.vis_reset_ms = 60000;
+    this.vis_reset_timer = null;
+    this.visibility_toggle = null;
+    this.require_auth_for_vis_toggle = false;
     this.input = $("<input class='" + this.color.PlaceholderClass + "'>");
     this.setup_styles = function () {
         // Have to do it here instead of inline to solve for any single quotations (escaping doesn't work inline)
         this.input.attr("placeholder", this.placeholder);
+
         this.html.css({
             "height": this.height,
             "background": this.color.Input.Background.Base,
             "border-radius": Dash.Size.BorderRadiusInteractive,
-            "box-shadow": "0px 0px 20px 1px rgba(0, 0, 0, 0.2)",  // DON'T REPLACE THIS WITH BORDER
             "padding": 0,
-            "margin": 0
+            "margin": 0,
+            "text-align": "left",
+            // DON'T REPLACE THIS WITH BORDER
+            "box-shadow": "0px 0px 20px 1px rgba(0, 0, 0, " + (Dash.Color.IsDark(this.color) ? 0.1 : 0.2) + ")"
         });
         this.input.css({
-            "background": "rgba(0, 0, 0, 0)",
+            "background": "rgba(0, 0, 0, 0)",  // Why?
             "line-height": this.height + "px",
             "width": "100%",
             "height": "100%",
@@ -44319,7 +44292,7 @@ function DashGuiInput (placeholder_text="", color=null) {
             "overflow": "hidden",
             "text-overflow": "ellipsis",
             "font-size": Dash.Size.DesktopToMobileMode ? "75%" : "100%",
-            // These css properties should be the default, but I don't want to break anything
+            // These css properties should probably be the default, but I don't want to break anything
             // "padding-left": Dash.Size.Padding * 0.5,
             // "padding-right": Dash.Size.Padding * 0.5,
             // "width": "calc(100% - " + Dash.Size.Padding + "px)"
@@ -44327,31 +44300,6 @@ function DashGuiInput (placeholder_text="", color=null) {
         this.html.append(this.input);
         this.parse_input_type();
         this.setup_connections();
-    };
-    this.parse_input_type = function () {
-        var placeholder = this.placeholder.toString().toLowerCase();
-        var type = (
-              placeholder.includes("password") ? "password"
-            : placeholder.includes("email") ? "email"
-            : ""
-        );
-        if (type === "numeric") {
-            if (Dash.IsMobile) {
-                this.input.attr({
-                    "type": "number",
-                    "pattern": "[0-9]*",
-                    "step": "1",
-                    "min": "0"
-                });
-            }
-        }
-        else if (type) {
-            this.input.attr("type", type);
-        }
-        if (type === "email") {
-            // This is supposed to happen when the mode is set to "email", but isn't happening automatically
-            this.input.attr("autocapitalize", "off");
-        }
     };
     this.SetDarkMode = function (dark_mode_on) {
         if (dark_mode_on) {
@@ -44385,6 +44333,59 @@ function DashGuiInput (placeholder_text="", color=null) {
     this.OnSubmit = function (callback, bind_to) {
         this.SetOnSubmit(callback, bind_to);
     };
+    this.AddVisibilityToggle = function () {
+        this._toggle_visibility(true);
+        var comp = this.get_vis_toggle_pad();
+        this.visibility_toggle = new Dash.Gui.Checkbox(
+            "",
+            true,
+            this.color,
+            "Toggle visibility",
+            this,
+            () => {
+                if (this.require_auth_for_vis_toggle && !this.visibility_toggle.IsChecked() && this.Text()) {
+                    this.auth_for_vis_toggle();
+                }
+                else {
+                    this._toggle_visibility();
+                }
+            }
+        );
+        this.visibility_toggle.SetTrueIconName("hidden", "Show");
+        this.visibility_toggle.SetFalseIconName("visible", "Hide");
+        this.visibility_toggle.AddHighlight(
+            0,
+            false,
+            {
+                "left": comp,
+                "right": comp
+            }
+        );
+        this.visibility_toggle.html.css({
+            "position": "absolute",
+            "top": 0,
+            "right": 0,
+            "border-radius": Dash.Size.BorderRadius
+        });
+        this.html.append(this.visibility_toggle.html);
+        requestAnimationFrame(() => {
+            this.visibility_toggle.SetIconSize(Dash.IsMobile ? 140 : 110, this.html.height());
+            this.input.css({
+                "width": "calc(100% - " + (Dash.Size.RowHeight + (comp * (Dash.IsMobile ? 5 : 3))) + "px)"
+            });
+        });
+    };
+    this.EnableAuthForVisToggle = function () {
+        this.require_auth_for_vis_toggle = true;
+        this._toggle_visibility(true);
+    };
+    this.DisableAuthForVisToggle = function () {
+        this.require_auth_for_vis_toggle = false;
+        this.SetLocked(false);
+    };
+    this.SetVisResetMS = function (ms) {
+        this.vis_reset_ms = ms;
+    };
     // Override
     this.parse_value = function (value, data_key="") {
         if (value === null || value === undefined) {
@@ -44410,6 +44411,154 @@ function DashGuiInput (placeholder_text="", color=null) {
             }
         }
         return value;
+    };
+    this.parse_input_type = function () {
+        var placeholder = this.placeholder.toString().toLowerCase();
+        // Don't handle password type here, it gets handled further below
+        var type = (
+              placeholder.includes("email") ? "email"
+            : ""
+        );
+        if (type === "numeric") {
+            if (Dash.IsMobile) {
+                this.input.attr({
+                    "type": "number",
+                    "pattern": "[0-9]*",
+                    "step": "1",
+                    "min": "0"
+                });
+            }
+        }
+        else if (type) {
+            this.input.attr("type", type);
+        }
+        if (type === "email") {
+            // This is supposed to happen when the mode is set to "email", but isn't happening automatically
+            this.input.attr("autocapitalize", "off");
+        }
+        else if (placeholder.includes("password")) {
+            this.EnableAuthForVisToggle();
+            this.AddVisibilityToggle();
+        }
+    };
+    this.get_vis_toggle_pad = function () {
+        return Dash.Size.Padding * (Dash.IsMobile ? 0.25 : 0.5);
+    };
+    this.auth_for_vis_toggle = function () {
+        // Declare these early to ref in cb
+        var input;
+        var prompt;
+        prompt = new Dash.Gui.Prompt(
+            (selected_index) => {
+                if (selected_index === 0) {  // Cancel
+                    this.visibility_toggle.Toggle(true);
+                    prompt.Remove();
+                }
+                else if (selected_index === 1) {
+                    var value = input.Text();
+                    input.input.css({
+                        "background": "rgba(0, 0, 0, 0)"
+                    });
+                    if (!value) {
+                        var border_size = Dash.Size.Padding * 0.2;
+                        input.html.css({
+                            "border":  border_size + "px solid " + prompt.color.AccentBad,
+                            // Do it this way instead of 'box-sizing: border' so we don't make the input smaller
+                            "margin-top": -border_size * 0.5,
+                            "margin-left": -border_size * 0.5
+                        });
+                        return;
+                    }
+                    input.html.css({
+                        "border": "",
+                        "margin": 0
+                    });
+                    this._auth_for_vis_toggle(value, input, prompt);
+                }
+            },
+            Dash.Size.ColumnWidth * 3,
+            Dash.Size.ColumnWidth * 1.05,
+            "",
+            "Please confirm your login password to reveal this"
+        );
+        prompt.DisableRemoveOnSelection();
+        input = new Dash.Gui.Input("Password", prompt.color);
+        input.DisableAuthForVisToggle();
+        var comp = this.get_vis_toggle_pad();
+        input.visibility_toggle.html.css({
+            "right": comp
+        });
+        input.input.css({
+            "border-top-left-radius": Dash.Size.BorderRadiusInteractive,
+            "border-bottom-left-radius": Dash.Size.BorderRadiusInteractive
+        });
+        prompt.AddHTML(input.html);
+        setTimeout(
+            () => {
+                input.visibility_toggle.SetIconSize(Dash.IsMobile ? 140 : 110, input.html.height());
+                input.input.css({
+                    "width": "calc(100% - " + (Dash.Size.RowHeight + (comp * (Dash.IsMobile ? 6 : 4))) + "px)"
+                });
+                input.Focus();
+            },
+            300
+        );
+    };
+    this.set_vis_reset_timer = function () {
+        if (this.vis_reset_timer) {
+            clearTimeout(this.vis_reset_timer);
+        }
+        this.vis_reset_timer = setTimeout(
+            () => {
+                if (this.visibility_toggle.IsChecked()) {
+                    return;
+                }
+                this.visibility_toggle.Toggle(true);
+                this._toggle_visibility();
+            },
+            this.vis_reset_ms
+        );
+    };
+    this._auth_for_vis_toggle = function (password, input, prompt) {
+        prompt.cancel_button.Disable();
+        prompt.continue_button.Disable();
+        prompt.continue_button.SetLoading(true);
+        Dash.Request(
+            this,
+            (response) => {
+                prompt.cancel_button.Enable();
+                prompt.continue_button.Enable();
+                prompt.continue_button.SetLoading(false);
+                if (!response?.["authenticated"]) {
+                    input.input.css({
+                        "background": prompt.color.AccentBad
+                    });
+                    return;
+                }
+                input.input.css({
+                    "background": "rgba(0, 0, 0, 0)"
+                });
+                prompt.Remove();
+                this._toggle_visibility();
+                this.set_vis_reset_timer();
+            },
+            "Users",
+            {
+                "f": "validate_credentials",
+                "email": Dash.User.Data["email"],
+                "password": password
+            }
+        );
+    };
+    this._toggle_visibility = function (concealed=null) {
+        if (typeof concealed !== "boolean") {
+            concealed = this.visibility_toggle.IsChecked();
+        }
+        this.input.attr("type", concealed ? "password" : "text");
+        if (concealed && this.vis_reset_timer) {
+            clearTimeout(this.vis_reset_timer);
+        }
+        this.SetLocked(this.require_auth_for_vis_toggle ? concealed : false);
     };
     this.setup_styles();
 }
@@ -44633,7 +44782,7 @@ function DashGuiInputBase (
                 return;
             }
             if (
-                this.previous_submitted_text
+                   this.previous_submitted_text
                 && this.Text().toString() === this.previous_submitted_text.toString()
             ) {
                 return;
@@ -44956,8 +45105,10 @@ function DashGuiInputRow (
             "opacity": 0
         });
         this.input.html.css({
-            "flex-grow": 2,
-            "margin-right": Dash.Size.Padding
+            "flex-grow": 2
+        });
+        this.input.input.css({
+            "width": "calc(100% - " + Dash.Size.Padding + "px)"
         });
         this.label.css({
             "height": this.height,
@@ -45004,27 +45155,25 @@ function DashGuiInputRow (
     this.create_save_button = function () {
         this.button = new Dash.Gui.Button(this.button_text, this.on_submit, this);
         this.html.append(this.button.html);
+        // No submit button on mobile - but it's used to process the result, so we'll hide it
         if (Dash.IsMobile) {
-            // No submit button on mobile - but it's used to process the result, so we'll hide it
             this.button.html.css({
-                "pointer-events": "none",
-                "opacity": 0
+                "visibility": "hidden"  // Use this instead of opacity so it doesn't interfere with other gui
             });
             return;
         }
         this.button.html.css({
             "position": "absolute",
-            "right": 0,
+            "right": this.input.visibility_toggle ? Dash.Size.RowHeight : 0,
             "top": 0,
             "margin": 0,
             "height": this.height,
-            "width": Dash.Size.ColumnWidth,
+            "width": Dash.Size.RowHeight * 1.7,
             "background": "none",
-            "opacity": 0,
-            "cursor": "auto"  // While hidden
+            "visibility": "hidden"  // Use this instead of opacity so it doesn't interfere with other gui
         });
         this.button.highlight.css({
-            "background": "none",
+            "background": "none"
         });
         this.button.label.css({
             "text-align": "right",
@@ -45150,9 +45299,8 @@ function DashGuiInputRow (
             return;
         }
         this.button.html.css({
-            "cursor": "pointer"
+            "visibility": "visible"  // Use this instead of opacity so it doesn't interfere with other gui
         });
-        this.button.html.stop().animate({"opacity": 1});
         this.save_button_visible = true;
     };
     this.hide_save_button = function () {
@@ -45160,9 +45308,8 @@ function DashGuiInputRow (
             return;
         }
         this.button.html.css({
-            "cursor": "auto"
+            "visibility": "hidden"  // Use this instead of opacity so it doesn't interfere with other gui
         });
-        this.button.html.stop().animate({"opacity": 0});
         this.save_button_visible = false;
     };
     this.on_request_response = function (response_json) {
@@ -49625,11 +49772,15 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
         }
         if (!this.options["property_box"] || !this.options["property_box"]["replace"] && this.has_privileges) {
             this.property_box.AddLineBreak();
-            this.property_box.AddInput(
+            var row = this.property_box.AddInput(
                 "password", "Update Password", "", null, !this.modal_of, {"placeholder_text": "New Password"}
-            ).html.css({
+            );
+            row.html.css({
                 "background": Dash.Color.GetTransparent(this.color.AccentBad, 0.1)
             });
+            row.DisableAutosave();
+            row.input.DisableAuthForVisToggle();
+            row.input.visibility_toggle.Toggle();
         }
     };
     this.add_user_image_box = function () {

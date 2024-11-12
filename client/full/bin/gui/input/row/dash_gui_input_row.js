@@ -100,8 +100,11 @@ function DashGuiInputRow (
         });
 
         this.input.html.css({
-            "flex-grow": 2,
-            "margin-right": Dash.Size.Padding
+            "flex-grow": 2
+        });
+
+        this.input.input.css({
+            "width": "calc(100% - " + Dash.Size.Padding + "px)"
         });
 
         this.label.css({
@@ -165,11 +168,10 @@ function DashGuiInputRow (
 
         this.html.append(this.button.html);
 
+        // No submit button on mobile - but it's used to process the result, so we'll hide it
         if (Dash.IsMobile) {
-            // No submit button on mobile - but it's used to process the result, so we'll hide it
             this.button.html.css({
-                "pointer-events": "none",
-                "opacity": 0
+                "visibility": "hidden"  // Use this instead of opacity so it doesn't interfere with other gui
             });
 
             return;
@@ -177,18 +179,17 @@ function DashGuiInputRow (
 
         this.button.html.css({
             "position": "absolute",
-            "right": 0,
+            "right": this.input.visibility_toggle ? Dash.Size.RowHeight : 0,
             "top": 0,
             "margin": 0,
             "height": this.height,
-            "width": Dash.Size.ColumnWidth,
+            "width": Dash.Size.RowHeight * 1.7,
             "background": "none",
-            "opacity": 0,
-            "cursor": "auto"  // While hidden
+            "visibility": "hidden"  // Use this instead of opacity so it doesn't interfere with other gui
         });
 
         this.button.highlight.css({
-            "background": "none",
+            "background": "none"
         });
 
         this.button.label.css({
@@ -354,10 +355,8 @@ function DashGuiInputRow (
         }
 
         this.button.html.css({
-            "cursor": "pointer"
+            "visibility": "visible"  // Use this instead of opacity so it doesn't interfere with other gui
         });
-
-        this.button.html.stop().animate({"opacity": 1});
 
         this.save_button_visible = true;
     };
@@ -368,10 +367,8 @@ function DashGuiInputRow (
         }
 
         this.button.html.css({
-            "cursor": "auto"
+            "visibility": "hidden"  // Use this instead of opacity so it doesn't interfere with other gui
         });
-
-        this.button.html.stop().animate({"opacity": 0});
 
         this.save_button_visible = false;
     };

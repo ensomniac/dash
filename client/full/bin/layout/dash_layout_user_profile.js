@@ -359,11 +359,19 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
         if (!this.options["property_box"] || !this.options["property_box"]["replace"] && this.has_privileges) {
             this.property_box.AddLineBreak();
 
-            this.property_box.AddInput(
+            var row = this.property_box.AddInput(
                 "password", "Update Password", "", null, !this.modal_of, {"placeholder_text": "New Password"}
-            ).html.css({
+            );
+
+            row.html.css({
                 "background": Dash.Color.GetTransparent(this.color.AccentBad, 0.1)
             });
+
+            row.DisableAutosave();
+
+            row.input.DisableAuthForVisToggle();
+
+            row.input.visibility_toggle.Toggle();
         }
     };
 

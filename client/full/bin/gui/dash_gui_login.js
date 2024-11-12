@@ -184,50 +184,14 @@ function DashGuiLogin (on_login_binder=null, on_login_callback=null, color=null,
 
         this.email_input.SetText(Dash.Local.Get("email") || "");
 
-        var toggle = new Dash.Gui.Checkbox(
-            "",
-            true,
-            this.color,
-            "Toggle",
-            this,
-            (toggle) => {
-                this.password_input.input.attr("type", toggle.IsChecked() ? "password" : "text");
-            }
-        );
+        var comp = this.password_input.get_vis_toggle_pad();
 
-        toggle.SetTrueIconName("hidden", "Show password");
-        toggle.SetFalseIconName("visible", "Hide password");
-
-        toggle.AddHighlight(
-            0,
-            false,
-            {
-                "left": Dash.Size.Padding * 0.5,
-                "right": Dash.Size.Padding * 0.5
-            }
-        );
-
-        toggle.html.css({
-            "position": "absolute",
-            "top": 0,
-            "border-radius": Dash.Size.BorderRadius
+        this.password_input.visibility_toggle.html.css({
+            "top": comp,
+            "right": comp
         });
 
-        this.password_row.append(toggle.html);
-
-        requestAnimationFrame(() => {
-            var comp = Dash.Size.Padding * (Dash.IsMobile ? 0.5 : 0.5);
-
-            toggle.SetIconSize(Dash.IsMobile ? 140 : 110, this.password_row.height());
-
-            toggle.html.css({
-                "right": -comp
-            });
-
-            this.password_row.css({
-                "padding-right": Dash.Size.ButtonHeight - (comp * (Dash.IsMobile ? 2 : 1))
-            });
-        });
+        this.password_input.DisableAuthForVisToggle();
     };
 
     this.add_login_box = function () {
