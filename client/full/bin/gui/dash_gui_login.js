@@ -192,6 +192,17 @@ function DashGuiLogin (on_login_binder=null, on_login_callback=null, color=null,
         });
 
         this.password_input.DisableAuthForVisToggle();
+
+        // The vis toggle prevents tabbing to the password field, but in this context, need
+        // to make sure it can be tabbed to (for some reason, needs to be the same index)
+        this.password_input.input[0].tabIndex = this.email_input.input[0].tabIndex;
+
+        setTimeout(
+            () => {
+                this.email_input.Focus();
+            },
+            100
+        );
     };
 
     this.add_login_box = function () {
