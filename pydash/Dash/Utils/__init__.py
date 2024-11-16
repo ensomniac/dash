@@ -536,10 +536,16 @@ class _Memory:
 
         return self._global_memory
 
-    def SetUser(self, email):
-        from Dash.Users import Get as GetUser
+    def SetUser(self, email="", user_data={}):
+        if not email and not user_data:
+            raise ValueError("Must provide either email or user data")
 
-        self.global_memory.RequestUser = GetUser(email)
+        if not user_data:
+            from Dash.Users import Get as GetUser
+
+            user_data = GetUser(email)
+
+        self.global_memory.RequestUser = user_data
 
         return self.global_memory.RequestUser
 
