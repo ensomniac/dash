@@ -24254,6 +24254,17 @@ function DashGuiLogin (on_login_binder=null, on_login_callback=null, color=null,
     this.password_row = $("<div></div>");
     this.header_label = $("<div>" + Dash.Context["display_name"] + "</div>");
     this.setup_styles = function () {
+        // Depending on the setup in Core, this might be initialized immediately after
+        // this login gui is drawn, so need to add a negligible delay for those cases
+        if (!this.color.BackgroundRaised) {
+            setTimeout(
+                () => {
+                    this.setup_styles();
+                },
+                50
+            );
+            return;
+        }
         var row_css = {
             "margin-bottom": Dash.Size.Padding,
             "margin-top": 0
@@ -43995,6 +44006,7 @@ DashGuiIconMap = {
     "color_palette":           ["Color Palette", DashGuiIconWeights["regular"], "palette"],
     "comment":                 ["Conversation Bubble", DashGuiIconWeights["solid"], "comment"],
     "comment_square":          ["Conversation Box", DashGuiIconWeights["regular"], "comment-alt-lines"],
+    "comment_square_smile":    ["Conversation Box Smile", DashGuiIconWeights["regular"], "comment-alt-smile"],
     "comments":                ["Multiple Conversations Bubble", DashGuiIconWeights["solid"], "comments"],
     "comments_square":         ["Multiple Conversations Boxes", DashGuiIconWeights["regular"], "comments-alt"],
     "complete":                ["Complete", DashGuiIconWeights["regular"], "check"],
@@ -44089,6 +44101,7 @@ DashGuiIconMap = {
     "javascript_logo":         ["JavaScript", DashGuiIconWeights["brand"], "js-square"],
     "key":                     ["Key", DashGuiIconWeights["regular"], "key"],
     "key_solid":               ["Key (Solid)", DashGuiIconWeights["solid"], "key"],
+    "lasso":                   ["Lasso", DashGuiIconWeights["regular"], "lasso"],
     "layers":                  ["Layers", DashGuiIconWeights["regular"], "layer-group"],
     "level_up":                ["Level Up", DashGuiIconWeights["regular"], "level-up"],
     "level_down":              ["Level Down", DashGuiIconWeights["regular"], "level-down"],

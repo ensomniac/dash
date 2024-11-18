@@ -15,6 +15,19 @@ function DashGuiLogin (on_login_binder=null, on_login_callback=null, color=null,
     this.header_label = $("<div>" + Dash.Context["display_name"] + "</div>");
 
     this.setup_styles = function () {
+        // Depending on the setup in Core, this might be initialized immediately after
+        // this login gui is drawn, so need to add a negligible delay for those cases
+        if (!this.color.BackgroundRaised) {
+            setTimeout(
+                () => {
+                    this.setup_styles();
+                },
+                50
+            );
+
+            return;
+        }
+
         var row_css = {
             "margin-bottom": Dash.Size.Padding,
             "margin-top": 0

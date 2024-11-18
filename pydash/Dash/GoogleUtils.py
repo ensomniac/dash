@@ -368,6 +368,9 @@ class GUtils:
 
         return self._youtube_utils_
 
+    def PostToYouTube(self, channel_id):  # TODO
+        return self._youtube_utils.Post(channel_id)
+
     def GetYouTubeChannels(self, handle="", username=""):
         return self._youtube_utils.GetChannels(handle, username)
 
@@ -1047,6 +1050,11 @@ class _YouTubeUtils:
             }
 
         return self._video_categories
+
+    def Post(self, channel_id):
+        # TODO: any short content that goes to socials can go to youtube
+        #  shorts, and any longer content can go to og youtube
+        return {}
 
     def GetChannels(self, handle="", username=""):
         params = {
