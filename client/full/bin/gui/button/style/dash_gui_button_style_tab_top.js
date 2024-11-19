@@ -65,29 +65,4 @@ function DashGuiButtonStyleTabTop () {
             "font-size": Dash.Size.DesktopToMobileMode ? "60%" : "80%"
         });
     };
-
-    this.on_hover_in = function () {
-        if (this.is_selected) {
-            this.label.css("color", this.color_set.Text.SelectedHover);
-        }
-
-        else {
-            this.label.css("color", this.color_set.Text.BaseHover);
-        }
-    };
-
-    this.on_hover_out = function () {
-        if (this.is_selected) {
-            this.label.css("color", this.color_set.Text.Selected);
-        }
-
-        else {
-            this.label.css("color", this.color_set.Text.Base);
-        }
-    };
-
-    this.manage_style_on_click = function () {
-        this.click_highlight.stop().css({"opacity": 1});
-        this.click_highlight.stop().animate({"opacity": 0}, 150);
-    };
 }

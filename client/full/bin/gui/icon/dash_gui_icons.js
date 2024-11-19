@@ -251,7 +251,6 @@ DashGuiIconMap = {
     "javascript_logo":         ["JavaScript", DashGuiIconWeights["brand"], "js-square"],
     "key":                     ["Key", DashGuiIconWeights["regular"], "key"],
     "key_solid":               ["Key (Solid)", DashGuiIconWeights["solid"], "key"],
-    "lasso":                   ["Lasso", DashGuiIconWeights["regular"], "lasso"],
     "layers":                  ["Layers", DashGuiIconWeights["regular"], "layer-group"],
     "level_up":                ["Level Up", DashGuiIconWeights["regular"], "level-up"],
     "level_down":              ["Level Down", DashGuiIconWeights["regular"], "level-down"],

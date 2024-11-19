@@ -168,28 +168,30 @@ function DashColor (dark_mode_active=false) {
         return this.to_rgb(this.Parse(cstr));
     };
 
-    this.IsLightColor = function (color) {
+    this.IsLightColor = function (color, threshold=127.5) {
         var r;
         var g;
         var b;
 
-        if (color.match(/^rgb/)) {
+        if (color.match(/^rgb/)) {  // Extract RGB values from "rgb()" or "rgba()" string
             color = color.match(/^rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*(\d+(?:\.\d+)?))?\)$/);
-
-            r = color[1];
-            g = color[2];
-            b = color[3];
+            r = parseInt(color[1], 10);
+            g = parseInt(color[2], 10);
+            b = parseInt(color[3], 10);
         }
 
-        else {
-            color = +("0x" + color.slice(1).replace(color.length < 5 && /./g, '$&$&'));
-
-            r = color >> 16;
-            g = color >> 8 & 255;
+        else {  // Convert HEX to RGB
+            color = parseInt(color.slice(1), 16);
+            r = (color >> 16) & 255;
+            g = (color >> 8) & 255;
             b = color & 255;
         }
 
-        return Math.sqrt(0.299 * (r * r) + 0.587 * (g * g) + 0.114 * (b * b)) > 127.5;
+        // Calculate perceived brightness
+        var brightness = Math.sqrt(0.299 * (r * r) + 0.587 * (g * g) + 0.114 * (b * b));
+
+        // Compare brightness to the threshold
+        return brightness > threshold;
     };
 
     this.ParseToRGBA = function (cstr, opacity_override=null) {

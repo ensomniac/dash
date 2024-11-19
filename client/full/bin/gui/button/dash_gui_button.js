@@ -120,11 +120,19 @@ function DashGuiButton (label, callback, binder, color=null, options={}) {
         }
 
         if (this.is_selected) {
-            this.label.css("color", this.label_color_override || this.color_set.Text.Selected);
+            this.label.css({
+                "color": (
+                      this.label_color_override
+                    ? Dash.Color.Lighten(this.label_color_override, 60)
+                    : this.color_set.Text.Selected
+                )
+            });
         }
 
         else {
-            this.label.css("color", this.label_color_override || this.color_set.Text.Base);
+            this.label.css({
+                "color": this.label_color_override || this.color_set.Text.Base
+            });
         }
     };
 
@@ -180,9 +188,10 @@ function DashGuiButton (label, callback, binder, color=null, options={}) {
     };
 
     this.manage_style_on_click = function () {
-        // Overridden in DashGuiButtonStyleTabTop
+        if (this.style !== "tab_top") {
+            this.highlight.stop().animate({"opacity": 0}, 50);
+        }
 
-        this.highlight.stop().animate({"opacity": 0}, 50);
         this.click_highlight.stop().css({"opacity": 1});
         this.click_highlight.stop().animate({"opacity": 0}, 150);
     };

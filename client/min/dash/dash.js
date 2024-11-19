@@ -22027,23 +22027,26 @@ function DashColor (dark_mode_active=false) {
     this.ParseToRGB = function (cstr) {
         return this.to_rgb(this.Parse(cstr));
     };
-    this.IsLightColor = function (color) {
+    this.IsLightColor = function (color, threshold=127.5) {
         var r;
         var g;
         var b;
-        if (color.match(/^rgb/)) {
+        if (color.match(/^rgb/)) {  // Extract RGB values from "rgb()" or "rgba()" string
             color = color.match(/^rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*(\d+(?:\.\d+)?))?\)$/);
-            r = color[1];
-            g = color[2];
-            b = color[3];
+            r = parseInt(color[1], 10);
+            g = parseInt(color[2], 10);
+            b = parseInt(color[3], 10);
         }
-        else {
-            color = +("0x" + color.slice(1).replace(color.length < 5 && /./g, '$&$&'));
-            r = color >> 16;
-            g = color >> 8 & 255;
+        else {  // Convert HEX to RGB
+            color = parseInt(color.slice(1), 16);
+            r = (color >> 16) & 255;
+            g = (color >> 8) & 255;
             b = color & 255;
         }
-        return Math.sqrt(0.299 * (r * r) + 0.587 * (g * g) + 0.114 * (b * b)) > 127.5;
+        // Calculate perceived brightness
+        var brightness = Math.sqrt(0.299 * (r * r) + 0.587 * (g * g) + 0.114 * (b * b));
+        // Compare brightness to the threshold
+        return brightness > threshold;
     };
     this.ParseToRGBA = function (cstr, opacity_override=null) {
         var rgba = this.Parse(cstr);
@@ -27276,10 +27279,18 @@ function DashGuiButton (label, callback, binder, color=null, options={}) {
             return;
         }
         if (this.is_selected) {
-            this.label.css("color", this.label_color_override || this.color_set.Text.Selected);
+            this.label.css({
+                "color": (
+                      this.label_color_override
+                    ? Dash.Color.Lighten(this.label_color_override, 60)
+                    : this.color_set.Text.Selected
+                )
+            });
         }
         else {
-            this.label.css("color", this.label_color_override || this.color_set.Text.Base);
+            this.label.css({
+                "color": this.label_color_override || this.color_set.Text.Base
+            });
         }
     };
     this.on_file_upload_response = function (response, return_button=false) {
@@ -27325,8 +27336,9 @@ function DashGuiButton (label, callback, binder, color=null, options={}) {
         })(this);
     };
     this.manage_style_on_click = function () {
-        // Overridden in DashGuiButtonStyleTabTop
-        this.highlight.stop().animate({"opacity": 0}, 50);
+        if (this.style !== "tab_top") {
+            this.highlight.stop().animate({"opacity": 0}, 50);
+        }
         this.click_highlight.stop().css({"opacity": 1});
         this.click_highlight.stop().animate({"opacity": 0}, 150);
     };
@@ -27801,12 +27813,28 @@ function DashGuiButtonInterface () {
         }
         this.is_selected = is_selected;
         if (this.is_selected) {
-            this.html.css({"background": this.color_set.Background.Selected});
-            this.highlight.css({"background": this.color_set.Background.SelectedHover});
+            this.html.css({
+                "background": (
+                      this.base_color_override
+                    ? Dash.Color.Lighten(this.base_color_override, 60)
+                    : this.color_set.Background.Selected
+                )
+            });
+            this.highlight.css({
+                "background": (
+                      this.highlight_color_override
+                    ? Dash.Color.Lighten(this.highlight_color_override)
+                    : this.color_set.Background.SelectedHover
+                )
+            });
         }
         else {
-            this.html.css({"background": this.base_color_override || this.color_set.Background.Base});
-            this.highlight.css({"background": this.color_set.Background.BaseHover});
+            this.html.css({
+                "background": this.base_color_override || this.color_set.Background.Base
+            });
+            this.highlight.css({
+                "background": this.highlight_color_override || this.color_set.Background.BaseHover
+            });
         }
         this.on_hover_out();
     };
@@ -28281,26 +28309,6 @@ function DashGuiButtonStyleTabTop () {
             "padding-right": Dash.Size.Padding * 0.5,
             "font-size": Dash.Size.DesktopToMobileMode ? "60%" : "80%"
         });
-    };
-    this.on_hover_in = function () {
-        if (this.is_selected) {
-            this.label.css("color", this.color_set.Text.SelectedHover);
-        }
-        else {
-            this.label.css("color", this.color_set.Text.BaseHover);
-        }
-    };
-    this.on_hover_out = function () {
-        if (this.is_selected) {
-            this.label.css("color", this.color_set.Text.Selected);
-        }
-        else {
-            this.label.css("color", this.color_set.Text.Base);
-        }
-    };
-    this.manage_style_on_click = function () {
-        this.click_highlight.stop().css({"opacity": 1});
-        this.click_highlight.stop().animate({"opacity": 0}, 150);
     };
 }
 
@@ -44101,7 +44109,6 @@ DashGuiIconMap = {
     "javascript_logo":         ["JavaScript", DashGuiIconWeights["brand"], "js-square"],
     "key":                     ["Key", DashGuiIconWeights["regular"], "key"],
     "key_solid":               ["Key (Solid)", DashGuiIconWeights["solid"], "key"],
-    "lasso":                   ["Lasso", DashGuiIconWeights["regular"], "lasso"],
     "layers":                  ["Layers", DashGuiIconWeights["regular"], "layer-group"],
     "level_up":                ["Level Up", DashGuiIconWeights["regular"], "level-up"],
     "level_down":              ["Level Down", DashGuiIconWeights["regular"], "level-down"],
@@ -48692,6 +48699,45 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="", color=null) {
         }
         Dash.Log.Warn("Warning: Failed to find index by tab name for:", name, this.all_content);
         return (default_zero ? 0 : null);
+    };
+    // Call this AFTER all tabs are added for full effect
+    this.SetBorderRadius = function (border_radius) {
+        if (this.side_tabs) {
+            console.error("SetBorderRadius hasn't been configured for side tabs yet");
+        }
+        else {
+            this.html.css({
+                "border-radius": border_radius
+            });
+            this.content_area.css({
+                "border-bottom-left-radius": border_radius,
+                "border-bottom-right-radius": border_radius
+            });
+            this.tab_top.css({
+                "border-top-left-radius": border_radius,
+                "border-top-right-radius": border_radius
+            });
+            this.tab_bottom.css({
+                "border-top-left-radius": border_radius,
+                "border-top-right-radius": border_radius
+            });
+            this.list_backing.css({
+                "border-top-left-radius": border_radius,
+                "border-top-right-radius": border_radius
+            });
+            var top_tabs = this.tab_top.children();
+            var bottom_tabs = this.tab_bottom.children();
+            if (top_tabs.length) {
+                top_tabs.first().css({
+                    "border-top-left-radius": border_radius
+                });
+            }
+            if (bottom_tabs.length) {
+                top_tabs.last().css({
+                    "border-top-right-radius": border_radius
+                });
+            }
+        }
     };
     // TODO: Break this function up
     this.LoadIndex = function (index, clicked=false) {

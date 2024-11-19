@@ -123,6 +123,54 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="", color=null) {
         return (default_zero ? 0 : null);
     };
 
+    // Call this AFTER all tabs are added for full effect
+    this.SetBorderRadius = function (border_radius) {
+        if (this.side_tabs) {
+            console.error("SetBorderRadius hasn't been configured for side tabs yet");
+        }
+
+        else {
+            this.html.css({
+                "border-radius": border_radius
+            });
+
+            this.content_area.css({
+                "border-bottom-left-radius": border_radius,
+                "border-bottom-right-radius": border_radius
+            });
+
+            this.tab_top.css({
+                "border-top-left-radius": border_radius,
+                "border-top-right-radius": border_radius
+            });
+
+            this.tab_bottom.css({
+                "border-top-left-radius": border_radius,
+                "border-top-right-radius": border_radius
+            });
+
+            this.list_backing.css({
+                "border-top-left-radius": border_radius,
+                "border-top-right-radius": border_radius
+            });
+
+            var top_tabs = this.tab_top.children();
+            var bottom_tabs = this.tab_bottom.children();
+
+            if (top_tabs.length) {
+                top_tabs.first().css({
+                    "border-top-left-radius": border_radius
+                });
+            }
+
+            if (bottom_tabs.length) {
+                top_tabs.last().css({
+                    "border-top-right-radius": border_radius
+                });
+            }
+        }
+    };
+
     // TODO: Break this function up
     this.LoadIndex = function (index, clicked=false) {
         if (index > this.all_content.length - 1) {
