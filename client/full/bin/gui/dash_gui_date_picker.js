@@ -8,10 +8,30 @@ function DashGuiDatePicker (
     on_change_cb=null,
     color=null,
 
-    // yyyy-mm-dd
+    // yyyy-mm-dd (shortcuts: today)
     min="",
     max=""
 ) {
+    if (min === "today" || max === "today") {
+        var now = new Date();
+
+        var today = (
+              now.getFullYear()
+            + "-"
+            + String(now.getMonth() + 1).padStart(2, "0")
+            + "-"
+            + String(now.getDate()).padStart(2, "0")
+        );
+
+        if (min === "today") {
+            min = today;
+        }
+
+        if (max === "today") {
+            max = today;
+        }
+    }
+
     DashGuiInputType.call(
         this,
         $(

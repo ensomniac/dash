@@ -133,22 +133,24 @@ function DashGuiInputRowInterface () {
 
         this.html.append(this.end_tag);
 
-        (function (self) {
-            setTimeout(
-                function () {
-                    var right = self.end_tag.width() + Dash.Size.Padding;
+        setTimeout(
+            () => {
+                var right = this.end_tag.width() + Dash.Size.Padding;
 
-                    self.highlight.css({
+                if (this.highlight) {
+                    this.highlight.css({
                         "right": right
                     });
+                }
 
-                    self.flash_save.css({
+                if (this.flash_save) {
+                    this.flash_save.css({
                         "right": right
                     });
-                },
-                250
-            );
-        })(this);
+                }
+            },
+            250
+        );
     };
 
     this.SetupCombo = function (combo_options) {

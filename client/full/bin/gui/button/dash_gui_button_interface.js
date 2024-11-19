@@ -9,10 +9,14 @@ function DashGuiButtonInterface () {
         }
     };
 
-    this.FitContent = function () {
+    this.FitContent = function (padding=null) {
+        if (padding === null) {
+            padding = Dash.Size.Padding * 0.5;
+        }
+
         this.html.css({
-            "padding-left": Dash.Size.Padding * 0.5,
-            "padding-right": Dash.Size.Padding * 0.5,
+            "padding-left": padding,
+            "padding-right": padding,
             "width": "fit-content"
         });
     };
@@ -163,22 +167,18 @@ function DashGuiButtonInterface () {
 
     };
 
-    this.SetBorderRadius = function (border_radius) {
-        this.html.css({
-            "border-radius": border_radius,
-        });
+    this.SetBorderRadius = function (border_radius, key="border-radius") {
+        var css = {};
 
-        this.highlight.css({
-            "border-radius": border_radius,
-        });
+        css[key] = border_radius;
 
-        this.load_bar.css({
-            "border-radius": border_radius,
-        });
+        this.html.css(css);
 
-        this.click_highlight.css({
-            "border-radius": border_radius,
-        });
+        this.highlight.css(css);
+
+        this.load_bar.css(css);
+
+        this.click_highlight.css(css);
     };
 
     this.SetTextAlign = function (text_alignment) {

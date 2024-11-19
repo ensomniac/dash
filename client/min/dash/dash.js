@@ -27032,10 +27032,26 @@ function DashGuiDatePicker (
     on_autosave_cb=null,
     on_change_cb=null,
     color=null,
-    // yyyy-mm-dd
+    // yyyy-mm-dd (shortcuts: today)
     min="",
     max=""
 ) {
+    if (min === "today" || max === "today") {
+        var now = new Date();
+        var today = (
+              now.getFullYear()
+            + "-"
+            + String(now.getMonth() + 1).padStart(2, "0")
+            + "-"
+            + String(now.getDate()).padStart(2, "0")
+        );
+        if (min === "today") {
+            min = today;
+        }
+        if (max === "today") {
+            max = today;
+        }
+    }
     DashGuiInputType.call(
         this,
         $(
@@ -27663,10 +27679,13 @@ function DashGuiButtonInterface () {
             this.html.css({"width": width});
         }
     };
-    this.FitContent = function () {
+    this.FitContent = function (padding=null) {
+        if (padding === null) {
+            padding = Dash.Size.Padding * 0.5;
+        }
         this.html.css({
-            "padding-left": Dash.Size.Padding * 0.5,
-            "padding-right": Dash.Size.Padding * 0.5,
+            "padding-left": padding,
+            "padding-right": padding,
             "width": "fit-content"
         });
     };
@@ -27783,19 +27802,13 @@ function DashGuiButtonInterface () {
             "opacity": 1,
         }, 300);
     };
-    this.SetBorderRadius = function (border_radius) {
-        this.html.css({
-            "border-radius": border_radius,
-        });
-        this.highlight.css({
-            "border-radius": border_radius,
-        });
-        this.load_bar.css({
-            "border-radius": border_radius,
-        });
-        this.click_highlight.css({
-            "border-radius": border_radius,
-        });
+    this.SetBorderRadius = function (border_radius, key="border-radius") {
+        var css = {};
+        css[key] = border_radius;
+        this.html.css(css);
+        this.highlight.css(css);
+        this.load_bar.css(css);
+        this.click_highlight.css(css);
     };
     this.SetTextAlign = function (text_alignment) {
         this.label.css({
@@ -45493,20 +45506,22 @@ function DashGuiInputRowInterface () {
             ...css
         });
         this.html.append(this.end_tag);
-        (function (self) {
-            setTimeout(
-                function () {
-                    var right = self.end_tag.width() + Dash.Size.Padding;
-                    self.highlight.css({
+        setTimeout(
+            () => {
+                var right = this.end_tag.width() + Dash.Size.Padding;
+                if (this.highlight) {
+                    this.highlight.css({
                         "right": right
                     });
-                    self.flash_save.css({
+                }
+                if (this.flash_save) {
+                    this.flash_save.css({
                         "right": right
                     });
-                },
-                250
-            );
-        })(this);
+                }
+            },
+            250
+        );
     };
     this.SetupCombo = function (combo_options) {
         this.initial_value = this.initial_value || combo_options[0]["id"];
