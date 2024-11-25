@@ -373,6 +373,9 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
 
             row.input.visibility_toggle.Toggle();
 
+            // In this context, we don't want password managers to autofill the user's existing password,
+            // but some of them, like Chrome's password manager, ignore "autocomplete: off", so setting
+            // it to a non-standard/invalid value solves the problem, counteracting those bypasses
             row.input.input.attr("autocomplete", "new-password");
         }
     };
