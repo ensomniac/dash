@@ -373,7 +373,7 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
 
             row.input.visibility_toggle.Toggle();
 
-            row.input.input.attr("autocomplete", "off");
+            row.input.input.attr("autocomplete", "new-password");
         }
     };
 
