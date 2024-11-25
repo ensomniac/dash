@@ -49861,6 +49861,7 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
             row.DisableAutosave();
             row.input.DisableAuthForVisToggle();
             row.input.visibility_toggle.Toggle();
+            row.input.input.attr("autocomplete", "off");
         }
     };
     this.add_user_image_box = function () {
