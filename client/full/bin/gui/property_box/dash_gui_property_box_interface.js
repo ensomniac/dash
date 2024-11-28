@@ -549,7 +549,7 @@ function DashGuiPropertyBoxInterface () {
                     if (self.get_data_cb) {
                         var old_value = self.get_data_cb()[data_key];
 
-                        if (old_value === value) {
+                        if (old_value === value || (!old_value && !value)) {
                             return;
                         }
                     }

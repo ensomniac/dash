@@ -3,7 +3,7 @@ class DashGuiFile {
         entry, type, key, label_text="", preview_size=0,
         include_upload_button=true, include_download_button=true, color=null
     ) {
-        this.entry = entry;  // Parent/binder
+        this.entry = entry;  // Parent/binder/view (usually a VDB entry)
         this.type = type;
         this.key = key;
         this.label_text = label_text || key.Title();
@@ -16,6 +16,7 @@ class DashGuiFile {
         this.toolbar = null;
         this.preview_bg = null;
         this.upload_button = null;
+        this.delete_button = null;
         this.download_button = null;
         this.html = $("<div></div>");
         this.preview_width = this.preview_size;
@@ -73,7 +74,7 @@ class DashGuiFile {
         return this.entry.get_data()["files"]?.[this.type]?.[this.key] || {};
     }
 
-    // Override this for use cases that don't follow the standardized "files" structure
+    // Override this for use cases that don't follow the standardized "files" structure or .full_data example
     on_update (file_data=null) {
         if (!file_data) {
             return;
@@ -122,6 +123,56 @@ class DashGuiFile {
                 this.upload_params
             );
         }
+    }
+
+    AddDeleteButton (api="", params={}) {
+        if (this.delete_button) {
+            return;
+        }
+
+        this.delete_button = this.add_icon_button_to_toolbar(
+            "trash_alt",
+            (button) => {
+                if (!this.get_url()) {
+                    alert("No file to delete");
+
+                    return;
+                }
+
+                if (!window.confirm("Delete this file?")) {
+                    return;
+                }
+
+                button.SetLoading(true);
+                button.Disable();
+
+                Dash.Request(
+                    this,
+                    this.on_delete,
+                    api || this.upload_api,
+                    (
+                        Dash.Validate.Object(params) ? params : {
+                            "f": "delete_file",
+                            "key": this.key,
+                            "type": this.type,
+                            "obj_id": this.entry.obj_id,
+                            "vdb_type": this.entry.vdb_type
+                        }
+                    )
+                );
+            }
+        );
+    }
+
+    on_delete (response) {
+        if (!Dash.Validate.Response(response)) {
+            return;
+        }
+
+        this.Update({});
+
+        this.delete_button.SetLoading(false);
+        this.delete_button.Enable();
     }
 
     parse_aspect () {

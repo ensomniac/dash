@@ -375,6 +375,7 @@ function DashLayoutToolbarInterface () {
         return input;
     };
 
+    // TODO: This is a mess
     this.AddInput = function (
         placeholder_label, callback, options={}, additional_data={}, double_click_clear=true
     ) {
@@ -524,7 +525,7 @@ function DashLayoutToolbarInterface () {
         checkbox_redraw_styling=null, label_border=true, strict_identifier=false
     ) {
         var checkbox = new Dash.Gui.Checkbox(
-            strict_identifier ? identifier : "dash_gui_toolbar_toggle_" + label_text + identifier,  // This is a mess
+            strict_identifier ? identifier : "dash_gui_toolbar_toggle_" + label_text + identifier,  // TODO: This is a mess
             default_state,
             this.color,
             hover_hint,

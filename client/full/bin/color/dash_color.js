@@ -501,10 +501,10 @@ function DashColor (dark_mode_active=false) {
                 "none"  // Light.Input.Background.SelectedHover
             ),
             new DashColorStateSet(
-                window["ColorLightText"],  // Light.Input.Text.Base
-                window["ColorLightText"],  // Light.Input.Text.Selected
-                window["ColorLightText"],  // Light.Input.Text.BaseHover
-                window["ColorLightText"]  // Light.Input.Text.SelectedHover
+                window["ColorDarkText"],  // Light.Input.Text.Base
+                window["ColorDarkText"],  // Light.Input.Text.Selected
+                window["ColorDarkText"],  // Light.Input.Text.BaseHover
+                window["ColorDarkText"]  // Light.Input.Text.SelectedHover
             )
         );
     };

@@ -174,6 +174,10 @@ function DashGuiInputBase (
         this.input.trigger("focus");
     };
 
+    this.UnFocus = function () {
+        this.input.trigger("blur");
+    };
+
     this.RefreshConnections = function () {
         this.BreakConnections();
         this.setup_connections();

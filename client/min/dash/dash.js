@@ -22295,10 +22295,10 @@ function DashColor (dark_mode_active=false) {
                 "none"  // Light.Input.Background.SelectedHover
             ),
             new DashColorStateSet(
-                window["ColorLightText"],  // Light.Input.Text.Base
-                window["ColorLightText"],  // Light.Input.Text.Selected
-                window["ColorLightText"],  // Light.Input.Text.BaseHover
-                window["ColorLightText"]  // Light.Input.Text.SelectedHover
+                window["ColorDarkText"],  // Light.Input.Text.Base
+                window["ColorDarkText"],  // Light.Input.Text.Selected
+                window["ColorDarkText"],  // Light.Input.Text.BaseHover
+                window["ColorDarkText"]  // Light.Input.Text.SelectedHover
             )
         );
     };
@@ -23953,7 +23953,7 @@ class DashGuiFile {
         entry, type, key, label_text="", preview_size=0,
         include_upload_button=true, include_download_button=true, color=null
     ) {
-        this.entry = entry;  // Parent/binder
+        this.entry = entry;  // Parent/binder/view (usually a VDB entry)
         this.type = type;
         this.key = key;
         this.label_text = label_text || key.Title();
@@ -23965,6 +23965,7 @@ class DashGuiFile {
         this.toolbar = null;
         this.preview_bg = null;
         this.upload_button = null;
+        this.delete_button = null;
         this.download_button = null;
         this.html = $("<div></div>");
         this.preview_width = this.preview_size;
@@ -24012,7 +24013,7 @@ class DashGuiFile {
     get_data () {
         return this.entry.get_data()["files"]?.[this.type]?.[this.key] || {};
     }
-    // Override this for use cases that don't follow the standardized "files" structure
+    // Override this for use cases that don't follow the standardized "files" structure or .full_data example
     on_update (file_data=null) {
         if (!file_data) {
             return;
@@ -24051,6 +24052,47 @@ class DashGuiFile {
                 this.upload_params
             );
         }
+    }
+    AddDeleteButton (api="", params={}) {
+        if (this.delete_button) {
+            return;
+        }
+        this.delete_button = this.add_icon_button_to_toolbar(
+            "trash_alt",
+            (button) => {
+                if (!this.get_url()) {
+                    alert("No file to delete");
+                    return;
+                }
+                if (!window.confirm("Delete this file?")) {
+                    return;
+                }
+                button.SetLoading(true);
+                button.Disable();
+                Dash.Request(
+                    this,
+                    this.on_delete,
+                    api || this.upload_api,
+                    (
+                        Dash.Validate.Object(params) ? params : {
+                            "f": "delete_file",
+                            "key": this.key,
+                            "type": this.type,
+                            "obj_id": this.entry.obj_id,
+                            "vdb_type": this.entry.vdb_type
+                        }
+                    )
+                );
+            }
+        );
+    }
+    on_delete (response) {
+        if (!Dash.Validate.Response(response)) {
+            return;
+        }
+        this.Update({});
+        this.delete_button.SetLoading(false);
+        this.delete_button.Enable();
     }
     parse_aspect () {
         var aspect = this.key.split("_").Last();
@@ -44743,6 +44785,9 @@ function DashGuiInputBase (
     this.Focus = function () {
         this.input.trigger("focus");
     };
+    this.UnFocus = function () {
+        this.input.trigger("blur");
+    };
     this.RefreshConnections = function () {
         this.BreakConnections();
         this.setup_connections();
@@ -46788,7 +46833,7 @@ function DashGuiPropertyBoxInterface () {
                     }
                     if (self.get_data_cb) {
                         var old_value = self.get_data_cb()[data_key];
-                        if (old_value === value) {
+                        if (old_value === value || (!old_value && !value)) {
                             return;
                         }
                     }
@@ -54845,6 +54890,7 @@ function DashLayoutToolbarInterface () {
         this.refactor_item_padding();
         return input;
     };
+    // TODO: This is a mess
     this.AddInput = function (
         placeholder_label, callback, options={}, additional_data={}, double_click_clear=true
     ) {
@@ -54968,7 +55014,7 @@ function DashLayoutToolbarInterface () {
         checkbox_redraw_styling=null, label_border=true, strict_identifier=false
     ) {
         var checkbox = new Dash.Gui.Checkbox(
-            strict_identifier ? identifier : "dash_gui_toolbar_toggle_" + label_text + identifier,  // This is a mess
+            strict_identifier ? identifier : "dash_gui_toolbar_toggle_" + label_text + identifier,  // TODO: This is a mess
             default_state,
             this.color,
             hover_hint,
