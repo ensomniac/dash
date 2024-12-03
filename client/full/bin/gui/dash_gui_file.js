@@ -91,6 +91,14 @@ class DashGuiFile {
         this.entry.full_data["files"][this.type][this.key] = file_data;
     }
 
+    _on_upload () {
+        // Intended to be overridden
+    }
+
+    _on_delete () {
+        // Intended to be overridden
+    }
+
     Update (file_data=null) {
         this.on_update(file_data);
 
@@ -173,6 +181,8 @@ class DashGuiFile {
 
         this.delete_button.SetLoading(false);
         this.delete_button.Enable();
+
+        this._on_delete();
     }
 
     parse_aspect () {
@@ -242,7 +252,7 @@ class DashGuiFile {
             if (this.include_upload_button) {
                 this.upload_button = this.add_icon_button_to_toolbar(
                     "upload",
-                    this.upload
+                    this.on_upload
                 );
 
                 this.upload_button.SetFileUploader(
@@ -265,12 +275,13 @@ class DashGuiFile {
         this.html.append(this.toolbar.html);
     }
 
-    upload (file_data) {
+    on_upload (file_data) {
         if (!Dash.Validate.Response(file_data)) {
             return;
         }
 
         this.Update(file_data);
+        this._on_upload();
     }
 
     download (button) {

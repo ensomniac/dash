@@ -90,10 +90,12 @@ function DashGuiCheckbox (
         return this;
     };
 
-    this.SetAbleToToggleCallback = function (callback_with_bool_return, binder=null) {
-        this.able_to_toggle_cb = binder || this.binder ?
-            callback_with_bool_return.bind(binder ? binder : this.binder) :
-            callback_with_bool_return;
+    this.SetAbleToToggleCallback = function (cb_with_bool_return, binder=null) {
+        this.able_to_toggle_cb = (
+              (binder || this.binder)
+            ? cb_with_bool_return.bind(binder ? binder : this.binder)
+            : cb_with_bool_return
+        );
     };
 
     this.SetChecked = function (is_checked=true, skip_callback=true, hover_hint="") {

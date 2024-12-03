@@ -19214,6 +19214,9 @@ function DashFile () {
             }
         );
     };
+    this.GetExt = function (url_or_filename) {
+        return url_or_filename.split("/").Last().split("?")[0].split(".").Last();
+    };
     this.GetPreview = function (
         color, file_data={}, height=null, allow_100_percent_size=true,
         default_to_placeholder=true, center_in_parent=true, assert_ext="", width=null
@@ -19222,7 +19225,7 @@ function DashFile () {
         var file_url = file_data["url"] || file_data["orig_url"] || "";
         var filename = file_data["filename"] || file_data["orig_filename"];
         if (file_url || assert_ext) {
-            var file_ext = file_url ? file_url.split(".").Last() : assert_ext;
+            var file_ext = file_url ? this.GetExt(file_url) : assert_ext;
             if (file_ext === "txt") {
                 preview = this.GetPlainTextPreview(file_url);
             }
@@ -24026,6 +24029,12 @@ class DashGuiFile {
         }
         this.entry.full_data["files"][this.type][this.key] = file_data;
     }
+    _on_upload () {
+        // Intended to be overridden
+    }
+    _on_delete () {
+        // Intended to be overridden
+    }
     Update (file_data=null) {
         this.on_update(file_data);
         var url = this.get_url();
@@ -24093,6 +24102,7 @@ class DashGuiFile {
         this.Update({});
         this.delete_button.SetLoading(false);
         this.delete_button.Enable();
+        this._on_delete();
     }
     parse_aspect () {
         var aspect = this.key.split("_").Last();
@@ -24143,7 +24153,7 @@ class DashGuiFile {
             if (this.include_upload_button) {
                 this.upload_button = this.add_icon_button_to_toolbar(
                     "upload",
-                    this.upload
+                    this.on_upload
                 );
                 this.upload_button.SetFileUploader(
                     this.upload_api,
@@ -24161,11 +24171,12 @@ class DashGuiFile {
         }
         this.html.append(this.toolbar.html);
     }
-    upload (file_data) {
+    on_upload (file_data) {
         if (!Dash.Validate.Response(file_data)) {
             return;
         }
         this.Update(file_data);
+        this._on_upload();
     }
     download (button) {
         var url = this.get_url();
@@ -25604,10 +25615,12 @@ function DashGuiCheckbox (
         this.icon_button.SetIconSize(this.icon_size, this.icon_container_size);
         return this;
     };
-    this.SetAbleToToggleCallback = function (callback_with_bool_return, binder=null) {
-        this.able_to_toggle_cb = binder || this.binder ?
-            callback_with_bool_return.bind(binder ? binder : this.binder) :
-            callback_with_bool_return;
+    this.SetAbleToToggleCallback = function (cb_with_bool_return, binder=null) {
+        this.able_to_toggle_cb = (
+              (binder || this.binder)
+            ? cb_with_bool_return.bind(binder ? binder : this.binder)
+            : cb_with_bool_return
+        );
     };
     this.SetChecked = function (is_checked=true, skip_callback=true, hover_hint="") {
         if (is_checked === this.checked) {

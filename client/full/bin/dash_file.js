@@ -85,6 +85,10 @@ function DashFile () {
         );
     };
 
+    this.GetExt = function (url_or_filename) {
+        return url_or_filename.split("/").Last().split("?")[0].split(".").Last();
+    };
+
     this.GetPreview = function (
         color, file_data={}, height=null, allow_100_percent_size=true,
         default_to_placeholder=true, center_in_parent=true, assert_ext="", width=null
@@ -94,7 +98,7 @@ function DashFile () {
         var filename = file_data["filename"] || file_data["orig_filename"];
 
         if (file_url || assert_ext) {
-            var file_ext = file_url ? file_url.split(".").Last() : assert_ext;
+            var file_ext = file_url ? this.GetExt(file_url) : assert_ext;
 
             if (file_ext === "txt") {
                 preview = this.GetPlainTextPreview(file_url);
