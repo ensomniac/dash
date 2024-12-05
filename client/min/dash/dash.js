@@ -58503,7 +58503,7 @@ class DashGuiGraph {
     load_excalidraw_p1 () {
         window.EXCALIDRAW_ASSET_PATH = "dash/dist/excalidraw/";
         var script = document.createElement("script");
-        script.src = "https://unpkg.com/react/umd/react.production.min.js";
+        script.src = "dash/dist/react_18/react.production.min.js";
         (function (self, script) {
             script.onload = function () {
                 self.load_excalidraw_p2();
@@ -58516,7 +58516,7 @@ class DashGuiGraph {
     };
     load_excalidraw_p2 () {
         var script = document.createElement("script");
-        script.src = "https://unpkg.com/react-dom/umd/react-dom.production.min.js";
+        script.src = "dash/dist/react_18/react-dom.production.min.js";
         (function (self, script) {
             script.onload = function () {
                 self.load_excalidraw_p3();
