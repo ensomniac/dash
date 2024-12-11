@@ -783,7 +783,13 @@ def convert_model_to_glb(source_model_file_ext, source_model_file_path, replace_
 
 
 def save_images(img, orig_path="", thumb_path="", thumb_square_path="", thumb_png_path="", transparent_mask_path=""):
-    from PIL.Image import ANTIALIAS
+    try:
+        from PIL.Image import ANTIALIAS as anti_alias  # PIL <10.0.0
+
+    except ImportError:
+        from PIL.Image import Resampling
+
+        anti_alias = Resampling.LANCZOS  # PIL >=10.0.0
 
     if orig_path:
         img.save(orig_path)
@@ -796,7 +802,7 @@ def save_images(img, orig_path="", thumb_path="", thumb_square_path="", thumb_pn
     if thumb_png_path:
         png_thumb = img.copy()
 
-        png_thumb.thumbnail((ThumbSize, ThumbSize), ANTIALIAS)
+        png_thumb.thumbnail((ThumbSize, ThumbSize), anti_alias)
 
         # If a file is uploaded as CMYK, it can't be saved as a PNG
         if png_thumb.mode == "CMYK":
@@ -833,7 +839,7 @@ def save_images(img, orig_path="", thumb_path="", thumb_square_path="", thumb_pn
             img = img.convert("RGB")
 
         if img.size[0] > ThumbSize or img.size[1] > ThumbSize:
-            img.thumbnail((ThumbSize, ThumbSize), ANTIALIAS)
+            img.thumbnail((ThumbSize, ThumbSize), anti_alias)
 
         if thumb_path:
             img.save(thumb_path, quality=40)
@@ -844,7 +850,7 @@ def save_images(img, orig_path="", thumb_path="", thumb_square_path="", thumb_pn
             img_square = get_square_image_copy(img)
 
             if img_square.size[0] > ThumbSize or img_square.size[1] > ThumbSize:
-                img_square = img_square.resize((ThumbSize, ThumbSize), ANTIALIAS)
+                img_square = img_square.resize((ThumbSize, ThumbSize), anti_alias)
 
             img_square.save(thumb_square_path, quality=40)
 
