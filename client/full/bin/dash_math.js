@@ -40,6 +40,11 @@ function DashMath () {
         return [...new Array(num).keys()].map(n => zero_based ? n : n + 1);
     };
 
+    // Greatest common divisor
+    this.GCD = function (a, b) {
+        return b === 0 ? a : this.GCD(b, a % b);
+    };
+
     // Can't think of a better name for this, nor do I know how to properly explain it...
     // Ex: Dash.Math.GetPercentageIncrements(5) -> ['0.2', '0.4', '0.6', '0.8']
     this.GetPercentageIncrements = function (divisor, start_with_0=false, end_with_1=false, conform_length=true) {

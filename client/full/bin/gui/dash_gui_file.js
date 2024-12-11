@@ -12,6 +12,8 @@ class DashGuiFile {
         this.include_download_button = include_download_button;
         this.color = color || this.entry.color;
 
+        this.aspect_h = 0;
+        this.aspect_w = 0;
         this.preview = null;
         this.toolbar = null;
         this.preview_bg = null;
@@ -21,6 +23,7 @@ class DashGuiFile {
         this.html = $("<div></div>");
         this.preview_width = this.preview_size;
         this.preview_height = this.preview_size;
+        this.toolbar_top_margin = Dash.Size.Padding * (this.type === "audio" || this.type === "video" ? 0.6 : 1);
 
         // Override these upload attrs by calling UpdateFileUploader for use
         // cases that don't follow the standardized VDB.upload_file convention
@@ -104,6 +107,12 @@ class DashGuiFile {
 
         var url = this.get_url();
 
+        this.UpdateSource(url);
+    }
+
+    // Unless needing to do this manually and bypassing the other logic,
+    // the standard Update function should be used in most cases
+    UpdateSource (url="") {
         if (this.type === "image") {
             this.preview.css({
                 "background-image": url ? ("url(" + url + ")") : "",
@@ -114,6 +123,63 @@ class DashGuiFile {
         else {
             this.preview.attr("src", url);
         }
+    }
+
+    // Useful if this file box is dynamic, supporting many ratios, rather
+    // than the standard use of expecting a specific aspect ratio
+    UpdateAspect (aspect_w, aspect_h) {
+        if (this.type !== "image" && this.type !== "video") {
+            return;
+        }
+
+        aspect_w = parseInt(aspect_w);
+        aspect_h = parseInt(aspect_h);
+
+        var gcd = Dash.Math.GCD(aspect_w, aspect_h);
+
+        aspect_w = aspect_w / gcd;
+        aspect_h = aspect_h / gcd;
+
+        if (aspect_w === this.aspect_w && aspect_h === this.aspect_h) {
+            return;
+        }
+
+        this.aspect_w = aspect_w;
+        this.aspect_h = aspect_h;
+
+        if (this.aspect_w !== this.aspect_h) {
+            if (this.aspect_w > this.aspect_h) {
+                this.preview_height = this.preview_size;
+                this.preview_width = (this.preview_size / this.aspect_h) * this.aspect_w;
+            }
+
+            else {
+                this.preview_width = this.preview_size;
+                this.preview_height = (this.preview_size / this.aspect_w) * this.aspect_h;
+            }
+        }
+
+        this.preview.css({
+            "width": this.preview_width,
+            "height": this.preview_height
+        });
+
+        if (this.preview_bg) {
+            setTimeout(
+                () => {
+                    this.preview_bg.css({
+                        "width": this.preview.width(),
+                        "height": this.preview.height()
+                    });
+                },
+                50
+            );
+        }
+
+        this.html.css({
+            "width": this.preview_width <= this.preview_height ? this.preview_size : this.preview_width,
+            "height": "auto"
+        });
     }
 
     UpdateFileUploader (api="", params={}) {
@@ -206,18 +272,18 @@ class DashGuiFile {
             return false;
         }
 
-        aspect_w = parseInt(aspect_w);
-        aspect_h = parseInt(aspect_h);
+        this.aspect_w = parseInt(aspect_w);
+        this.aspect_h = parseInt(aspect_h);
 
-        if (aspect_w !== aspect_h) {
-            if (aspect_w > aspect_h) {
+        if (this.aspect_w !== this.aspect_h) {
+            if (this.aspect_w > this.aspect_h) {
                 this.preview_height = this.preview_size;
-                this.preview_width = (this.preview_size / aspect_h) * aspect_w;
+                this.preview_width = (this.preview_size / this.aspect_h) * this.aspect_w;
             }
 
             else {
                 this.preview_width = this.preview_size;
-                this.preview_height = (this.preview_size / aspect_w) * aspect_h;
+                this.preview_height = (this.preview_size / this.aspect_w) * this.aspect_h;
             }
         }
 
@@ -236,12 +302,10 @@ class DashGuiFile {
         this.toolbar.RemoveStrokeSep();
         this.toolbar.DisablePaddingRefactoring();
 
-        var top_margin = Dash.Size.Padding * (this.type === "audio" || this.type === "video" ? 0.6 : 1);
-
         this.toolbar.html.css({
             "background": this.color.Pinstripe,
             "border-radius": Dash.Size.BorderRadius,
-            "margin-top": top_margin
+            "margin-top": this.toolbar_top_margin
         });
 
         this.toolbar.AddLabel(this.label_text, false, null, false, true);
@@ -268,7 +332,7 @@ class DashGuiFile {
 
         if (this.preview_width > this.preview_height) {
             this.html.css({
-                "height": this.preview_size + top_margin + this.toolbar.height
+                "height": this.preview_size + this.toolbar_top_margin + this.toolbar.height
             });
         }
 
@@ -298,8 +362,8 @@ class DashGuiFile {
 
         Dash.Gui.OpenFileURLDownloadDialog(
             url,
-            "",
-            function () {
+            this.key + "." + url.split(".").Last(),
+            () => {
                 button.SetLoading(false);
                 button.Enable();
             }

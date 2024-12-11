@@ -125,22 +125,20 @@ function DashGuiInputRow (
     };
 
     this.SetLabelURL = function (url) {
-
         this.on_label_click_url = url;
 
         if (!this.label_url_hover) {
             this.setup_label_url_hover();
-        };
-
+        }
     };
 
     this.setup_label_url_hover = function () {
-
         this.label.css({
             "cursor": "pointer",
         });
 
         this.label_url_hover = $("<div></div>");
+
         this.label_url_hover.css({
             "width":          this.height,
             "height":         this.height,
@@ -149,14 +147,14 @@ function DashGuiInputRow (
             "top":            -1,
             "user-select":    "none",
             "pointer-events": "none",
-            "opacity":        0,
+            "opacity":        0
         });
 
         this.html.append(this.label_url_hover);
 
         var icon = new Dash.Gui.Icon(this.color, "arrow_right_circled", this.height, 0.8);
-        this.label_url_hover.append(icon.html);
 
+        this.label_url_hover.append(icon.html);
     };
 
     this.set_initial_text = function () {
@@ -272,7 +270,7 @@ function DashGuiInputRow (
 
         if (this.label_url_hover) {
             this.label_url_hover.stop().animate({"opacity": 1}, 250);
-        };
+        }
 
     };
 
@@ -280,7 +278,7 @@ function DashGuiInputRow (
 
         if (this.label_url_hover) {
             this.label_url_hover.stop().animate({"opacity": 0}, 1000);
-        };
+        }
 
     };
 

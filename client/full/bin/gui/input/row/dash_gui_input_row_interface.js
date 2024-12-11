@@ -14,6 +14,14 @@ function DashGuiInputRowInterface () {
         this.html.off("mouseleave");
     };
 
+    this.SetMaxCharacters = function (num) {
+        this.input.SetMaxCharacters(num);
+    };
+
+    this.SetPlaceholder = function (placeholder_text) {
+        this.input.SetPlaceholder(placeholder_text);
+    };
+
     this.AddKeyCopyButton = function (data_key="") {
         if (!data_key) {
             data_key = this.data_key;

@@ -760,7 +760,7 @@ function DashGuiPropertyBoxInterface () {
     ) {
         this.inputs[key] = (function (self) {
             return new Dash.Gui.TimePicker(
-                label_text || key.Title() || "[Time]",
+                label_text === "none" ? "" : (label_text || key.Title() || "[Time]"),
                 self.binder,
                 on_submit_cb,
                 on_autosave_cb,

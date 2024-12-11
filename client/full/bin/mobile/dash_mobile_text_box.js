@@ -79,14 +79,27 @@ function DashMobileTextBox (
         this.textarea.val(text);
 
         if (this.auto_height) {
-            (function (self) {
-                requestAnimationFrame(function () {
-                    self.auto_adjust_height();
-                });
-            })(this);
+            requestAnimationFrame(() => {
+                this.auto_adjust_height();
+            });
         }
 
         this.last_change_value = text;
+
+        // Trigger spellcheck
+        setTimeout(
+            () => {
+                this.Focus();
+
+                setTimeout(
+                    () => {
+                        this.UnFocus();
+                    },
+                    50
+                );
+            },
+            50
+        );
 
         return text;
     };
@@ -259,6 +272,10 @@ function DashMobileTextBox (
 
     this.Focus = function () {
         this.textarea.trigger("focus");
+    };
+
+    this.UnFocus = function () {
+        this.textarea.trigger("blur");
     };
 
     this.DisableAutoSubmit = function () {

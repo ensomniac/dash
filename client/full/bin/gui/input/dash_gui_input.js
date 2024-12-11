@@ -13,7 +13,7 @@ function DashGuiInput (placeholder_text="", color=null) {
 
     this.setup_styles = function () {
         // Have to do it here instead of inline to solve for any single quotations (escaping doesn't work inline)
-        this.input.attr("placeholder", this.placeholder);
+        this.SetPlaceholder(this.placeholder);
 
 
         this.html.css({
@@ -50,6 +50,14 @@ function DashGuiInput (placeholder_text="", color=null) {
 
         this.parse_input_type();
         this.setup_connections();
+    };
+
+    this.SetPlaceholder = function (placeholder_text) {
+        this.input.attr("placeholder", placeholder_text);
+    };
+
+    this.SetMaxCharacters = function (num) {
+        this.input.attr("maxlength", num);
     };
 
     this.SetDarkMode = function (dark_mode_on) {

@@ -18,9 +18,9 @@ function DashGuiDatePicker (
         var today = (
               now.getFullYear()
             + "-"
-            + String(now.getMonth() + 1).padStart(2, "0")
+            + (now.getMonth() + 1).toString().ZFill(2)
             + "-"
-            + String(now.getDate()).padStart(2, "0")
+            + now.getDate().toString().ZFill(2)
         );
 
         if (min === "today") {

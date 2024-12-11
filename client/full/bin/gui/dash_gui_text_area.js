@@ -15,6 +15,32 @@ function DashGuiTextArea (
         "line-height": Dash.Size.RowHeight + "px"
     });
 
+    // Similar to SetLocked(true)
+    this.Disable = function (opacity=0.5) {
+        if (this.locked) {
+            return;
+        }
+
+        this.Lock(false);
+
+        this.html.css({
+            "opacity": opacity
+        });
+    };
+
+    // Similar to SetLocked(false)
+    this.Enable = function () {
+        if (!this.locked) {
+            return;
+        }
+
+        this.Unlock(false);
+
+        this.html.css({
+            "opacity": 1
+        });
+    };
+
     // Override
     this.SetMaxCharacters = function (num, include_counter=true, enforce=true) {
         if (!enforce && !include_counter) {

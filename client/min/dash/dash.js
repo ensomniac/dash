@@ -19036,6 +19036,10 @@ function DashMath () {
     this.Range = function (num, zero_based=true) {
         return [...new Array(num).keys()].map(n => zero_based ? n : n + 1);
     };
+    // Greatest common divisor
+    this.GCD = function (a, b) {
+        return b === 0 ? a : this.GCD(b, a % b);
+    };
     // Can't think of a better name for this, nor do I know how to properly explain it...
     // Ex: Dash.Math.GetPercentageIncrements(5) -> ['0.2', '0.4', '0.6', '0.8']
     this.GetPercentageIncrements = function (divisor, start_with_0=false, end_with_1=false, conform_length=true) {
@@ -23964,6 +23968,8 @@ class DashGuiFile {
         this.include_upload_button = include_upload_button;
         this.include_download_button = include_download_button;
         this.color = color || this.entry.color;
+        this.aspect_h = 0;
+        this.aspect_w = 0;
         this.preview = null;
         this.toolbar = null;
         this.preview_bg = null;
@@ -23973,6 +23979,7 @@ class DashGuiFile {
         this.html = $("<div></div>");
         this.preview_width = this.preview_size;
         this.preview_height = this.preview_size;
+        this.toolbar_top_margin = Dash.Size.Padding * (this.type === "audio" || this.type === "video" ? 0.6 : 1);
         // Override these upload attrs by calling UpdateFileUploader for use
         // cases that don't follow the standardized VDB.upload_file convention
         this.upload_api = this.entry.api || this.entry.list_view?.api;
@@ -24038,6 +24045,11 @@ class DashGuiFile {
     Update (file_data=null) {
         this.on_update(file_data);
         var url = this.get_url();
+        this.UpdateSource(url);
+    }
+    // Unless needing to do this manually and bypassing the other logic,
+    // the standard Update function should be used in most cases
+    UpdateSource (url="") {
         if (this.type === "image") {
             this.preview.css({
                 "background-image": url ? ("url(" + url + ")") : "",
@@ -24047,6 +24059,52 @@ class DashGuiFile {
         else {
             this.preview.attr("src", url);
         }
+    }
+    // Useful if this file box is dynamic, supporting many ratios, rather
+    // than the standard use of expecting a specific aspect ratio
+    UpdateAspect (aspect_w, aspect_h) {
+        if (this.type !== "image" && this.type !== "video") {
+            return;
+        }
+        aspect_w = parseInt(aspect_w);
+        aspect_h = parseInt(aspect_h);
+        var gcd = Dash.Math.GCD(aspect_w, aspect_h);
+        aspect_w = aspect_w / gcd;
+        aspect_h = aspect_h / gcd;
+        if (aspect_w === this.aspect_w && aspect_h === this.aspect_h) {
+            return;
+        }
+        this.aspect_w = aspect_w;
+        this.aspect_h = aspect_h;
+        if (this.aspect_w !== this.aspect_h) {
+            if (this.aspect_w > this.aspect_h) {
+                this.preview_height = this.preview_size;
+                this.preview_width = (this.preview_size / this.aspect_h) * this.aspect_w;
+            }
+            else {
+                this.preview_width = this.preview_size;
+                this.preview_height = (this.preview_size / this.aspect_w) * this.aspect_h;
+            }
+        }
+        this.preview.css({
+            "width": this.preview_width,
+            "height": this.preview_height
+        });
+        if (this.preview_bg) {
+            setTimeout(
+                () => {
+                    this.preview_bg.css({
+                        "width": this.preview.width(),
+                        "height": this.preview.height()
+                    });
+                },
+                50
+            );
+        }
+        this.html.css({
+            "width": this.preview_width <= this.preview_height ? this.preview_size : this.preview_width,
+            "height": "auto"
+        });
     }
     UpdateFileUploader (api="", params={}) {
         if (api) {
@@ -24119,16 +24177,16 @@ class DashGuiFile {
             );
             return false;
         }
-        aspect_w = parseInt(aspect_w);
-        aspect_h = parseInt(aspect_h);
-        if (aspect_w !== aspect_h) {
-            if (aspect_w > aspect_h) {
+        this.aspect_w = parseInt(aspect_w);
+        this.aspect_h = parseInt(aspect_h);
+        if (this.aspect_w !== this.aspect_h) {
+            if (this.aspect_w > this.aspect_h) {
                 this.preview_height = this.preview_size;
-                this.preview_width = (this.preview_size / aspect_h) * aspect_w;
+                this.preview_width = (this.preview_size / this.aspect_h) * this.aspect_w;
             }
             else {
                 this.preview_width = this.preview_size;
-                this.preview_height = (this.preview_size / aspect_w) * aspect_h;
+                this.preview_height = (this.preview_size / this.aspect_w) * this.aspect_h;
             }
         }
         return true;
@@ -24141,11 +24199,10 @@ class DashGuiFile {
         this.toolbar = new Dash.Layout.Toolbar(this);
         this.toolbar.RemoveStrokeSep();
         this.toolbar.DisablePaddingRefactoring();
-        var top_margin = Dash.Size.Padding * (this.type === "audio" || this.type === "video" ? 0.6 : 1);
         this.toolbar.html.css({
             "background": this.color.Pinstripe,
             "border-radius": Dash.Size.BorderRadius,
-            "margin-top": top_margin
+            "margin-top": this.toolbar_top_margin
         });
         this.toolbar.AddLabel(this.label_text, false, null, false, true);
         if (this.include_upload_button || this.include_download_button) {
@@ -24166,7 +24223,7 @@ class DashGuiFile {
         }
         if (this.preview_width > this.preview_height) {
             this.html.css({
-                "height": this.preview_size + top_margin + this.toolbar.height
+                "height": this.preview_size + this.toolbar_top_margin + this.toolbar.height
             });
         }
         this.html.append(this.toolbar.html);
@@ -24188,8 +24245,8 @@ class DashGuiFile {
         button.Disable();
         Dash.Gui.OpenFileURLDownloadDialog(
             url,
-            "",
-            function () {
+            this.key + "." + url.split(".").Last(),
+            () => {
                 button.SetLoading(false);
                 button.Enable();
             }
@@ -26487,6 +26544,26 @@ function DashGuiTextArea (
     this.textarea.css({
         "line-height": Dash.Size.RowHeight + "px"
     });
+    // Similar to SetLocked(true)
+    this.Disable = function (opacity=0.5) {
+        if (this.locked) {
+            return;
+        }
+        this.Lock(false);
+        this.html.css({
+            "opacity": opacity
+        });
+    };
+    // Similar to SetLocked(false)
+    this.Enable = function () {
+        if (!this.locked) {
+            return;
+        }
+        this.Unlock(false);
+        this.html.css({
+            "opacity": 1
+        });
+    };
     // Override
     this.SetMaxCharacters = function (num, include_counter=true, enforce=true) {
         if (!enforce && !include_counter) {
@@ -27096,9 +27173,9 @@ function DashGuiDatePicker (
         var today = (
               now.getFullYear()
             + "-"
-            + String(now.getMonth() + 1).padStart(2, "0")
+            + (now.getMonth() + 1).toString().ZFill(2)
             + "-"
-            + String(now.getDate()).padStart(2, "0")
+            + now.getDate().toString().ZFill(2)
         );
         if (min === "today") {
             min = today;
@@ -44366,7 +44443,7 @@ function DashGuiInput (placeholder_text="", color=null) {
     this.input = $("<input class='" + this.color.PlaceholderClass + "'>");
     this.setup_styles = function () {
         // Have to do it here instead of inline to solve for any single quotations (escaping doesn't work inline)
-        this.input.attr("placeholder", this.placeholder);
+        this.SetPlaceholder(this.placeholder);
 
         this.html.css({
             "height": this.height,
@@ -44397,6 +44474,12 @@ function DashGuiInput (placeholder_text="", color=null) {
         this.html.append(this.input);
         this.parse_input_type();
         this.setup_connections();
+    };
+    this.SetPlaceholder = function (placeholder_text) {
+        this.input.attr("placeholder", placeholder_text);
+    };
+    this.SetMaxCharacters = function (num) {
+        this.input.attr("maxlength", num);
     };
     this.SetDarkMode = function (dark_mode_on) {
         if (dark_mode_on) {
@@ -45228,7 +45311,7 @@ function DashGuiInputRow (
         this.on_label_click_url = url;
         if (!this.label_url_hover) {
             this.setup_label_url_hover();
-        };
+        }
     };
     this.setup_label_url_hover = function () {
         this.label.css({
@@ -45243,7 +45326,7 @@ function DashGuiInputRow (
             "top":            -1,
             "user-select":    "none",
             "pointer-events": "none",
-            "opacity":        0,
+            "opacity":        0
         });
         this.html.append(this.label_url_hover);
         var icon = new Dash.Gui.Icon(this.color, "arrow_right_circled", this.height, 0.8);
@@ -45338,12 +45421,12 @@ function DashGuiInputRow (
     this.on_label_hover_in = function () {
         if (this.label_url_hover) {
             this.label_url_hover.stop().animate({"opacity": 1}, 250);
-        };
+        }
     };
     this.on_label_hover_out = function () {
         if (this.label_url_hover) {
             this.label_url_hover.stop().animate({"opacity": 0}, 1000);
-        };
+        }
     };
     this.setup_connections = function () {
         (function (self) {
@@ -45473,6 +45556,12 @@ function DashGuiInputRowInterface () {
         this.html.off("click");
         this.html.off("mouseenter");
         this.html.off("mouseleave");
+    };
+    this.SetMaxCharacters = function (num) {
+        this.input.SetMaxCharacters(num);
+    };
+    this.SetPlaceholder = function (placeholder_text) {
+        this.input.SetPlaceholder(placeholder_text);
     };
     this.AddKeyCopyButton = function (data_key="") {
         if (!data_key) {
@@ -47009,7 +47098,7 @@ function DashGuiPropertyBoxInterface () {
     ) {
         this.inputs[key] = (function (self) {
             return new Dash.Gui.TimePicker(
-                label_text || key.Title() || "[Time]",
+                label_text === "none" ? "" : (label_text || key.Title() || "[Time]"),
                 self.binder,
                 on_submit_cb,
                 on_autosave_cb,
@@ -55433,13 +55522,24 @@ function DashMobileTextBox (
     this.SetText = function (text) {
         this.textarea.val(text);
         if (this.auto_height) {
-            (function (self) {
-                requestAnimationFrame(function () {
-                    self.auto_adjust_height();
-                });
-            })(this);
+            requestAnimationFrame(() => {
+                this.auto_adjust_height();
+            });
         }
         this.last_change_value = text;
+        // Trigger spellcheck
+        setTimeout(
+            () => {
+                this.Focus();
+                setTimeout(
+                    () => {
+                        this.UnFocus();
+                    },
+                    50
+                );
+            },
+            50
+        );
         return text;
     };
     this.SetLineBreakReplacement = function (value="") {
@@ -55571,6 +55671,9 @@ function DashMobileTextBox (
     };
     this.Focus = function () {
         this.textarea.trigger("focus");
+    };
+    this.UnFocus = function () {
+        this.textarea.trigger("blur");
     };
     this.DisableAutoSubmit = function () {
         this.submit_override_only = true;
