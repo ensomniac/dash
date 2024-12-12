@@ -14,7 +14,7 @@ import json
 import requests
 
 from httplib2 import Http
-from base64 import encodestring
+from base64 import b64encode
 
 try:
     from .services import get_by_name
@@ -71,7 +71,7 @@ class Auth:
         auth_str = f"{self.service.client_id}:{self.service.client_secret}".replace("\n", "")
 
         # TODO: This doesn't appear to be used
-        auth_bytes = encodestring(auth_str.encode())
+        auth_bytes = b64encode(auth_str.encode())
 
         token_request_response = requests.post(
             self.service.token_endpoint,
@@ -199,7 +199,7 @@ class Auth:
                 "Accept": "*/*",
                 "Content-Type": "application/x-www-form-urlencoded",
                 "User-Agent": "runscope/0.1",
-                "Authorization": "Basic " + encodestring("%s:%s" % (self.service.client_id, self.service.client_secret)).replace("\n", "")
+                "Authorization": "Basic " + b64encode("%s:%s" % (self.service.client_id, self.service.client_secret)).replace("\n", "")
             },
             data={
                 "grant_type": "refresh_token",
