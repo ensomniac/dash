@@ -415,6 +415,14 @@ def GetRandomHexColor():
     return f"#{randint(0, 0xFFFFFF):06x}"
 
 
+# Basic wrapper because I'm tired of repeating this pattern everywhere
+def JSON2HTML(data, indent=4, sort_keys=True):
+    from json import dumps
+    from json2html import json2html
+
+    return json2html.convert(json=dumps(data, indent=indent, sort_keys=sort_keys))
+
+
 def change_dt_tz(dt_obj, tz):
     if str(dt_obj.time()) == "00:00:00":
         return dt_obj

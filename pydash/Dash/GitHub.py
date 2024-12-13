@@ -38,7 +38,7 @@ class GitHub:
         self.users = []
 
     def UpdateAndNotify(self, params, path_set, email_list):
-        from json import loads, dumps
+        from json import loads
 
         return_data = {"payload": params.get("payload")}
 
@@ -65,9 +65,8 @@ class GitHub:
 
             return return_data
 
-        from json2html import json2html
-        from Dash.Utils import SendEmail
         from Dash import PersonalContexts
+        from Dash.Utils import SendEmail, JSON2HTML
 
         subject = f"GitHub -> {return_data['repository']} -> {return_data['sender']}"
         msg = "<b>Git Webhook Response</b><br><br>"
@@ -84,15 +83,15 @@ class GitHub:
 
         msg += "<b>Git Pull Result (via Dash):</b><br>"
 
-        html = json2html.convert(json=dumps(return_data["server_git_update"]))
+        html = JSON2HTML(return_data["server_git_update"])
 
         msg += f"{html}<br><b>Github Commits:</b><br>"
 
         for commit_details in commits:
-            msg += json2html.convert(json=dumps(commit_details))
+            msg += JSON2HTML(commit_details)
 
         msg += "<br><b>Full Github Payload:</b><br>"
-        msg += f"{json2html.convert(json=dumps(return_data['payload']))}<br>"
+        msg += f"{JSON2HTML(return_data['payload'])}<br>"
 
         for email in PersonalContexts:
             if return_data["repository"] in PersonalContexts[email]["repo_names"]:

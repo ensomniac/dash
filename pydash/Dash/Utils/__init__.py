@@ -275,6 +275,12 @@ def GetRandomHexColor():
     return GetRandomHexColor()
 
 
+def JSON2HTML(data, indent=4, sort_keys=True):
+    from .string import JSON2HTML
+
+    return JSON2HTML(data, indent, sort_keys)
+
+
 # -------------------------------------------------- LIST ----------------------------------------------------
 
 

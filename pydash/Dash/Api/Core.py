@@ -636,9 +636,9 @@ class ApiCore:
                     del params[key]
 
             if params:
-                from json2html import json2html
+                from Dash.Utils import JSON2HTML
 
-                request_details += f"<b>Params:</b><br>{json2html.convert(json=json.dumps(params, indent=4, sort_keys=True))}<br><br>"
+                request_details += f"<b>Params:</b><br>{JSON2HTML(params)}<br><br>"
 
         if not msg:
             return request_details
@@ -675,9 +675,9 @@ class ApiCore:
         # To assist in tracking down errors with unknown origin
         if error:
             try:
-                from json2html import json2html
+                from Dash.Utils import JSON2HTML
 
-                error += f"<br><br><b>Env:</b><br>{json2html.convert(json=json.dumps(dict(os.environ), indent=4, sort_keys=True))}"
+                error += f"<br><br><b>Env:</b><br>{JSON2HTML(dict(os.environ))}"
             except:
                 pass
 
