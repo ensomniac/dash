@@ -257,12 +257,6 @@ def GetAssetPath(name):
     return GetAssetPath(name)
 
 
-def ValidateEmailAddress(email):
-    from .string import ValidateEmailAddress
-
-    return ValidateEmailAddress(email)
-
-
 def Abbreviate(string, length=3, excluded_abbreviations=[]):
     from .string import Abbreviate
 
@@ -337,6 +331,12 @@ def SendDebugEmail(msg, recipient="stetandrew@gmail.com"):
         strict_notify=True,
         msg=msg
     )
+
+
+def ValidateEmailAddress(email, verbose=False):
+    from .comms import ValidateEmailAddress
+
+    return ValidateEmailAddress(email, verbose)
 
 
 # ----------------------------------------------- WORKSHEET -------------------------------------------------

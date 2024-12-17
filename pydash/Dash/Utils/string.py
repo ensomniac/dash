@@ -325,26 +325,6 @@ def GetAssetPath(string):
     return asset_path.strip("_")
 
 
-def ValidateEmailAddress(email):
-    email = email.lower()
-
-    if not email:
-        return False
-
-    domain = email.split("@")[-1]
-
-    if not domain:
-        return False
-
-    if len(email) and (email.count("@") != 1 or "." not in domain):
-        return False
-
-    if not len(domain.split(".")[0]) or not len(domain.split(".")[-1]) or not len(email.split("@")[0]):
-        return False
-
-    return True
-
-
 def Abbreviate(string, length=3, excluded_abbreviations=[], _retry=0):
     if length < 2:
         raise ValueError("Length must be at least 2")

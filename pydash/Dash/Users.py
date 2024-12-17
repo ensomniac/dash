@@ -50,11 +50,11 @@ class Users:
         if not os.path.exists(user_root):
             self.validate_dash_guide_account_creation(email)
 
-            from validate_email_address import validate_email
+            from Dash.Utils import ValidateEmailAddress
 
             # Make sure it's a real, existing email address that actually exists before
             # we create a user for an email address that was simply misspelled, etc
-            if not validate_email(email, verify=True):
+            if not ValidateEmailAddress(email):
                 from Dash.Utils import ClientAlert
 
                 raise ClientAlert("Invalid email address.\nPlease double-check and try again.")

@@ -8,8 +8,8 @@ import sys
 
 
 def SendEmail(
-        subject, notify_email_list=[], msg="", error="", sender_email="", sender_name="Dash", strict_notify=False,
-        reply_to_email="", reply_to_name="", bcc_email_list=[], attachment_file_paths=[], ensure_sender_gets_copied=True
+    subject, notify_email_list=[], msg="", error="", sender_email="", sender_name="Dash", strict_notify=False,
+    reply_to_email="", reply_to_name="", bcc_email_list=[], attachment_file_paths=[], ensure_sender_gets_copied=True
 ):
     from . import OapiRoot
 
@@ -102,3 +102,61 @@ def SendEmail(
         ParseHTTPError(http_error, response)
 
     return response
+
+
+def ValidateEmailAddress(email, verbose=False):
+    from email_validator import validate_email
+
+    try:
+        validated = validate_email(email)
+
+    except Exception as e:
+        if verbose:
+            return f"Invalid email address, validation error:\n{e}"
+
+        return False
+
+    from dns.resolver import resolve
+
+    try:
+        mx_records = resolve(validated.domain, "MX")
+
+        if not mx_records:
+            if verbose:
+                return "Invalid email address: No MX records found"
+
+            return False
+
+        mail_server = str(mx_records[0].exchange).rstrip(".")
+
+    except Exception as e:
+        if verbose:
+            return f"Invalid email address, MX error:\n{e}"
+
+        return False
+
+    from smtplib import SMTP
+
+    try:
+        with SMTP(mail_server, timeout=10) as smtp:
+            smtp.ehlo()  # Introduce yourself to the server
+            smtp.mail("test@example.com")  # Fake sender email
+
+            code, _ = smtp.rcpt(validated.normalized)  # Check recipient email
+
+            if code == 250:
+                if verbose:
+                    return f"Valid email address: {email}"
+
+                return True
+
+            if verbose:
+                return f"Invalid email address: SMTP returned code {code} (expected 250)"
+
+            return False
+
+    except Exception as e:
+        if verbose:
+            return f"Invalid email address, SMTP error:\n{e}"
+
+        return False
