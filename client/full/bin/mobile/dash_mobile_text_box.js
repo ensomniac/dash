@@ -75,7 +75,7 @@ function DashMobileTextBox (
         return val;
     };
 
-    this.SetText = function (text) {
+    this.SetText = function (text, trigger_spellcheck=false) {
         this.textarea.val(text);
 
         if (this.auto_height) {
@@ -86,20 +86,25 @@ function DashMobileTextBox (
 
         this.last_change_value = text;
 
-        // Trigger spellcheck
-        setTimeout(
-            () => {
-                this.Focus();
+        // When you programmatically set the initial value of a textarea, it doesn’t trigger
+        // spellcheck. It requires the thing to be focused at least once, so this resolves that.
+        // However, this solution causes problems in certain scenarios, such as a property box with
+        // multiple textareas updating, which is why it must be explicitly triggered with the param.
+        if (trigger_spellcheck && !this.InFocus()) {
+            setTimeout(
+                () => {
+                    this.Focus();
 
-                setTimeout(
-                    () => {
-                        this.UnFocus();
-                    },
-                    50
-                );
-            },
-            50
-        );
+                    setTimeout(
+                        () => {
+                            this.UnFocus();
+                        },
+                        50
+                    );
+                },
+                50
+            );
+        }
 
         return text;
     };

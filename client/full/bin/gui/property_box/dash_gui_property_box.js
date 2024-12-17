@@ -62,7 +62,13 @@ function DashGuiPropertyBox (
                 continue;
             }
 
-            input_row.SetText(this.get_update_value(data_key));
+            var new_val = this.get_update_value(data_key);
+
+            if (new_val === input_row.Text()) {
+                continue;
+            }
+
+            input_row.SetText(new_val);
         }
     };
 
@@ -93,7 +99,13 @@ function DashGuiPropertyBox (
                 continue;
             }
 
-            text_area.SetText(this.get_update_value(data_key));
+            var new_val = this.get_update_value(data_key);
+
+            if (new_val === text_area.GetText()) {
+                continue;
+            }
+
+            text_area.SetText(new_val);
         }
     };
 
@@ -127,7 +139,14 @@ function DashGuiPropertyBox (
         }
 
         for (var i in this.headers) {
-            this.headers[i]["obj"].SetText(this.get_update_value(this.headers[i]["update_key"]));
+            var header = this.headers[i]["obj"];
+            var new_val = this.get_update_value(this.headers[i]["update_key"]);
+
+            if (new_val === header.Text()) {
+                continue;
+            }
+
+            header.SetText(new_val);
         }
     };
 
@@ -135,15 +154,23 @@ function DashGuiPropertyBox (
         for (var tool_row of this.tool_rows) {
             for (var element of tool_row.elements) {
                 if (element instanceof DashGuiInput || element instanceof DashGuiInputRow) {
+                    if (!element.data_key) {
+                        continue;
+                    }
+
                     if (element.InFocus()) {
                         Dash.Log.Log("(Currently being edited) Skipping update for " + element.data_key);
 
                         continue;
                     }
 
-                    if (element.data_key) {
-                        element.SetText(this.get_update_value(element.data_key));
+                    var new_val = this.get_update_value(element.data_key);
+
+                    if (new_val === element.Text()) {
+                        continue;
                     }
+
+                    element.SetText(new_val);
                 }
 
                 // Add more as needed

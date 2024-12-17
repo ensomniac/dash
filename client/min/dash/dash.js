@@ -46186,7 +46186,11 @@ function DashGuiPropertyBox (
                 Dash.Log.Log("(Currently being edited) Skipping update for " + data_key);
                 continue;
             }
-            input_row.SetText(this.get_update_value(data_key));
+            var new_val = this.get_update_value(data_key);
+            if (new_val === input_row.Text()) {
+                continue;
+            }
+            input_row.SetText(new_val);
         }
     };
     this.update_color_pickers = function () {
@@ -46209,7 +46213,11 @@ function DashGuiPropertyBox (
                 Dash.Log.Log("(Currently being edited) Skipping update for " + data_key);
                 continue;
             }
-            text_area.SetText(this.get_update_value(data_key));
+            var new_val = this.get_update_value(data_key);
+            if (new_val === text_area.GetText()) {
+                continue;
+            }
+            text_area.SetText(new_val);
         }
     };
     this.update_combos = function () {
@@ -46235,20 +46243,30 @@ function DashGuiPropertyBox (
             return;
         }
         for (var i in this.headers) {
-            this.headers[i]["obj"].SetText(this.get_update_value(this.headers[i]["update_key"]));
+            var header = this.headers[i]["obj"];
+            var new_val = this.get_update_value(this.headers[i]["update_key"]);
+            if (new_val === header.Text()) {
+                continue;
+            }
+            header.SetText(new_val);
         }
     };
     this.update_tool_rows = function () {
         for (var tool_row of this.tool_rows) {
             for (var element of tool_row.elements) {
                 if (element instanceof DashGuiInput || element instanceof DashGuiInputRow) {
+                    if (!element.data_key) {
+                        continue;
+                    }
                     if (element.InFocus()) {
                         Dash.Log.Log("(Currently being edited) Skipping update for " + element.data_key);
                         continue;
                     }
-                    if (element.data_key) {
-                        element.SetText(this.get_update_value(element.data_key));
+                    var new_val = this.get_update_value(element.data_key);
+                    if (new_val === element.Text()) {
+                        continue;
                     }
+                    element.SetText(new_val);
                 }
                 // Add more as needed
             }
@@ -46968,7 +46986,7 @@ function DashGuiPropertyBoxInterface () {
         else {
             text_area.SetHeight((label_height * starting_height_mult) + (Dash.Size.Padding * 1.5));
             if (value) {
-                text_area.SetText(value);
+                text_area.SetText(value, true);
             }
         }
         if (!can_edit) {
@@ -55519,7 +55537,7 @@ function DashMobileTextBox (
         }
         return val;
     };
-    this.SetText = function (text) {
+    this.SetText = function (text, trigger_spellcheck=false) {
         this.textarea.val(text);
         if (this.auto_height) {
             requestAnimationFrame(() => {
@@ -55527,19 +55545,24 @@ function DashMobileTextBox (
             });
         }
         this.last_change_value = text;
-        // Trigger spellcheck
-        setTimeout(
-            () => {
-                this.Focus();
-                setTimeout(
-                    () => {
-                        this.UnFocus();
-                    },
-                    50
-                );
-            },
-            50
-        );
+        // When you programmatically set the initial value of a textarea, it doesn’t trigger
+        // spellcheck. It requires the thing to be focused at least once, so this resolves that.
+        // However, this solution causes problems in certain scenarios, such as a property box with
+        // multiple textareas updating, which is why it must be explicitly triggered with the param.
+        if (trigger_spellcheck && !this.InFocus()) {
+            setTimeout(
+                () => {
+                    this.Focus();
+                    setTimeout(
+                        () => {
+                            this.UnFocus();
+                        },
+                        50
+                    );
+                },
+                50
+            );
+        }
         return text;
     };
     this.SetLineBreakReplacement = function (value="") {

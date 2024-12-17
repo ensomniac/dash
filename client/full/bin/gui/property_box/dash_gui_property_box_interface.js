@@ -590,7 +590,7 @@ function DashGuiPropertyBoxInterface () {
             text_area.SetHeight((label_height * starting_height_mult) + (Dash.Size.Padding * 1.5));
 
             if (value) {
-                text_area.SetText(value);
+                text_area.SetText(value, true);
             }
         }
 
