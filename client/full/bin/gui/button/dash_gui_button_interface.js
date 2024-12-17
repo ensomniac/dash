@@ -100,7 +100,8 @@ function DashGuiButtonInterface () {
             this.highlight_color_override = highlight;
 
             this.highlight.css({
-                "background": highlight
+                "background": highlight,
+                "opacity": 0 // Setting background color forces opacity back to 1, so account for that
             });
         }
 
@@ -195,6 +196,8 @@ function DashGuiButtonInterface () {
 
     this.SetSelected = function (is_selected) {
         if (is_selected === this.is_selected) {
+            this.on_hover_out();
+
             return;
         }
 

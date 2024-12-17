@@ -27885,7 +27885,8 @@ function DashGuiButtonInterface () {
         if (highlight) {
             this.highlight_color_override = highlight;
             this.highlight.css({
-                "background": highlight
+                "background": highlight,
+                "opacity": 0 // Setting background color forces opacity back to 1, so account for that
             });
         }
         if (load_bar) {
@@ -27954,6 +27955,7 @@ function DashGuiButtonInterface () {
     };
     this.SetSelected = function (is_selected) {
         if (is_selected === this.is_selected) {
+            this.on_hover_out();
             return;
         }
         this.is_selected = is_selected;
@@ -48924,6 +48926,9 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="", color=null) {
         if (index > this.all_content.length - 1) {
             return;
         }
+        if (clicked && index === this.current_index) {
+            return;
+        }
         if (clicked && this.before_tab_changed_cb && !this.before_tab_changed_cb(index)) {
             return;
         }
@@ -48939,6 +48944,7 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="", color=null) {
                 continue;
             }
             if (parseInt(i) === parseInt(index)) {
+                console.warn("TEST set selected", index, content_data["selected_css"]);
                 content_data["button"].SetSelected(true);
                 button = content_data["button"];
                 if (content_data["selected_css"]) {

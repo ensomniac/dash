@@ -177,6 +177,10 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="", color=null) {
             return;
         }
 
+        if (clicked && index === this.current_index) {
+            return;
+        }
+
         if (clicked && this.before_tab_changed_cb && !this.before_tab_changed_cb(index)) {
             return;
         }
@@ -199,6 +203,7 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="", color=null) {
             }
 
             if (parseInt(i) === parseInt(index)) {
+                console.warn("TEST set selected", index, content_data["selected_css"]);
                 content_data["button"].SetSelected(true);
 
                 button = content_data["button"];
