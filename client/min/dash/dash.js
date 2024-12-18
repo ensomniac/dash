@@ -48948,11 +48948,15 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="", color=null) {
     // TODO: Break this function up
     this.LoadIndex = function (index, clicked=false) {
         if (index > this.all_content.length - 1) {
+            Dash.Log.Warn("LoadIndex: Invalid index:", index, "for", this.all_content.length, "tabs");
             return;
         }
-        if (clicked && index === this.current_index) {
-            return;
-        }
+        // DO NOT USE THIS LOGIC
+        // if (clicked && index === this.current_index) {
+        //     Dash.Log.Warn("LoadIndex: Same index as current index, skipping");
+        //
+        //     return;
+        // }
         if (clicked && this.before_tab_changed_cb && !this.before_tab_changed_cb(index)) {
             return;
         }
