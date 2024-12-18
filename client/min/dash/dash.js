@@ -18768,6 +18768,9 @@ function DashUser () {
     this.__auth_not_authenticated_cb = null;
     this.Data = null;
     this.Init = null;
+    this.GetDisplayNameByEmail = function (user_email) {
+        return this.GetDisplayName(this.GetByEmail(user_email));
+    };
     this.GetDisplayName = function (user_data=null) {
         if (!user_data) {
             user_data = this.Data;
@@ -54763,14 +54766,16 @@ function DashLayoutToolbarInterface () {
             "height": this.height
         });
         this.stroke_sep_removed = true;
+        return this;
     };
     this.DisablePaddingRefactoring = function () {
         this.allow_padding_refactoring = false;
+        return this;
     };
     this.AddExpander = function () {
         var expander = $("<div></div>");
         expander.css({
-            "flex-grow": 2,
+            "flex-grow": 2
         });
         this.html.append(expander);
         var obj_index = this.objects.length;
@@ -54792,6 +54797,7 @@ function DashLayoutToolbarInterface () {
         this.html.css({
             "height": height
         });
+        return this;
     };
     this.AddSpace = function (width) {
         var space = $("<div></div>");
@@ -54805,6 +54811,7 @@ function DashLayoutToolbarInterface () {
         });
         this.refactor_item_padding();
         this.html.append(space);
+        return space;
     };
     // TODO: These params are a mess
     this.AddIconButton = function (
@@ -54988,6 +54995,7 @@ function DashLayoutToolbarInterface () {
             "text-overflow": "ellipsis",
             "padding-left": 0
         });
+        // This is old and not the ideal way to handle this
         if (centered) {
             label.html.css({
                 "margin-bottom": 0

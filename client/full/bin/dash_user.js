@@ -5,6 +5,10 @@ function DashUser () {
     this.Data = null;
     this.Init = null;
 
+    this.GetDisplayNameByEmail = function (user_email) {
+        return this.GetDisplayName(this.GetByEmail(user_email));
+    };
+
     this.GetDisplayName = function (user_data=null) {
         if (!user_data) {
             user_data = this.Data;

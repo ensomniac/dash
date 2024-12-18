@@ -11,17 +11,21 @@ function DashLayoutToolbarInterface () {
         });
 
         this.stroke_sep_removed = true;
+
+        return this;
     };
 
     this.DisablePaddingRefactoring = function () {
         this.allow_padding_refactoring = false;
+
+        return this;
     };
 
     this.AddExpander = function () {
         var expander = $("<div></div>");
 
         expander.css({
-            "flex-grow": 2,
+            "flex-grow": 2
         });
 
         this.html.append(expander);
@@ -52,6 +56,8 @@ function DashLayoutToolbarInterface () {
         this.html.css({
             "height": height
         });
+
+        return this;
     };
 
     this.AddSpace = function (width) {
@@ -70,6 +76,8 @@ function DashLayoutToolbarInterface () {
         this.refactor_item_padding();
 
         this.html.append(space);
+
+        return space;
     };
 
     // TODO: These params are a mess
@@ -305,6 +313,7 @@ function DashLayoutToolbarInterface () {
             "padding-left": 0
         });
 
+        // This is old and not the ideal way to handle this
         if (centered) {
             label.html.css({
                 "margin-bottom": 0
