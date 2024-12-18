@@ -32,7 +32,7 @@ class DashGuiAddress extends DashGuiInputType {
         include_tip_icon=true
     ) {
         super(
-            $("<input placeholder='" + placeholder_text + "'>"),
+            $("<input>", {"placeholder": placeholder_text}),
             label_text,
             null,
             () => {

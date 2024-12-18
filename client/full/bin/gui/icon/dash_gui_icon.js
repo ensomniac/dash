@@ -11,7 +11,7 @@ function DashGuiIcon (
     this.icon_html = null;
     this.icon_fill = null;
     this.icon_definition = new DashGuiIcons(this);
-    this.html = $("<div class='GuiIcon'></div>");
+    this.html = $("<div>", {"class": "GuiIcon"});
     this.set_color = null;
     this.initialized = false;
 
@@ -32,7 +32,7 @@ function DashGuiIcon (
             "user-select": "none"
         });
 
-        this.icon_html = $('<i class="' + this.icon_definition.get_class() + '"></i>');
+        this.icon_html = $("<i>", {"class": this.icon_definition.get_class()});
 
         this.icon_html.css(this.icon_definition.get_css());
 
@@ -111,7 +111,7 @@ function DashGuiIcon (
         this.name = icon_name || "unknown";
         this.icon_definition = new DashGuiIcons(this);
 
-        var icon_html = $('<i class="' + this.icon_definition.get_class() + '"></i>');
+        var icon_html = $("<i>", {"class": this.icon_definition.get_class()});
         var icon_css = this.icon_definition.get_css();
 
         if (this.set_color) {

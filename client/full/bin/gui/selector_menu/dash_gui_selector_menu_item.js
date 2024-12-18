@@ -8,7 +8,7 @@ function DashGuiSelectorItem (tray, details) {
     this.height  = this.tray.item_height;
     this.width   = this.tray.item_width;
 
-    this.html    = $("<div class='SelectorMenuItem'></div>");
+    this.html    = $("<div>", {"class": "SelectorMenuItem"});
     this.label   = $("<div>" + this.details["display_name"] + "</div>");
     this.hover   = Dash.Gui.GetHTMLAbsContext();
 

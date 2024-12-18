@@ -18306,7 +18306,14 @@ function DashGui () {
         var color_picker = {
             "height": height,
             "html": $("<div></div>"),
-            "input": $("<input type='color' id='" + id + "' value='" + default_picker_hex_color + "'>"),
+            "input": $(
+                "<input>",
+                {
+                    "type": "color",
+                    "id": id,
+                    "value": default_picker_hex_color
+                }
+            ),
             "default_hex_color": default_picker_hex_color
         };
         if (include_label) {
@@ -19298,13 +19305,13 @@ function DashFile () {
             url = ("https://docs.google.com/gview?url=" + url + "&embedded=true");
         }
         return this.set_preview_size(
-            $("<iframe src='" + url + "'></iframe>"),
+            $("<iframe>", {"src": url}),
             height,
             "100%"
         );
     };
     this.GetPlainTextPreview = function (url, formatted=true) {
-        var preview = $("<iframe src='" + url + "'></iframe>");
+        var preview = $("<iframe>", {"src": url});
         if (!formatted) {
             return preview;
         }
@@ -19333,7 +19340,13 @@ function DashFile () {
         );
     };
     this.GetVideoPreview = function (url, height, center_in_parent=true, square=false, controls=true, width=null) {
-        var html = $("<video src='" + url + "' crossorigin='anonymous'></video>");
+        var html = $(
+            "<video>",
+            {
+                "src": url,
+                "crossorigin": "anonymous"
+            }
+        );
         if (center_in_parent) {
             html.css(this.abs_center_css);
         }
@@ -19353,7 +19366,7 @@ function DashFile () {
     };
     this.GetMicrosoftPreview = function (url, height) {
         return this.set_preview_size(
-            $("<iframe src='https://view.officeapps.live.com/op/embed.aspx?src=" + url + "' ></iframe>"),
+            $("<iframe>", {"src": "https://view.officeapps.live.com/op/embed.aspx?src=" + url}),
             height,
             "100%"
         );
@@ -20320,7 +20333,7 @@ class DashGuiAddress extends DashGuiInputType {
         include_tip_icon=true
     ) {
         super(
-            $("<input placeholder='" + placeholder_text + "'>"),
+            $("<input>", {"placeholder": placeholder_text}),
             label_text,
             null,
             () => {
@@ -27184,14 +27197,16 @@ function DashGuiDatePicker (
             max = today;
         }
     }
+    var _attrs = {"type": "date"};
+    if (min) {
+        _attrs["min"] = min;
+    }
+    if (max) {
+        _attrs["max"] = max;
+    }
     DashGuiInputType.call(
         this,
-        $(
-            "<input type='date'" +
-            (min ? " min='" + min + "'" : "") +
-            (max ? " max='" + max + "'" : "") +
-            ">"
-        ),
+        $("<input>", _attrs),
         label_text,
         binder,
         on_submit_cb,
@@ -27248,15 +27263,19 @@ function DashGuiTimePicker (
     include_seconds=false
 ) {
     this.include_seconds = include_seconds;
+    var _attrs = {"type": "time"};
+    if (min) {
+        _attrs["min"] = min;
+    }
+    if (max) {
+        _attrs["max"] = max;
+    }
+    if (this.include_seconds) {
+        _attrs["step"] = "1";
+    }
     DashGuiInputType.call(
         this,
-        $(
-            "<input type='time'" +
-            (min ? " min='" + min + "'" : "") +
-            (max ? " max='" + max + "'" : "") +
-            (this.include_seconds ? " step='1'" : "") +
-            ">"
-        ),
+        $("<input>", _attrs),
         label_text,
         binder,
         on_submit_cb,
@@ -28593,7 +28612,7 @@ function DashGuiSelectorMenu (binder, selected_callback, icon_name="unknown", op
     this.items       = [];
     this.items_built = false;
     this.items_str   = "-";
-    this.html  = $("<div class='SelectorMenu'></div>");
+    this.html  = $("<div>", {"class": "SelectorMenu"});
     this.hover = Dash.Gui.GetHTMLAbsContext();
     this.icon  = null;
     this.tray  = new DashGuiSelectorMenuTray(this);
@@ -28671,7 +28690,7 @@ function DashGuiSelectorMenuTray (selector_menu) {
     this.item_width  = Dash.Size.ColumnWidth * 1.5;
     this.num_rows = 3;
     this.num_cols = 1;
-    this.html  = $("<div class='SelectorMenuTray'></div>");
+    this.html  = $("<div>", {"class": "SelectorMenuTray"});
     this.close_skirt = $("<div></div>");
     this.background  = $("<div></div>");
     this.content     = $("<div></div>");
@@ -28855,7 +28874,7 @@ function DashGuiSelectorItem (tray, details) {
     this.menu    = this.tray.selector_menu;
     this.height  = this.tray.item_height;
     this.width   = this.tray.item_width;
-    this.html    = $("<div class='SelectorMenuItem'></div>");
+    this.html    = $("<div>", {"class": "SelectorMenuItem"});
     this.label   = $("<div>" + this.details["display_name"] + "</div>");
     this.hover   = Dash.Gui.GetHTMLAbsContext();
     this.setup_styles = function () {
@@ -29892,18 +29911,18 @@ function DashGuiCombo (
     this.show_rows_on_empty_search = true;
     this.default_search_submit_combo = null;
     this.pending_initial_multi_select_ids = [];
-    this.html = $("<div class='Combo'></div>");
-    this.rows = $("<div class='Combo'></div>");
-    this.click = $("<div class='Combo'></div>");
-    this.highlight = $("<div class='Combo'></div>");
+    this.html = $("<div>", {"class": "Combo"});
+    this.rows = $("<div>", {"class": "Combo"});
+    this.click = $("<div>", {"class": "Combo"});
+    this.highlight = $("<div>", {"class": "Combo"});
     this.style = this.options["style"] || "default";
     this.read_only = this.options["read_only"] || false;
-    this.label = $("<div class='ComboLabel Combo'></div>");
+    this.label = $("<div>", {"class": "ComboLabel Combo"});
     this.label_background = this.color_set.Background.Base;
     this.multi_select = this.options["multi_select"] || false;
     this.additional_data = this.options["additional_data"] || {};
     this.font_size = Dash.Size.DesktopToMobileMode ? "75%" : "100%";
-    this.label_container = $("<div class='ComboLabel Combo'></div>");
+    this.label_container = $("<div>", {"class": "ComboLabel Combo"});
     // Originally wrote this to check programmatically for every combo, but
     // got concerned that it was inefficient to check any and every combo
     this.is_user_list = this.options["is_user_list"] || false;
@@ -29967,11 +29986,12 @@ function DashGuiCombo (
         if (this.is_searchable) {
             height = this.html.height();
         }
+        var attrs = {"class": "ComboClickSkirt Combo"};
         this.click_skirt = [
-            $("<div class='ComboClickSkirt Combo'></div>"),
-            $("<div class='ComboClickSkirt Combo'></div>"),
-            $("<div class='ComboClickSkirt Combo'></div>"),
-            $("<div class='ComboClickSkirt Combo'></div>")
+            $("<div>", attrs),
+            $("<div>", attrs),
+            $("<div>", attrs),
+            $("<div>", attrs)
         ];
         var skirt_thickness = Dash.Size.ColumnWidth * 1.2;
         var skirt_top = skirt_thickness;
@@ -30933,9 +30953,9 @@ function DashGuiComboRow (combo, option) {
     this.multi_select = this.combo.multi_select;
     this.height = this.combo.height || Dash.Size.ButtonHeight;
     this.label_text = this.option["label_text"] || this.option["display_name"];
-    this.html = $("<div class='Combo'></div>");
-    this.highlight = $("<div class='Combo'></div>");
-    this.label = $("<div class='Combo'>" + this.label_text + "</div>");
+    this.html = $("<div>", {"class": "Combo"});
+    this.highlight = $("<div>", {"class": "Combo"});
+    this.label = $("<div>" + this.label_text + "</div>", {"class": "Combo"});
     this.setup_styles = function () {
         this.html.css({
             "border-bottom": this.multi_select ? "1px solid rgba(255, 255, 255, 0.1)" : "none",
@@ -33481,7 +33501,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     this.parent_data = this.layer.GetParentData();
     this.opposite_color = this.editor.opposite_color;
     this.highlight_color = this.editor.highlight_color;
-    this.html = $("<div class='DashGuiContext2DPrimitive'></div>");
+    this.html = $("<div>", {"class": "DashGuiContext2DPrimitive"});
     this.hover_color = Dash.Color.GetTransparent(this.highlight_color, 0.5);
     this.id = this.data["id"];
     this.type = this.data["type"] || "";
@@ -43820,7 +43840,7 @@ function DashGuiIcon (
     this.icon_html = null;
     this.icon_fill = null;
     this.icon_definition = new DashGuiIcons(this);
-    this.html = $("<div class='GuiIcon'></div>");
+    this.html = $("<div>", {"class": "GuiIcon"});
     this.set_color = null;
     this.initialized = false;
     if (!this.color.Text) {
@@ -43837,7 +43857,7 @@ function DashGuiIcon (
             "cursor": "pointer",  // Why is this the default?
             "user-select": "none"
         });
-        this.icon_html = $('<i class="' + this.icon_definition.get_class() + '"></i>');
+        this.icon_html = $("<i>", {"class": this.icon_definition.get_class()});
         this.icon_html.css(this.icon_definition.get_css());
         this.html.append(this.icon_html);
         requestAnimationFrame(() => {
@@ -43894,7 +43914,7 @@ function DashGuiIcon (
         }
         this.name = icon_name || "unknown";
         this.icon_definition = new DashGuiIcons(this);
-        var icon_html = $('<i class="' + this.icon_definition.get_class() + '"></i>');
+        var icon_html = $("<i>", {"class": this.icon_definition.get_class()});
         var icon_css = this.icon_definition.get_css();
         if (this.set_color) {
             icon_css["color"] = this.set_color;
@@ -44442,11 +44462,10 @@ function DashGuiInput (placeholder_text="", color=null) {
     this.vis_reset_timer = null;
     this.visibility_toggle = null;
     this.require_auth_for_vis_toggle = false;
-    this.input = $("<input class='" + this.color.PlaceholderClass + "'>");
+    this.input = $("<input>", {"class": this.color.PlaceholderClass});
     this.setup_styles = function () {
         // Have to do it here instead of inline to solve for any single quotations (escaping doesn't work inline)
         this.SetPlaceholder(this.placeholder);
-
         this.html.css({
             "height": this.height,
             "background": this.color.Input.Background.Base,
@@ -45882,6 +45901,7 @@ function DashGuiLoadingLabel (binder=null, label_text="Loading...", height=null,
             "padding-left": Dash.Size.Padding,
             "padding-right": Dash.Size.Padding
         });
+        return this;
     };
     // This function will fade out the loading label while converting
     // it to an absolutely positioned element. Since this element is
@@ -45900,21 +45920,25 @@ function DashGuiLoadingLabel (binder=null, label_text="Loading...", height=null,
         if (this.label) {
             this.label.stop().animate({"opacity": 0}, anim_ms, this.destroy.bind(this));
         }
+        return this;
     };
     this.Stop = function () {
         if (this.loading_dots) {
             this.loading_dots.Stop();
         }
+        return this;
     };
     this.Start = function () {
         if (this.loading_dots) {
             this.loading_dots.Start();
         }
+        return this;
     };
     this.SetText = function (text) {
         if (this.label) {
             this.label.text(text);
         }
+        return this;
     };
     // Called after fade out is complete
     this.destroy = function () {
@@ -48944,7 +48968,6 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="", color=null) {
                 continue;
             }
             if (parseInt(i) === parseInt(index)) {
-                console.warn("TEST set selected", index, content_data["selected_css"]);
                 content_data["button"].SetSelected(true);
                 button = content_data["button"];
                 if (content_data["selected_css"]) {
@@ -58369,7 +58392,13 @@ function DashPDFView (options) {
         this.images_initialized = false;
         for (var i in this.data["pages"]) {
             var page_data = this.data["pages"][i];
-            var image = $("<img src='" + page_data["url"] + "' alt=''>");
+            var image = $(
+                "<img>",
+                {
+                    "src": page_data["url"],
+                    "alt": ""
+                }
+            );
             image.css({
                 "width": this.content_width-(Dash.Size.Padding * 2),
                 "margin-bottom": Dash.Size.Padding,

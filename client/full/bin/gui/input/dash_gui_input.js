@@ -9,12 +9,11 @@ function DashGuiInput (placeholder_text="", color=null) {
     this.vis_reset_timer = null;
     this.visibility_toggle = null;
     this.require_auth_for_vis_toggle = false;
-    this.input = $("<input class='" + this.color.PlaceholderClass + "'>");
+    this.input = $("<input>", {"class": this.color.PlaceholderClass});
 
     this.setup_styles = function () {
         // Have to do it here instead of inline to solve for any single quotations (escaping doesn't work inline)
         this.SetPlaceholder(this.placeholder);
-
 
         this.html.css({
             "height": this.height,

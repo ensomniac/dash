@@ -189,14 +189,14 @@ function DashFile () {
         }
 
         return this.set_preview_size(
-            $("<iframe src='" + url + "'></iframe>"),
+            $("<iframe>", {"src": url}),
             height,
             "100%"
         );
     };
 
     this.GetPlainTextPreview = function (url, formatted=true) {
-        var preview = $("<iframe src='" + url + "'></iframe>");
+        var preview = $("<iframe>", {"src": url});
 
         if (!formatted) {
             return preview;
@@ -234,7 +234,13 @@ function DashFile () {
     };
 
     this.GetVideoPreview = function (url, height, center_in_parent=true, square=false, controls=true, width=null) {
-        var html = $("<video src='" + url + "' crossorigin='anonymous'></video>");
+        var html = $(
+            "<video>",
+            {
+                "src": url,
+                "crossorigin": "anonymous"
+            }
+        );
 
         if (center_in_parent) {
             html.css(this.abs_center_css);
@@ -262,7 +268,7 @@ function DashFile () {
 
     this.GetMicrosoftPreview = function (url, height) {
         return this.set_preview_size(
-            $("<iframe src='https://view.officeapps.live.com/op/embed.aspx?src=" + url + "' ></iframe>"),
+            $("<iframe>", {"src": "https://view.officeapps.live.com/op/embed.aspx?src=" + url}),
             height,
             "100%"
         );

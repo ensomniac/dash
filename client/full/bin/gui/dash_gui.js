@@ -240,7 +240,14 @@ function DashGui () {
         var color_picker = {
             "height": height,
             "html": $("<div></div>"),
-            "input": $("<input type='color' id='" + id + "' value='" + default_picker_hex_color + "'>"),
+            "input": $(
+                "<input>",
+                {
+                    "type": "color",
+                    "id": id,
+                    "value": default_picker_hex_color
+                }
+            ),
             "default_hex_color": default_picker_hex_color
         };
 

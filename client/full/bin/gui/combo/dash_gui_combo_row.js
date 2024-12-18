@@ -12,9 +12,9 @@ function DashGuiComboRow (combo, option) {
     this.height = this.combo.height || Dash.Size.ButtonHeight;
     this.label_text = this.option["label_text"] || this.option["display_name"];
 
-    this.html = $("<div class='Combo'></div>");
-    this.highlight = $("<div class='Combo'></div>");
-    this.label = $("<div class='Combo'>" + this.label_text + "</div>");
+    this.html = $("<div>", {"class": "Combo"});
+    this.highlight = $("<div>", {"class": "Combo"});
+    this.label = $("<div>" + this.label_text + "</div>", {"class": "Combo"});
 
     this.setup_styles = function () {
         this.html.css({

@@ -152,7 +152,14 @@ function DashPDFView (options) {
 
         for (var i in this.data["pages"]) {
             var page_data = this.data["pages"][i];
-            var image = $("<img src='" + page_data["url"] + "' alt=''>");
+
+            var image = $(
+                "<img>",
+                {
+                    "src": page_data["url"],
+                    "alt": ""
+                }
+            );
 
             image.css({
                 "width": this.content_width-(Dash.Size.Padding * 2),

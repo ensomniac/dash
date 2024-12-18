@@ -56,18 +56,18 @@ function DashGuiCombo (
     this.show_rows_on_empty_search = true;
     this.default_search_submit_combo = null;
     this.pending_initial_multi_select_ids = [];
-    this.html = $("<div class='Combo'></div>");
-    this.rows = $("<div class='Combo'></div>");
-    this.click = $("<div class='Combo'></div>");
-    this.highlight = $("<div class='Combo'></div>");
+    this.html = $("<div>", {"class": "Combo"});
+    this.rows = $("<div>", {"class": "Combo"});
+    this.click = $("<div>", {"class": "Combo"});
+    this.highlight = $("<div>", {"class": "Combo"});
     this.style = this.options["style"] || "default";
     this.read_only = this.options["read_only"] || false;
-    this.label = $("<div class='ComboLabel Combo'></div>");
+    this.label = $("<div>", {"class": "ComboLabel Combo"});
     this.label_background = this.color_set.Background.Base;
     this.multi_select = this.options["multi_select"] || false;
     this.additional_data = this.options["additional_data"] || {};
     this.font_size = Dash.Size.DesktopToMobileMode ? "75%" : "100%";
-    this.label_container = $("<div class='ComboLabel Combo'></div>");
+    this.label_container = $("<div>", {"class": "ComboLabel Combo"});
 
     // Originally wrote this to check programmatically for every combo, but
     // got concerned that it was inefficient to check any and every combo
@@ -154,11 +154,13 @@ function DashGuiCombo (
             height = this.html.height();
         }
 
+        var attrs = {"class": "ComboClickSkirt Combo"};
+
         this.click_skirt = [
-            $("<div class='ComboClickSkirt Combo'></div>"),
-            $("<div class='ComboClickSkirt Combo'></div>"),
-            $("<div class='ComboClickSkirt Combo'></div>"),
-            $("<div class='ComboClickSkirt Combo'></div>")
+            $("<div>", attrs),
+            $("<div>", attrs),
+            $("<div>", attrs),
+            $("<div>", attrs)
         ];
 
         var skirt_thickness = Dash.Size.ColumnWidth * 1.2;

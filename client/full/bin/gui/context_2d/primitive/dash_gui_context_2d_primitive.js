@@ -26,7 +26,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     this.parent_data = this.layer.GetParentData();
     this.opposite_color = this.editor.opposite_color;
     this.highlight_color = this.editor.highlight_color;
-    this.html = $("<div class='DashGuiContext2DPrimitive'></div>");
+    this.html = $("<div>", {"class": "DashGuiContext2DPrimitive"});
     this.hover_color = Dash.Color.GetTransparent(this.highlight_color, 0.5);
 
     this.id = this.data["id"];

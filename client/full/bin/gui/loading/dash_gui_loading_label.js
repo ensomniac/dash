@@ -64,6 +64,8 @@ function DashGuiLoadingLabel (binder=null, label_text="Loading...", height=null,
             "padding-left": Dash.Size.Padding,
             "padding-right": Dash.Size.Padding
         });
+
+        return this;
     };
 
     // This function will fade out the loading label while converting
@@ -85,24 +87,32 @@ function DashGuiLoadingLabel (binder=null, label_text="Loading...", height=null,
         if (this.label) {
             this.label.stop().animate({"opacity": 0}, anim_ms, this.destroy.bind(this));
         }
+
+        return this;
     };
 
     this.Stop = function () {
         if (this.loading_dots) {
             this.loading_dots.Stop();
         }
+
+        return this;
     };
 
     this.Start = function () {
         if (this.loading_dots) {
             this.loading_dots.Start();
         }
+
+        return this;
     };
 
     this.SetText = function (text) {
         if (this.label) {
             this.label.text(text);
         }
+
+        return this;
     };
 
     // Called after fade out is complete

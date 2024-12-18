@@ -32,14 +32,19 @@ function DashGuiDatePicker (
         }
     }
 
+    var _attrs = {"type": "date"};
+
+    if (min) {
+        _attrs["min"] = min;
+    }
+
+    if (max) {
+        _attrs["max"] = max;
+    }
+
     DashGuiInputType.call(
         this,
-        $(
-            "<input type='date'" +
-            (min ? " min='" + min + "'" : "") +
-            (max ? " max='" + max + "'" : "") +
-            ">"
-        ),
+        $("<input>", _attrs),
         label_text,
         binder,
         on_submit_cb,

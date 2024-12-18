@@ -10,7 +10,7 @@ function DashGuiSelectorMenuTray (selector_menu) {
     this.num_rows = 3;
     this.num_cols = 1;
 
-    this.html  = $("<div class='SelectorMenuTray'></div>");
+    this.html  = $("<div>", {"class": "SelectorMenuTray"});
     this.close_skirt = $("<div></div>");
     this.background  = $("<div></div>");
     this.content     = $("<div></div>");

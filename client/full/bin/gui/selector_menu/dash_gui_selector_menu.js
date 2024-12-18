@@ -15,7 +15,7 @@ function DashGuiSelectorMenu (binder, selected_callback, icon_name="unknown", op
     this.items_built = false;
     this.items_str   = "-";
 
-    this.html  = $("<div class='SelectorMenu'></div>");
+    this.html  = $("<div>", {"class": "SelectorMenu"});
     this.hover = Dash.Gui.GetHTMLAbsContext();
     this.icon  = null;
     this.tray  = new DashGuiSelectorMenuTray(this);

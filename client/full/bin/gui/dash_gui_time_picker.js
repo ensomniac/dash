@@ -17,15 +17,23 @@ function DashGuiTimePicker (
 ) {
     this.include_seconds = include_seconds;
 
+    var _attrs = {"type": "time"};
+
+    if (min) {
+        _attrs["min"] = min;
+    }
+
+    if (max) {
+        _attrs["max"] = max;
+    }
+
+    if (this.include_seconds) {
+        _attrs["step"] = "1";
+    }
+
     DashGuiInputType.call(
         this,
-        $(
-            "<input type='time'" +
-            (min ? " min='" + min + "'" : "") +
-            (max ? " max='" + max + "'" : "") +
-            (this.include_seconds ? " step='1'" : "") +
-            ">"
-        ),
+        $("<input>", _attrs),
         label_text,
         binder,
         on_submit_cb,

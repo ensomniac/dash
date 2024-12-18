@@ -203,7 +203,6 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="", color=null) {
             }
 
             if (parseInt(i) === parseInt(index)) {
-                console.warn("TEST set selected", index, content_data["selected_css"]);
                 content_data["button"].SetSelected(true);
 
                 button = content_data["button"];
