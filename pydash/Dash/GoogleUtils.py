@@ -3,6 +3,8 @@
 # Ensomniac 2024 Ryan Martin, ryan@ensomniac.com
 #                Andrew Stet, stetandrew@gmail.com
 
+# TODO: Break this script up into a module
+
 import os
 import sys
 
@@ -85,6 +87,7 @@ class GUtils:
     _auth_utils_: callable
     _docs_utils_: callable
     _drive_utils_: callable
+    _gmail_utils_: callable
     _sheets_utils_: callable
     _slides_utils_: callable
     _youtube_utils_: callable
@@ -196,6 +199,19 @@ class GUtils:
             raise error
 
         return download_path
+
+    # ========================= GMAIL =========================
+
+    @property
+    def GmailClient(self):
+        return self._gmail_utils.Client
+
+    @property
+    def _gmail_utils(self):
+        if not hasattr(self, "_gmail_utils_"):
+            self._gmail_utils_ = _GmailUtils(self)
+
+        return self._gmail_utils_
 
     # ========================= SHEETS =========================
 
@@ -396,6 +412,23 @@ class GUtils:
 
     def GetYouTubeSubscriberCount(self, channel_id="", channel_handle="", music_channel_id=""):
         return self._youtube_utils.GetSubscriberCount(channel_id, channel_handle, music_channel_id)
+
+
+# TODO: Placeholder for future - once ability to send email is added, can probably deprecate the Mail module
+class _GmailUtils:
+    _client: callable
+
+    def __init__(self, gutils):
+        self.gutils = gutils
+
+    @property
+    def Client(self):
+        if not hasattr(self, "_client"):
+            from googleapiclient.discovery import build
+
+            self._client = build("gmail", "v1", http=self.gutils.OAuth2Creds)
+
+        return self._client
 
 
 class _DriveUtils:
@@ -1311,4 +1344,3 @@ class _AuthUtils:
 class _YouTubeAuthUtils(_AuthUtils):
     def __init__(self, gutils):
         _AuthUtils.__init__(self, gutils, service_name="youtube")
-

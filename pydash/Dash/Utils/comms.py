@@ -104,15 +104,17 @@ def SendEmail(
     return response
 
 
-def ValidateEmailAddress(email, verbose=False):
+def ValidateEmailAddress(email, verbose=False, verbose_success_msg=False):
     from email_validator import validate_email
+
+    error_tag = f"Invalid email address ({email})"
 
     try:
         validated = validate_email(email)
 
     except Exception as e:
         if verbose:
-            return f"Invalid email address, validation error:\n{e}"
+            return f", validation error:\n{e}"
 
         return False
 
@@ -123,40 +125,47 @@ def ValidateEmailAddress(email, verbose=False):
 
         if not mx_records:
             if verbose:
-                return "Invalid email address: No MX records found"
+                return f"{error_tag}: No MX records found"
 
             return False
 
-        mail_server = str(mx_records[0].exchange).rstrip(".")
+        # mail_server = str(mx_records[0].exchange).rstrip(".")
 
     except Exception as e:
         if verbose:
-            return f"Invalid email address, MX error:\n{e}"
+            return f"{error_tag}, MX error:\n{e}"
 
         return False
 
-    from smtplib import SMTP
+    # This works locally but not on the server, and resolving it on the server is
+    # proving very difficult, so disabling it for now since it's not critical
+    # from smtplib import SMTP
+    #
+    # try:
+    #     with SMTP(mail_server, timeout=10) as smtp:
+    #         smtp.ehlo()  # Introduce yourself to the server
+    #         smtp.mail("test@example.com")  # Fake sender email
+    #
+    #         code, _ = smtp.rcpt(validated.normalized)  # Check recipient email
+    #
+    #         if code == 250:
+    #             if verbose:
+    #                 return f"Valid email address: {email}" if verbose_success_msg else ""
+    #
+    #             return True
+    #
+    #         if verbose:
+    #             return f"{error_tag}: SMTP returned code {code} (expected 250)"
+    #
+    #         return False
+    #
+    # except Exception as e:
+    #     if verbose:
+    #         return f"{error_tag}, SMTP error:\n{e}"
+    #
+    #     return False
 
-    try:
-        with SMTP(mail_server, timeout=10) as smtp:
-            smtp.ehlo()  # Introduce yourself to the server
-            smtp.mail("test@example.com")  # Fake sender email
+    if verbose:
+        return f"Valid email address: {email}" if verbose_success_msg else ""
 
-            code, _ = smtp.rcpt(validated.normalized)  # Check recipient email
-
-            if code == 250:
-                if verbose:
-                    return f"Valid email address: {email}"
-
-                return True
-
-            if verbose:
-                return f"Invalid email address: SMTP returned code {code} (expected 250)"
-
-            return False
-
-    except Exception as e:
-        if verbose:
-            return f"Invalid email address, SMTP error:\n{e}"
-
-        return False
+    return True

@@ -333,10 +333,10 @@ def SendDebugEmail(msg, recipient="stetandrew@gmail.com"):
     )
 
 
-def ValidateEmailAddress(email, verbose=False):
+def ValidateEmailAddress(email, verbose=False, verbose_success_msg=False):
     from .comms import ValidateEmailAddress
 
-    return ValidateEmailAddress(email, verbose)
+    return ValidateEmailAddress(email, verbose, verbose_success_msg)
 
 
 # ----------------------------------------------- WORKSHEET -------------------------------------------------
