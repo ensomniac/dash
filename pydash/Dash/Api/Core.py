@@ -504,7 +504,13 @@ class ApiCore:
         else:
             self._render_html = False
 
-            if "error" not in response.keys():
+            if response is None:
+                response = {
+                    "error": "Missing response",
+                    "_error": "Ensure a response is passed to SetResponse"
+                }
+
+            elif "error" not in response.keys():
                 response["error"] = None
 
         self._response = response
