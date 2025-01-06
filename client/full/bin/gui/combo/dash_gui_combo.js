@@ -972,38 +972,43 @@ function DashGuiCombo (
             return;
         }
 
-        if (active_index < (this.arrow_buttons_allow_first ? 1 : 2)) {
-            if (this.arrow_buttons_inverted) {
-                this.right_arrow_button.Disable();
+        var next_allowed = active_index < (this.option_list.length - 1);
+        var previous_allowed = active_index > (this.arrow_buttons_allow_first ? 0 : 1);
 
+        if (this.arrow_buttons_inverted) {
+            if (next_allowed) {
                 this.left_arrow_button.Enable();
             }
 
             else {
                 this.left_arrow_button.Disable();
-
-                this.right_arrow_button.Enable();
             }
-        }
 
-        else if (active_index > (this.option_list.length - 2)) {
-            if (this.arrow_buttons_inverted) {
+            if (previous_allowed) {
                 this.right_arrow_button.Enable();
-
-                this.left_arrow_button.Disable();
             }
 
             else {
-                this.left_arrow_button.Enable();
-
                 this.right_arrow_button.Disable();
             }
         }
 
         else {
-            this.left_arrow_button.Enable();
+            if (next_allowed) {
+                this.right_arrow_button.Enable();
+            }
 
-            this.right_arrow_button.Enable();
+            else {
+                this.right_arrow_button.Disable();
+            }
+
+            if (previous_allowed) {
+                this.left_arrow_button.Enable();
+            }
+
+            else {
+                this.left_arrow_button.Disable();
+            }
         }
     };
 

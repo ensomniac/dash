@@ -184,8 +184,8 @@ function DashDateTime () {
         return readable;
     };
 
-    this.GetUTCDateObject = function () {
-        return this.GetDateObjectFromISO(new Date().toISOString(), "UTC");
+    this.GetUTCDateObject = function (dt_obj=null) {
+        return this.GetDateObjectFromISO((dt_obj || new Date()).toISOString(), "UTC");
     };
 
     this.GetISOAgeMs = function (iso_string, return_objects=false) {
@@ -297,6 +297,20 @@ function DashDateTime () {
         }
 
         return "th";
+    };
+
+    this.GetNumWeeksInYear = function (year) {
+        year = parseInt(year);
+
+        var jan1 = new Date(year, 0, 1);
+        var dec31 = new Date(year, 11, 31);
+
+        // Rare instance of 53 weeks instead of 52 (January 1 or December 31 is a Thursday)
+        if (jan1.getDay() === 4 || dec31.getDay() === 4) {
+            return 53;
+        }
+
+        return 52;
     };
 
     this.get_server_offset_hours = function (dt_obj=null, timezone="EST", account_for_dst=true) {

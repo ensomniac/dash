@@ -21475,8 +21475,8 @@ function DashDateTime () {
         }
         return readable;
     };
-    this.GetUTCDateObject = function () {
-        return this.GetDateObjectFromISO(new Date().toISOString(), "UTC");
+    this.GetUTCDateObject = function (dt_obj=null) {
+        return this.GetDateObjectFromISO((dt_obj || new Date()).toISOString(), "UTC");
     };
     this.GetISOAgeMs = function (iso_string, return_objects=false) {
         var now = this.GetNewRelativeDateObject("UTC");
@@ -21561,6 +21561,16 @@ function DashDateTime () {
             return "rd";
         }
         return "th";
+    };
+    this.GetNumWeeksInYear = function (year) {
+        year = parseInt(year);
+        var jan1 = new Date(year, 0, 1);
+        var dec31 = new Date(year, 11, 31);
+        // Rare instance of 53 weeks instead of 52 (January 1 or December 31 is a Thursday)
+        if (jan1.getDay() === 4 || dec31.getDay() === 4) {
+            return 53;
+        }
+        return 52;
     };
     this.get_server_offset_hours = function (dt_obj=null, timezone="EST", account_for_dst=true) {
         timezone = timezone.toLowerCase();
@@ -30613,29 +30623,35 @@ function DashGuiCombo (
         if (active_index === null) {
             return;
         }
-        if (active_index < (this.arrow_buttons_allow_first ? 1 : 2)) {
-            if (this.arrow_buttons_inverted) {
-                this.right_arrow_button.Disable();
+        var next_allowed = active_index < (this.option_list.length - 1);
+        var previous_allowed = active_index > (this.arrow_buttons_allow_first ? 0 : 1);
+        if (this.arrow_buttons_inverted) {
+            if (next_allowed) {
                 this.left_arrow_button.Enable();
             }
             else {
                 this.left_arrow_button.Disable();
-                this.right_arrow_button.Enable();
             }
-        }
-        else if (active_index > (this.option_list.length - 2)) {
-            if (this.arrow_buttons_inverted) {
+            if (previous_allowed) {
                 this.right_arrow_button.Enable();
-                this.left_arrow_button.Disable();
             }
             else {
-                this.left_arrow_button.Enable();
                 this.right_arrow_button.Disable();
             }
         }
         else {
-            this.left_arrow_button.Enable();
-            this.right_arrow_button.Enable();
+            if (next_allowed) {
+                this.right_arrow_button.Enable();
+            }
+            else {
+                this.right_arrow_button.Disable();
+            }
+            if (previous_allowed) {
+                this.left_arrow_button.Enable();
+            }
+            else {
+                this.left_arrow_button.Disable();
+            }
         }
     };
     this.initialize_style();
