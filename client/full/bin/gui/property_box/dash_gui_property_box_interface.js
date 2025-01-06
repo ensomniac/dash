@@ -546,27 +546,7 @@ function DashGuiPropertyBoxInterface () {
                         return;
                     }
 
-                    if (self.get_data_cb) {
-                        var old_value = self.get_data_cb()[data_key];
-
-                        if (old_value === value || (!old_value && !value)) {
-                            return;
-                        }
-                    }
-
-                    if (!self.dash_obj_id) {
-                        if (self.set_data_cb) {
-                            self.set_data_cb(data_key, value);
-                        }
-
-                        else {
-                            console.error("Error: Property Box has no callback and no endpoint information!");
-                        }
-
-                        return;
-                    }
-
-                    self.set_property(data_key, value, text_area, false);
+                    self.on_text_area_change(data_key, value, text_area);
                 },
                 delay_cb
             );

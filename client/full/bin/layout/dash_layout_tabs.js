@@ -164,7 +164,7 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="", color=null) {
             }
 
             if (bottom_tabs.length) {
-                top_tabs.last().css({
+                bottom_tabs.last().css({
                     "border-top-right-radius": border_radius
                 });
             }

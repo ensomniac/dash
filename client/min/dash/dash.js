@@ -44322,7 +44322,6 @@ DashGuiIconMap = {
     "more":                    ["More", DashGuiIconWeights["regular"], "window-restore"],
     "move":                    ["Move", DashGuiIconWeights["regular"], "arrows-alt"],
     "music":                   ["Music", DashGuiIconWeights["regular"], "music"],
-    "music_alt":               ["Music (Alt)", DashGuiIconWeights["regular"], "music-alt"],
     "navigation":              ["Navigation - Top Level", DashGuiIconWeights["regular"], "tasks"],
     "next":                    ["Next", DashGuiIconWeights["solid"], "step-forward"],
     "newsfeed":                ["Newsfeed", DashGuiIconWeights["regular"], "newspaper"],
@@ -44359,6 +44358,7 @@ DashGuiIconMap = {
     "server":                  ["Server", DashGuiIconWeights["regular"], "server"],
     "share":                   ["Share", DashGuiIconWeights["regular"],"share"],
     "share_alt":               ["Share (Alt)", DashGuiIconWeights["regular"],"share-alt"],
+    "share_alt_solid":         ["Share (Alt, Solid)", DashGuiIconWeights["solid"],"share-alt"],
     "shield":                  ["Shield", DashGuiIconWeights["regular"],"shield-alt"],
     "signal_full":             ["Full Signal", DashGuiIconWeights["regular"],"signal-alt"],
     "signal_none":             ["No Signal", DashGuiIconWeights["regular"],"signal-alt-slash"],
@@ -46574,6 +46574,24 @@ function DashGuiPropertyBox (
         this.rows.push(row);
         this.highlight_row_if_applicable(row);
     };
+    this.on_text_area_change = function (data_key, value, text_area) {
+        if (this.get_data_cb) {
+            var old_value = this.get_data_cb()[data_key];
+            if (old_value === value || (!old_value && !value)) {
+                return;
+            }
+        }
+        if (!this.dash_obj_id) {
+            if (this.set_data_cb) {
+                this.set_data_cb(data_key, value);
+            }
+            else {
+                console.error("Error: Property Box has no callback and no endpoint information!");
+            }
+            return;
+        }
+        this.set_property(data_key, value, text_area, false);
+    };
     this.setup_styles();
 }
 
@@ -46996,22 +47014,7 @@ function DashGuiPropertyBoxInterface () {
                     if (!can_edit) {
                         return;
                     }
-                    if (self.get_data_cb) {
-                        var old_value = self.get_data_cb()[data_key];
-                        if (old_value === value || (!old_value && !value)) {
-                            return;
-                        }
-                    }
-                    if (!self.dash_obj_id) {
-                        if (self.set_data_cb) {
-                            self.set_data_cb(data_key, value);
-                        }
-                        else {
-                            console.error("Error: Property Box has no callback and no endpoint information!");
-                        }
-                        return;
-                    }
-                    self.set_property(data_key, value, text_area, false);
+                    self.on_text_area_change(data_key, value, text_area);
                 },
                 delay_cb
             );
@@ -48958,7 +48961,7 @@ function DashLayoutTabs (binder, side_tabs, recall_id_suffix="", color=null) {
                 });
             }
             if (bottom_tabs.length) {
-                top_tabs.last().css({
+                bottom_tabs.last().css({
                     "border-top-right-radius": border_radius
                 });
             }
