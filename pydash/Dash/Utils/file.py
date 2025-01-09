@@ -31,11 +31,16 @@ def Upload(
     include_orig_png=True, min_size=0, is_mask=False, allowable_exts=[], target_width=0, target_height=0
 ):
     if type(file_bytes_or_existing_path) is not bytes:
-        if type(file_bytes_or_existing_path) is not str:
-            raise Exception("Param 'file_bytes_or_existing_path' must be either bytes or string")
+        t = type(file_bytes_or_existing_path)
+
+        if t is not str:
+            raise Exception(f"Param 'file_bytes_or_existing_path' must be either bytes or string, not `{t.__name__}`")
 
         if not os.path.exists(file_bytes_or_existing_path):
-            raise Exception("When param 'file_bytes_or_existing_path' is a string, it must be an existing path")
+            raise Exception(
+                "When param 'file_bytes_or_existing_path' is a string, "
+                f"it must be an existing path:\n{file_bytes_or_existing_path}"
+            )
 
     period_count = filename.count(".")
 
