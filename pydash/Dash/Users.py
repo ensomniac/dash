@@ -207,18 +207,31 @@ class Users:
         html.append("""</body>""")
         html.append("""</html>""")
 
-        try:
-            os.remove(reset_path)
+        # IMPORTANT:
+        # Leaving this commented out for now, but this block should be removed after Feb 2025
+        #
+        # The logic for removing password reset files has been moved to a cron:
+        # /var/www/vhosts/oapi.co/dash/github/dash/pydash/Dash/Server/ServerUsersCron.py
+        #
+        # This new cron allows these files to remain around for 10 minutes, which prevents
+        # errors we've seen happen when overseas users attempt to access the link, but
+        # some process (presumably on Google's side) has already 'previewed' the reset url,
+        # which would previously have deleted the file, preventing the user from creating an
+        # account or resetting their password.
 
-        # It might be safe to ignore this, but raising for now
-        except FileNotFoundError:
-            return {
-                "error": "Invalid request token x8924",
-                "_error": (
-                    f"Reset path didn't exist when it should have: {reset_path}.\n\nThis rare case is "
-                    f"likely due to a user submitting a reset request twice in rapid succession."
-                )
-            }
+        # try:
+        #     # os.remove(reset_path)
+        #     pass
+
+        # # It might be safe to ignore this, but raising for now
+        # except FileNotFoundError:
+        #     return {
+        #         "error": "Invalid request token x8924",
+        #         "_error": (
+        #             f"Reset path didn't exist when it should have: {reset_path}.\n\nThis rare case is "
+        #             f"likely due to a user submitting a reset request twice in rapid succession."
+        #         )
+        #     }
 
         return "\n".join(html)
 
