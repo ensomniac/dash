@@ -105,14 +105,6 @@ class GUtils:
     def UserEmail(self):
         return self._user_email
 
-    @property  # For all Drive-based apps (not YouTube)
-    def OAuth2Creds(self):
-        return self._auth_utils.OAuth2Creds
-
-    @property  # For all Drive-based apps (not YouTube)
-    def BearerToken(self):
-        return self._auth_utils.BearerToken
-
     @property
     def PDFMimeType(self):
         return "application/pdf"
@@ -123,6 +115,14 @@ class GUtils:
             self._auth_utils_ = _AuthUtils(self)
 
         return self._auth_utils_
+
+    @property  # For all Drive-based apps (not YouTube)
+    def _oauth2_creds(self):
+        return self._auth_utils._oauth2_creds  # noqa
+
+    @property  # For all Drive-based apps (not YouTube)
+    def _bearer_token(self):
+        return self._auth_utils._bearer_token  # noqa
 
     # If downloading a sheet as a PDF and landscape is needed, use DownloadSheetAsPDF with landscape set to True
     def DownloadAsPDF(self, file_id, pdf_path, parent_id=""):
@@ -220,8 +220,8 @@ class GUtils:
         return self._sheets_utils.Client
 
     @property
-    def GSpreadCreds(self):
-        return self._sheets_utils.GSpreadCreds
+    def _gspread_creds(self):
+        return self._sheets_utils._gspread_creds  # noqa
 
     @property
     def SheetsMimeType(self):
@@ -363,12 +363,12 @@ class GUtils:
         return self._youtube_utils.Client
 
     @property
-    def YouTubeOAuth2Creds(self):
-        return self._youtube_auth_utils.OAuth2Creds
+    def _youtube_oauth2_creds(self):
+        return self._youtube_auth_utils._oauth2_creds  # noqa
 
     @property
-    def YouTubeBearerToken(self):
-        return self._youtube_auth_utils.BearerToken
+    def __youtube_bearer_token(self):
+        return self._youtube_auth_utils._bearer_token  # noqa
 
     @property
     def _youtube_auth_utils(self):
@@ -426,7 +426,7 @@ class _GmailUtils:
         if not hasattr(self, "_client"):
             from googleapiclient.discovery import build
 
-            self._client = build("gmail", "v1", http=self.gutils.OAuth2Creds)
+            self._client = build("gmail", "v1", http=self.gutils._oauth2_creds)  # noqa
 
         return self._client
 
@@ -443,22 +443,13 @@ class _DriveUtils:
         if not hasattr(self, "_client"):
             from googleapiclient.discovery import build
 
-            self._client = build("drive", "v3", http=self.gutils.OAuth2Creds)
+            self._client = build("drive", "v3", http=self.gutils._oauth2_creds)  # noqa
 
         return self._client
 
     @property
     def FolderMimeType(self):
         return "application/vnd.google-apps.folder"
-
-    @property
-    def drafting_file_exts(self):
-        if not hasattr(self, "_drafting_file_exts"):
-            from Dash.Utils import GetDraftingExtensions
-
-            self._drafting_file_exts = GetDraftingExtensions()
-
-        return self._drafting_file_exts
 
     @property
     def Fields(self):
@@ -485,6 +476,15 @@ class _DriveUtils:
         ]
 
         return ", ".join(fields)
+
+    @property
+    def drafting_file_exts(self):
+        if not hasattr(self, "_drafting_file_exts"):
+            from Dash.Utils import GetDraftingExtensions
+
+            self._drafting_file_exts = GetDraftingExtensions()
+
+        return self._drafting_file_exts
 
     def CreateFile(self, params, file_path=None, in_shared_drive=False, fields="", file_url=""):
         """
@@ -852,7 +852,7 @@ class _DriveUtils:
 
 class _SheetsUtils:
     _client: callable
-    _gspread_creds: object
+    _gspread_creds_: object
 
     def __init__(self, gutils):
         self.gutils = gutils
@@ -862,18 +862,9 @@ class _SheetsUtils:
         if not hasattr(self, "_client"):
             from googleapiclient.discovery import build
 
-            self._client = build("sheets", "v4", http=self.gutils.OAuth2Creds)
+            self._client = build("sheets", "v4", http=self.gutils._oauth2_creds)  # noqa
 
         return self._client
-
-    @property
-    def GSpreadCreds(self):
-        if not hasattr(self, "_gspread_creds"):
-            from gspread import authorize as g_authorize
-
-            self._gspread_creds = g_authorize(self.gutils._auth_utils.credentials)  # noqa
-
-        return self._gspread_creds
 
     @property
     def SheetsMimeType(self):
@@ -882,6 +873,15 @@ class _SheetsUtils:
     @property
     def ExcelMimeType(self):
         return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+
+    @property
+    def _gspread_creds(self):
+        if not hasattr(self, "_gspread_creds_"):
+            from gspread import authorize as g_authorize
+
+            self._gspread_creds_ = g_authorize(self.gutils._auth_utils._credentials)  # noqa
+
+        return self._gspread_creds_
 
     def GetData(self, sheet_id, row_data_only=True):
         """
@@ -935,7 +935,7 @@ class _SheetsUtils:
         return parsed
 
     def GetNew(self, sheet_name):
-        return self.GSpreadCreds.open(sheet_name).get_worksheet(0)
+        return self._gspread_creds.open(sheet_name).get_worksheet(0)
 
     def DownloadAsXLSX(self, sheet_id, xlsx_path, parent_id=""):
         return self.gutils.download_as(
@@ -976,7 +976,7 @@ class _SheetsUtils:
         response = requests_get(
             f"https://docs.google.com/spreadsheets/d/{file_id}/export?{params}",
             headers={
-                "Authorization": f"Bearer {self.gutils.BearerToken}"
+                "Authorization": f"Bearer {self.gutils._bearer_token}"  # noqa
             }
         )
 
@@ -998,7 +998,7 @@ class _SlidesUtils:
         if not hasattr(self, "_client"):
             from googleapiclient.discovery import build
 
-            self._client = build("slides", "v1", http=self.gutils.OAuth2Creds)
+            self._client = build("slides", "v1", http=self.gutils._oauth2_creds)  # noqa
 
         return self._client
 
@@ -1018,7 +1018,7 @@ class _DocsUtils:
         if not hasattr(self, "_client"):
             from googleapiclient.discovery import build
 
-            self._client = build("docs", "v1", http=self.gutils.OAuth2Creds)
+            self._client = build("docs", "v1", http=self.gutils._oauth2_creds)  # noqa
 
         return self._client
 
@@ -1040,7 +1040,7 @@ class _YouTubeUtils:
         if not hasattr(self, "_client"):
             from googleapiclient.discovery import build
 
-            self._client = build("youtube", "v3", http=self.gutils.YouTubeOAuth2Creds)
+            self._client = build("youtube", "v3", http=self.gutils._youtube_oauth2_creds)  # noqa
 
         return self._client
 
@@ -1282,52 +1282,55 @@ class _YouTubeUtils:
 
 
 class _AuthUtils:
-    _creds: object
-    _oauth2_creds: object
+    _credentials_: object
+    _oauth2_creds_: object
 
     def __init__(self, gutils, service_name="gdrive"):
         self.gutils = gutils
         self.service_name = service_name
 
     @property
-    def OAuth2Creds(self):
+    def _oauth2_creds(self):
         """
         This is used for API instance authentication.
         """
 
-        if not hasattr(self, "_oauth2_creds"):
+        if not hasattr(self, "_oauth2_creds_"):
             from httplib2 import Http
 
-            self._oauth2_creds = self.credentials.authorize(Http())
+            self._oauth2_creds_ = self._credentials.authorize(Http())
 
-        return self._oauth2_creds
+        return self._oauth2_creds_
 
     @property
-    def BearerToken(self):
+    def _bearer_token(self):
         """
         | This is used for standard request authentication, ex:
-        | requests.get(url, headers={"Authorization": f"Bearer {self.BearerToken}"})
+        | requests.get(url, headers={"Authorization": f"Bearer {self._bearer_token}"})
         """
 
-        if self.credentials.access_token_expired:
-            self.credentials.refresh(self.OAuth2Creds)
+        if self._credentials.access_token_expired:
+            self._credentials.refresh(self._oauth2_creds)
 
-        return self.credentials.access_token
+        return self._credentials.access_token
 
     @property
-    def credentials(self):
-        if not hasattr(self, "_creds"):
+    def _credentials(self):
+        if not hasattr(self, "_credentials_"):
             from Dash.Authorize import GetTokenData
 
             try:
-                token_json = GetTokenData(service_name=self.service_name, user_email=self.gutils.UserEmail)
+                token_json = GetTokenData(
+                    service_name=self.service_name,
+                    user_email=self.gutils.UserEmail
+                )
 
             except Exception as e:
                 raise Exception(f"Failed to get Google credentials") from e
 
             from oauth2client.client import OAuth2Credentials
 
-            self._creds = OAuth2Credentials(
+            self._credentials_ = OAuth2Credentials(
                 access_token=token_json["access_token"],
                 client_id=token_json["client_id"],
                 client_secret=token_json["client_secret"],
@@ -1338,7 +1341,7 @@ class _AuthUtils:
                 user_agent=None
             )
 
-        return self._creds
+        return self._credentials_
 
 
 class _YouTubeAuthUtils(_AuthUtils):

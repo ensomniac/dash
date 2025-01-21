@@ -19,8 +19,8 @@ services = {}
 
 class Service:
     def __init__(
-            self, name, authorize_url, token_endpoint, token_refresh_endpoint,
-            scope, success_token_exchange_key, access_token_key, token_valid_url
+        self, name, authorize_url, token_endpoint, token_refresh_endpoint,
+        scope, success_token_exchange_key, access_token_key, token_valid_url
     ):
         self.name = name
         self.authorize_url = authorize_url
@@ -32,9 +32,9 @@ class Service:
         self.token_valid_url = token_valid_url
 
         self.redirect_uri = "https://authorize.oapi.co/r"
-        self.priv_data = GetPrivKey(f"{self.name}.json")
-        self.client_id = self.priv_data["client_id"]
-        self.client_secret = self.priv_data["client_secret"]
+        self.__priv_data = GetPrivKey(f"{self.name}.json")
+        self._client_id = self.__priv_data["client_id"]
+        self._client_secret = self.__priv_data["client_secret"]
 
         services[self.name] = self
 
@@ -43,7 +43,7 @@ class Service:
         authorization_data = {
             "response_type": "code",
             "redirect_uri": self.redirect_uri,
-            "client_id": self.client_id,
+            "client_id": self._client_id,
             "scope": self.scope
         }
 
