@@ -97,7 +97,8 @@ class WebCrawler:
         input_el.send_keys(self.keys.RETURN)
 
     def WaitForElement(
-        self, el_id="", el_name="", el_class="", css_selector="", xpath="", wait_timeout_sec_override=0
+        self, el_id="", el_name="", el_class="", css_selector="", xpath="",
+        wait_timeout_sec_override=0, for_click=False
     ):
         """
         Supply one of the allowed params to wait for, and return, an expected element.
@@ -108,35 +109,39 @@ class WebCrawler:
         :param str css_selector: Example format: `input[type='password']` (default="")
         :param str xpath: Example format: `//*[@id="username"]/div[2]/div/div[2]/input` (default="")
         :param int wait_timeout_sec_override: Override the class' default wait timeout (default=0)
+        :param bool for_click: Wait for the element (usually a button) to be clickable (default=False)
 
         :return: Element
         :rtype: selenium.webdriver.remote.webelement.WebElement
         """
 
         if el_id:
-            return self._wait_for_element((self.by.ID, el_id), wait_timeout_sec_override)
+            locator = (self.by.ID, el_id)
 
-        if el_name:
-            return self._wait_for_element((self.by.NAME, el_name), wait_timeout_sec_override)
+        elif el_name:
+            locator = (self.by.NAME, el_name)
 
-        if el_class:
-            return self._wait_for_element((self.by.CLASS_NAME, el_class), wait_timeout_sec_override)
+        elif el_class:
+            locator = (self.by.CLASS_NAME, el_class)
 
-        if css_selector:
-            return self._wait_for_element((self.by.CSS_SELECTOR, css_selector), wait_timeout_sec_override)
+        elif css_selector:
+            locator = (self.by.CSS_SELECTOR, css_selector)
 
-        if xpath:
-            return self._wait_for_element((self.by.XPATH, xpath), wait_timeout_sec_override)
+        elif xpath:
+            locator = (self.by.XPATH, xpath)
 
-        raise ValueError(
-            "Must supply one of the following params: el_id, el_name, class_name, css_selector, xpath"
-        )
+        else:
+            raise ValueError(
+                "Must supply one of the following params: el_id, el_name, class_name, css_selector, xpath"
+            )
 
-    def _wait_for_element(self, locator, wait_timeout_sec_override):
         from selenium.common.exceptions import TimeoutException
 
         try:
-            return self.get_wait(wait_timeout_sec_override).until(self.ec.presence_of_element_located(locator))
+            return self.get_wait(wait_timeout_sec_override).until(
+                self.ec.element_to_be_clickable(locator) if for_click
+                else self.ec.presence_of_element_located(locator)
+            )
 
         except TimeoutException as e:
             raise Exception(
