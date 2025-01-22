@@ -167,19 +167,22 @@ class OnePass:
         from json import JSONDecodeError
         from subprocess import CalledProcessError, run as sub_run
 
-        # Have to run as root
-        if args[0] != "sudo":
-            args.insert(0, "sudo")
+        op_arg_index = 2 if self._on_server else 0
 
-        # Preserve environment variables (session token) throughout sudo calls
-        if args[1] != "-E":
-            args.insert(1, "-E")
+        if self._on_server:
+            # Have to run as root
+            if args[0] != "sudo":
+                args.insert(0, "sudo")
 
-        if args[2] != "op":
-            args.insert(2, "op")
+            # Preserve environment variables (session token) throughout sudo calls
+            if args[1] != "-E":
+                args.insert(1, "-E")
+
+        if args[op_arg_index] != "op":
+            args.insert(op_arg_index, "op")
 
         env = (
-            ({f"OP_SESSION_{self.account_shorthand}": self.session_token} if self._on_server else {})
+            ({f"OP_SESSION_{self.account_shorthand}": self.session_token} if self._on_server else None)
             if add_env else None
         )
 
@@ -202,6 +205,11 @@ class OnePass:
 
         except JSONDecodeError as e:
             raise Exception(f"Failed to parse output from 1pass:\n{error_midfix}\nError: {e}") from e
+
+        except FileNotFoundError as e:
+            raise Exception(
+                f"{error_prefix or 'Failed to run 1pass command (file not found?'}:\n{error_midfix}\nError: {e}"
+            ) from e
 
         if "--format json" in " ".join(args):
             from json import loads

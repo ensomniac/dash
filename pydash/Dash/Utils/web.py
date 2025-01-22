@@ -11,14 +11,18 @@ class WebCrawler:
     _by: callable
     _ec: callable
     _keys: callable
-    _wait: callable
     _driver: callable
 
-    def __init__(self, headless=True, wait_timeout_sec=10):
+    def __init__(self, headless=True, wait_timeout_sec=15):
+        from Dash.Utils import OapiRoot
+
         self.headless = headless
         self.wait_timeout_sec = wait_timeout_sec
 
-        if not self.headless:
+        self.waits = {}
+        self._on_server = os.path.exists(OapiRoot)
+
+        if not self.headless and self._on_server:
             # TODO: Figure out how to do this with a virtual display (ex: using Xvfb)
             raise NotImplementedError("Headed mode still needs to be implemented")
 
@@ -38,15 +42,6 @@ class WebCrawler:
             )
 
         return self._driver
-
-    @property
-    def wait(self):
-        if not hasattr(self, "_wait"):
-            from selenium.webdriver.support.ui import WebDriverWait
-
-            self._wait = WebDriverWait(self.driver, self.wait_timeout_sec)
-
-        return self._wait
 
     @property
     def by(self):
@@ -78,7 +73,8 @@ class WebCrawler:
     def Quit(self):
         self.driver.quit()
 
-        delattr(self, "_wait")
+        self.waits = {}
+
         delattr(self, "_driver")
 
     def LoadPage(self, url):
@@ -90,35 +86,71 @@ class WebCrawler:
     def PopulateInput(self, input_el, text=""):
         input_el.send_keys(text)
 
+    def ClearInput(self, input_el, custom_element=False):
+        if custom_element:
+            input_el.send_keys(f"{self.keys.CONTROL if self._on_server else self.keys.COMMAND}a")
+            input_el.send_keys(self.keys.BACKSPACE)
+        else:
+            input_el.clear()
+
     def SubmitInput(self, input_el):
         input_el.send_keys(self.keys.RETURN)
 
-    def WaitForElement(self, el_id="", el_name="", el_class="", css_selector="", xpath=""):
+    def WaitForElement(
+        self, el_id="", el_name="", el_class="", css_selector="", xpath="", wait_timeout_sec_override=0
+    ):
         """
         Supply one of the allowed params to wait for, and return, an expected element.
 
-        :param el_id: `id` attribute of the element
-        :param el_name: `name` attribute of the element
-        :param el_class: `class` attribute of the element
-        :param css_selector: Example format: `input[type='password']`
-        :param xpath: Example format: `//*[@id="username"]/div[2]/div/div[2]/input`
+        :param str el_id: `id` attribute of the element (default="")
+        :param str el_name: `name` attribute of the element (default="")
+        :param str el_class: `class` attribute of the element (default="")
+        :param str css_selector: Example format: `input[type='password']` (default="")
+        :param str xpath: Example format: `//*[@id="username"]/div[2]/div/div[2]/input` (default="")
+        :param int wait_timeout_sec_override: Override the class' default wait timeout (default=0)
 
         :return: Element
+        :rtype: selenium.webdriver.remote.webelement.WebElement
         """
 
         if el_id:
-            return self.wait.until(self.ec.presence_of_element_located((self.by.ID, el_id)))
+            return self._wait_for_element((self.by.ID, el_id), wait_timeout_sec_override)
 
         if el_name:
-            return self.wait.until(self.ec.presence_of_element_located((self.by.NAME, el_name)))
+            return self._wait_for_element((self.by.NAME, el_name), wait_timeout_sec_override)
 
         if el_class:
-            return self.wait.until(self.ec.presence_of_element_located((self.by.CLASS_NAME, el_class)))
+            return self._wait_for_element((self.by.CLASS_NAME, el_class), wait_timeout_sec_override)
 
         if css_selector:
-            return self.wait.until(self.ec.presence_of_element_located((self.by.CSS_SELECTOR, css_selector)))
+            return self._wait_for_element((self.by.CSS_SELECTOR, css_selector), wait_timeout_sec_override)
 
         if xpath:
-            return self.wait.until(self.ec.presence_of_element_located((self.by.XPATH, xpath)))
+            return self._wait_for_element((self.by.XPATH, xpath), wait_timeout_sec_override)
 
-        raise ValueError("Must supply one of the following params: el_id, el_name, class_name, css_selector, xpath")
+        raise ValueError(
+            "Must supply one of the following params: el_id, el_name, class_name, css_selector, xpath"
+        )
+
+    def _wait_for_element(self, locator, wait_timeout_sec_override):
+        from selenium.common.exceptions import TimeoutException
+
+        try:
+            return self.get_wait(wait_timeout_sec_override).until(self.ec.presence_of_element_located(locator))
+
+        except TimeoutException as e:
+            raise Exception(
+                f"Failed to find '{locator[0]}' element ({locator[1]}) within timeout "
+                f"({wait_timeout_sec_override or self.wait_timeout_sec} secs)"
+            ) from e
+
+    def get_wait(self, timeout_sec=0):
+        if not timeout_sec:
+            timeout_sec = self.wait_timeout_sec
+
+        if timeout_sec not in self.waits:
+            from selenium.webdriver.support.ui import WebDriverWait
+
+            self.waits[timeout_sec] = WebDriverWait(self.driver, timeout_sec)
+
+        return self.waits[timeout_sec]
