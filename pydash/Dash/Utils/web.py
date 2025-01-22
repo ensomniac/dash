@@ -18,6 +18,10 @@ class WebCrawler:
         self.headless = headless
         self.wait_timeout_sec = wait_timeout_sec
 
+        if not self.headless:
+            # TODO: Figure out how to do this with a virtual display (ex: using Xvfb)
+            raise NotImplementedError("Headed mode still needs to be implemented")
+
     @property
     def driver(self):
         if not hasattr(self, "_driver"):

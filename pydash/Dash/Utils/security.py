@@ -41,19 +41,12 @@ class OnePass:
                 needed = True
 
         if needed:
-            from subprocess import run, CalledProcessError
-
-            try:
-                self._session_token = run(  # Good for 10 mins
-                    ["op", "signin", "--account", self.account_shorthand, "--raw"],
-                    input=self.__signin_pass,
-                    text=True,
-                    capture_output=True,
-                    check=True
-                ).stdout.strip()
-
-            except CalledProcessError as e:
-                raise Exception(f"Failed to sign in to 1pass:\n{e.stderr}") from e
+            self._session_token = self.run_command(
+                args=["signin", "--account", self.account_shorthand, "--raw"],
+                cmd_input=self.__signin_pass,
+                error_prefix="Failed to sign in to 1pass",
+                add_env=False
+            )
 
             from datetime import datetime
 
@@ -64,18 +57,11 @@ class OnePass:
     # Ideally, should always call this when done with an
     # instance, but will happen on its own after 10 mins
     def SignOut(self):
-        from subprocess import run, CalledProcessError
-
-        try:
-            return run(
-                ["op", "signout", "--all"],
-                text=True,
-                capture_output=True,
-                check=True
-            ).stdout.strip()
-
-        except CalledProcessError as e:
-            raise Exception(f"Failed to sign out of 1pass:\n{e.stderr}") from e
+        return self.run_command(
+            args=["signout", "--all"],
+            error_prefix="Failed to sign out of 1pass",
+            add_env=False
+        )
 
     def GetValue(self, item_name, field_name, vault_name="", _secret_reference=""):
         if "one-time password" in field_name:
@@ -89,71 +75,34 @@ class OnePass:
 
             raise ValueError(f"Failed to locate OTP field '{field_name}' in item '{item_name}'")
 
-        from subprocess import run, CalledProcessError
-
-        try:
-            return run(
-                (
-                    [
-                        "op",
-                        "read",
-                        _secret_reference or f"op://{vault_name}/{item_name}/{field_name}"
-                    ]
-                    if (_secret_reference or vault_name)
-                    else ["op", "item", "get", item_name, "--field", field_name, "--reveal"]
-                ),
-                env=self.get_env(),
-                capture_output=True,
-                text=True,
-                check=True
-            ).stdout.strip()
-
-        except CalledProcessError as e:
-            raise Exception(f"Failed to get value from 1pass:\n{e.stderr}") from e
+        return self.run_command(
+            args=(
+                [
+                    "read",
+                    _secret_reference or f"op://{vault_name}/{item_name}/{field_name}"
+                ]
+                if (_secret_reference or vault_name)
+                else ["item", "get", item_name, "--field", field_name, "--reveal"]
+            ),
+            error_prefix="Failed to get value from 1pass"
+        )
 
     def GetItem(self, item_name):
-        from json import loads, JSONDecodeError
-        from subprocess import run, CalledProcessError
-
-        try:
-            return loads(run(
-                ["op", "item", "get", item_name, "--format", "json"],
-                env=self.get_env(),
-                capture_output=True,
-                text=True,
-                check=True
-            ).stdout)
-
-        except CalledProcessError as e:
-            raise Exception(f"Failed to get item from 1pass:\n{e.stderr}") from e
-
-        except JSONDecodeError as e:
-            raise Exception(f"Failed to parse item output from 1pass:\n{e}") from e
+        return self.run_command(
+            args=["item", "get", item_name, "--format", "json"],
+            error_prefix="Failed to get item from 1pass"
+        )
 
     def GetItemList(self):
-        from json import loads, JSONDecodeError
-        from subprocess import run, CalledProcessError
+        return self.run_command(
+            args=["item", "list", "--format", "json"],
+            error_prefix="Failed to get item list from 1pass"
+        )
 
-        try:
-            return loads(run(
-                ["op", "item", "list", "--format", "json"],
-                env=self.get_env(),
-                capture_output=True,
-                text=True,
-                check=True
-            ).stdout)
-
-        except CalledProcessError as e:
-            raise Exception(f"Failed to get item list from 1pass:\n{e.stderr}") from e
-
-        except JSONDecodeError as e:
-            raise Exception(f"Failed to parse item list output from 1pass:\n{e}") from e
-
-    def CreateItem(self, vault_name, item_name, url="", tags=[], category="login", password_recipe="", debug=False):
-        from subprocess import run, CalledProcessError
-
+    def CreateItem(
+        self, vault_name, item_name, url="", tags=[], category="login", password_recipe="", debug=False
+    ):
         args = [
-            "op",
             "item",
             "create",
             "--category",
@@ -178,24 +127,14 @@ class OnePass:
         if debug:
             args.append("--dry-run")
 
-        try:
-            return run(
-                args,
-                env=self.get_env(),
-                capture_output=True,
-                text=True,
-                check=True
-            ).stdout.strip()
-
-        except CalledProcessError as e:
-            raise Exception(f"Failed to create 1pass item:\n{e.stderr}") from e
+        return self.run_command(
+            args=args,
+            error_prefix="Failed to create 1pass item"
+        )
 
     # If this hangs when running within an IDE, run the script directly in the terminal
     def EditItem(self, item_name_or_id, item_name="", vault_name="", tags=[], url="", debug=False):
-        from subprocess import run, CalledProcessError
-
         args = [
-            "op",
             "item",
             "edit",
             item_name_or_id
@@ -219,17 +158,54 @@ class OnePass:
         # TODO: Use assignment statements to edit an item's built-in and custom fields
         #  - https://developer.1password.com/docs/cli/item-edit/#edit-built-in-and-custom-fields
 
+        return self.run_command(
+            args=args,
+            error_prefix="Failed to edit 1pass item"
+        )
+
+    def run_command(self, args, cmd_input=None, error_prefix="", add_env=True):
+        from json import JSONDecodeError
+        from subprocess import CalledProcessError, run as sub_run
+
+        # Have to run as root
+        if args[0] != "sudo":
+            args.insert(0, "sudo")
+
+        # Preserve environment variables (session token) throughout sudo calls
+        if args[1] != "-E":
+            args.insert(1, "-E")
+
+        if args[2] != "op":
+            args.insert(2, "op")
+
+        env = (
+            ({f"OP_SESSION_{self.account_shorthand}": self.session_token} if self._on_server else {})
+            if add_env else None
+        )
+
+        error_midfix = f"Command: {args}\nEnv: {env}"
+
         try:
-            return run(
-                args,
-                env=self.get_env(),
-                capture_output=True,
+            result = sub_run(
+                args=args,
                 text=True,
-                check=True
-            ).stdout.strip()
+                check=True,
+                input=cmd_input,
+                capture_output=True,
+                env=env
+            ).stdout
 
         except CalledProcessError as e:
-            raise Exception(f"Failed to edit 1pass item:\n{e.stderr}") from e
+            raise Exception(
+                f"{error_prefix or 'Failed to run 1pass command'}:\n{error_midfix}\nError: {e.stderr}"
+            ) from e
 
-    def get_env(self):
-        return {f"OP_SESSION_{self.account_shorthand}": self.session_token} if self._on_server else {}
+        except JSONDecodeError as e:
+            raise Exception(f"Failed to parse output from 1pass:\n{error_midfix}\nError: {e}") from e
+
+        if "--format json" in " ".join(args):
+            from json import loads
+
+            return loads(result)
+
+        return result.strip()
