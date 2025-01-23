@@ -98,7 +98,7 @@ class WebCrawler:
 
     def WaitForElement(
         self, el_id="", el_name="", el_class="", css_selector="", xpath="",
-        wait_timeout_sec_override=0, for_click=False
+        wait_timeout_sec_override=0, for_click=False, must_exist=True
     ):
         """
         Supply one of the allowed params to wait for, and return, an expected element.
@@ -110,6 +110,7 @@ class WebCrawler:
         :param str xpath: Example format: `//*[@id="username"]/div[2]/div/div[2]/input` (default="")
         :param int wait_timeout_sec_override: Override the class' default wait timeout (default=0)
         :param bool for_click: Wait for the element (usually a button) to be clickable (default=False)
+        :param bool must_exist: Raise an exception if the element isn't found (default=True)
 
         :return: Element
         :rtype: selenium.webdriver.remote.webelement.WebElement
@@ -144,6 +145,9 @@ class WebCrawler:
             )
 
         except TimeoutException as e:
+            if not must_exist:
+                return None
+
             raise Exception(
                 f"Failed to find '{locator[0]}' element ({locator[1]}) within timeout "
                 f"({wait_timeout_sec_override or self.wait_timeout_sec} secs)"
