@@ -81,10 +81,10 @@ def ValidateImageAspectRatio(
     )
 
 
-def ValidateVideoAspectRatio(video_bytes, target_aspect_ratio, return_video_details=False):
+def ValidateVideoAspectRatio(video_bytes_or_existing_path, target_aspect_ratio, return_video_details=False):
     from .file import ValidateVideoAspectRatio
 
-    return ValidateVideoAspectRatio(video_bytes, target_aspect_ratio, return_video_details)
+    return ValidateVideoAspectRatio(video_bytes_or_existing_path, target_aspect_ratio, return_video_details)
 
 
 def ValidateMaskImage(

@@ -694,12 +694,14 @@ def get_video_details(path):
 
     props = get_video_properties(path)
 
-    # The props object above has way more stuff than we need, but
-    # we can update this down the line with more fields as needed
-    return {
+    return {  # Filter out the useless stuff
         "width": props["width"],
         "height": props["height"],
-        "aspect": props["width"] / props["height"]
+        "aspect": props["width"] / props["height"],
+        "codec": props.get("codec_name", props.get("codec_long_name", "Unknown")),
+        "frame_rate": props.get("avg_frame_rate", props.get("r_frame_rate", "Unknown")),
+        "num_frames": props.get("nb_frames", "Unknown"),
+        "duration_sec": str(props.get("duration", "Unknown")).strip("0")
     }
 
 
