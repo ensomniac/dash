@@ -98,7 +98,7 @@ class WebCrawler:
 
     def WaitForElement(
         self, el_id="", el_name="", el_class="", css_selector="", xpath="",
-        wait_timeout_sec_override=0, for_click=False, must_exist=True
+        wait_timeout_sec_override=0, for_click=False, must_exist=True, _stale_retry=False
     ):
         """
         Supply one of the allowed params to wait for, and return, an expected element.
@@ -111,6 +111,7 @@ class WebCrawler:
         :param int wait_timeout_sec_override: Override the class' default wait timeout (default=0)
         :param bool for_click: Wait for the element (usually a button) to be clickable (default=False)
         :param bool must_exist: Raise an exception if the element isn't found (default=True)
+        :param bool _stale_retry: For internal use only (default=False)
 
         :return: Element
         :rtype: selenium.webdriver.remote.webelement.WebElement
@@ -136,12 +137,24 @@ class WebCrawler:
                 "Must supply one of the following params: el_id, el_name, class_name, css_selector, xpath"
             )
 
-        from selenium.common.exceptions import TimeoutException
+        from selenium.common.exceptions import TimeoutException, StaleElementReferenceException
 
         try:
             return self.get_wait(wait_timeout_sec_override).until(
                 self.ec.element_to_be_clickable(locator) if for_click
                 else self.ec.presence_of_element_located(locator)
+            )
+
+        except StaleElementReferenceException as e:
+            if _stale_retry:
+                raise Exception(
+                    f"Failed to find valid '{locator[0]}' element ({locator[1]}), found to be stale twice"
+                ) from e
+
+            # Retry one more time
+            return self.WaitForElement(
+                el_id, el_name, el_class, css_selector, xpath,
+                wait_timeout_sec_override, for_click, must_exist, _stale_retry=True
             )
 
         except TimeoutException as e:
