@@ -11,7 +11,7 @@ from time import sleep
 from threading import Timer
 from datetime import datetime
 from Dash.Utils import OapiRoot
-from traceback import format_exc
+# from traceback import format_exc
 from subprocess import check_output, STDOUT, CalledProcessError
 from Dash.LocalStorage import Read, Write
 
@@ -38,7 +38,10 @@ from Dash.LocalStorage import Read, Write
 # + ** Added back in a check to see if the command was started, and
 #          starting it ONLY if it hasn't been started :-)
 
+
 class PollRequests:
+    _warning_notification_sent: bool
+
     def __init__(self):
         # Check to see if another process (long process) is still
         # running on the server. If there is one, kill this process
@@ -66,16 +69,16 @@ class PollRequests:
 
     @property
     def uptime(self):
-        uptime_sec = datetime.now()-self.start_time
+        uptime_sec = datetime.now() - self.start_time
+
         return uptime_sec.total_seconds()
 
     @property
     def active_requests(self):
         return os.listdir(self.request_path)
 
+    # Basic maintenance of the runtime loop
     def periodic_check(self):
-        # Basic maintenence of the runtime loop
-
         if self.uptime >= self.run_duration_in_minutes*60:
             if self.running_task_ids:
                 print("Waiting for running tasks to exit: " + ", ".join(self.running_task_ids))
@@ -130,10 +133,12 @@ class PollRequests:
             print("No active requests")
             return
 
-        # For each task_id in the active folder, check it's status,
+        # For each task_id in the active folder, check its status,
         # start it maybe, and make some important decisions
         for task_id in self.active_requests:
-            if not task_id.isdigit(): continue
+            if not task_id.isdigit():
+                continue
+
             self.monitor_task_status(task_id)
 
     def get_task_path(self, task_id):
@@ -305,11 +310,5 @@ class PollRequests:
         return pids
 
 
-
-
-
-
 if __name__ == "__main__":
     PollRequests()
-
-

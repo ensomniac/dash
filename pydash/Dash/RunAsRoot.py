@@ -5,16 +5,19 @@
 
 import os
 import sys
-import json
+# import json
 
 from time import sleep
-from pathlib import Path
-from threading import Timer
+# from pathlib import Path
+# from threading import Timer
 from datetime import datetime
 from Dash.Utils import OapiRoot, GetRandomID
 from Dash.LocalStorage import Read, Write
 
+
 class RunAsRoot:
+    _task_id: str
+
     def __init__(self):
         self.state        = {}
         self.response     = {}
@@ -22,7 +25,7 @@ class RunAsRoot:
         self.timestamp    = ""
         self.cmd_path     = None
         self.init_time    = datetime.now()
-        self.fail_timeout = 60 # In seconds, the duration to monitor task
+        self.fail_timeout = 60  # In seconds, the duration to monitor task
 
     @property
     def request_path(self):
@@ -50,7 +53,7 @@ class RunAsRoot:
 
     def Queue(self, command):
         if not command:
-            raise Exception("RunAsRoot.Queue > Missing command directive!")
+            raise Exception("RunAsRoot.Queue > Missing 'command' param")
 
         self.state = {
             "cmd":             command,
@@ -78,7 +81,6 @@ class RunAsRoot:
         self.response["error"]          = None
 
         while True:
-
             task_complete = self.check_task_status()
 
             if task_complete:
@@ -92,17 +94,20 @@ class RunAsRoot:
 
     @property
     def uptime(self):
-        init_uptime = datetime.now()-self.init_time
+        init_uptime = datetime.now() - self.init_time
+
         return round(init_uptime.total_seconds(), 2)
 
     def check_task_status(self):
         if not os.path.exists(self.task_path):
             # The task has likely completed and is now removed
             self.response["complete"] = True
+
             return True
 
         if self.uptime >= self.fail_timeout:
             self.register_timeout_fail()
+
             return True
 
         task_data = self.get_task_data(self.task_id)
@@ -110,8 +115,10 @@ class RunAsRoot:
         include_update = False
         if len(self.response["status_log"]) == 0:
             include_update = True
+
         elif self.response["status_log"][-1]["started"] != task_data["started"]:
             include_update = True
+
         elif self.response["status_log"][-1]["complete"] != task_data["complete"]:
             include_update = True
 
@@ -127,9 +134,9 @@ class RunAsRoot:
         return False
 
     def register_timeout_fail(self):
-        # Called when this task has ran longer than the timeout
+        # Called when this task has run longer than the timeout
         # NOTE: It's possible the running task is still running just fine
-        # This may not be a problem, it may just be a long running process
+        # This may not be a problem, it may just be a long-running process
         # This function does not actually attempt to kill the job, it just
         # stops checking it and returns the thread so the request can continue
         self.response["error"] = "Task ran for over " + str(self.uptime)
@@ -143,34 +150,13 @@ class RunAsRoot:
 
         if os.path.exists(final_path) and not os.path.exists(self.task_path):
             return Read(final_path), True
-        else:
-            return self.last_status, False
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+        return self.last_status, False
 
 
 def Queue(command):
     return RunAsRoot().Queue(command)
+
 
 if __name__ == "__main__":
     print("Interactive testing...")
