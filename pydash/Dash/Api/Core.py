@@ -702,9 +702,6 @@ class ApiCore:
         if error in ignore:
             return True
 
-        if self.__class__.__name__ == "Users" and self.Params.get("f") == "r" and "Invalid request token" in error:
-            return True
-
         if "Missing param 'file'" in error:
             return True
 

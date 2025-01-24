@@ -135,12 +135,12 @@ class Users:
         user_root = os.path.join(self.dash_context["srv_path_local"], "users", email)
         user_reset_root = os.path.join(user_root, "reset_requests")
         reset_path = os.path.join(user_reset_root, uri_data_64)
+        link = f"<a href='https://{self.dash_context['domain']}'>https://{self.dash_context['domain']}</a>"
 
         if not os.path.exists(reset_path):
-            return {
-                "error": "Invalid request token x8923",
-                "_error": f"Reset path doesn't exist: {reset_path}"
-            }
+            from Dash.Utils import ClientAlert
+
+            raise ClientAlert(f"Your password request has expired. Visit {link} to request a new reset link.")
 
         from random import choice
         from datetime import datetime
@@ -151,29 +151,23 @@ class Users:
         seconds_since = (datetime.now() - timestamp).total_seconds()
         minutes_since = int(seconds_since / 60)
 
-        if minutes_since > 5:
-            html = [
+        # This used to be 10 minutes, but on 1/24/25 Altona requested it be an hour,
+        # and it seemed harmless to make that a global change. If this becomes a
+        # security concern down the line, we can make that specific to Altona.
+        if minutes_since > 60:
+            return "\n".join([
                 "<!DOCTYPE html>",
                 """<html lang='en-us'>""",
                 """  <head>""",
                 """    <meta charset='utf-8'>""",
                 """    <meta http-equiv='Content-Type' content='text/html; charset=utf-8'>""",
-                """<title>Your password reset link has expired!</title>""",
+                """<title>Your password request has expired</title>""",
                 """</head>""",
                 """<body style='font-family: sans-serif;'>""",
-            ]
-
-            link = "<a href='https://" + self.dash_context["domain"]
-            link += "'>https://" + self.dash_context["domain"] + "</a>"
-
-            html.append(
-                f"""Your password reset link has expired. Visit {link} to request a new reset link.<br><br>"""
-            )
-
-            html.append("""</body>""")
-            html.append("""</html>""")
-
-            return "\n".join(html)
+                f"""Your password request has expired. Visit {link} to request a new reset link.<br><br>""",
+                """</body>""",
+                """</html>"""
+            ])
 
         new_password = ""
         characters = "abcdefghijklmnopqrstuvwxyz1234567890ABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$"
@@ -186,7 +180,7 @@ class Users:
 
         open(pass_path, "w").write(hashed_password)
 
-        html = [
+        return "\n".join([
             "<!DOCTYPE html>",
             """<html lang='en-us'>""",
             """  <head>""",
@@ -195,45 +189,13 @@ class Users:
             """<title>Password was set!</title>""",
             """</head>""",
             """<body style='font-family: sans-serif;'>""",
-        ]
-
-        link = "<a href='https://" + self.dash_context["domain"]
-        link += "'>https://" + self.dash_context["domain"] + "</a>"
-
-        html.append(f"""Hello, {email}, <br><br>""")
-        html.append(f"""You've been issued a new temporary password that can be used to log in to {link}<br><br>""")
-        html.append("""Change it once you log in.<br><br>""")
-        html.append(f"""<b>Temporary password: </b>{new_password}""")
-        html.append("""</body>""")
-        html.append("""</html>""")
-
-        # IMPORTANT:
-        # Leaving this commented out for now, but this block should be removed after Feb 2025
-        #
-        # The logic for removing password reset files has been moved to a cron:
-        # /var/www/vhosts/oapi.co/dash/github/dash/pydash/Dash/Server/ServerUsersCron.py
-        #
-        # This new cron allows these files to remain around for 10 minutes, which prevents
-        # errors we've seen happen when overseas users attempt to access the link, but
-        # some process (presumably on Google's side) has already 'previewed' the reset url,
-        # which would previously have deleted the file, preventing the user from creating an
-        # account or resetting their password.
-
-        # try:
-        #     # os.remove(reset_path)
-        #     pass
-
-        # # It might be safe to ignore this, but raising for now
-        # except FileNotFoundError:
-        #     return {
-        #         "error": "Invalid request token x8924",
-        #         "_error": (
-        #             f"Reset path didn't exist when it should have: {reset_path}.\n\nThis rare case is "
-        #             f"likely due to a user submitting a reset request twice in rapid succession."
-        #         )
-        #     }
-
-        return "\n".join(html)
+            f"""Hello, {email}, <br><br>""",
+            f"""You've been issued a new temporary password that can be used to log in to {link}<br><br>""",
+            """Change it once you log in.<br><br>""",
+            f"""<b>Temporary password: </b>{new_password}""",
+            """</body>""",
+            """</html>"""
+        ])
 
     def UpdatePassword(self):
         user = self.ValidateUser()
