@@ -277,6 +277,12 @@ def JSON2HTML(data, indent=4, sort_keys=True):
     return JSON2HTML(data, indent, sort_keys)
 
 
+def IsWithinBMP(text):
+    from .string import IsWithinBMP
+
+    return IsWithinBMP(text)
+
+
 # -------------------------------------------------- LIST ----------------------------------------------------
 
 

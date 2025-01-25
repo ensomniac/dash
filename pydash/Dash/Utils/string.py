@@ -403,6 +403,13 @@ def JSON2HTML(data, indent=4, sort_keys=True):
     return json2html.convert(json=dumps(data, indent=indent, sort_keys=sort_keys))
 
 
+# BMP (Basic Multilingual Plane) includes most commonly used characters, but characters
+# like certain emojis, special symbols, and rare Unicode characters are in supplementary
+# planes and not supported directly by certain systems, such as Selenium/ChromeDriver.
+def IsWithinBMP(text):
+    return all(ord(char) <= 0xFFFF for char in text)
+
+
 def change_dt_tz(dt_obj, tz):
     if str(dt_obj.time()) == "00:00:00":
         return dt_obj
