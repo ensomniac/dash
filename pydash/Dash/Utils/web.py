@@ -139,8 +139,8 @@ class WebCrawler:
     def GetPageTitle(self):
         return self.driver.title
 
-    def PopulateInput(self, input_el, text):
-        if self.extra_stealth:
+    def PopulateInput(self, input_el, text, is_file_input=False):
+        if self.extra_stealth and not is_file_input:
             for char in text:
                 input_el.send_keys(char)
 
