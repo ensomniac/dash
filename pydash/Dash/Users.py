@@ -645,12 +645,15 @@ class Users:
         users_root = os.path.join(self.dash_context["srv_path_local"], "users")
 
         for user_email in os.listdir(users_root):
+            if user_email.startswith("_"):
+                continue
+            
             # Emails are sanitized on account creation, but leaving this here for
             # any accounts for older sites from before that sanitation was added
             user_email = user_email.lower()
 
             user_data_path = self.GetUserDataPath(user_email)
-            is_link        = os.path.islink(os.path.dirname(user_data_path))
+            is_link = os.path.islink(os.path.dirname(user_data_path))
 
             if is_link:
                 continue

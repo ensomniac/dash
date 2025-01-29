@@ -776,49 +776,97 @@ class DashLocalStorage:
             "modified_on": datetime.now().isoformat()
         }
 
-    def RecursivelyReplaceIDInRoot(self, root, old_id, new_id):
-        log = [f"old: {old_id}, new: {new_id}"]
+    # This is not exclusive to IDs, can be used for any string values
+    def RecursivelyReplaceIDInRoot(self, root, old_id, new_id, dry_run=False, verbose=False, _log=[]):
+        log = _log or [f"old: {old_id}, new: {new_id}, dry run: {dry_run}, verbose: {verbose}"]
 
         if not os.path.exists(root):
-            log.append(f"Root doesn't exist: {root}")
+            log.append(f"root: {root}")
+            log.append("\troot doesn't exist")
 
             return log
+
+        root_logged = False
 
         for filename in os.listdir(root):
             path = os.path.join(root, filename)
 
-            log.append(f"{filename}: {path}")
-
             if filename.endswith(".json"):
-                data, modified, log = self.recursively_replace_id_in_data(self.Read(path), old_id, new_id, log)
-
-                log.append(f"modified: {modified}")
+                data, modified, data_log = self.recursively_replace_id_in_dict(self.Read(path), old_id, new_id, verbose)
 
                 if modified:
-                    self.Write(path, data)
+                    if not root_logged:
+                        log.append(f"root: {root}")
+
+                        root_logged = True
+
+                    log.append(f"\t{filename}: {path}")
+
+                    log += data_log
+
+                    if not dry_run:
+                        self.Write(path, data)
+
+                if verbose:
+                    if not root_logged:
+                        log.append(f"root: {root}")
+
+                        root_logged = True
+
+                    if not modified:
+                        log.append(f"\t{filename}: {path}")
+
+                    log += data_log
+
+                    log.append(f"\t\tmodified: {modified}")
 
             elif os.path.isdir(path):
-                log.append("is dir, recurse")
+                if verbose:
+                    if not root_logged:
+                        log.append(f"root: {root}")
 
-                self.RecursivelyReplaceIDInRoot(path, old_id, new_id)
+                        root_logged = True
+
+                    log.append(f"\t{filename}: {path}")
+                    log.append("\t\tis dir, recurse")
+
+                log = self.RecursivelyReplaceIDInRoot(path, old_id, new_id, dry_run, verbose, log)
 
             else:
-                log.append("skipped/missed")
+                if verbose:
+                    if not root_logged:
+                        log.append(f"root: {root}")
+
+                        root_logged = True
+
+                    log.append(f"\t{filename}: {path}")
+                    log.append("\t\tskipped/missed")
 
             if old_id in filename:
-                log.append("rename file")
+                if not root_logged:
+                    log.append(f"root: {root}")
 
-                os.rename(path, os.path.join(root, filename.replace(old_id, new_id)))
+                    root_logged = True
+
+                log.append(f"\t{filename}: {path}")
+                log.append("\t\trename file")
+
+                if not dry_run:
+                    os.rename(path, os.path.join(root, filename.replace(old_id, new_id)))
 
         return log
 
-    def recursively_replace_id_in_data(self, data, old_id, new_id, log, _modified=False):
+    def recursively_replace_id_in_dict(self, data, old_id, new_id, verbose, log=[], _modified=False):
         modified = False
 
-        log.append(f"json: {data}")
+        if verbose:
+            log.append(f"\t\tdict:")
 
         if not data:
-            return data, _modified or modified, log
+            if verbose:
+                log.append("\t\t\tInvalid/empty dict")
+
+            return data, (_modified or modified), log
 
         key_changes = []
 
@@ -826,58 +874,104 @@ class DashLocalStorage:
             if key == "_duplicated_from":
                 continue
 
-            log.append(f"key: {key}")
-
             if old_id in key:
                 key_changes.append(key)
 
             value = data.get(key)
 
             if not value:
-                log.append("continue")
+                if verbose:
+                    log.append(f"\t\t\tkey: {key}")
+                    log.append("\t\t\t\tcontinue")
 
                 continue
 
-            t = type(value)
+            value_type = type(value)
 
-            if t is dict:
-                log.append("recurse")
+            if value_type is dict:
+                if verbose:
+                    log.append(f"\t\t\tkey: {key}")
+                    log.append("\t\t\t\trecurse dict")
 
-                value, modified, log = self.recursively_replace_id_in_data(value, old_id, new_id, log, modified)
-
-                data[key] = value
-
-                continue
-
-            if t is list:
-                if old_id not in value:
-                    continue
-
-                value[value.index(old_id)] = new_id
-
-                data[key] = value
-
-                modified = True
+                data[key], modified, log = self.recursively_replace_id_in_dict(value, old_id, new_id, verbose, log, modified)
 
                 continue
 
-            if t is not str or old_id not in value:
-                log.append("continue")
+            if value_type is list:
+                if verbose:
+                    log.append(f"\t\t\tkey: {key}")
+                    log.append("\t\t\t\trecurse list")
+
+                data[key], modified, log = self.recursively_replace_id_in_list(value, old_id, new_id, verbose, log, modified)
+
+                continue
+
+            if value_type is not str or old_id not in value:
+                if verbose:
+                    log.append(f"\t\t\tkey: {key}")
+                    log.append("\t\t\t\tcontinue")
 
                 continue
 
             data[key] = value.replace(old_id, new_id)
 
-            modified = True
-
-        for key in key_changes:
-            data[key.replace(old_id, new_id)] = data.pop(key)
+            log.append(f"\t\t\tupdated value for key: {key}")
 
             modified = True
 
-        log.append(f"key changes: {key_changes}")
+        if key_changes:
+            log.append(f"\t\tkey changes: {key_changes}")
 
-        return data, _modified or modified, log
+            for key in key_changes:
+                data[key.replace(old_id, new_id)] = data.pop(key)
+
+                modified = True
+
+        return data, (_modified or modified), log
+
+    def recursively_replace_id_in_list(self, data, old_id, new_id, verbose, log=[], _modified=False):
+        modified = False
+
+        if verbose:
+            log.append(f"\t\t\tlist:")
+
+        if not data:
+            if verbose:
+                log.append("\t\t\t\tInvalid/empty list")
+
+            return data, (_modified or modified), log
+
+        for index, item in enumerate(data):
+            item_type = type(item)
+
+            if item_type is dict:
+                if verbose:
+                    log.append(f"\t\t\t\tindex: {index}")
+                    log.append("\t\t\t\t\trecurse dict")
+
+                data[index], modified, log = self.recursively_replace_id_in_dict(item, old_id, new_id, verbose, log, modified)
+
+                continue
+
+            if item_type is list:
+                if verbose:
+                    log.append(f"\t\t\t\tindex: {index}")
+                    log.append("\t\t\t\t\trecurse list")
+
+                data[index], modified, log = self.recursively_replace_id_in_list(item, old_id, new_id, verbose, log, modified)
+
+                continue
+
+            if item_type is not str or old_id not in item:
+                continue
+
+            data[index] = new_id
+
+            log.append(f"\t\t\tupdated value for index: {index}")
+
+            modified = True
+
+        return data, (_modified or modified), log
 
 
 def New(dash_context, store_path, additional_data={}, obj_id=None, nested=False, conform_permissions=True):
@@ -962,5 +1056,5 @@ def ConvertToNested(dash_context, store_path):
     return DashLocalStorage(dash_context, store_path).ConvertToNested()
 
 
-def RecursivelyReplaceIDInRoot(root, old_id, new_id):
-    return DashLocalStorage().RecursivelyReplaceIDInRoot(root, old_id, new_id)
+def RecursivelyReplaceIDInRoot(root, old_id, new_id, dry_run=False, verbose=False):
+    return DashLocalStorage().RecursivelyReplaceIDInRoot(root, old_id, new_id, dry_run, verbose)
