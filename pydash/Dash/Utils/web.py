@@ -6,23 +6,36 @@
 import os
 import sys
 
+from time import sleep
+from random import uniform, randint
+
 
 class WebCrawler:
     _by: callable
     _ec: callable
     _keys: callable
     _driver: callable
+    _auto_gui: callable
 
-    def __init__(self, headless=True, wait_timeout_sec=15):
+    def __init__(self, headless=True, wait_timeout_sec=15, profile_root="", extra_stealth=False, cookies_path=""):
         from Dash.Utils import OapiRoot
 
         self.headless = headless
         self.wait_timeout_sec = wait_timeout_sec
+        self.profile_root = profile_root  # Default to NO profile, otherwise, must explicitly provide one
+        self.extra_stealth = extra_stealth  # Defaults to False because it may be over-kill for some sites
+        self.cookies_path = cookies_path
+
+        if self.profile_root and not os.path.exists(self.profile_root):
+            raise FileNotFoundError(f"Profile root does not exist: {self.profile_root}")
+
+        if self.cookies_path and not self.cookies_path.endswith(".pkl"):
+            raise ValueError("Cookies path must end with '.pkl' extension (cookies get pickled)")
 
         self.waits = {}
         self._on_server = os.path.exists(OapiRoot)
 
-        if not self.headless and self._on_server:
+        if self._on_server and not self.headless:
             # TODO: Figure out how to do this with a virtual display (ex: using Xvfb)
             raise NotImplementedError("Headed mode still needs to be implemented")
 
@@ -30,9 +43,33 @@ class WebCrawler:
     def driver(self):
         if not hasattr(self, "_driver"):
             from selenium_stealth import stealth
-            from undetected_chromedriver import Chrome
+            from undetected_chromedriver import Chrome, ChromeOptions
 
-            self._driver = Chrome(headless=self.headless)
+            options = None
+
+            if self.profile_root:
+                options = ChromeOptions()
+
+                split = self.profile_root.rstrip(os.path.sep).split(os.path.sep)
+                profile = split.pop()
+                root = os.path.join(split)
+
+                options.add_argument(f"--user-data-dir={root}")
+                options.add_argument(f"--profile-directory={profile}")
+
+            if self.extra_stealth and self.headless:
+                options.add_argument("--enable-gpu")
+                options.add_argument("--window-size=1920,1080")
+                options.add_argument("--start-maximized")
+                options.add_argument("--host-resolver-rules=MAP * ~NOTFOUND , EXCLUDE 127.0.0.1")
+
+            if options:
+                self._driver = Chrome(
+                    headless=self.headless,
+                    options=options
+                )
+            else:  # In this case, we don't want to supply a default `options` object
+                self._driver = Chrome(headless=self.headless)
 
             stealth(
                 driver=self._driver,
@@ -40,6 +77,13 @@ class WebCrawler:
                 platform="Linux",
                 fix_hairline=True
             )
+
+            if self.cookies_path and os.path.exists(self.cookies_path):
+                from pickle import load as load_pickle
+
+                with open(self.cookies_path, "rb") as file:
+                    for cookie in load_pickle(file):
+                        self.driver.add_cookie(cookie)
 
         return self._driver
 
@@ -70,6 +114,18 @@ class WebCrawler:
 
         return self._keys
 
+    @property
+    def auto_gui(self):
+        if not hasattr(self, "_auto_gui"):
+            if self.headless:
+                self._auto_gui = None  # Doesn't work in headless mode
+            else:
+                import pyautogui
+
+                self._auto_gui  = pyautogui
+
+        return self._auto_gui
+
     def Quit(self):
         self.driver.quit()
 
@@ -83,8 +139,14 @@ class WebCrawler:
     def GetPageTitle(self):
         return self.driver.title
 
-    def PopulateInput(self, input_el, text=""):
-        input_el.send_keys(text)
+    def PopulateInput(self, input_el, text):
+        if self.extra_stealth:
+            for char in text:
+                input_el.send_keys(char)
+
+                sleep(uniform(0.1, 0.5))
+        else:
+            input_el.send_keys(text)
 
     def ClearInput(self, input_el, custom_element=False):
         if custom_element:
@@ -95,6 +157,67 @@ class WebCrawler:
 
     def SubmitInput(self, input_el):
         input_el.send_keys(self.keys.RETURN)
+
+    def Click(self, element, headless_delay=True):
+        if self.extra_stealth:
+            self.MoveMouse(
+                to_element=element,
+                headless_delay=headless_delay
+            )
+
+        element.click()
+
+    def RandomDelay(self):
+        sleep(uniform(0.5, 3.0))
+
+        return self
+
+    def RandomScroll(self, post_delay=True):
+        scroll_height = self.driver.execute_script("return document.body.scrollHeight")
+        current_position = self.driver.execute_script("return window.pageYOffset")
+        max_scroll = min(scroll_height - current_position, randint(50, 300))
+
+        if max_scroll > 0:  # Only scroll if there's room
+            self.driver.execute_script(f"window.scrollBy(0, {max_scroll});")
+
+            if post_delay:
+                self.RandomDelay()
+
+        return self
+
+    def MoveMouse(self, x=-1, y=-1, to_element=None, headless_delay=True):
+        if to_element is None and (x == -1 or y == -1):
+            raise ValueError("Must supply either an element or x/y coordinates")
+
+        if self.headless:
+            if headless_delay:
+                self.RandomDelay()
+
+            return self
+
+        if to_element:
+            x, y = self.get_element_center_coords(to_element)
+
+        self.auto_gui.moveTo(
+            x,
+            y,
+            duration=uniform(0.5, 2.0)
+        )
+
+        return self
+
+    # This should typically be done after logging in and will only save if it doesn't exist (unless forced)
+    def SaveCookies(self, force=False):
+        if not self.cookies_path:
+            raise ValueError("Cookies path not set")
+
+        if os.path.exists(self.cookies_path) and not force:
+            return
+
+        from pickle import dump as dump_pickle
+
+        with open(self.cookies_path, "wb") as file:
+            dump_pickle(self.driver.get_cookies(), file)
 
     def WaitForElement(
         self, el_id="", el_name="", el_class="", css_selector="", xpath="",
@@ -176,3 +299,9 @@ class WebCrawler:
             self.waits[timeout_sec] = WebDriverWait(self.driver, timeout_sec)
 
         return self.waits[timeout_sec]
+
+    def get_element_center_coords(self, element):
+        return (
+            element.location["x"] + (element.size["width"] * 0.5),
+            element.location["y"] + (element.size["height"] * 0.5)
+        )

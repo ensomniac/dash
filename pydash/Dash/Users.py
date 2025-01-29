@@ -647,7 +647,7 @@ class Users:
         for user_email in os.listdir(users_root):
             if user_email.startswith("_"):
                 continue
-            
+
             # Emails are sanitized on account creation, but leaving this here for
             # any accounts for older sites from before that sanitation was added
             user_email = user_email.lower()
