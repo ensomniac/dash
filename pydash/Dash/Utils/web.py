@@ -46,22 +46,32 @@ class WebCrawler:
             from undetected_chromedriver import Chrome, ChromeOptions
 
             options = None
+            mac = sys.platform == "darwin"
 
             if self.profile_root:
-                options = ChromeOptions()
+                if options is None:
+                    options = ChromeOptions()
 
-                split = self.profile_root.rstrip(os.path.sep).split(os.path.sep)
+                split = self.profile_root.strip(os.path.sep).split(os.path.sep)
                 profile = split.pop()
-                root = os.path.join(split)
+                root = os.path.sep + os.path.join(*split)  # noqa
 
                 options.add_argument(f"--user-data-dir={root}")
                 options.add_argument(f"--profile-directory={profile}")
 
-            if self.extra_stealth and self.headless:
-                options.add_argument("--enable-gpu")
-                options.add_argument("--window-size=1920,1080")
-                options.add_argument("--start-maximized")
-                options.add_argument("--host-resolver-rules=MAP * ~NOTFOUND , EXCLUDE 127.0.0.1")
+            if self.extra_stealth:
+                if options is None:
+                    options = ChromeOptions()
+
+                if self.headless:
+                    options.add_argument("--enable-gpu")
+                    options.add_argument("--window-size=1920,1080")
+                    options.add_argument("--start-maximized")
+
+                if mac:
+                    options.add_argument("--dns-prefetch-disable")
+                else:
+                    options.add_argument("--host-resolver-rules=MAP * ~NOTFOUND , EXCLUDE 127.0.0.1")
 
             if options:
                 self._driver = Chrome(
@@ -74,7 +84,7 @@ class WebCrawler:
             stealth(
                 driver=self._driver,
                 languages=["en-US", "en"],
-                platform="Linux",
+                platform="MacIntel" if mac else "Linux",
                 fix_hairline=True
             )
 
