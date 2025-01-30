@@ -35,25 +35,23 @@ function DashGuiFileExplorerData () {
 
         var f = "delete_file";
 
-        (function (self) {
-            Dash.Request(
-                self,
-                function (response) {
-                    if (!self.on_files_changed(response, false)) {
-                        return;
-                    }
-
-                    self.list.RemoveRow(row.ID(), true);
-                },
-                self.api,
-                {
-                    "f": f,
-                    "parent_obj_id": self.parent_obj_id,
-                    "file_id": row.ID(),
-                    ...(self.extra_params[f] || {})
+        Dash.Request(
+            this,
+            (response) => {
+                if (!this.on_files_changed(response, false)) {
+                    return;
                 }
-            );
-        })(this);
+
+                this.list.RemoveRow(row.ID(), true);
+            },
+            this.api,
+            {
+                "f": f,
+                "parent_obj_id": this.parent_obj_id,
+                "file_id": row.ID(),
+                ...(this.extra_params[f] || {})
+            }
+        );
     };
 
     this.restore_file = function (row) {
@@ -96,35 +94,33 @@ function DashGuiFileExplorerData () {
 
         var f = "set_file_property";
 
-        (function (self) {
-            Dash.Request(
-                self,
-                function (response) {
-                    if (!self.on_files_changed(response, false)) {
-                        return;
-                    }
-
-                    var row = self.list.GetRow(file_id);
-
-                    if (!row) {
-                        row = self.list.GetRow(file_id, false, true);
-                    }
-
-                    if (row) {
-                        row.Update();
-                    }
-                },
-                self.api,
-                {
-                    "f": f,
-                    "parent_obj_id": self.parent_obj_id,
-                    "key": key,
-                    "value": value,
-                    "file_id": file_id,
-                    ...(self.extra_params[f] || {})
+        Dash.Request(
+            this,
+            (response) => {
+                if (!this.on_files_changed(response, false)) {
+                    return;
                 }
-            );
-        })(this);
+
+                var row = this.list.GetRow(file_id);
+
+                if (!row) {
+                    row = this.list.GetRow(file_id, false, true);
+                }
+
+                if (row) {
+                    row.Update();
+                }
+            },
+            this.api,
+            {
+                "f": f,
+                "parent_obj_id": this.parent_obj_id,
+                "key": key,
+                "value": value,
+                "file_id": file_id,
+                ...(this.extra_params[f] || {})
+            }
+        );
     };
 
     this.get_files_data = function (callback=null) {
@@ -133,20 +129,18 @@ function DashGuiFileExplorerData () {
         // Need archive mode at the moment of the request, not at the moment of the callback
         var archive_mode = this.archive_mode;
 
-        (function (self) {
-            Dash.Request(
-                self,
-                function (response) {
-                    self.on_files_data(response, archive_mode, callback);
-                },
-                self.api,
-                {
-                    "f": f,
-                    "parent_obj_id": self.parent_obj_id,
-                    ...(self.extra_params[f] || {})
-                }
-            );
-        })(this);
+        Dash.Request(
+            this,
+            (response) => {
+                this.on_files_data(response, archive_mode, callback);
+            },
+            this.api,
+            {
+                "f": f,
+                "parent_obj_id": this.parent_obj_id,
+                ...(this.extra_params[f] || {})
+            }
+        );
     };
 
     this.update_cached_data = function (data) {
@@ -154,6 +148,20 @@ function DashGuiFileExplorerData () {
         this.original_order = data["order"];
 
         this.get_order();
+
+        if (this.header) {
+            this.header.SetText(this.get_header_text());
+        }
+
+        if (this.collapse_toggle) {
+            if (this.files_data["order"].length) {
+                this.collapse_toggle.html.show();
+            }
+
+            else {
+                this.collapse_toggle.html.hide();
+            }
+        }
     };
 
     this.on_files_data = function (response, archive_mode=false, callback=null) {
@@ -182,14 +190,12 @@ function DashGuiFileExplorerData () {
         }
 
         if (!this.initialized) {
-            (function (self, response, archive_mode) {
-                setTimeout(
-                    function () {
-                        self.on_files_data(response, archive_mode);
-                    },
-                    250
-                );
-            })(this, response, archive_mode);
+            setTimeout(
+                () => {
+                    this.on_files_data(response, archive_mode);
+                },
+                250
+            );
 
             return;
         }

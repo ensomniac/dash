@@ -2,7 +2,7 @@
 
 function DashGuiFileExplorerGUI () {
     this.add_header = function () {
-        this.header = new Dash.Gui.Header(this.header_text, this.color);
+        this.header = new Dash.Gui.Header(this.get_header_text(), this.color);
 
         this.header.ReplaceBorderWithIcon("paperclip").AddShadow();
 
@@ -10,7 +10,82 @@ function DashGuiFileExplorerGUI () {
             "margin-bottom": 0
         });
 
+        if (typeof this.start_collapsed === "boolean") {
+            this.add_collapse_toggle();
+        }
+
         this.html.append(this.header.html);
+    };
+
+    this.add_collapse_toggle = function () {
+        this.collapse_toggle = new Dash.Gui.Checkbox(
+            "",
+            !this.start_collapsed,
+            this.color,
+            undefined,
+            this,
+            () => {
+                if (this.collapse_toggle.IsChecked()) {  // Expand
+                    if (this.list) {
+                        if (this.animate_toggling) {
+                            this.list.html.slideDown(
+                                300,
+                                () => {
+                                    if (this.on_height_change_cb) {
+                                        this.on_height_change_cb();
+                                    }
+                                }
+                            );
+                        }
+
+                        else {
+                            this.list.html.show();
+                        }
+                    }
+
+                    else {
+                        this.redraw_rows(true);
+                    }
+                }
+
+                else {  // Collapse
+                    if (this.list) {
+                        if (this.animate_toggling) {
+                            this.list.html.slideUp(
+                                300,
+                                () => {
+                                    if (this.on_height_change_cb) {
+                                        this.on_height_change_cb();
+                                    }
+                                }
+                            );
+                        }
+
+                        else {
+                            this.list.html.hide();
+                        }
+                    }
+
+                    else {
+                        return;
+                    }
+                }
+
+                if (!this.animate_toggling && this.on_height_change_cb) {
+                    this.on_height_change_cb();
+                }
+            }
+        );
+
+        this.collapse_toggle.SetTrueIconName("caret_up", "Collapse");
+        this.collapse_toggle.SetFalseIconName("caret_down", "Expand");
+        this.collapse_toggle.SetIconSize(170);
+
+        if (this.files_data?.["order"] && !this.files_data["order"].length) {
+            this.collapse_toggle.html.hide();
+        }
+
+        this.header.html.append(this.collapse_toggle.html);
     };
 
     this.add_subheader = function () {
@@ -253,6 +328,27 @@ function DashGuiFileExplorerGUI () {
             "margin-top": Dash.Size.Padding
         });
 
+        var animate = this.animate_toggling && this.start_collapsed === true;
+
+        if (animate) {
+            this.list.html.hide();
+        }
+
         this.html.append(this.list.html);
+
+        if (animate) {
+            this.list.html.slideDown(
+                300,
+                () => {
+                    if (this.on_height_change_cb) {
+                        this.on_height_change_cb();
+                    }
+                }
+            );
+        }
+
+        if (this.on_height_change_cb) {
+            this.list.SetHeightChangeCallback(this.on_height_change_cb);
+        }
     };
 }

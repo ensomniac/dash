@@ -28,6 +28,7 @@ function DashLayoutList (binder, selected_callback, column_config, color=null, g
     this.footer_row_css = null;
     this.html = $("<div></div>");
     this.last_selection_id = null;
+    this.on_height_change_cb = null;
     this.highlight_active_row = false;
     this.sublist_row_tag = "_sublist_row_";
     this.header_row_tag = "_top_header_row";
@@ -203,6 +204,10 @@ function DashLayoutList (binder, selected_callback, column_config, color=null, g
 
         // This step must happen after re-adding the header/footer rows above, since we don't track those rows
         this.rows = [];
+
+        if (this.on_height_change_cb) {
+            this.on_height_change_cb();
+        }
     };
 
     this.SetColumnConfig = function (column_config, clear=true) {
@@ -291,6 +296,10 @@ function DashLayoutList (binder, selected_callback, column_config, color=null, g
     // Intended to be used when custom CSS is used on divider elements
     this.DisableDividerColorChangeOnHover = function () {
         this.allow_row_divider_color_change_on_hover = false;
+    };
+
+    this.SetHeightChangeCallback = function (cb) {
+        this.on_height_change_cb = cb;
     };
 
     this.get_row_nested_in_sublist = function (row_id, return_sublist=false, _rows=null) {
@@ -423,6 +432,10 @@ function DashLayoutList (binder, selected_callback, column_config, color=null, g
             sublist.DisableDividerColorChangeOnHover();
         }
 
+        if (this.on_height_change_cb) {
+            sublist.SetHeightChangeCallback(this.on_height_change_cb);
+        }
+
         return sublist;
     };
 
@@ -433,8 +446,9 @@ function DashLayoutList (binder, selected_callback, column_config, color=null, g
 
         var refresh_connections = true;
 
-        // Since lists can get big, we only want to draw this once, but we'll reset it to null on Update to force a redraw
-        // (we may also want to follow this pattern for all row previews in the future, but it'd be harder to manage)
+        // Since lists can get big, we only want to draw this once, but we'll reset
+        // it to null on Update to force a redraw (we may also want to follow this
+        // pattern for all row previews in the future, but it'd be harder to manage)
         var preview = row.GetCachedPreview();
 
         if (!(preview instanceof DashLayoutList)) {
@@ -448,7 +462,7 @@ function DashLayoutList (binder, selected_callback, column_config, color=null, g
 
         if (Dash.Validate.Object(queue)) {
             queue.forEach(
-                function (entry) {
+                (entry) => {
                     var added_row = preview.GetRow(entry["row_id"]);
 
                     if (!added_row) {
@@ -468,7 +482,7 @@ function DashLayoutList (binder, selected_callback, column_config, color=null, g
             if (refresh_connections) {
                 // When re-using a cached preview, need to refresh the connections
                 preview.rows.forEach(
-                    function (sublist_row) {
+                    (sublist_row) => {
                         sublist_row.RefreshConnections();
                     }
                 );
@@ -488,7 +502,7 @@ function DashLayoutList (binder, selected_callback, column_config, color=null, g
                 "font-family": "sans_serif_italic"
             });
 
-            preview.text("No content (empty folder)");
+            preview.text("No content");
 
             row.Expand(preview);
         }

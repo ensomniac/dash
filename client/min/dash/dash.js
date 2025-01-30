@@ -25679,12 +25679,16 @@ function DashGuiCheckbox (
     };
     this.SetIconColor = function (color) {
         this.icon_color = color;
-        this.icon_button.SetIconColor(color);
+        if (this.icon_button) {
+            this.icon_button.SetIconColor(color);
+        }
         return this;
     };
     this.SetIconShadow = function (shadow) {
         this.icon_shadow = shadow;
-        this.icon_button.AddIconShadow(shadow);
+        if (this.icon_button) {
+            this.icon_button.AddIconShadow(shadow);
+        }
         return this;
     };
     this.SetIconSize = function (icon_size_percent_num, container_size=null) {
@@ -25695,7 +25699,9 @@ function DashGuiCheckbox (
                 "height": this.icon_container_size
             });
         }
-        this.icon_button.SetIconSize(this.icon_size, this.icon_container_size);
+        if (this.icon_button) {
+            this.icon_button.SetIconSize(this.icon_size, this.icon_container_size);
+        }
         return this;
     };
     this.SetAbleToToggleCallback = function (cb_with_bool_return, binder=null) {
@@ -25915,20 +25921,17 @@ function DashGuiCheckbox (
     };
     this.redraw = function () {
         this.html.empty();
-        (function (self) {
-            self.icon_button = new Dash.Gui.IconButton(
-                self.static_icon_name ? self.static_icon_name : (
-                    self.checked ? self.true_icon_name : self.false_icon_name
-                ),
-                function () {
-                    // We don't want the args from IconButton's callback
-                    self.Toggle();
-                },
-                self,
-                self.color,
-                {"container_size": self.icon_container_size}
-            );
-        })(this);
+        this.icon_button = new Dash.Gui.IconButton(
+            this.static_icon_name ? this.static_icon_name : (
+                this.checked ? this.true_icon_name : this.false_icon_name
+            ),
+            () => {
+                this.Toggle();  // We don't want the args from IconButton's callback
+            },
+            this,
+            this.color,
+            {"container_size": this.icon_container_size}
+        );
         this.hover_hint = (
               this._false_hover_hint && !this.checked ? this._false_hover_hint
             : this._true_hover_hint && this.checked ? this._true_hover_hint
@@ -25942,7 +25945,7 @@ function DashGuiCheckbox (
             this.icon_button.SetIconColor(this.icon_color);
         }
         if (this.icon_shadow) {
-            this.icon_button.SetIconShadow(this.icon_shadow);
+            this.icon_button.AddIconShadow(this.icon_shadow);
         }
         if (this.icon_size) {
             this.icon_button.SetIconSize(this.icon_size);
@@ -38760,7 +38763,8 @@ function DashGuiContext2DEditorPanelContentPreComps (content) {
 
 function DashGuiFileExplorer (
     color=null, api="", parent_obj_id="", supports_desktop_client=false, supports_folders=true,
-    include_modified_keys_columns=false, extra_params={}, print_mode=false
+    include_modified_keys_columns=false, extra_params={}, print_mode=false, include_header_gui=true,
+    start_collapsed=null
 ) {
     /**
      * File Explorer box element.
@@ -38794,6 +38798,8 @@ function DashGuiFileExplorer (
      * @param {object} extra_params - Dictionary with extra params for each request type above,
      *                                where the function name for the request is the key
      * @param {boolean} print_mode - Removes interactive GUI and expands all folders for printing the page
+     * @param {boolean} include_header_gui - Whether to include tool row and upload button
+     * @param {null|boolean} start_collapsed - Not collapsible when left null, otherwise, defines starting state
      */
     this.color = color || Dash.Color.Light;
     this.api = api;
@@ -38803,6 +38809,8 @@ function DashGuiFileExplorer (
     this.include_modified_keys_columns = include_modified_keys_columns;
     this.extra_params = extra_params;
     this.print_mode = print_mode;
+    this.include_header_gui = include_header_gui;
+    this.start_collapsed = start_collapsed;
     // This is a quick, non-responsive solution to ensure the viewport is big enough for the extra columns
     if (window.innerWidth < 1065) {
         this.include_modified_keys_columns = false;
@@ -38824,6 +38832,9 @@ function DashGuiFileExplorer (
     this.original_order = null;
     this.header_text = "Files";
     this.subheader_styling = {};
+    this.collapse_toggle = null;
+    this.animate_toggling = true;
+    this.on_height_change_cb = null;
     this.display_folders_first = true;
     this.include_list_header_row = true;
     this.desktop_client_name = "desktop";
@@ -38865,13 +38876,23 @@ function DashGuiFileExplorer (
                 this.DownloadButtonConfig,
                 this.DeleteButtonConfig
             ];
-            Dash.SetInterval(this, this.get_files_data, 10000);
+            setTimeout(
+                () => {
+                    Dash.SetInterval(this, this.get_files_data, 10000);
+                },
+                200  // Buffer for any button config changes
+            );
         }
         if (this.print_mode) {
-            this.get_files_data();
+            setTimeout(
+                () => {
+                    this.get_files_data();
+                },
+                200  // Buffer for any button config changes
+            );
         }
         this.add_header();
-        if (!this.read_only) {
+        if (!this.read_only && this.include_header_gui) {
             this.add_tool_row();
             this.add_upload_button();
         }
@@ -38884,9 +38905,9 @@ function DashGuiFileExplorer (
         }
         this.subheader_styling = css;
     };
-    this.SetHeaderText = function (label_text="") {
+    this.SetHeaderText = function (label_text="", raw=false) {
         this.header_text = label_text;
-        this.header.SetText(label_text);
+        this.header.SetText(raw ? this.header_text : this.get_header_text());
     };
     this.SetDesktopClientName = function (name) {
         if (!name) {
@@ -38914,14 +38935,12 @@ function DashGuiFileExplorer (
             return;
         }
         if (!this.initialized) {
-            (function (self) {
-                setTimeout(
-                    function () {
-                        self.AddHTML(html, wait_for_list);
-                    },
-                    250
-                );
-            })(this);
+            setTimeout(
+                () => {
+                    this.AddHTML(html, wait_for_list);
+                },
+                250
+            );
             return;
         }
         if (wait_for_list) {
@@ -39011,15 +39030,14 @@ function DashGuiFileExplorer (
             this._buttons = this.buttons;
         }
         this.archive_mode = !this.archive_mode;
-        var tag = " (Archive)";
-        if (this.archive_mode) {
-            this.header_text += tag;
-        }
-        else {
-            this.header_text = this.header_text.replace(tag, "");
-        }
-        this.SetHeaderText(this.header_text);
+        this.SetHeaderText(this.get_header_text());
         this.get_files_data(this.update_button_config_on_archive_toggled);
+    };
+    this.SetHeightChangeCallback = function (cb) {
+        this.on_height_change_cb = cb;
+    };
+    this.DisableToggleAnimation = function () {
+        this.animate_toggling = false;
     };
     this.update_button_config_on_archive_toggled = function () {
         if (this.archive_mode) {
@@ -39118,8 +39136,8 @@ function DashGuiFileExplorer (
         var preview = new DashGuiFileExplorerPreviewStrip(this, file_id);
         row.Expand(preview.html);
     };
-    this.redraw_rows = function () {
-        if (!Dash.Validate.Object(this.files_data)) {
+    this.redraw_rows = function (force=false) {
+        if (!Dash.Validate.Object(this.files_data) || (this.start_collapsed === true && !this.list && !force)) {
             return;
         }
         this.rows = {};
@@ -39140,7 +39158,7 @@ function DashGuiFileExplorer (
         }
         // Draw files that don't live in subfolders
         this.files_data["order"].forEach(
-            function (file_id) {
+            (file_id) => {
                 if (!Dash.Validate.Object(this.get_file_data(file_id)["parent_folders"])) {
                     this.add_row(file_id);
                 }
@@ -39173,7 +39191,6 @@ function DashGuiFileExplorer (
             },
             300
         );
-
     };
     this.get_file_data = function (file_id) {
         return this.files_data["data"][file_id];
@@ -39183,6 +39200,16 @@ function DashGuiFileExplorer (
     };
     this.get_file_url = function (file_data) {
         return file_data["url"] || file_data["orig_url"] || "";
+    };
+    this.get_header_text = function () {
+        var text = this.header_text;
+        if (this.files_data?.["order"]) {
+            text += " (" + this.files_data["order"].length + ")";
+        }
+        if (this.archive_mode) {
+            text += " - Archive";
+        }
+        return text;
     };
     this.GetDataForKey = function (file_id, key) {
         if (key === "filename") {
@@ -39212,12 +39239,76 @@ function DashGuiFileExplorer (
 /**@member DashGuiFileExplorer*/
 function DashGuiFileExplorerGUI () {
     this.add_header = function () {
-        this.header = new Dash.Gui.Header(this.header_text, this.color);
+        this.header = new Dash.Gui.Header(this.get_header_text(), this.color);
         this.header.ReplaceBorderWithIcon("paperclip").AddShadow();
         this.header.html.css({
             "margin-bottom": 0
         });
+        if (typeof this.start_collapsed === "boolean") {
+            this.add_collapse_toggle();
+        }
         this.html.append(this.header.html);
+    };
+    this.add_collapse_toggle = function () {
+        this.collapse_toggle = new Dash.Gui.Checkbox(
+            "",
+            !this.start_collapsed,
+            this.color,
+            undefined,
+            this,
+            () => {
+                if (this.collapse_toggle.IsChecked()) {  // Expand
+                    if (this.list) {
+                        if (this.animate_toggling) {
+                            this.list.html.slideDown(
+                                300,
+                                () => {
+                                    if (this.on_height_change_cb) {
+                                        this.on_height_change_cb();
+                                    }
+                                }
+                            );
+                        }
+                        else {
+                            this.list.html.show();
+                        }
+                    }
+                    else {
+                        this.redraw_rows(true);
+                    }
+                }
+                else {  // Collapse
+                    if (this.list) {
+                        if (this.animate_toggling) {
+                            this.list.html.slideUp(
+                                300,
+                                () => {
+                                    if (this.on_height_change_cb) {
+                                        this.on_height_change_cb();
+                                    }
+                                }
+                            );
+                        }
+                        else {
+                            this.list.html.hide();
+                        }
+                    }
+                    else {
+                        return;
+                    }
+                }
+                if (!this.animate_toggling && this.on_height_change_cb) {
+                    this.on_height_change_cb();
+                }
+            }
+        );
+        this.collapse_toggle.SetTrueIconName("caret_up", "Collapse");
+        this.collapse_toggle.SetFalseIconName("caret_down", "Expand");
+        this.collapse_toggle.SetIconSize(170);
+        if (this.files_data?.["order"] && !this.files_data["order"].length) {
+            this.collapse_toggle.html.hide();
+        }
+        this.header.html.append(this.collapse_toggle.html);
     };
     this.add_subheader = function () {
         this.subheader = new Dash.Gui.Header("...", this.color);
@@ -39407,7 +39498,24 @@ function DashGuiFileExplorerGUI () {
         this.list.html.css({
             "margin-top": Dash.Size.Padding
         });
+        var animate = this.animate_toggling && this.start_collapsed === true;
+        if (animate) {
+            this.list.html.hide();
+        }
         this.html.append(this.list.html);
+        if (animate) {
+            this.list.html.slideDown(
+                300,
+                () => {
+                    if (this.on_height_change_cb) {
+                        this.on_height_change_cb();
+                    }
+                }
+            );
+        }
+        if (this.on_height_change_cb) {
+            this.list.SetHeightChangeCallback(this.on_height_change_cb);
+        }
     };
 }
 
@@ -39439,24 +39547,22 @@ function DashGuiFileExplorerData () {
         this.show_subheader("Deleting...");
         this.disable_load_buttons();
         var f = "delete_file";
-        (function (self) {
-            Dash.Request(
-                self,
-                function (response) {
-                    if (!self.on_files_changed(response, false)) {
-                        return;
-                    }
-                    self.list.RemoveRow(row.ID(), true);
-                },
-                self.api,
-                {
-                    "f": f,
-                    "parent_obj_id": self.parent_obj_id,
-                    "file_id": row.ID(),
-                    ...(self.extra_params[f] || {})
+        Dash.Request(
+            this,
+            (response) => {
+                if (!this.on_files_changed(response, false)) {
+                    return;
                 }
-            );
-        })(this);
+                this.list.RemoveRow(row.ID(), true);
+            },
+            this.api,
+            {
+                "f": f,
+                "parent_obj_id": this.parent_obj_id,
+                "file_id": row.ID(),
+                ...(this.extra_params[f] || {})
+            }
+        );
     };
     this.restore_file = function (row) {
         if (!window.confirm("Are you sure you want to restore this file?")) {
@@ -39490,56 +39596,63 @@ function DashGuiFileExplorerData () {
         this.show_subheader("Updating...");
         this.disable_load_buttons();
         var f = "set_file_property";
-        (function (self) {
-            Dash.Request(
-                self,
-                function (response) {
-                    if (!self.on_files_changed(response, false)) {
-                        return;
-                    }
-                    var row = self.list.GetRow(file_id);
-                    if (!row) {
-                        row = self.list.GetRow(file_id, false, true);
-                    }
-                    if (row) {
-                        row.Update();
-                    }
-                },
-                self.api,
-                {
-                    "f": f,
-                    "parent_obj_id": self.parent_obj_id,
-                    "key": key,
-                    "value": value,
-                    "file_id": file_id,
-                    ...(self.extra_params[f] || {})
+        Dash.Request(
+            this,
+            (response) => {
+                if (!this.on_files_changed(response, false)) {
+                    return;
                 }
-            );
-        })(this);
+                var row = this.list.GetRow(file_id);
+                if (!row) {
+                    row = this.list.GetRow(file_id, false, true);
+                }
+                if (row) {
+                    row.Update();
+                }
+            },
+            this.api,
+            {
+                "f": f,
+                "parent_obj_id": this.parent_obj_id,
+                "key": key,
+                "value": value,
+                "file_id": file_id,
+                ...(this.extra_params[f] || {})
+            }
+        );
     };
     this.get_files_data = function (callback=null) {
         var f = this.archive_mode ? "get_archived_files" : "get_files";
         // Need archive mode at the moment of the request, not at the moment of the callback
         var archive_mode = this.archive_mode;
-        (function (self) {
-            Dash.Request(
-                self,
-                function (response) {
-                    self.on_files_data(response, archive_mode, callback);
-                },
-                self.api,
-                {
-                    "f": f,
-                    "parent_obj_id": self.parent_obj_id,
-                    ...(self.extra_params[f] || {})
-                }
-            );
-        })(this);
+        Dash.Request(
+            this,
+            (response) => {
+                this.on_files_data(response, archive_mode, callback);
+            },
+            this.api,
+            {
+                "f": f,
+                "parent_obj_id": this.parent_obj_id,
+                ...(this.extra_params[f] || {})
+            }
+        );
     };
     this.update_cached_data = function (data) {
         this.files_data = data;
         this.original_order = data["order"];
         this.get_order();
+        if (this.header) {
+            this.header.SetText(this.get_header_text());
+        }
+        if (this.collapse_toggle) {
+            if (this.files_data["order"].length) {
+                this.collapse_toggle.html.show();
+            }
+            else {
+                this.collapse_toggle.html.hide();
+            }
+        }
     };
     this.on_files_data = function (response, archive_mode=false, callback=null) {
         if (archive_mode !== this.archive_mode) {
@@ -39560,14 +39673,12 @@ function DashGuiFileExplorerData () {
             return;
         }
         if (!this.initialized) {
-            (function (self, response, archive_mode) {
-                setTimeout(
-                    function () {
-                        self.on_files_data(response, archive_mode);
-                    },
-                    250
-                );
-            })(this, response, archive_mode);
+            setTimeout(
+                () => {
+                    this.on_files_data(response, archive_mode);
+                },
+                250
+            );
             return;
         }
         response = this.clean_cached_data(response);
@@ -51317,6 +51428,7 @@ function DashLayoutList (binder, selected_callback, column_config, color=null, g
     this.footer_row_css = null;
     this.html = $("<div></div>");
     this.last_selection_id = null;
+    this.on_height_change_cb = null;
     this.highlight_active_row = false;
     this.sublist_row_tag = "_sublist_row_";
     this.header_row_tag = "_top_header_row";
@@ -51447,6 +51559,9 @@ function DashLayoutList (binder, selected_callback, column_config, color=null, g
         }
         // This step must happen after re-adding the header/footer rows above, since we don't track those rows
         this.rows = [];
+        if (this.on_height_change_cb) {
+            this.on_height_change_cb();
+        }
     };
     this.SetColumnConfig = function (column_config, clear=true) {
         if (!(column_config instanceof DashLayoutListColumnConfig)) {
@@ -51513,6 +51628,9 @@ function DashLayoutList (binder, selected_callback, column_config, color=null, g
     // Intended to be used when custom CSS is used on divider elements
     this.DisableDividerColorChangeOnHover = function () {
         this.allow_row_divider_color_change_on_hover = false;
+    };
+    this.SetHeightChangeCallback = function (cb) {
+        this.on_height_change_cb = cb;
     };
     this.get_row_nested_in_sublist = function (row_id, return_sublist=false, _rows=null) {
         if (_rows === null) {
@@ -51615,6 +51733,9 @@ function DashLayoutList (binder, selected_callback, column_config, color=null, g
         if (!this.allow_row_divider_color_change_on_hover) {
             sublist.DisableDividerColorChangeOnHover();
         }
+        if (this.on_height_change_cb) {
+            sublist.SetHeightChangeCallback(this.on_height_change_cb);
+        }
         return sublist;
     };
     this.expand_sublist = function (row, is_selected) {
@@ -51622,8 +51743,9 @@ function DashLayoutList (binder, selected_callback, column_config, color=null, g
             row.Collapse();
         }
         var refresh_connections = true;
-        // Since lists can get big, we only want to draw this once, but we'll reset it to null on Update to force a redraw
-        // (we may also want to follow this pattern for all row previews in the future, but it'd be harder to manage)
+        // Since lists can get big, we only want to draw this once, but we'll reset
+        // it to null on Update to force a redraw (we may also want to follow this
+        // pattern for all row previews in the future, but it'd be harder to manage)
         var preview = row.GetCachedPreview();
         if (!(preview instanceof DashLayoutList)) {
             preview = row.SetCachedPreview(this.get_sublist());
@@ -51633,7 +51755,7 @@ function DashLayoutList (binder, selected_callback, column_config, color=null, g
         var queue = row.GetSublistQueue();
         if (Dash.Validate.Object(queue)) {
             queue.forEach(
-                function (entry) {
+                (entry) => {
                     var added_row = preview.GetRow(entry["row_id"]);
                     if (!added_row) {
                         added_row = preview.AddRow(entry["row_id"]);
@@ -51649,7 +51771,7 @@ function DashLayoutList (binder, selected_callback, column_config, color=null, g
             if (refresh_connections) {
                 // When re-using a cached preview, need to refresh the connections
                 preview.rows.forEach(
-                    function (sublist_row) {
+                    (sublist_row) => {
                         sublist_row.RefreshConnections();
                     }
                 );
@@ -51665,7 +51787,7 @@ function DashLayoutList (binder, selected_callback, column_config, color=null, g
                 "color": this.color.Text,
                 "font-family": "sans_serif_italic"
             });
-            preview.text("No content (empty folder)");
+            preview.text("No content");
             row.Expand(preview);
         }
     };
@@ -51842,6 +51964,9 @@ function DashLayoutListRow (list, row_id, height=null) {
         for (var divider of this.columns["dividers"]) {
             divider["obj"].css({"background": this.color.AccentGood});
         }
+    };
+    this.get_computed_height = function () {
+        return parseInt(this.expanded_content.css("height").replace("px", ""));
     };
     this.setup_connections = function () {
         (function (self) {
@@ -53054,18 +53179,21 @@ function DashLayoutListRowInterface () {
         if (!row || !row.is_sublist || !row.is_expanded) {
             return;
         }
-        var size_now = parseInt(row.expanded_content.css("height").replace("px", ""));
-        row.expanded_content.stop().animate({"height": size_now + height_change}, this.anim_delay["expanded_content"]);
+        var size_now = row.get_computed_height();
+        row.expanded_content.stop().animate(
+            {"height": size_now + height_change},
+            this.anim_delay["expanded_content"]
+        );
         // This will recursively continue up the stack
         row.SetExpandedSubListParentHeight(height_change);
     };
     this.Expand = function (html, sublist_rows=null, remove_hover_tip=false) {
         if (this.is_header || this.is_footer || this.is_divider) {
-            return;
+            return 0;
         }
         if (this.is_expanded) {
             this.Collapse();
-            return;
+            return 0;
         }
         // Optional param so that we can hide hover tips that are intended for the collapsed row element only.
         // Once removed, the managing code needs to re-assign the hover tip on hover in (mouse enter).
@@ -53079,7 +53207,7 @@ function DashLayoutListRowInterface () {
             this.store_css_on_expansion(this.list.rows.Last());
         }
         this.ShowHighlight();
-        var size_now = parseInt(this.expanded_content.css("height").replace("px", ""));
+        var size_now = this.get_computed_height();
         this.expanded_content.stop().css({
             "overflow-y": "auto",
             "opacity": 1,
@@ -53090,33 +53218,34 @@ function DashLayoutListRowInterface () {
             "border-bottom": "1px solid rgb(200, 200, 200)"
         });
         this.expanded_content.append(html);
-        var target_size = parseInt(this.expanded_content.css("height").replace("px", ""));
+        var target_size = this.get_computed_height();
         this.expanded_content.stop().css({
             "height": size_now,
-            "overflow-y": "hidden",
+            "overflow-y": "hidden"
         });
-        (function (self) {
-            self.expanded_content.animate(
-                {"height": target_size},
-                self.anim_delay["expanded_content"],
-                function () {
-                    self.expanded_content.css({
-                        "overflow-y": "visible"  // This MUST be set to visible so that combo skirts don't get clipped
-                    });
-                    self.is_expanded = true;
+        this.expanded_content.stop().animate(
+            {"height": target_size},
+            this.anim_delay["expanded_content"],
+            () => {
+                this.expanded_content.css({
+                    "overflow-y": "visible"  // This MUST be set to visible so that combo skirts don't get clipped
+                });
+                this.is_expanded = true;
+                if (this.list.on_height_change_cb) {
+                    this.list.on_height_change_cb();
                 }
-            );
-        })(this);
+            }
+        );
         this.SetExpandedSubListParentHeight(target_size);
         return target_size;
     };
     this.Collapse = function (callback=null) {
         if (!this.is_expanded || this.is_header || this.is_footer) {
-            return;
+            return 0;
         }
         if (Dash.Validate.Object(this.tmp_css_cache)) {
             this.tmp_css_cache.forEach(
-                function (entry) {
+                (entry) => {
                     if (entry && entry["row"] && entry["row"].html && entry["css"]) {
                         entry["row"].html.css(entry["css"]);
                     }
@@ -53125,27 +53254,28 @@ function DashLayoutListRowInterface () {
             this.tmp_css_cache = [];
         }
         this.expanded_content.stop().css({
-            "overflow-y": "hidden",
+            "overflow-y": "hidden"
         });
-        var expanded_height = parseInt(this.expanded_content.css("height").replace("px", ""));
-        (function (self) {
-            self.expanded_content.animate(
-                {"height": 0},
-                self.anim_delay["expanded_content"],
-                function () {
-                    self.expanded_content.stop().css({
-                        "overflow-y": "hidden",
-                        "opacity": 0,
-                    });
-                    self.HideHighlight();
-                    self.expanded_content.empty();
-                    self.is_expanded = false;
-                    if (callback) {
-                        callback();
-                    }
+        var expanded_height = this.get_computed_height();
+        this.expanded_content.stop().animate(
+            {"height": 0},
+            this.anim_delay["expanded_content"],
+            () => {
+                this.expanded_content.stop().css({
+                    "overflow-y": "hidden",
+                    "opacity": 0
+                });
+                this.HideHighlight();
+                this.expanded_content.empty();
+                this.is_expanded = false;
+                if (callback) {
+                    callback();
                 }
-            );
-        })(this);
+                if (this.list.on_height_change_cb) {
+                    this.list.on_height_change_cb();
+                }
+            }
+        );
         this.SetExpandedSubListParentHeight(-expanded_height);
         return expanded_height;
     };
@@ -53298,6 +53428,9 @@ function DashLayoutListRowInterface () {
         this.html.css({
             "min-height": this.height
         });
+        if (this.list.on_height_change_cb) {
+            this.list.on_height_change_cb();
+        }
     };
 }
 
@@ -53884,14 +54017,12 @@ function DashLayoutRevolvingList (
         if (this.row_events_disabled) {
             return;
         }
-        (function (self) {
-            row.html.on("mouseenter", function () {
-                if (!self.get_hover_preview_content) {
-                    return;
-                }
-                row.SetHoverPreview(self.get_hover_preview_content(row.ID()) || "");
-            });
-        })(this);
+        row.html.on("mouseenter", () => {
+            if (!this.get_hover_preview_content) {
+                return;
+            }
+            row.SetHoverPreview(this.get_hover_preview_content(row.ID()) || "");
+        });
     };
     // Replace the DashLayoutList-driven click behavior
     this.set_on_row_click = function (row) {
@@ -53899,15 +54030,12 @@ function DashLayoutRevolvingList (
             return;
         }
         row.column_box.off("click");
-        (function (self) {
-            row.column_box.on("click", function (e) {
-                if (e.target && e.target.className.includes(" fa-")) {
-                    // Don't set selection if it was an icon button that was clicked
-                    return;
-                }
-                self.on_row_selected(row);
-            });
-        })(this);
+        row.column_box.on("click", (e) => {
+            if (e.target && e.target.className.includes(" fa-")) {
+                return;  // Don't set selection if it was an icon button that was clicked
+            }
+            this.on_row_selected(row);
+        });
     };
     this.setup_row_connections = function (row) {
         if (this.row_events_disabled) {

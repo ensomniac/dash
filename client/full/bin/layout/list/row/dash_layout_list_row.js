@@ -210,6 +210,10 @@ function DashLayoutListRow (list, row_id, height=null) {
         }
     };
 
+    this.get_computed_height = function () {
+        return parseInt(this.expanded_content.css("height").replace("px", ""));
+    };
+
     this.setup_connections = function () {
         (function (self) {
             self.html.on("mouseenter", function () {

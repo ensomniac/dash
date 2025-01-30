@@ -769,15 +769,13 @@ function DashLayoutRevolvingList (
             return;
         }
 
-        (function (self) {
-            row.html.on("mouseenter", function () {
-                if (!self.get_hover_preview_content) {
-                    return;
-                }
+        row.html.on("mouseenter", () => {
+            if (!this.get_hover_preview_content) {
+                return;
+            }
 
-                row.SetHoverPreview(self.get_hover_preview_content(row.ID()) || "");
-            });
-        })(this);
+            row.SetHoverPreview(this.get_hover_preview_content(row.ID()) || "");
+        });
     };
 
     // Replace the DashLayoutList-driven click behavior
@@ -788,16 +786,13 @@ function DashLayoutRevolvingList (
 
         row.column_box.off("click");
 
-        (function (self) {
-            row.column_box.on("click", function (e) {
-                if (e.target && e.target.className.includes(" fa-")) {
-                    // Don't set selection if it was an icon button that was clicked
-                    return;
-                }
+        row.column_box.on("click", (e) => {
+            if (e.target && e.target.className.includes(" fa-")) {
+                return;  // Don't set selection if it was an icon button that was clicked
+            }
 
-                self.on_row_selected(row);
-            });
-        })(this);
+            this.on_row_selected(row);
+        });
     };
 
     this.setup_row_connections = function (row) {

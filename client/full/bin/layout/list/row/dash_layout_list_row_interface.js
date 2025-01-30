@@ -90,6 +90,7 @@ function DashLayoutListRowInterface () {
         }
 
         this.is_shown = false;
+
         this.html.css("display", "none");
     };
 
@@ -99,6 +100,7 @@ function DashLayoutListRowInterface () {
         }
 
         this.is_shown = true;
+
         this.html.css("display", "block");
     };
 
@@ -177,9 +179,12 @@ function DashLayoutListRowInterface () {
             return;
         }
 
-        var size_now = parseInt(row.expanded_content.css("height").replace("px", ""));
+        var size_now = row.get_computed_height();
 
-        row.expanded_content.stop().animate({"height": size_now + height_change}, this.anim_delay["expanded_content"]);
+        row.expanded_content.stop().animate(
+            {"height": size_now + height_change},
+            this.anim_delay["expanded_content"]
+        );
 
         // This will recursively continue up the stack
         row.SetExpandedSubListParentHeight(height_change);
@@ -187,13 +192,13 @@ function DashLayoutListRowInterface () {
 
     this.Expand = function (html, sublist_rows=null, remove_hover_tip=false) {
         if (this.is_header || this.is_footer || this.is_divider) {
-            return;
+            return 0;
         }
 
         if (this.is_expanded) {
             this.Collapse();
 
-            return;
+            return 0;
         }
 
         // Optional param so that we can hide hover tips that are intended for the collapsed row element only.
@@ -212,7 +217,7 @@ function DashLayoutListRowInterface () {
 
         this.ShowHighlight();
 
-        var size_now = parseInt(this.expanded_content.css("height").replace("px", ""));
+        var size_now = this.get_computed_height();
 
         this.expanded_content.stop().css({
             "overflow-y": "auto",
@@ -227,26 +232,28 @@ function DashLayoutListRowInterface () {
 
         this.expanded_content.append(html);
 
-        var target_size = parseInt(this.expanded_content.css("height").replace("px", ""));
+        var target_size = this.get_computed_height();
 
         this.expanded_content.stop().css({
             "height": size_now,
-            "overflow-y": "hidden",
+            "overflow-y": "hidden"
         });
 
-        (function (self) {
-            self.expanded_content.animate(
-                {"height": target_size},
-                self.anim_delay["expanded_content"],
-                function () {
-                    self.expanded_content.css({
-                        "overflow-y": "visible"  // This MUST be set to visible so that combo skirts don't get clipped
-                    });
+        this.expanded_content.stop().animate(
+            {"height": target_size},
+            this.anim_delay["expanded_content"],
+            () => {
+                this.expanded_content.css({
+                    "overflow-y": "visible"  // This MUST be set to visible so that combo skirts don't get clipped
+                });
 
-                    self.is_expanded = true;
+                this.is_expanded = true;
+
+                if (this.list.on_height_change_cb) {
+                    this.list.on_height_change_cb();
                 }
-            );
-        })(this);
+            }
+        );
 
         this.SetExpandedSubListParentHeight(target_size);
 
@@ -255,12 +262,12 @@ function DashLayoutListRowInterface () {
 
     this.Collapse = function (callback=null) {
         if (!this.is_expanded || this.is_header || this.is_footer) {
-            return;
+            return 0;
         }
 
         if (Dash.Validate.Object(this.tmp_css_cache)) {
             this.tmp_css_cache.forEach(
-                function (entry) {
+                (entry) => {
                     if (entry && entry["row"] && entry["row"].html && entry["css"]) {
                         entry["row"].html.css(entry["css"]);
                     }
@@ -271,33 +278,35 @@ function DashLayoutListRowInterface () {
         }
 
         this.expanded_content.stop().css({
-            "overflow-y": "hidden",
+            "overflow-y": "hidden"
         });
 
-        var expanded_height = parseInt(this.expanded_content.css("height").replace("px", ""));
+        var expanded_height = this.get_computed_height();
 
-        (function (self) {
-            self.expanded_content.animate(
-                {"height": 0},
-                self.anim_delay["expanded_content"],
-                function () {
-                    self.expanded_content.stop().css({
-                        "overflow-y": "hidden",
-                        "opacity": 0,
-                    });
+        this.expanded_content.stop().animate(
+            {"height": 0},
+            this.anim_delay["expanded_content"],
+            () => {
+                this.expanded_content.stop().css({
+                    "overflow-y": "hidden",
+                    "opacity": 0
+                });
 
-                    self.HideHighlight();
+                this.HideHighlight();
 
-                    self.expanded_content.empty();
+                this.expanded_content.empty();
 
-                    self.is_expanded = false;
+                this.is_expanded = false;
 
-                    if (callback) {
-                        callback();
-                    }
+                if (callback) {
+                    callback();
                 }
-            );
-        })(this);
+
+                if (this.list.on_height_change_cb) {
+                    this.list.on_height_change_cb();
+                }
+            }
+        );
 
         this.SetExpandedSubListParentHeight(-expanded_height);
 
@@ -496,5 +505,9 @@ function DashLayoutListRowInterface () {
         this.html.css({
             "min-height": this.height
         });
+
+        if (this.list.on_height_change_cb) {
+            this.list.on_height_change_cb();
+        }
     };
 }

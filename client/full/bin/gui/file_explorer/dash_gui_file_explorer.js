@@ -1,6 +1,7 @@
 function DashGuiFileExplorer (
     color=null, api="", parent_obj_id="", supports_desktop_client=false, supports_folders=true,
-    include_modified_keys_columns=false, extra_params={}, print_mode=false
+    include_modified_keys_columns=false, extra_params={}, print_mode=false, include_header_gui=true,
+    start_collapsed=null
 ) {
     /**
      * File Explorer box element.
@@ -34,6 +35,8 @@ function DashGuiFileExplorer (
      * @param {object} extra_params - Dictionary with extra params for each request type above,
      *                                where the function name for the request is the key
      * @param {boolean} print_mode - Removes interactive GUI and expands all folders for printing the page
+     * @param {boolean} include_header_gui - Whether to include tool row and upload button
+     * @param {null|boolean} start_collapsed - Not collapsible when left null, otherwise, defines starting state
      */
 
     this.color = color || Dash.Color.Light;
@@ -44,6 +47,8 @@ function DashGuiFileExplorer (
     this.include_modified_keys_columns = include_modified_keys_columns;
     this.extra_params = extra_params;
     this.print_mode = print_mode;
+    this.include_header_gui = include_header_gui;
+    this.start_collapsed = start_collapsed;
 
     // This is a quick, non-responsive solution to ensure the viewport is big enough for the extra columns
     if (window.innerWidth < 1065) {
@@ -67,6 +72,9 @@ function DashGuiFileExplorer (
     this.original_order = null;
     this.header_text = "Files";
     this.subheader_styling = {};
+    this.collapse_toggle = null;
+    this.animate_toggling = true;
+    this.on_height_change_cb = null;
     this.display_folders_first = true;
     this.include_list_header_row = true;
     this.desktop_client_name = "desktop";
@@ -116,16 +124,26 @@ function DashGuiFileExplorer (
                 this.DeleteButtonConfig
             ];
 
-            Dash.SetInterval(this, this.get_files_data, 10000);
+            setTimeout(
+                () => {
+                    Dash.SetInterval(this, this.get_files_data, 10000);
+                },
+                200  // Buffer for any button config changes
+            );
         }
 
         if (this.print_mode) {
-            this.get_files_data();
+            setTimeout(
+                () => {
+                    this.get_files_data();
+                },
+                200  // Buffer for any button config changes
+            );
         }
 
         this.add_header();
 
-        if (!this.read_only) {
+        if (!this.read_only && this.include_header_gui) {
             this.add_tool_row();
             this.add_upload_button();
         }
@@ -142,10 +160,10 @@ function DashGuiFileExplorer (
         this.subheader_styling = css;
     };
 
-    this.SetHeaderText = function (label_text="") {
+    this.SetHeaderText = function (label_text="", raw=false) {
         this.header_text = label_text;
 
-        this.header.SetText(label_text);
+        this.header.SetText(raw ? this.header_text : this.get_header_text());
     };
 
     this.SetDesktopClientName = function (name) {
@@ -182,14 +200,12 @@ function DashGuiFileExplorer (
         }
 
         if (!this.initialized) {
-            (function (self) {
-                setTimeout(
-                    function () {
-                        self.AddHTML(html, wait_for_list);
-                    },
-                    250
-                );
-            })(this);
+            setTimeout(
+                () => {
+                    this.AddHTML(html, wait_for_list);
+                },
+                250
+            );
 
             return;
         }
@@ -309,19 +325,16 @@ function DashGuiFileExplorer (
 
         this.archive_mode = !this.archive_mode;
 
-        var tag = " (Archive)";
-
-        if (this.archive_mode) {
-            this.header_text += tag;
-        }
-
-        else {
-            this.header_text = this.header_text.replace(tag, "");
-        }
-
-        this.SetHeaderText(this.header_text);
-
+        this.SetHeaderText(this.get_header_text());
         this.get_files_data(this.update_button_config_on_archive_toggled);
+    };
+
+    this.SetHeightChangeCallback = function (cb) {
+        this.on_height_change_cb = cb;
+    };
+
+    this.DisableToggleAnimation = function () {
+        this.animate_toggling = false;
     };
 
     this.update_button_config_on_archive_toggled = function () {
@@ -446,8 +459,8 @@ function DashGuiFileExplorer (
         row.Expand(preview.html);
     };
 
-    this.redraw_rows = function () {
-        if (!Dash.Validate.Object(this.files_data)) {
+    this.redraw_rows = function (force=false) {
+        if (!Dash.Validate.Object(this.files_data) || (this.start_collapsed === true && !this.list && !force)) {
             return;
         }
 
@@ -475,7 +488,7 @@ function DashGuiFileExplorer (
 
         // Draw files that don't live in subfolders
         this.files_data["order"].forEach(
-            function (file_id) {
+            (file_id) => {
                 if (!Dash.Validate.Object(this.get_file_data(file_id)["parent_folders"])) {
                     this.add_row(file_id);
                 }
@@ -514,8 +527,6 @@ function DashGuiFileExplorer (
             },
             300
         );
-
-
     };
 
     this.get_file_data = function (file_id) {
@@ -528,6 +539,20 @@ function DashGuiFileExplorer (
 
     this.get_file_url = function (file_data) {
         return file_data["url"] || file_data["orig_url"] || "";
+    };
+
+    this.get_header_text = function () {
+        var text = this.header_text;
+
+        if (this.files_data?.["order"]) {
+            text += " (" + this.files_data["order"].length + ")";
+        }
+
+        if (this.archive_mode) {
+            text += " - Archive";
+        }
+
+        return text;
     };
 
     this.GetDataForKey = function (file_id, key) {
