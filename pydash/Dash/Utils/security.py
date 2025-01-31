@@ -155,7 +155,7 @@ class OnePass:
         if debug:
             args.append("--dry-run")
 
-        # TODO: Use assignment statements to edit an item's built-in and custom fields
+        # To edit an item's built-in and custom fields, update this to leverage assignment statements:
         #  - https://developer.1password.com/docs/cli/item-edit/#edit-built-in-and-custom-fields
 
         return self.run_command(

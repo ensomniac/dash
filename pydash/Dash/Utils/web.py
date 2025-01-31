@@ -15,6 +15,7 @@ class WebCrawler:
     _ec: callable
     _keys: callable
     _driver: callable
+    _actions: callable
     _auto_gui: callable
 
     def __init__(self, headless=True, wait_timeout_sec=15, profile_root="", extra_stealth=False, cookies_path=""):
@@ -36,7 +37,7 @@ class WebCrawler:
         self._on_server = os.path.exists(OapiRoot)
 
         if self._on_server and not self.headless:
-            # TODO: Figure out how to do this with a virtual display (ex: using Xvfb)
+            # When needed, figure out how to do this with a virtual display (ex: Xvfb)
             raise NotImplementedError("Headed mode still needs to be implemented")
 
     @property
@@ -136,15 +137,30 @@ class WebCrawler:
 
         return self._auto_gui
 
+    @property
+    def actions(self):
+        if not hasattr(self, "_actions"):
+            from selenium.webdriver import ActionChains
+
+            self._actions = ActionChains(self.driver)
+
+        return self._actions
+
     def Quit(self):
+        if self.extra_stealth:
+            self.RandomScroll().RandomDelay()
+
         self.driver.quit()
 
         self.waits = {}
 
         delattr(self, "_driver")
 
-    def LoadPage(self, url):
+    def LoadPage(self, url, post_delay=True):
         self.driver.get(url)
+
+        if post_delay:
+            self.RandomDelay()
 
     def GetPageTitle(self):
         return self.driver.title
@@ -154,7 +170,7 @@ class WebCrawler:
             for char in text:
                 input_el.send_keys(char)
 
-                sleep(uniform(0.1, 0.5))
+                sleep(uniform(0.1, 0.3))
         else:
             input_el.send_keys(text)
 
@@ -168,17 +184,30 @@ class WebCrawler:
     def SubmitInput(self, input_el):
         input_el.send_keys(self.keys.RETURN)
 
-    def Click(self, element, headless_delay=True):
-        if self.extra_stealth:
-            self.MoveMouse(
-                to_element=element,
-                headless_delay=headless_delay
-            )
+    def ClickElement(self, element, headless_delay=True, attempt=1):
+        if attempt == 1:
+            if self.extra_stealth:
+                self.MoveMouse(
+                    to_element=element,
+                    headless_delay=headless_delay
+                )
 
-        element.click()
+            # This is unaware of success, so manual checks are necessary,
+            # such as checking for expected visual changes. If those manual
+            # checks fail, the below approaches may help, depending on the scenario.
+            element.click()
+
+        elif attempt == 2:
+            self.actions.move_to_element(element).click().perform()
+
+        elif attempt == 3:
+            self.driver.execute_script("arguments[0].click();", element)
+
+        else:
+            raise ValueError("Invalid attempt number")
 
     def RandomDelay(self):
-        sleep(uniform(0.5, 3.0))
+        sleep(uniform(0.5, 2.0))
 
         return self
 
@@ -211,7 +240,7 @@ class WebCrawler:
         self.auto_gui.moveTo(
             x,
             y,
-            duration=uniform(0.5, 2.0)
+            duration=uniform(0.5, 1.2)
         )
 
         return self
@@ -231,7 +260,7 @@ class WebCrawler:
 
     def WaitForElement(
         self, el_id="", el_name="", el_class="", css_selector="", xpath="",
-        wait_timeout_sec_override=0, for_click=False, must_exist=True, _stale_retry=False
+        wait_timeout_sec_override=0, for_click=False, to_be_removed=False, must_exist=True, _stale_retry=False
     ):
         """
         Supply one of the allowed params to wait for, and return, an expected element.
@@ -243,6 +272,7 @@ class WebCrawler:
         :param str xpath: Example format: `//*[@id="username"]/div[2]/div/div[2]/input` (default="")
         :param int wait_timeout_sec_override: Override the class' default wait timeout (default=0)
         :param bool for_click: Wait for the element (usually a button) to be clickable (default=False)
+        :param bool to_be_removed: Wait for the element to disappear or become stale (default=False)
         :param bool must_exist: Raise an exception if the element isn't found (default=True)
         :param bool _stale_retry: For internal use only (default=False)
 
@@ -272,11 +302,29 @@ class WebCrawler:
 
         from selenium.common.exceptions import TimeoutException, StaleElementReferenceException
 
+        wait = self.get_wait(wait_timeout_sec_override)
+
         try:
-            return self.get_wait(wait_timeout_sec_override).until(
-                self.ec.element_to_be_clickable(locator) if for_click
-                else self.ec.presence_of_element_located(locator)
-            )
+            if to_be_removed:
+                from selenium.common.exceptions import NoSuchElementException
+
+                try:
+                    return wait.until(self.ec.invisibility_of_element_located(locator))
+
+                except NoSuchElementException:
+                    return True
+
+                except:
+                    try:
+                        return wait.until(self.ec.staleness_of(locator))
+
+                    except NoSuchElementException:
+                        return True
+            else:
+                return wait.until(
+                    self.ec.element_to_be_clickable(locator) if for_click
+                    else self.ec.presence_of_element_located(locator)
+                )
 
         except StaleElementReferenceException as e:
             if _stale_retry:
@@ -291,6 +339,9 @@ class WebCrawler:
             )
 
         except TimeoutException as e:
+            if to_be_removed:
+                return False
+
             if not must_exist:
                 return None
 
