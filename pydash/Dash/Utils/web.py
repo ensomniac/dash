@@ -34,6 +34,7 @@ class WebCrawler:
             raise ValueError("Cookies path must end with '.pkl' extension (cookies get pickled)")
 
         self.waits = {}
+        self.repositioned_window = False
         self._on_server = os.path.exists(OapiRoot)
 
         if self._on_server and not self.headless:
@@ -64,14 +65,14 @@ class WebCrawler:
                 if options is None:
                     options = ChromeOptions()
 
-                if self.headless:
+                if self.headless:  # TODO: TEST THIS
                     options.add_argument("--enable-gpu")
                     options.add_argument("--window-size=1920,1080")
                     options.add_argument("--start-maximized")
 
                 if mac:
                     options.add_argument("--dns-prefetch-disable")
-                else:
+                else:  # TODO: TEST THIS
                     options.add_argument("--host-resolver-rules=MAP * ~NOTFOUND , EXCLUDE 127.0.0.1")
 
             if options:
@@ -153,6 +154,7 @@ class WebCrawler:
         self.driver.quit()
 
         self.waits = {}
+        self.repositioned_window = False
 
         delattr(self, "_driver")
 
@@ -161,6 +163,11 @@ class WebCrawler:
 
         if post_delay:
             self.RandomDelay()
+
+        if not self.repositioned_window and not self.headless:
+            self.driver.set_window_position(0, 0)  # For auto_gui
+
+            self.repositioned_window = True
 
     def GetPageTitle(self):
         return self.driver.title
