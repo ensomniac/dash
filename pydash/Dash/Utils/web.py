@@ -65,15 +65,11 @@ class WebCrawler:
                 if options is None:
                     options = ChromeOptions()
 
-                if self.headless:  # TODO: TEST THIS
-                    options.add_argument("--enable-gpu")
+                if self.headless:
                     options.add_argument("--window-size=1920,1080")
-                    options.add_argument("--start-maximized")
 
                 if mac:
                     options.add_argument("--dns-prefetch-disable")
-                else:  # TODO: TEST THIS
-                    options.add_argument("--host-resolver-rules=MAP * ~NOTFOUND , EXCLUDE 127.0.0.1")
 
             if options:
                 self._driver = Chrome(
