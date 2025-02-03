@@ -55375,10 +55375,11 @@ function DashLayoutToolbarInterface () {
 }
 
 class DashLayoutSelectorTabs {
-    constructor (binder, layout_name) {
+    constructor (binder, layout_name, selector_menu_opts={}) {
         this.binder = binder;
         this.color  = this.binder.color || Dash.Color.Light;
         this.layout_name = layout_name;
+        this.selector_menu_opts = selector_menu_opts;
         if (!this.layout_name) {
             console.error("DashLayoutSelectorTabs > Error: Invalid Layout Name: " + this.layout_name);
             console.trace();
@@ -55397,22 +55398,15 @@ class DashLayoutSelectorTabs {
         this.on_selected_callback = null;
         this.menu_initialized = null;
         this.menu_items       = null;
-        // this.active_ss_id     = Dash.Local.Get("active_ss_id");
-        // this.data             = null;
-        // this.song_selector    = null;
-        // this.details_tab      = null;
-        // this.active_tab       = null;
-        // this.active_tab_name  = null;
-        // this.initialized      = false;
-        // this.active_set_data  = null;
         this.setup_styles();
     };
     setup_styles () {
+        this.selector_menu_opts["icon_menu"] = this.selector_menu_opts["icon_menu"] || "object_group";
         this.selector_menu = new Dash.Gui.SelectorMenu(
             this,
             this.on_selector_menu_clicked,
-            "music",
-            {"item_icon": "battle_axe"}
+            this.selector_menu_opts["icon_menu"],
+            this.selector_menu_opts
         );
         this.new_button = new Dash.Gui.Button(
             "Create New Item",
@@ -55427,7 +55421,6 @@ class DashLayoutSelectorTabs {
         this.layout.AppendHTML(this.selector_menu.html);
         this.layout.PrependHTML(this.new_button.html);
         this.html.css({
-            // "padding": Dash.Size.Padding,
         });
         (function (self) {
             requestAnimationFrame(function () {
@@ -55437,9 +55430,7 @@ class DashLayoutSelectorTabs {
         })(this);
     };
     on_selector_menu_clicked (menu_item) {
-        // var item_id = menu_item["id"];
         this.LoadItem(menu_item["id"]);
-        // console.log("Menu Item Selected: ", item_id);
     };
     on_new_button_clicked () {
         if (this.on_new_callback) {
