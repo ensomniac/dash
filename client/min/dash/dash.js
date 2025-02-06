@@ -55516,6 +55516,9 @@ class DashLayoutSelectorTabs {
             this.LoadItem(item_id);
         };
     };
+    HideTabs () {
+        this.layout.SetTabAreaSize(0);
+    };
     LoadItem (item_id) {
         Dash.Local.Set(this.ls_key, item_id);
         var menu_item = this.menu_items[item_id];

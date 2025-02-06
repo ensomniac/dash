@@ -108,6 +108,10 @@ class DashLayoutSelectorTabs {
 
     };
 
+    HideTabs () {
+        this.layout.SetTabAreaSize(0);
+    };
+
     LoadItem (item_id) {
 
         Dash.Local.Set(this.ls_key, item_id);
