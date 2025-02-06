@@ -47,12 +47,17 @@ class WebCrawler:
             from selenium_stealth import stealth
             from undetected_chromedriver import Chrome, ChromeOptions
 
-            options = None
+            # options = None
+            options = ChromeOptions()
             mac = sys.platform == "darwin"
 
+            # After upgrading, there were intermittent conflicts and I can't
+            # seem to track it down, so explicitly setting this seems to solve it
+            options.binary_location = os.path.join("/usr", "bin", "google-chrome-stable")
+
             if self.profile_root:
-                if options is None:
-                    options = ChromeOptions()
+                # if options is None:
+                #     options = ChromeOptions()
 
                 split = self.profile_root.strip(os.path.sep).split(os.path.sep)
                 profile = split.pop()
@@ -62,8 +67,8 @@ class WebCrawler:
                 options.add_argument(f"--profile-directory={profile}")
 
             if self.extra_stealth:
-                if options is None:
-                    options = ChromeOptions()
+                # if options is None:
+                #     options = ChromeOptions()
 
                 if self.headless:
                     options.add_argument("--window-size=1920,1080")
