@@ -102,13 +102,42 @@ class LayerLink:
             if data["layer_ids"]:  # Prevent data errors from a mid-operation failure
                 self.SetProperty("layer_ids", data["layer_ids"])
 
-                raise Exception("Some layers failed to be unlinked")
+                raise Exception(f"Some layers failed to be unlinked:\n{data['layer_ids']}")
 
         from shutil import rmtree
 
         rmtree(self.root)
 
         return data
+
+    # Intended only to be called from Context2D directly, when it's updating its layer order and has deletions
+    def RemoveDeletedLayers(self, deleted_layer_ids=[]):
+        data = self.ToDict()
+
+        if not deleted_layer_ids:
+            return data
+
+        if not data["layer_ids"]:
+            return data
+
+        modified = False
+        filtered_layer_ids = []
+
+        for layer_id in data["layer_ids"]:
+            if layer_id in deleted_layer_ids:
+                modified = True
+
+                continue
+
+            filtered_layer_ids.append(layer_id)
+
+        if not modified:
+            return data
+
+        # Bypass the extra logic in self.SetProperties
+        self.data.update({"layer_ids": filtered_layer_ids})
+
+        return self.Save().ToDict()
 
     def handle_layer_id_changes(self, layer_ids=[]):
         removed = []
@@ -153,6 +182,11 @@ class LayerLink:
 
     def on_layer_ids_removed(self, removed, layer_ids=None):
         for layer_id in removed:
+            layer = self.context_2d.GetLayer(layer_id, load=False)
+
+            if not layer.Exists:  # Has since been deleted (would've been cleaned up already, but just in case)
+                continue
+
             try:
                 self.context_2d.SetLayerProperty(
                     layer_id=layer_id,

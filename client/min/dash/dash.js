@@ -23549,9 +23549,27 @@ function DashDocsIcons () {
             "align-items":     "center",
             "justify-content": "center"
         });
-        for (var icon_name in DashGuiIconMap) {
+        for (var icon_name of this.get_order()) {
             this.add_icon(icon_name);
         }
+    };
+    this.get_order = function () {
+        var map = {};
+        var order = [];
+        var to_sort = [];
+        for (var icon_name in DashGuiIconMap) {
+            var display_name = DashGuiIconMap[icon_name][0].toLowerCase();
+            if (to_sort.includes(display_name)) {
+                display_name += "_" + icon_name;
+            }
+            map[display_name] = icon_name;
+            to_sort.push(display_name);
+        }
+        to_sort.sort();
+        for (display_name of to_sort) {
+            order.push(map[display_name]);
+        }
+        return order;
     };
     this.add_icon = function (icon_name) {
         var container        = $("<div></div>");
@@ -23604,6 +23622,7 @@ function DashDocsIcons () {
             "height":         Dash.Size.RowHeight,
             "line-height":    Dash.Size.RowHeight + "px",
             "font-size":      (Dash.Size.RowHeight * 0.8) + "px",
+            "font-family":    "sans_serif_bold",
             "pointer-events": "none"
         });
         label_2.css({
@@ -23616,7 +23635,6 @@ function DashDocsIcons () {
             "line-height":    Dash.Size.RowHeight + "px",
             "text-align":     "center",
             "font-size":      (Dash.Size.RowHeight * 0.6) + "px",
-            "font-family":    "sans_serif_bold",
             "pointer-events": "none"
         });
         copied_highlight.css({
@@ -32930,7 +32948,7 @@ class DashGuiContext2DLayerLinks {
         toolbar.AddExpander();
         if (this.link_id) {
             this.delete_button = toolbar.AddButton(
-                "Delete",
+                "Delete Existing Links",
                 this.delete,
                 null,
                 null,
@@ -33604,7 +33622,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             // (this prevents the box from appearing to "jitter" when the border is toggled)
             "border": "1px solid rgba(0, 0, 0, 0)"
         };
-        if (this.type === "context") {
+        if (["context", "audio"].includes(this.type)) {
             css["pointer-events"] = "none";
         }
         this.html.css(css);
@@ -33700,7 +33718,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             // (this prevents the box from appearing to "jitter" when the border is toggled)
             "border": "1px solid rgba(0, 0, 0, 0)"
         };
-        if (this.type === "context") {
+        if (["context", "audio"].includes(this.type)) {
             css["pointer-events"] = "none";
         }
         this.html.css(css);
@@ -33713,7 +33731,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         if (this.selected) {
             return;
         }
-        if (from_click && this.type === "context") {
+        if (from_click && ["context", "audio"].includes(this.type)) {
             return;
         }
         if (from_click && this.parent_id && this.canvas.primitives[this.parent_id].IsSelected()) {
@@ -33725,7 +33743,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
         }
         this.canvas.DeselectAllPrimitives();
         var css = (border && !this.editor.preview_mode) ? {"border": "1px solid " + this.highlight_color} : {};
-        if (this.type === "context") {
+        if (["context", "audio"].includes(this.type)) {
             css["pointer-events"] = "none";
         }
         // When a layer is hovered in the layer stack, it adds +0.1 to the brightness
@@ -34074,7 +34092,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     };
     // Meant to be overridden by member classes
     this.on_hidden_change = function (hidden) {
-        if (this.type === "context") {
+        if (["context", "audio"].includes(this.type)) {
             return;
         }
         // Dash.Log.Warn("'on_hidden_change' function override is not defined in member class for type:", this.type);
@@ -34087,19 +34105,19 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     };
     // Meant to be overridden by member classes
     this.on_update = function () {
-        if (this.type !== "context") {
+        if (!(["context", "audio"].includes(this.type))) {
             Dash.Log.Warn("'on_update' function override is not defined in member class for type:", this.type);
         }
     };
     // Meant to be overridden by member classes
     this.on_locked_change = function () {
-        if (!(["context", "color"]).includes(this.type)) {
+        if (!(["context", "color", "audio"].includes(this.type))) {
             Dash.Log.Warn("'on_locked_change' function override is not defined in member class for type:", this.type);
         }
     };
     // Meant to be overridden by member classes
     this.on_opacity_change = function (value) {
-        if (this.type !== "context") {
+        if (!(["context", "audio"].includes(this.type))) {
             Dash.Log.Warn("'on_opacity_change' function override is not defined in member class for type:", this.type);
         }
         this.html.css({
@@ -34231,7 +34249,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
     };
     // Each type should have its own file which is called as a member of this file
     this.call_style = function () {
-        if (this.type === "context") {
+        if (["context", "audio"].includes(this.type)) {
             return true;
         }
         if (this.type === "text") {
@@ -36213,6 +36231,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         "text": "font",
         "image": "image",
         "video": "film",
+        "audio": "headphones",
         "color": "color_palette",
         "context": "project_diagram"
     };

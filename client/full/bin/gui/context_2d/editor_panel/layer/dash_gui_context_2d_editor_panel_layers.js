@@ -18,6 +18,7 @@ function DashGuiContext2DEditorPanelLayers (panel) {
         "text": "font",
         "image": "image",
         "video": "film",
+        "audio": "headphones",
         "color": "color_palette",
         "context": "project_diagram"
     };

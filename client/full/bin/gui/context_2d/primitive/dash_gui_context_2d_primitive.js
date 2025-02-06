@@ -54,7 +54,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             "border": "1px solid rgba(0, 0, 0, 0)"
         };
 
-        if (this.type === "context") {
+        if (["context", "audio"].includes(this.type)) {
             css["pointer-events"] = "none";
         }
 
@@ -182,7 +182,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             "border": "1px solid rgba(0, 0, 0, 0)"
         };
 
-        if (this.type === "context") {
+        if (["context", "audio"].includes(this.type)) {
             css["pointer-events"] = "none";
         }
 
@@ -200,7 +200,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
             return;
         }
 
-        if (from_click && this.type === "context") {
+        if (from_click && ["context", "audio"].includes(this.type)) {
             return;
         }
 
@@ -218,7 +218,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
 
         var css = (border && !this.editor.preview_mode) ? {"border": "1px solid " + this.highlight_color} : {};
 
-        if (this.type === "context") {
+        if (["context", "audio"].includes(this.type)) {
             css["pointer-events"] = "none";
         }
 
@@ -670,7 +670,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
 
     // Meant to be overridden by member classes
     this.on_hidden_change = function (hidden) {
-        if (this.type === "context") {
+        if (["context", "audio"].includes(this.type)) {
             return;
         }
 
@@ -687,21 +687,21 @@ function DashGuiContext2DPrimitive (canvas, layer) {
 
     // Meant to be overridden by member classes
     this.on_update = function () {
-        if (this.type !== "context") {
+        if (!(["context", "audio"].includes(this.type))) {
             Dash.Log.Warn("'on_update' function override is not defined in member class for type:", this.type);
         }
     };
 
     // Meant to be overridden by member classes
     this.on_locked_change = function () {
-        if (!(["context", "color"]).includes(this.type)) {
+        if (!(["context", "color", "audio"].includes(this.type))) {
             Dash.Log.Warn("'on_locked_change' function override is not defined in member class for type:", this.type);
         }
     };
 
     // Meant to be overridden by member classes
     this.on_opacity_change = function (value) {
-        if (this.type !== "context") {
+        if (!(["context", "audio"].includes(this.type))) {
             Dash.Log.Warn("'on_opacity_change' function override is not defined in member class for type:", this.type);
         }
 
@@ -869,7 +869,7 @@ function DashGuiContext2DPrimitive (canvas, layer) {
 
     // Each type should have its own file which is called as a member of this file
     this.call_style = function () {
-        if (this.type === "context") {
+        if (["context", "audio"].includes(this.type)) {
             return true;
         }
 

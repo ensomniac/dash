@@ -14,9 +14,35 @@ function DashDocsIcons () {
             "justify-content": "center"
         });
 
-        for (var icon_name in DashGuiIconMap) {
+        for (var icon_name of this.get_order()) {
             this.add_icon(icon_name);
         }
+    };
+
+    this.get_order = function () {
+        var map = {};
+        var order = [];
+        var to_sort = [];
+
+        for (var icon_name in DashGuiIconMap) {
+            var display_name = DashGuiIconMap[icon_name][0].toLowerCase();
+
+            if (to_sort.includes(display_name)) {
+                display_name += "_" + icon_name;
+            }
+
+            map[display_name] = icon_name;
+
+            to_sort.push(display_name);
+        }
+
+        to_sort.sort();
+
+        for (display_name of to_sort) {
+            order.push(map[display_name]);
+        }
+
+        return order;
     };
 
     this.add_icon = function (icon_name) {
@@ -75,6 +101,7 @@ function DashDocsIcons () {
             "height":         Dash.Size.RowHeight,
             "line-height":    Dash.Size.RowHeight + "px",
             "font-size":      (Dash.Size.RowHeight * 0.8) + "px",
+            "font-family":    "sans_serif_bold",
             "pointer-events": "none"
         });
 
@@ -88,7 +115,6 @@ function DashDocsIcons () {
             "line-height":    Dash.Size.RowHeight + "px",
             "text-align":     "center",
             "font-size":      (Dash.Size.RowHeight * 0.6) + "px",
-            "font-family":    "sans_serif_bold",
             "pointer-events": "none"
         });
 

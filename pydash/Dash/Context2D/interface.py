@@ -29,6 +29,7 @@ class Interface:
     PreCompsFull: dict
     Context2DRoot: str
     add_layer: callable
+    get_layer_links: callable
     add_layer_from_file: callable
     update_linked_layers_on_change: callable
     parse_aspect_keys_for_properties: callable
@@ -154,11 +155,21 @@ class Interface:
             if len(properties["layer_order"]) < len(self.LayerOrder):  # Deletion
                 from shutil import rmtree
 
+                deleted_layer_ids = []
+
                 for layer_id in os.listdir(self.LayersRoot):
                     if layer_id in properties["layer_order"]:
                         continue
 
                     rmtree(os.path.join(self.LayersRoot, layer_id))
+
+                    deleted_layer_ids.append(layer_id)
+
+                if deleted_layer_ids:
+                    layer_links = self.get_layer_links(return_classes=True)
+
+                    for link_id in layer_links:
+                        layer_links[link_id].RemoveDeletedLayers(deleted_layer_ids)
 
             if moved_layer_id:
                 from .layer import Layer
@@ -203,10 +214,10 @@ class Interface:
     def AddVideoLayer(self, file, filename):
         return self.add_layer_from_file(file, filename, "video")
 
-    def GetLayer(self, layer_id):
+    def GetLayer(self, layer_id, load=True):
         from .layer import Layer
 
-        return Layer(self, layer_id)
+        return Layer(self, layer_id, load=load)
 
     def SetLayerProperty(
         self, layer_id, key, value, imported_context_layer_id="",

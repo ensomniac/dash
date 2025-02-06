@@ -197,7 +197,7 @@ class DashGuiContext2DLayerLinks {
 
         if (this.link_id) {
             this.delete_button = toolbar.AddButton(
-                "Delete",
+                "Delete Existing Links",
                 this.delete,
                 null,
                 null,

@@ -13,13 +13,16 @@ class Layer:
     _default_display_name: str
     _imported_context_data: dict
 
-    def __init__(self, context_2d, obj_id="", new_layer_type="", new_layer_imported_context_id=""):
+    def __init__(self, context_2d, obj_id="", new_layer_type="", new_layer_imported_context_id="", load=True):
         self.context_2d = context_2d
         self.ID = obj_id
         self.Type = new_layer_type  # text, image, video, etc
 
         # When importing another context into a context
         self._new_layer_imported_context_id = new_layer_imported_context_id
+
+        # Should always be True, except for rare cases where you don't want to raise on failed init
+        self._load = load
 
         self.data = {}
         self._new = False
@@ -91,7 +94,12 @@ class Layer:
             *self.context_2d.LayerExtraFloatKeys
         ]
 
-        self.load_data()
+        if self._load:
+            self.load_data()
+
+    @property
+    def Exists(self):
+        return self.ID and os.path.exists(self.data_path)
 
     @property
     def root(self):
@@ -880,7 +888,7 @@ class Layer:
 
             url = file_data[key]
 
-            if not url:
+            if not url or "/media_sets/" in url or "/layers/" not in url:
                 continue
 
             split = url.split("/layers/")

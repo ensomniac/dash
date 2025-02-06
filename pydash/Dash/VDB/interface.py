@@ -65,10 +65,12 @@ class Interface:
 
         return response
 
-    def GetAll(self, combo_types=[], include_combos=True, _vdb_type="", temp_kwargs={}, unset_temp=True):
+    def GetAll(
+        self, combo_types=[], include_combos=True, _vdb_type="", temp_kwargs={}, unset_temp=True, collection=None
+    ):
         self.set_temp_attrs(_vdb_type, **temp_kwargs)
 
-        response = self.GetCollection().GetAll()
+        response = (collection or self.GetCollection()).GetAll()
 
         if include_combos:
             response["combo_options"] = self.GetComboOptions(combo_types=combo_types)

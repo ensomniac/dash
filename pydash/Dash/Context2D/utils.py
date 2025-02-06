@@ -107,7 +107,7 @@ class Utils:
 
         return layers
 
-    def get_layer_links(self):
+    def get_layer_links(self, return_classes=False):
         layer_links = {}
 
         if not os.path.exists(self.LayerLinksRoot):
@@ -121,7 +121,9 @@ class Utils:
         from .layer_link import LayerLink
 
         for link_id in link_ids:
-            layer_links[link_id] = LayerLink(self, link_id).ToDict()
+            layer_link = LayerLink(self, link_id)
+
+            layer_links[link_id] = layer_link if return_classes else layer_link.ToDict()
 
         return layer_links
 
