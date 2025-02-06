@@ -14,6 +14,9 @@ function DashGuiSelectorMenuTray (selector_menu) {
     this.close_skirt = $("<div></div>");
     this.background  = $("<div></div>");
     this.content     = $("<div></div>");
+    this.top_button_box    = $("<div></div>");
+    this.top_box_height = Dash.Size.RowHeight + (Dash.Size.Padding * 1);
+    this.on_new_callback = null;
 
     this.setup_styles = function () {
 
@@ -31,8 +34,6 @@ function DashGuiSelectorMenuTray (selector_menu) {
             "position": "fixed",
             "left":   0,
             "top":    0,
-            "width": 500,
-            "height": Dash.Size.ColumnWidth * 3,
             "background": "rgba(255, 255, 255, 0.0)",
             "pointer-events": "auto",
             "user-select":    "none",
@@ -43,7 +44,7 @@ function DashGuiSelectorMenuTray (selector_menu) {
             "position": "fixed",
             "left":   0,
             "top":    0,
-            "right": 0,
+            "right":  0,
             "bottom": 0,
             "background": "rgba(0, 0, 0, 0.3)",
             "pointer-events": "auto",
@@ -51,12 +52,12 @@ function DashGuiSelectorMenuTray (selector_menu) {
         });
 
         this.content.css({
-            "position": "absolute",
-            "display":  "flex",
-            "flex-wrap": "wrap",
+            "position":        "absolute",
+            "display":         "flex",
+            "flex-wrap":       "wrap",
             "justify-content": "left",
-            "align-items": "flex-start",
-            "align-content": "flex-start",
+            "align-items":     "flex-start",
+            "align-content":   "flex-start",
             "left":   0,
             "top":    0,
             "right":  0,
@@ -65,12 +66,53 @@ function DashGuiSelectorMenuTray (selector_menu) {
             "background":     this.color.Background,
             "pointer-events": "auto",
             "user-select":    "none",
-            "box-shadow": "0px 10px 30px 0px rgba(0, 0, 0, 0.5)",
-            "padding-left": Dash.Size.Padding,
-            "padding-top": Dash.Size.Padding,
+            "box-shadow":     "0px 10px 30px 0px rgba(0, 0, 0, 0.7)",
+            "padding-left":   Dash.Size.Padding,
+            "padding-top":    Dash.Size.Padding,
+        });
+
+        this.top_button_box.css({
+            "position": "absolute",
+            "background":     "rgba(255, 255, 255, 0.0)",
+            "pointer-events": "auto",
+            "user-select":    "none",
+            "display": "flex",
         });
 
         this.background.append(this.content);
+        this.background.append(this.top_button_box);
+
+        this.new_button = new Dash.Gui.Button("New", this.on_new_clicked, this, this.color, {});
+        var icon = this.new_button.AddIcon("add_square", 1.0, "rgba(255, 255, 255, 0.8)", true)
+
+        var icon_scale = (this.top_box_height - (Dash.Size.Padding * 2.0)) * 10;
+        icon.SetSize(icon_scale);
+
+        icon.html.css({
+            "margin": 0,
+            "margin-top": -(Dash.Size.Padding * 0.25),
+            "margin-right": Dash.Size.Padding * 0.5,
+            "padding": 0,
+            "margin-right": Dash.Size.Padding * 0.25,
+        });
+
+        this.top_button_box.append(Dash.Gui.GetFlexSpacer());
+        this.top_button_box.append(this.new_button.html);
+
+        this.new_button.html.css({
+            "height": this.top_box_height - (Dash.Size.Padding * 0.5),
+            "margin-top": Dash.Size.Padding * 0.25,
+            "margin-bottom": Dash.Size.Padding * 0.25,
+            "opacity": 0,
+            "pointer-events": "none",
+        });
+
+        this.new_button.label.css({
+            "height": this.top_box_height - (Dash.Size.Padding * 0.5),
+            "line-height": (this.top_box_height - (Dash.Size.Padding * 0.5)) + "px",
+            "padding-left": Dash.Size.Padding,
+            "padding-right": 0,
+        });
 
         (function (self) {
             self.close_skirt.on("click", function () {
@@ -79,7 +121,6 @@ function DashGuiSelectorMenuTray (selector_menu) {
 
             self.content.on("click", function (event) {
                 event.preventDefault();
-
                 return false;
             });
 
@@ -93,7 +134,30 @@ function DashGuiSelectorMenuTray (selector_menu) {
         })(this);
     };
 
+    this.SetNewItemCB = function(on_new_callback, label_text="") {
+        this.on_new_callback = on_new_callback;
+        this.new_button.label.text(label_text || "New");
+
+        this.new_button.html.css({
+            "opacity": 1,
+            "pointer-events": "auto",
+        });
+
+    };
+
+    this.on_new_clicked = function () {
+
+        if (!this.on_new_callback) {
+            alert("Selector Menu is missing a callback for the new button!")
+            return;
+        };
+
+        this.on_new_callback();
+
+    };
+
     this.get_content_size = function () {
+
         var row_padding = (Dash.Size.Padding * 1) + (Dash.Size.Padding * (this.num_rows - 1));
         var col_padding = (Dash.Size.Padding * 1) + (Dash.Size.Padding * (this.num_cols - 1));
 
@@ -190,6 +254,15 @@ function DashGuiSelectorMenuTray (selector_menu) {
             "height": this.content_size["height"] + (ex_mouse_buffer_px * 2),
         });
 
+        var top_button_box_x_offset = Dash.Size.RowHeight + (Dash.Size.Padding * 1);
+
+        this.top_button_box.css({
+            "left":   ex_mouse_buffer_px + top_button_box_x_offset,
+            "top":    ex_mouse_buffer_px,
+            "width":  this.content_size["width"] - (top_button_box_x_offset - Dash.Size.Padding),
+            "height": this.top_box_height,
+        });
+
         this.content.css({
             "left":   ex_mouse_buffer_px,
             "top":    ex_mouse_buffer_px + this.selector_menu.size,
@@ -201,6 +274,7 @@ function DashGuiSelectorMenuTray (selector_menu) {
 
         $("body").append(this.close_skirt);
         $("body").append(this.background);
+        this.background.append(this.top_button_box);
 
         this.close_skirt.stop().animate({"opacity": 1}, 300);
 

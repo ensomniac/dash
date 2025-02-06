@@ -158,6 +158,12 @@ class DashLayoutSelectorTabs {
 
     };
 
+    SetNewItemMenuCB (on_new_callback, label_text="") {
+        // Turns on the selector menu new button
+        on_new_callback = on_new_callback.bind(this.binder);
+        return this.selector_menu.SetNewItemCB(on_new_callback, label_text);
+    };
+
     SetNewItemCB (on_new_callback, label_text="") {
 
         this.on_new_callback = on_new_callback.bind(this.binder);

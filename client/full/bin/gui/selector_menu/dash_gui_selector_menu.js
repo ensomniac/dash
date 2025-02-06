@@ -37,10 +37,12 @@ function DashGuiSelectorMenu (binder, selected_callback, icon_name="unknown", op
 
     this.OnItemClicked = function (item) {
         var clicked_item = null;
-
         this.tray.Hide();
         this.selected_callback.bind(this.binder)(item);
+    };
 
+    this.SetNewItemCB = function(on_new_callback, label_text="") {
+        this.tray.SetNewItemCB(on_new_callback, label_text);
     };
 
     this.setup_styles = function () {
