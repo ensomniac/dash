@@ -47,17 +47,20 @@ class WebCrawler:
             from selenium_stealth import stealth
             from undetected_chromedriver import Chrome, ChromeOptions
 
-            # options = None
-            options = ChromeOptions()
+            options = None
             mac = sys.platform == "darwin"
 
-            # After upgrading, there were intermittent conflicts and I can't
-            # seem to track it down, so explicitly setting this seems to solve it
-            options.binary_location = os.path.join("/usr", "bin", "google-chrome-stable")
+            if self._on_server:
+                if options is None:
+                    options = ChromeOptions()
+
+                # After upgrading, there were intermittent conflicts and I can't
+                # seem to track it down, so explicitly setting this seems to solve it
+                options.binary_location = os.path.join("/usr", "bin", "google-chrome-stable")
 
             if self.profile_root:
-                # if options is None:
-                #     options = ChromeOptions()
+                if options is None:
+                    options = ChromeOptions()
 
                 split = self.profile_root.strip(os.path.sep).split(os.path.sep)
                 profile = split.pop()
@@ -67,8 +70,8 @@ class WebCrawler:
                 options.add_argument(f"--profile-directory={profile}")
 
             if self.extra_stealth:
-                # if options is None:
-                #     options = ChromeOptions()
+                if options is None:
+                    options = ChromeOptions()
 
                 if self.headless:
                     options.add_argument("--window-size=1920,1080")
@@ -214,6 +217,68 @@ class WebCrawler:
         else:
             raise ValueError("Invalid attempt number")
 
+    def MakeDropdownSelection(self, dropdown, value="", label_text=""):
+        if value:
+            dropdown.select_by_value(value)
+
+        elif label_text:
+            dropdown.select_by_visible_text(label_text)
+
+        else:
+            raise ValueError("Must provide either value or label_text")
+
+        self.driver.execute_script(
+            "arguments[0].dispatchEvent(new Event('change', {bubbles: true}));",
+            dropdown._el  # noqa
+        )
+
+        sleep(0.5)
+
+    def GetDropdownOptions(
+        self, dropdown, values_only=False, ignore_no_value=False,
+        as_elements=False, enforce_uniqueness=False
+    ):
+        if enforce_uniqueness:
+            values = []
+            options = []
+
+            for option in dropdown.options:
+                value = option.get_attribute("value")
+
+                if (ignore_no_value and not value) or value in values:
+                    continue
+
+                values.append(option.get_attribute("value"))
+
+                options.append(option)
+
+            if as_elements:
+                return options
+
+            if values_only:
+                return values
+
+            return [
+                {option.get_attribute("value"): option.text}
+                for option in options
+            ]
+
+        if as_elements:
+            return dropdown.options
+
+        if values_only:
+            return [
+                option.get_attribute("value")
+                for option in dropdown.options
+                if (option.get_attribute("value") if ignore_no_value else True)
+            ]
+
+        return [
+            {option.get_attribute("value"): option.text}
+            for option in dropdown.options
+            if (option.get_attribute("value") if ignore_no_value else True)
+        ]
+
     def RandomDelay(self):
         sleep(uniform(0.5, 2.0))
 
@@ -268,7 +333,8 @@ class WebCrawler:
 
     def WaitForElement(
         self, el_id="", el_name="", el_class="", css_selector="", xpath="",
-        wait_timeout_sec_override=0, for_click=False, to_be_removed=False, must_exist=True, _stale_retry=False
+        wait_timeout_sec_override=0, for_click=False, is_dropdown=False, for_multiple=False,
+        to_be_removed=False, must_exist=True, _stale_retry=False
     ):
         """
         Supply one of the allowed params to wait for, and return, an expected element.
@@ -280,12 +346,17 @@ class WebCrawler:
         :param str xpath: Example format: `//*[@id="username"]/div[2]/div/div[2]/input` (default="")
         :param int wait_timeout_sec_override: Override the class' default wait timeout (default=0)
         :param bool for_click: Wait for the element (usually a button) to be clickable (default=False)
+        :param bool is_dropdown: Wait for a dropdown element, returning a `Select` (default=False)
+        :param bool for_multiple: Wait for multiple elements, returned as a `list` (default=False)
         :param bool to_be_removed: Wait for the element to disappear or become stale (default=False)
         :param bool must_exist: Raise an exception if the element isn't found (default=True)
         :param bool _stale_retry: For internal use only (default=False)
 
-        :return: Element
+        :return: The expected element. If `is_dropdown` is True, a Select instance
+                 is returned. If `for_multiple` is True, a list of elements is returned.
         :rtype: selenium.webdriver.remote.webelement.WebElement
+                or selenium.webdriver.support.ui.Select
+                or list[selenium.webdriver.remote.webelement.WebElement]
         """
 
         if el_id:
@@ -329,10 +400,21 @@ class WebCrawler:
                     except NoSuchElementException:
                         return True
             else:
-                return wait.until(
+                element = wait.until(
                     self.ec.element_to_be_clickable(locator) if for_click
+                    else self.ec.presence_of_all_elements_located(locator) if for_multiple
                     else self.ec.presence_of_element_located(locator)
                 )
+
+                if for_multiple:
+                    return element
+
+                if is_dropdown:
+                    from selenium.webdriver.support.ui import Select
+
+                    return Select(element)
+
+                return element
 
         except StaleElementReferenceException as e:
             if _stale_retry:
@@ -343,7 +425,7 @@ class WebCrawler:
             # Retry one more time
             return self.WaitForElement(
                 el_id, el_name, el_class, css_selector, xpath,
-                wait_timeout_sec_override, for_click, must_exist, _stale_retry=True
+                wait_timeout_sec_override, for_click, is_dropdown, must_exist, _stale_retry=True
             )
 
         except TimeoutException as e:
