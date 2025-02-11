@@ -19,8 +19,6 @@ class WebCrawler:
     _auto_gui: callable
 
     def __init__(self, headless=True, wait_timeout_sec=15, profile_root="", extra_stealth=False, cookies_path=""):
-        from Dash.Utils import OapiRoot
-
         self.headless = headless
         self.wait_timeout_sec = wait_timeout_sec
         self.profile_root = profile_root  # Default to NO profile, otherwise, must explicitly provide one
@@ -33,13 +31,46 @@ class WebCrawler:
         if self.cookies_path and not self.cookies_path.endswith(".pkl"):
             raise ValueError("Cookies path must end with '.pkl' extension (cookies get pickled)")
 
+        from Dash.Utils import OapiRoot  # Leave this here, can't be top-level import
+
         self.waits = {}
+        self.virtual_display = False
         self.repositioned_window = False
         self._on_server = os.path.exists(OapiRoot)
 
         if self._on_server and not self.headless:
-            # When needed, figure out how to do this with a virtual display (ex: Xvfb)
-            raise NotImplementedError("Headed mode still needs to be implemented")
+            # Ex:
+            #     Xvfb (recommended):
+            #         - Requires a VNC client on local machine
+            #             - TigerVNC works great for this, Apple's built-in Screen Sharing app doesn't
+            #         - [TERMINAL 1]
+            #             - Access the server as normal via `ssh user@ipaddress`
+            #             - Start virtual display session via `Xvfb :99 -screen 0 1920x1080x24 &`
+            #             - Set DISPLAY via `export DISPLAY=:99`
+            #             - Start VNC session via `x11vnc -display :99 -nopw -listen localhost -xkb &`
+            #         - [TERMINAL 2]
+            #             - Access the server via `ssh -L 5900:localhost:5900 user@ipaddress`
+            #             - Set DISPLAY via `export DISPLAY=:99`
+            #         - Connect VNC client to `localhost:5900`
+            #         - [TERMINAL 2]
+            #             - Run the server script that uses this class
+            #             - Any graphics will be automatically routed to the VNC client
+            #     X11:
+            #         - Requires XQuartz on local machine
+            #         - Access the server via `ssh -Y user@ipaddress`
+            #         - DISPLAY will already be populated
+            #         - Run the server script that uses this class
+            #         - X11 will automatically open a window on local machine to route graphics
+            #             - There are unresolved errors with this approach that cause it to not
+            #               work reliably with selenium, and I dropped it after two hours wasted.
+            #               This is the simplest approach for non-selenium graphics routing, though.
+            if not os.environ.get("DISPLAY"):
+                raise EnvironmentError("Headed mode requires DISPLAY env var to be set, either via X11 or Xvfb")
+
+            if not os.environ.get("XAUTHORITY"):  # Required for X11
+                os.environ["XAUTHORITY"] = os.path.expanduser("~/.Xauthority")
+
+            self.virtual_display = True
 
     @property
     def driver(self):
@@ -69,6 +100,9 @@ class WebCrawler:
                 options.add_argument(f"--user-data-dir={root}")
                 options.add_argument(f"--profile-directory={profile}")
 
+                if self.virtual_display:
+                    self.clear_profile_lock_files(self.profile_root)
+
             if self.extra_stealth:
                 if options is None:
                     options = ChromeOptions()
@@ -80,12 +114,18 @@ class WebCrawler:
                     options.add_argument("--dns-prefetch-disable")
 
             if options:
-                self._driver = Chrome(
-                    headless=self.headless,
-                    options=options
-                )
+                if self.virtual_display:
+                    self._driver = Chrome(options=options)
+                else:
+                    self._driver = Chrome(
+                        headless=self.headless,
+                        options=options
+                    )
             else:  # In this case, we don't want to supply a default `options` object
-                self._driver = Chrome(headless=self.headless)
+                if self.virtual_display:
+                    self._driver = Chrome()
+                else:
+                    self._driver = Chrome(headless=self.headless)
 
             stealth(
                 driver=self._driver,
@@ -175,6 +215,9 @@ class WebCrawler:
 
     def GetPageTitle(self):
         return self.driver.title
+
+    def GetPageURL(self):
+        return self.driver.current_url
 
     def PopulateInput(self, input_el, text, is_file_input=False):
         if self.extra_stealth and not is_file_input:
@@ -456,3 +499,21 @@ class WebCrawler:
             element.location["x"] + (element.size["width"] * 0.5),
             element.location["y"] + (element.size["height"] * 0.5)
         )
+
+    def clear_profile_lock_files(self, profile_dir):
+        from glob import glob
+
+        patterns = [
+            os.path.join(profile_dir, "SingletonLock"),
+            os.path.join(profile_dir, "SingletonSocket*"),
+            os.path.join(profile_dir, "SingletonCookie")
+        ]
+
+        for pattern in patterns:
+            for lock_file in glob(pattern):
+                os.remove(lock_file)
+
+        lock_path = os.path.join(profile_dir, "LOCK")
+
+        if os.path.exists(lock_path):
+            os.remove(lock_path)
