@@ -8,6 +8,9 @@ import sys
 
 
 class Users:
+    _analog_context: dict
+    _dash_global: callable
+
     def __init__(self, request_params={}, dash_context={}):
         self.request_params = request_params
         self._dash_context = dash_context
@@ -28,14 +31,67 @@ class Users:
     @property
     def dash_context(self):
         if not self._dash_context:
-            if not self.request_params or not self.request_params.get("asset_path"):
-                raise Exception("Error: (Users) No access to Dash Context asset path (no request params)")
+            if not hasattr(self, "_analog_context"):
+                # Explicitly evaluate analog_context to trigger its logic, since it could populate _dash_context
+                _ = self.analog_context
 
-            from Dash.PackageContext import Get
+            if not self._dash_context:
+                if (
+                    self.dash_global
+                    and hasattr(self.dash_global, "Context")
+                    and self.dash_global.Context
+                ):
+                    self._dash_context = self.dash_global.Context
+                else:
+                    if not self.request_params or not self.request_params.get("asset_path"):
+                        raise Exception("Error: (Users) No access to Dash Context asset path (no request params)")
 
-            self._dash_context = Get(self.request_params["asset_path"])
+                    from Dash.PackageContext import Get
+
+                    self._dash_context = Get(self.request_params["asset_path"])
 
         return self._dash_context
+
+    @property
+    def analog_context(self):
+        if not hasattr(self, "_analog_context"):
+            if (
+                self.dash_global
+                and hasattr(self.dash_global, "AnalogContext")
+                and self.dash_global.AnalogContext
+            ):
+                self._analog_context = self.dash_global.AnalogContext
+            else:
+                from Dash.PackageContext import GetAnalogIndex
+
+                self._analog_context = {}
+
+                try:
+                    analog_index = GetAnalogIndex()
+
+                    if analog_index.get("dash_context"):
+                        self._dash_context = analog_index["dash_context"]
+
+                    if analog_index.get("analog_context"):
+                        self._analog_context = analog_index["analog_context"]
+
+                except KeyError:
+                    pass
+
+            # Expose access for older code without requiring adding support for this new context
+            if self._dash_context:
+                self._dash_context["analog_context"] = self._analog_context
+
+        return self._analog_context
+
+    @property
+    def dash_global(self):
+        if not hasattr(self, "_dash_global"):
+            from Dash import __name__ as DashName
+
+            self._dash_global = sys.modules[DashName]
+
+        return self._dash_global
 
     def Reset(self, user_email_domain_bypass_emails=[], send_reset_email=True):
         email = str(self.request_params.get("email")).strip().lower()
@@ -49,15 +105,7 @@ class Users:
 
         if not os.path.exists(user_root):
             self.validate_dash_guide_account_creation(email)
-
-            from Dash.Utils import ValidateEmailAddress
-
-            # Make sure it's a real, existing email address that actually exists before
-            # we create a user for an email address that was simply misspelled, etc
-            if not ValidateEmailAddress(email):
-                from Dash.Utils import ClientAlert
-
-                raise ClientAlert("Invalid email address.\nPlease double-check and try again.")
+            self.validate_email_address(email)
 
             os.makedirs(user_root)
 
@@ -197,6 +245,87 @@ class Users:
             """</html>"""
         ])
 
+    def UpdateEmail(self, return_logs=False):
+        user = self.ValidateUser()
+
+        if not user:
+            return {
+                "error": "Invalid User - x73894",
+                "_error": f"user: {user}"
+            }
+
+        if not self.request_params.get("new_email"):
+            return {"error": "Can't update email without a new email address"}
+
+        new_email = str(self.request_params["new_email"]).strip().lower()
+
+        self.validate_email_address(new_email)
+
+        # If updating someone else's password from the client, there will
+        # be an 'email' param, otherwise, update the requesting user's password
+        old_email = (self.request_params.get("email") or "").lower().strip() or user["email"].lower().strip()
+
+        old_email_root = os.path.join(self.dash_context["srv_path_local"], "users", old_email)
+        new_email_root = os.path.join(self.dash_context["srv_path_local"], "users", new_email)
+
+        if os.path.exists(new_email_root):
+            from Dash.Utils import ClientAlert
+
+            raise ClientAlert(
+                "There's already an account with this email address.\n\nIf you believe "
+                "this in error, please reach out to your manager or the dev team."
+            )
+
+        from shutil import copytree, rmtree
+        from Dash.LocalStorage import DashLocalStorage
+
+        copytree(old_email_root, new_email_root)
+
+        ls = DashLocalStorage(dash_context=self.dash_context)
+
+        logs = {
+            new_email_root: ls.RecursivelyReplaceIDInRoot(
+                root=new_email_root,
+                old_id=old_email,
+                new_id=new_email,
+                indent_char="    "
+            )
+        }
+
+        for filename in os.listdir(self.dash_context["srv_path_local"]):
+            if "users" in filename:
+                continue
+
+            root = os.path.join(self.dash_context["srv_path_local"], filename)
+
+            if not os.path.isdir(root):
+                continue
+
+            log = ls.RecursivelyReplaceIDInRoot(
+                root=root,
+                old_id=old_email,
+                new_id=new_email,
+                indent_char="    "
+            )
+
+            if len(log) > 1:
+                logs[root] = log
+
+        rmtree(old_email_root)
+
+        self.analog_update_on_email_change(old_email, new_email)
+
+        response = {
+            "updated": True,
+            "old_email": old_email,
+            "new_email": new_email
+        }
+
+        if return_logs:
+            response["logs"] = logs
+
+        return response
+
     def UpdatePassword(self):
         user = self.ValidateUser()
 
@@ -208,7 +337,8 @@ class Users:
 
         new_password = (self.request_params.get("p") or "").strip()
 
-        # If updating someone else's password from the client, there will be an 'email' param, otherwise, update the requesting user's password
+        # If updating someone else's password from the client, there will
+        # be an 'email' param, otherwise, update the requesting user's password
         email = (self.request_params.get("email") or "").lower().strip() or user["email"].lower().strip()
 
         if not new_password or len(new_password) < 5:
@@ -394,6 +524,10 @@ class Users:
             obj_id=email
         )
 
+    # Wrapper
+    def GetUserDataRoot(self, user_email_to_get):
+        return "/".join(self.GetUserDataPath(user_email_to_get).split("/")[:-1]) + "/"
+
     def GetUserData(self, user_email, create_if_missing=True):
         return self.get_user_info(user_email, create_if_missing)
 
@@ -443,6 +577,53 @@ class Users:
             return_data["init"] = self.get_user_init(email)
 
         return return_data
+
+    def UploadUserImage(self):
+        from Dash.Utils import UploadFile
+        from Dash.LocalStorage import Read, Write
+
+        data_root = self.GetUserDataRoot(self.request_params["user_data"]["email"])
+        img_root = os.path.join(data_root, "img")
+        user_data_path = os.path.join(data_root, "usr.data")
+        user_data = Read(user_data_path)
+
+        user_data["img"] = UploadFile(
+            dash_context=self.dash_context,
+            user=user_data,
+            file_root=img_root,
+            file_bytes_or_existing_path=self.request_params["file"],
+            filename=self.request_params["filename"]
+        )
+
+        Write(user_data_path, user_data)
+
+        # Cleanup old images
+        for filename in os.listdir(img_root):
+            if filename.startswith(user_data["img"]["id"]):
+                continue
+
+            try:
+                os.remove(os.path.join(img_root, filename))
+
+            except FileNotFoundError:
+                pass
+
+        return user_data
+
+    def validate_email_address(self, email):
+        from Dash.Utils import ValidateEmailAddress
+
+        # Make sure it's a real, existing email address that actually exists before
+        # we create a user for an email address that was simply misspelled, etc
+        if ValidateEmailAddress(email):
+            return
+
+        from Dash.Utils import ClientAlert
+
+        raise ClientAlert(
+            "Invalid email address.\nPlease double-check and try again.\n\n"
+            "If you believe this is in error, please inform your manager or the dev team."
+        )
 
     # Wrapper
     def send_email(self, subject="", msg="", notify_email_list=[], error=""):
@@ -539,6 +720,45 @@ class Users:
             "Your request to create an account has been sent to admin. If approved, "
             "you'll receive an email with a link to get a temporary password to log in."
         )
+
+    def analog_update_on_email_change(self, old_email, new_email):
+        try:
+            if (
+                self.analog_context
+                and self.analog_context.get("user_email_domain_bypass_emails")
+            ):
+                delete = old_email in self.analog_context["user_email_domain_bypass_emails"]
+
+                add = (
+                    new_email not in self.analog_context["user_email_domain_bypass_emails"]
+                    and not new_email.endswith(self.dash_context["domain"])
+                )
+
+                if add or delete:
+                    from Analog.VDB import VDB
+                    from Dash.PackageContext import Get as GetDashContext
+
+                    analog_vdb = VDB(
+                        vdb_type=self.analog_context["vdb_type"],
+                        obj_id=self.analog_context["id"],
+                        dash_context=GetDashContext("analog")
+                    )
+
+                    if delete:
+                        analog_vdb.UpdateUserEmailDomainBypassEmails(email_to_remove=old_email)
+
+                    if add:
+                        analog_vdb.UpdateUserEmailDomainBypassEmails(email_to_add=new_email)
+        except:
+            from traceback import format_exc
+            from Dash.Utils import SendEmail
+
+            # Don't want any issues here interrupting the email change, so we can address any issues if they arise
+            SendEmail(
+                subject="Email Change - Analog Error",
+                msg="Something failed when trying to handle Analog updates during an email change.",
+                error=format_exc()
+            )
 
     def decode_base64(self, data, altchars=b"+/"):
         """
@@ -762,8 +982,16 @@ def Login(use_pin=False, request_params={}, dash_context={}):
     return Users(request_params, dash_context).Login(use_pin)
 
 
+def UpdateEmail(request_params={}, dash_context={}):
+    return Users(request_params, dash_context).UpdateEmail()
+
+
 def UpdatePassword(request_params={}, dash_context={}):
     return Users(request_params, dash_context).UpdatePassword()
+
+
+def UploadUserImage(request_params={}, dash_context={}):
+    return Users(request_params, dash_context).UploadUserImage()
 
 
 def UpdatePIN(email="", pin="", token_validation=True, request_params={}, dash_context={}):
@@ -786,6 +1014,10 @@ def GetUserDataPath(user_email_to_get, request_params={}, dash_context={}):
     return Users(request_params, dash_context).GetUserDataPath(user_email_to_get)
 
 
+def GetUserDataRoot(user_email_to_get, request_params={}, dash_context={}):
+    return Users(request_params, dash_context).GetUserDataRoot(user_email_to_get)
+
+
 def GetUserData(user_email_to_get, request_params={}, dash_context={}, create_if_missing=True):
     return Users(request_params, dash_context).GetUserData(user_email_to_get, create_if_missing)
 
@@ -796,11 +1028,6 @@ def Reset(request_params={}, dash_context={}, user_email_domain_bypass_emails=[]
 
 def ResetResponse(request_params={}, dash_context={}):
     return Users(request_params, dash_context).ResetResponse()
-
-
-# Wrapper
-def GetUserDataRoot(user_email_to_get, request_params={}, dash_context={}):
-    return "/".join(GetUserDataPath(user_email_to_get, request_params, dash_context).split("/")[:-1]) + "/"
 
 
 # Deprecated, use Validate instead (same functionality, different name)

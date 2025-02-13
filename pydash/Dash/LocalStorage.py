@@ -20,8 +20,10 @@ class DashLocalStorage:
         Utility for reading, writing and maintaining common data.
 
         :param dash_context: Dash Context (default=None)
-        :param str store_path: Name of the folder located in /local/, such as users, packages, jobs, etc. (default="")
-        :param bool nested: If True, core record is considered data.json in a directory named after the ID (default=False)
+        :param str store_path: Name of the folder located in /local/, such as
+                               users, packages, jobs, etc. (default="")
+        :param bool nested: If True, core record is considered data.json in a
+                            directory named after the ID (default=False)
         :param str sort_by_key: dict key to sort the ordered data by (default="")
         :param list filter_out_keys: dict keys to filter out of each final data object (default=[])
         """
@@ -217,8 +219,8 @@ class DashLocalStorage:
             SendEmail(
                 subject="Dash.LocalStorage.GetAll",
                 msg=(
-                    "Warning:\nFolder(s) were identified as missing a data.json file. This typically happens "
-                    "if an object failed to be fully deleted, and therefore, this folder likely needs to be removed.\n"
+                    "Warning:\nFolder(s) were identified as missing a data.json file. This typically happens if an "
+                    "object failed to be fully deleted, and therefore, this folder likely needs to be removed.\n"
                     "Alternatively, a request to get the data may have happened at the same moment it was deleted."
                     f"\n\nFolders:\n" + "\n- ".join(missing) +
                     f"\n\nStack trace:\n" + "\n".join(format_stack())
@@ -286,14 +288,15 @@ class DashLocalStorage:
 
     def SetProperty(self, obj_id, key=None, value=None, create=False):
         obj_id = obj_id or Memory.Global.RequestData["obj_id"]
+
+        if not obj_id:
+            raise Exception("Missing 'obj_id' error x8932")
+
         key = key or Memory.Global.RequestData["key"]
         # value = value or Memory.Global.RequestData.get("value")  # This was breaking certain cases
 
         if value is None and "value" in Memory.Global.RequestData:
             value = Memory.Global.RequestData["value"]
-
-        if not obj_id:
-            raise Exception("Missing 'obj_id' error x8932")
 
         data = self.GetData(obj_id, create=create)
 
@@ -313,9 +316,49 @@ class DashLocalStorage:
 
         self.WriteData(obj_id, data)
 
-        response["updated_data"] = data
+        response["updated_data"] = self.update_user_monogram_on_set_property(data, key)
 
         return response
+
+    def update_user_monogram_on_set_property(self, data, key):
+        if (  # Confirm we're modifying a user's name and we have both parts
+            self.store_path != "users"
+            or key not in ["first_name", "last_name"]
+            or not data.get("first_name")
+            or not data.get("last_name")
+        ):
+            return data
+
+        monogram_prefix = "_default_user_monogram_"
+
+        # Confirm there's either no image yet, or the existing image is another auto-generated monogram
+        if data.get("img") and not data["img"].get("orig_filename", "").startswith(monogram_prefix):
+            return data
+
+        first_initial = data["first_name"].strip()[0].lower()
+        last_initial = data["last_name"].strip()[0].lower()
+
+        if not first_initial or not last_initial:
+            return data
+
+        from Dash.Users import UploadUserImage
+        from Dash.Utils import CreateMonogramImage
+
+        cleaned_email = data.get("email", data["id"]).lower().strip().split(".")[-1]
+        filename = f"{monogram_prefix}_{first_initial}{last_initial}_{cleaned_email}.png"
+
+        return UploadUserImage(
+            request_params={  # Spoof as a workaround to the request-only expectation of Dash.Users
+                "user_data": data,
+                "filename": filename,
+                "file": CreateMonogramImage(
+                    first_initial=first_initial,
+                    last_initial=last_initial,
+                    output_path=os.path.join("/var", "tmp", filename)
+                )
+            },
+            dash_context=self.dash_context
+        )
 
     def Delete(self, obj_id, archive_path=""):
         from time import sleep
@@ -777,12 +820,14 @@ class DashLocalStorage:
         }
 
     # This is not exclusive to IDs, can be used for any string values
-    def RecursivelyReplaceIDInRoot(self, root, old_id, new_id, dry_run=False, verbose=False, _log=[]):
+    def RecursivelyReplaceIDInRoot(
+        self, root, old_id, new_id, dry_run=False, verbose=False, indent_char="\t", _log=[]
+    ):
         log = _log or [f"old: {old_id}, new: {new_id}, dry run: {dry_run}, verbose: {verbose}"]
 
         if not os.path.exists(root):
             log.append(f"root: {root}")
-            log.append("\troot doesn't exist")
+            log.append(f"{indent_char}root doesn't exist")
 
             return log
 
@@ -791,8 +836,14 @@ class DashLocalStorage:
         for filename in os.listdir(root):
             path = os.path.join(root, filename)
 
-            if filename.endswith(".json"):
-                data, modified, data_log = self.recursively_replace_id_in_dict(self.Read(path), old_id, new_id, verbose)
+            if filename.endswith(".json") or filename == "usr.data":
+                data, modified, data_log = self.recursively_replace_id_in_dict(
+                    self.Read(path),
+                    old_id,
+                    new_id,
+                    verbose,
+                    indent_char
+                )
 
                 if modified:
                     if not root_logged:
@@ -800,7 +851,7 @@ class DashLocalStorage:
 
                         root_logged = True
 
-                    log.append(f"\t{filename}: {path}")
+                    log.append(f"{indent_char}{filename}: {path}")
 
                     log += data_log
 
@@ -814,11 +865,11 @@ class DashLocalStorage:
                         root_logged = True
 
                     if not modified:
-                        log.append(f"\t{filename}: {path}")
+                        log.append(f"{indent_char}{filename}: {path}")
 
                     log += data_log
 
-                    log.append(f"\t\tmodified: {modified}")
+                    log.append(f"{indent_char * 2}modified: {modified}")
 
             elif os.path.isdir(path):
                 if verbose:
@@ -827,10 +878,10 @@ class DashLocalStorage:
 
                         root_logged = True
 
-                    log.append(f"\t{filename}: {path}")
-                    log.append("\t\tis dir, recurse")
+                    log.append(f"{indent_char}{filename}: {path}")
+                    log.append(f"{indent_char * 2}is dir, recurse")
 
-                log = self.RecursivelyReplaceIDInRoot(path, old_id, new_id, dry_run, verbose, log)
+                log = self.RecursivelyReplaceIDInRoot(path, old_id, new_id, dry_run, verbose, indent_char, log)
 
             else:
                 if verbose:
@@ -839,8 +890,8 @@ class DashLocalStorage:
 
                         root_logged = True
 
-                    log.append(f"\t{filename}: {path}")
-                    log.append("\t\tskipped/missed")
+                    log.append(f"{indent_char}{filename}: {path}")
+                    log.append(f"{indent_char * 2}skipped/missed")
 
             if old_id in filename:
                 if not root_logged:
@@ -848,23 +899,24 @@ class DashLocalStorage:
 
                     root_logged = True
 
-                log.append(f"\t{filename}: {path}")
-                log.append("\t\trename file")
+                log.append(f"{indent_char}{filename}: {path}")
+                log.append(f"{indent_char * 2}rename file")
 
                 if not dry_run:
                     os.rename(path, os.path.join(root, filename.replace(old_id, new_id)))
 
         return log
 
-    def recursively_replace_id_in_dict(self, data, old_id, new_id, verbose, log=[], _modified=False):
+    def recursively_replace_id_in_dict(self, data, old_id, new_id, verbose, indent_char, _log=[], _modified=False):
         modified = False
+        log = _log or []  # Have to do this, otherwise the logs persist and we get duplicates
 
         if verbose:
-            log.append(f"\t\tdict:")
+            log.append(f"{indent_char * 2}dict:")
 
         if not data:
             if verbose:
-                log.append("\t\t\tInvalid/empty dict")
+                log.append(f"{indent_char * 3}Invalid/empty dict")
 
             return data, (_modified or modified), log
 
@@ -881,8 +933,8 @@ class DashLocalStorage:
 
             if not value:
                 if verbose:
-                    log.append(f"\t\t\tkey: {key}")
-                    log.append("\t\t\t\tcontinue")
+                    log.append(f"{indent_char * 3}key: {key}")
+                    log.append(f"{indent_char * 4}continue")
 
                 continue
 
@@ -890,37 +942,53 @@ class DashLocalStorage:
 
             if value_type is dict:
                 if verbose:
-                    log.append(f"\t\t\tkey: {key}")
-                    log.append("\t\t\t\trecurse dict")
+                    log.append(f"{indent_char * 3}key: {key}")
+                    log.append(f"{indent_char * 4}recurse dict")
 
-                data[key], modified, log = self.recursively_replace_id_in_dict(value, old_id, new_id, verbose, log, modified)
+                data[key], modified, log = self.recursively_replace_id_in_dict(
+                    value,
+                    old_id,
+                    new_id,
+                    verbose,
+                    indent_char,
+                    log,
+                    modified
+                )
 
                 continue
 
             if value_type is list:
                 if verbose:
-                    log.append(f"\t\t\tkey: {key}")
-                    log.append("\t\t\t\trecurse list")
+                    log.append(f"{indent_char * 3}key: {key}")
+                    log.append(f"{indent_char * 4}recurse list")
 
-                data[key], modified, log = self.recursively_replace_id_in_list(value, old_id, new_id, verbose, log, modified)
+                data[key], modified, log = self.recursively_replace_id_in_list(
+                    value,
+                    old_id,
+                    new_id,
+                    verbose,
+                    indent_char,
+                    log,
+                    modified
+                )
 
                 continue
 
             if value_type is not str or old_id not in value:
                 if verbose:
-                    log.append(f"\t\t\tkey: {key}")
-                    log.append("\t\t\t\tcontinue")
+                    log.append(f"{indent_char * 3}key: {key}")
+                    log.append(f"{indent_char * 4}continue")
 
                 continue
 
             data[key] = value.replace(old_id, new_id)
 
-            log.append(f"\t\t\tupdated value for key: {key}")
+            log.append(f"{indent_char * 3}updated value for key: {key}")
 
             modified = True
 
         if key_changes:
-            log.append(f"\t\tkey changes: {key_changes}")
+            log.append(f"{indent_char * 2}key changes: {key_changes}")
 
             for key in key_changes:
                 data[key.replace(old_id, new_id)] = data.pop(key)
@@ -929,15 +997,16 @@ class DashLocalStorage:
 
         return data, (_modified or modified), log
 
-    def recursively_replace_id_in_list(self, data, old_id, new_id, verbose, log=[], _modified=False):
+    def recursively_replace_id_in_list(self, data, old_id, new_id, verbose, indent_char, _log=[], _modified=False):
         modified = False
+        log = _log or []  # Have to do this, otherwise the logs persist and we get duplicates
 
         if verbose:
-            log.append(f"\t\t\tlist:")
+            log.append(f"{indent_char * 3}list:")
 
         if not data:
             if verbose:
-                log.append("\t\t\t\tInvalid/empty list")
+                log.append(f"{indent_char * 4}Invalid/empty list")
 
             return data, (_modified or modified), log
 
@@ -946,19 +1015,35 @@ class DashLocalStorage:
 
             if item_type is dict:
                 if verbose:
-                    log.append(f"\t\t\t\tindex: {index}")
-                    log.append("\t\t\t\t\trecurse dict")
+                    log.append(f"{indent_char * 4}index: {index}")
+                    log.append(f"{indent_char * 5}recurse dict")
 
-                data[index], modified, log = self.recursively_replace_id_in_dict(item, old_id, new_id, verbose, log, modified)
+                data[index], modified, log = self.recursively_replace_id_in_dict(
+                    item,
+                    old_id,
+                    new_id,
+                    verbose,
+                    indent_char,
+                    log,
+                    modified
+                )
 
                 continue
 
             if item_type is list:
                 if verbose:
-                    log.append(f"\t\t\t\tindex: {index}")
-                    log.append("\t\t\t\t\trecurse list")
+                    log.append(f"{indent_char * 4}index: {index}")
+                    log.append(f"{indent_char * 5}recurse list")
 
-                data[index], modified, log = self.recursively_replace_id_in_list(item, old_id, new_id, verbose, log, modified)
+                data[index], modified, log = self.recursively_replace_id_in_list(
+                    item,
+                    old_id,
+                    new_id,
+                    verbose,
+                    indent_char,
+                    log,
+                    modified
+                )
 
                 continue
 
@@ -967,7 +1052,7 @@ class DashLocalStorage:
 
             data[index] = new_id
 
-            log.append(f"\t\t\tupdated value for index: {index}")
+            log.append(f"{indent_char * 3}updated value for index: {index}")
 
             modified = True
 
@@ -978,8 +1063,12 @@ def New(dash_context, store_path, additional_data={}, obj_id=None, nested=False,
     return DashLocalStorage(dash_context, store_path, nested).New(additional_data, obj_id, conform_permissions)
 
 
-def Duplicate(dash_context, store_path, id_to_duplicate, include_display_name=True, display_name_tag="Copy", nested=False):
-    return DashLocalStorage(dash_context, store_path, nested).Duplicate(id_to_duplicate, include_display_name, display_name_tag)
+def Duplicate(
+    dash_context, store_path, id_to_duplicate, include_display_name=True, display_name_tag="Copy", nested=False
+):
+    return DashLocalStorage(dash_context, store_path, nested).Duplicate(
+        id_to_duplicate, include_display_name, display_name_tag
+    )
 
 
 def CreateOrUpdate(dash_context, store_path, additional_data, obj_id, nested=False):
@@ -1012,7 +1101,9 @@ def GetAllIDs(dash_context, store_path, nested=False):
 
 
 def SetProperty(dash_context, store_path, obj_id, key=None, value=None, create=False, nested=False):
-    return DashLocalStorage(dash_context, store_path, nested).SetProperty(obj_id, key=key, value=value, create=create)
+    return DashLocalStorage(dash_context, store_path, nested).SetProperty(
+        obj_id, key=key, value=value, create=create
+    )
 
 
 def SetProperties(dash_context, store_path, obj_id, properties={}, create=False, nested=False):
@@ -1056,5 +1147,5 @@ def ConvertToNested(dash_context, store_path):
     return DashLocalStorage(dash_context, store_path).ConvertToNested()
 
 
-def RecursivelyReplaceIDInRoot(root, old_id, new_id, dry_run=False, verbose=False):
-    return DashLocalStorage().RecursivelyReplaceIDInRoot(root, old_id, new_id, dry_run, verbose)
+def RecursivelyReplaceIDInRoot(root, old_id, new_id, dry_run=False, verbose=False, indent_char="\t"):
+    return DashLocalStorage().RecursivelyReplaceIDInRoot(root, old_id, new_id, dry_run, verbose, indent_char)

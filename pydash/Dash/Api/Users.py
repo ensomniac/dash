@@ -48,6 +48,7 @@ class ApiUsers:
         self.Add(self.update_pin,           requires_authentication=True)
         self.Add(self.upload_image,         requires_authentication=True)
         self.Add(self.set_property,         requires_authentication=True)
+        self.Add(self.update_email,         requires_authentication=True)
         self.Add(self.update_password,      requires_authentication=True)
         self.Add(self.validate_credentials, requires_authentication=True)
 
@@ -193,30 +194,15 @@ class ApiUsers:
             dash_context=self.DashContext
         ))
 
-    # TODO: Move this into the core Users.py module
     def upload_image(self):
-        from Dash.Utils import UploadFile
-        from Dash.Users import GetUserDataRoot
-        from Dash.LocalStorage import Read, Write
+        from Dash.Users import UploadUserImage
 
         self.ParseParam("user_data", dict, self.User)
 
-        data_root = GetUserDataRoot(self.Params["user_data"]["email"])
-        img_root = os.path.join(data_root, "img/")
-        user_data_path = os.path.join(data_root, "usr.data")
-        user_data = Read(user_data_path)
-
-        user_data["img"] = UploadFile(
-            self.DashContext,
-            user_data,
-            img_root,
-            self.Params["file"],
-            self.Params.get("filename")
-        )
-
-        Write(user_data_path, user_data)
-
-        return self.SetResponse(user_data)
+        return self.SetResponse(UploadUserImage(
+            request_params=self.Params,
+            dash_context=self.DashContext
+        ))
 
     def set_property(self):
         from Dash.LocalStorage import SetProperty
@@ -225,6 +211,14 @@ class ApiUsers:
             dash_context=self.DashContext,
             store_path="users",
             obj_id=self.Params["obj_id"]
+        ))
+
+    def update_email(self):
+        from Dash.Users import UpdateEmail
+
+        return self.SetResponse(UpdateEmail(
+            request_params=self.Params,
+            dash_context=self.DashContext
         ))
 
     def update_password(self):

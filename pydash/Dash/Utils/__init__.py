@@ -172,6 +172,17 @@ def ImageIsGrayscale(pil_image_object=None, file_bytes_or_existing_path="", file
     return ImageIsGrayscale(pil_image_object, file_bytes_or_existing_path, filename)
 
 
+def CreateMonogramImage(
+    first_initial, last_initial, output_path, image_size=512,
+    bg_color="#444b54", text_color="#f5f5f5", font_path="", font_size=0
+):
+    from .file import CreateMonogramImage
+
+    return CreateMonogramImage(
+        first_initial, last_initial, output_path, image_size, bg_color, text_color, font_path, font_size
+    )
+
+
 # ------------------------------------------------- MODEL ---------------------------------------------------
 
 

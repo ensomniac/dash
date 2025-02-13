@@ -135,7 +135,7 @@ def CreateZIP(dir_path):
 
     split = dir_path.strip("/").split("/")
     dir_to_zip = split.pop(-1)
-    dir_path_root = f"/{os.path.join(*split)}/"
+    dir_path_root = f"/{os.path.join(*split)}/"  # noqa
 
     # Returns newly created zip path
     return make_archive(
@@ -226,7 +226,7 @@ def GetPathFromURL(dash_context, server_file_url):
     return "/" + os.path.join(
         *dash_context["srv_path_http_root"].split("/"),
         *server_file_url.replace(f"https://{dash_context['domain']}", "").split("/")
-    )
+    )  # noqa
 
 
 def EnsureUniqueFilename(file_data, file_root, nested, is_image):
@@ -357,6 +357,49 @@ def CombinePDFs(pdf_paths, output_path):
 
     with open(output_path, "wb") as output:
         pdf_merger.write(output)
+
+    return output_path
+
+
+def CreateMonogramImage(
+    first_initial, last_initial, output_path, image_size=512,
+    bg_color="#444b54", text_color="#f5f5f5", font_path="", font_size=0
+):
+    from PIL import Image, ImageDraw, ImageFont
+
+    if not font_size:
+        font_size = int(image_size * 0.5)
+
+    text = f"{first_initial}{last_initial}".upper()
+    img = Image.new("RGB", (image_size, image_size), color=bg_color)
+
+    if font_path:
+        if ".woff" in font_path:
+            from fontTools.ttLib.woff2 import decompress
+
+            ext = font_path.split(".")[-1]
+            ttf_path = font_path.replace(f".{ext}", ".ttf")
+
+            decompress(font_path, ttf_path)
+
+            font_path = ttf_path
+
+        if not font_path.endswith(".ttf") and not font_path.endswith(".otf"):
+            raise ValueError(f"Invalid font file: {font_path}")
+
+        font = ImageFont.truetype(font_path, size=font_size)
+    else:
+        font = ImageFont.load_default(size=font_size)
+
+    ImageDraw.Draw(img).text(
+        (image_size * 0.5, image_size * 0.5),
+        text,
+        fill=text_color,
+        font=font,
+        anchor="mm"  # Centered
+    )
+
+    img.save(output_path)
 
     return output_path
 
@@ -496,12 +539,14 @@ def get_image_with_data(
         img = img.convert("RGB")
 
     file_data = {
-        "exif": process_exif_image_data(img),
         "org_format": img_format,
         "orig_filename": filename,
         "orig_width": img.size[0],
         "orig_height": img.size[1],
         "orig_aspect": img.size[0] / float(img.size[1]),
+
+        # Disabled on 2/12/25, leaving the key around - we don't even need this, it just bloats the data for no reason
+        "exif": {},  # process_exif_image_data(img),
     }
 
     if file_data["exif"] and "Orientation" in file_data["exif"]:
@@ -908,6 +953,9 @@ def process_exif_image_data(img):
     exif_data = {}
 
     for key, val in img_exif.items():
+        if type(val) is bytes:
+            continue
+
         if key in ExifTags.TAGS:
             if "." not in str(val):
                 continue
