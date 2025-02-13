@@ -23,6 +23,7 @@ function DashGuiPropertyBoxInterface () {
         this.num_headers = 0;
         this.custom_html = [];
         this.color_pickers = {};
+        this.phone_numbers = {};
         this.bottom_divider = null;
         this.top_right_delete_button = null;
     };
@@ -510,17 +511,7 @@ function DashGuiPropertyBoxInterface () {
         });
 
         var label_height = Dash.Size.RowHeight;
-        var label = $("<div>" + label_text + "</div>");
-
-        label.css({
-            "height": label_height,
-            "line-height": label_height + "px",
-            "text-align": "left",
-            "color": this.color.Text,
-            "font-family": "sans_serif_bold",
-            "font-size": Dash.Size.DesktopToMobileMode ? "60%" : "80%",
-            "flex": "none"
-        });
+        var label = this.get_row_label(label_text);
 
         label_container.append(label);
 
@@ -888,6 +879,56 @@ function DashGuiPropertyBoxInterface () {
         this.track_row(this.addresses[data_key]);
 
         return this.addresses[data_key];
+    };
+
+    this.AddPhoneNumber = function (
+        data_key, can_edit=false, on_submit_cb=null, label_text="Phone",
+        return_with_separators=false, international=false, allow_incomplete=false
+    ) {
+        this.phone_numbers[data_key] = new Dash.Gui.PhoneNumber(
+            (
+                on_submit_cb ? on_submit_cb.bind(this.binder) : (
+                    function (phone_number) {
+                        (this.set_data_cb || this.set_property)(data_key, phone_number);
+                    }
+                ).bind(this)
+            ),
+            this.color,
+            return_with_separators,
+            international,
+            allow_incomplete
+        );
+
+        this.phone_numbers[data_key].SetBottomBorder("");
+
+        var label = this.get_row_label(label_text);
+
+        label.css({
+            "margin-right": Dash.Size.Padding * 0.5
+        });
+
+        this.phone_numbers[data_key].html.prepend(label);
+
+        if (!can_edit) {
+            this.phone_numbers[data_key].SetLocked(true);
+        }
+
+        var value = this.get_formatted_data_cb ? this.get_formatted_data_cb(data_key) : this.data[data_key];
+
+        if (value) {
+            this.phone_numbers[data_key].SetValue(value);
+        }
+
+        this.phone_numbers[data_key].html.css({
+            "border-bottom": this.bottom_border
+        });
+
+        this.html.append(this.phone_numbers[data_key].html);
+
+        this.indent_row(this.phone_numbers[data_key]);
+        this.track_row(this.phone_numbers[data_key]);
+
+        return this.phone_numbers[data_key];
     };
 
     // To visually break up rows when readability is getting tough due to too much stuff on the screen etc

@@ -1,17 +1,23 @@
 /**@member DashGuiPrompt*/
 
 function DashGuiModal (
-    color=null, parent_html=null, width=null, height=null,
-    include_bg=true, bg_opacity=0.7, include_close_button=true, bg_color=null
+    color=null, parent_html=null, width=null, height=null, include_bg=true,
+    bg_opacity=0.5, include_close_button=true, bg_color=null, bg_blur="5px"
 ) {
+    this.color = color || Dash.Color.Light;
     this.parent_html = parent_html;
     this.width = width !== null ? (Math.min(width, (window.innerWidth - (Dash.Size.Padding * 2)))) : null;
     this.height = height !== null ? (Math.min(height, (window.innerHeight - (Dash.Size.Padding * 2)))) : null;
     this.include_bg = include_bg;
     this.bg_opacity = bg_opacity;
-    this.color = color || Dash.Color.Light;
     this.include_close_button = include_close_button;
-    this.bg_color = bg_color || Dash.Color.GetOpposite(this.color).BackgroundRaised;
+
+    this.bg_color = Dash.Color.GetTransparent(
+        (bg_color || Dash.Color.GetOpposite(this.color).BackgroundRaised),
+        this.bg_opacity
+    );
+
+    this.bg_blur = bg_blur;
 
     // Not using 'this.html' is unconventional, but it's not appropriate in
     // this context, since the modal consists of two individual elements with
@@ -108,28 +114,24 @@ function DashGuiModal (
     };
 
     this.Remove = function () {
-        (function (self) {
-            self.modal.stop().animate(
+        this.modal.stop().animate(
+            {"opacity": 0},
+            {
+                "complete": () => {
+                    this.modal.remove();
+                }
+            }
+        );
+
+        if (this.background) {
+            this.background.stop().animate(
                 {"opacity": 0},
                 {
-                    "complete": function () {
-                        self.modal.remove();
+                    "complete": () => {
+                        this.background.remove();
                     }
                 }
             );
-        })(this);
-
-        if (this.background) {
-            (function (self) {
-                self.background.stop().animate(
-                    {"opacity": 0},
-                    {
-                        "complete": function () {
-                            self.background.remove();
-                        }
-                    }
-                );
-            })(this);
         }
 
         return this;
@@ -266,24 +268,22 @@ function DashGuiModal (
             return;
         }
 
-        this.close_button = (function (self) {
-            return new Dash.Gui.IconButton(
-                "close",
-                function () {
-                    self.Hide();
+        this.close_button = new Dash.Gui.IconButton(
+            "close",
+            () => {
+                this.Hide();
 
-                    if (self.on_close_callback) {
-                        self.on_close_callback();
-                    }
-                },
-                self,
-                self.color,
-                {
-                    "container_size": Dash.Size.Padding * 3,
-                    "size_mult": 0.85
+                if (this.on_close_callback) {
+                    this.on_close_callback();
                 }
-            );
-        })(this);
+            },
+            this,
+            this.color,
+            {
+                "container_size": Dash.Size.Padding * 3,
+                "size_mult": 0.85
+            }
+        );
 
         this.close_button.html.css({
             "position": "absolute",
@@ -324,8 +324,8 @@ function DashGuiModal (
             {
                 "z-index": this.get_bg_z_index(),
                 "background": this.bg_color,
-                "opacity": this.bg_opacity,
-                "height": height
+                "height": height,
+                "backdrop-filter": "blur(" + this.bg_blur + ")"
             }
         );
 
@@ -350,26 +350,24 @@ function DashGuiModal (
             return;
         }
 
-        (function (self) {
-            $(document).on(
-                "keydown." + self.identifier,  // Adding an ID to the event listener allows us to kill this specific listener
-                function (e) {
-                    if (self.modal && !self.modal.is(":visible")) {
-                        $(document).off("keydown." + self.identifier);
+        $(document).on(
+            "keydown." + this.identifier,  // Adding an ID to the event listener allows us to kill this specific listener
+            (e) => {
+                if (this.modal && !this.modal.is(":visible")) {
+                    $(document).off("keydown." + this.identifier);
 
-                        self.esc_shortcut_active = false;
+                    this.esc_shortcut_active = false;
 
-                        return;
-                    }
-
-                    if (e.key === "Escape") {
-                        Dash.Log.Log("(Esc key pressed) Close modal");
-
-                        self.Hide();
-                    }
+                    return;
                 }
-            );
-        })(this);
+
+                if (e.key === "Escape") {
+                    Dash.Log.Log("(Esc key pressed) Close modal");
+
+                    this.Hide();
+                }
+            }
+        );
 
         this.esc_shortcut_active = true;
     };

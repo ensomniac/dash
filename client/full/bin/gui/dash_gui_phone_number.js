@@ -96,6 +96,22 @@ class DashGuiPhoneNumber {
         }
     }
 
+    SetBottomBorder (bottom_border) {
+        this.bottom_border = bottom_border;
+
+        for (var sep of this.separators) {
+            sep.css({
+                "border-bottom": bottom_border
+            });
+        }
+
+        for (var seg in this.segments) {
+            this.segments[seg].input.css({
+                "border-bottom": bottom_border
+            });
+        }
+    }
+
     add_copy_button () {
         this.copy_button = new Dash.Gui.CopyButton(
             this,

@@ -20,6 +20,7 @@ function DashGuiPropertyBox (
     this.disabled = false;
     this.custom_html = [];
     this.color_pickers = {};
+    this.phone_numbers = {};
     this.bottom_divider = null;
     this.property_set_data = null; // Managed Dash data
     this.get_formatted_data_cb = null;
@@ -416,29 +417,27 @@ function DashGuiPropertyBox (
             }
         }
 
-        (function (self) {
-            if (row_input && row_input.hasOwnProperty("Request")) {
-                row_input.Request(
-                    self.endpoint,
-                    params,
-                    function (response) {
-                        self.on_server_response(response, row_input);
-                    },
-                    self
-                );
-            }
+        if (row_input && row_input.hasOwnProperty("Request")) {
+            row_input.Request(
+                this.endpoint,
+                params,
+                (response) => {
+                    this.on_server_response(response, row_input);
+                },
+                this
+            );
+        }
 
-            else {
-                Dash.Request(
-                    self,
-                    function (response) {
-                        self.on_server_response(response);
-                    },
-                    self.endpoint,
-                    params
-                );
-            }
-        })(this);
+        else {
+            Dash.Request(
+                this,
+                (response) => {
+                    this.on_server_response(response);
+                },
+                this.endpoint,
+                params
+            );
+        }
     };
 
     this.on_server_response = function (response, row_input=null) {
@@ -527,6 +526,28 @@ function DashGuiPropertyBox (
         }
 
         this.set_property(data_key, value, text_area, false);
+    };
+
+    this.get_row_label = function (label_text) {
+        label_text = label_text.trim();
+
+        if (!label_text.endsWith(":")) {
+            label_text += ":";
+        }
+
+        var label = $("<div>", {"text": label_text});
+
+        label.css({
+            "height": Dash.Size.RowHeight,
+            "line-height": Dash.Size.RowHeight + "px",
+            "text-align": "left",
+            "color": this.color.Text,
+            "font-family": "sans_serif_bold",
+            "font-size": Dash.Size.DesktopToMobileMode ? "60%" : "80%",
+            "flex": "none"
+        });
+
+        return label;
     };
 
     this.setup_styles();

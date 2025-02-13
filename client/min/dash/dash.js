@@ -20737,6 +20737,19 @@ class DashGuiPhoneNumber {
             this.segments[seg_type].SetLocked(locked);
         }
     }
+    SetBottomBorder (bottom_border) {
+        this.bottom_border = bottom_border;
+        for (var sep of this.separators) {
+            sep.css({
+                "border-bottom": bottom_border
+            });
+        }
+        for (var seg in this.segments) {
+            this.segments[seg].input.css({
+                "border-bottom": bottom_border
+            });
+        }
+    }
     add_copy_button () {
         this.copy_button = new Dash.Gui.CopyButton(
             this,
@@ -24625,17 +24638,21 @@ function DashGuiLogin (on_login_binder=null, on_login_callback=null, color=null,
 
 /**@member DashGuiPrompt*/
 function DashGuiModal (
-    color=null, parent_html=null, width=null, height=null,
-    include_bg=true, bg_opacity=0.7, include_close_button=true, bg_color=null
+    color=null, parent_html=null, width=null, height=null, include_bg=true,
+    bg_opacity=0.5, include_close_button=true, bg_color=null, bg_blur="5px"
 ) {
+    this.color = color || Dash.Color.Light;
     this.parent_html = parent_html;
     this.width = width !== null ? (Math.min(width, (window.innerWidth - (Dash.Size.Padding * 2)))) : null;
     this.height = height !== null ? (Math.min(height, (window.innerHeight - (Dash.Size.Padding * 2)))) : null;
     this.include_bg = include_bg;
     this.bg_opacity = bg_opacity;
-    this.color = color || Dash.Color.Light;
     this.include_close_button = include_close_button;
-    this.bg_color = bg_color || Dash.Color.GetOpposite(this.color).BackgroundRaised;
+    this.bg_color = Dash.Color.GetTransparent(
+        (bg_color || Dash.Color.GetOpposite(this.color).BackgroundRaised),
+        this.bg_opacity
+    );
+    this.bg_blur = bg_blur;
     // Not using 'this.html' is unconventional, but it's not appropriate in
     // this context, since the modal consists of two individual elements with
     // 'this.parent_html' essentially being the equivalent of the usual 'this.html'.
@@ -24705,27 +24722,23 @@ function DashGuiModal (
         return this;
     };
     this.Remove = function () {
-        (function (self) {
-            self.modal.stop().animate(
+        this.modal.stop().animate(
+            {"opacity": 0},
+            {
+                "complete": () => {
+                    this.modal.remove();
+                }
+            }
+        );
+        if (this.background) {
+            this.background.stop().animate(
                 {"opacity": 0},
                 {
-                    "complete": function () {
-                        self.modal.remove();
+                    "complete": () => {
+                        this.background.remove();
                     }
                 }
             );
-        })(this);
-        if (this.background) {
-            (function (self) {
-                self.background.stop().animate(
-                    {"opacity": 0},
-                    {
-                        "complete": function () {
-                            self.background.remove();
-                        }
-                    }
-                );
-            })(this);
         }
         return this;
     };
@@ -24831,23 +24844,21 @@ function DashGuiModal (
         if (!this.include_close_button) {
             return;
         }
-        this.close_button = (function (self) {
-            return new Dash.Gui.IconButton(
-                "close",
-                function () {
-                    self.Hide();
-                    if (self.on_close_callback) {
-                        self.on_close_callback();
-                    }
-                },
-                self,
-                self.color,
-                {
-                    "container_size": Dash.Size.Padding * 3,
-                    "size_mult": 0.85
+        this.close_button = new Dash.Gui.IconButton(
+            "close",
+            () => {
+                this.Hide();
+                if (this.on_close_callback) {
+                    this.on_close_callback();
                 }
-            );
-        })(this);
+            },
+            this,
+            this.color,
+            {
+                "container_size": Dash.Size.Padding * 3,
+                "size_mult": 0.85
+            }
+        );
         this.close_button.html.css({
             "position": "absolute",
             "top": Dash.Size.Padding * 0.5,
@@ -24879,8 +24890,8 @@ function DashGuiModal (
             {
                 "z-index": this.get_bg_z_index(),
                 "background": this.bg_color,
-                "opacity": this.bg_opacity,
-                "height": height
+                "height": height,
+                "backdrop-filter": "blur(" + this.bg_blur + ")"
             }
         );
         // Block any elements behind this from being clicked
@@ -24900,22 +24911,20 @@ function DashGuiModal (
         if (!this.include_close_button || this.esc_shortcut_active) {
             return;
         }
-        (function (self) {
-            $(document).on(
-                "keydown." + self.identifier,  // Adding an ID to the event listener allows us to kill this specific listener
-                function (e) {
-                    if (self.modal && !self.modal.is(":visible")) {
-                        $(document).off("keydown." + self.identifier);
-                        self.esc_shortcut_active = false;
-                        return;
-                    }
-                    if (e.key === "Escape") {
-                        Dash.Log.Log("(Esc key pressed) Close modal");
-                        self.Hide();
-                    }
+        $(document).on(
+            "keydown." + this.identifier,  // Adding an ID to the event listener allows us to kill this specific listener
+            (e) => {
+                if (this.modal && !this.modal.is(":visible")) {
+                    $(document).off("keydown." + this.identifier);
+                    this.esc_shortcut_active = false;
+                    return;
                 }
-            );
-        })(this);
+                if (e.key === "Escape") {
+                    Dash.Log.Log("(Esc key pressed) Close modal");
+                    this.Hide();
+                }
+            }
+        );
         this.esc_shortcut_active = true;
     };
     this.setup_styles();
@@ -46388,6 +46397,7 @@ function DashGuiPropertyBox (
     this.disabled = false;
     this.custom_html = [];
     this.color_pickers = {};
+    this.phone_numbers = {};
     this.bottom_divider = null;
     this.property_set_data = null; // Managed Dash data
     this.get_formatted_data_cb = null;
@@ -46694,28 +46704,26 @@ function DashGuiPropertyBox (
                 }
             }
         }
-        (function (self) {
-            if (row_input && row_input.hasOwnProperty("Request")) {
-                row_input.Request(
-                    self.endpoint,
-                    params,
-                    function (response) {
-                        self.on_server_response(response, row_input);
-                    },
-                    self
-                );
-            }
-            else {
-                Dash.Request(
-                    self,
-                    function (response) {
-                        self.on_server_response(response);
-                    },
-                    self.endpoint,
-                    params
-                );
-            }
-        })(this);
+        if (row_input && row_input.hasOwnProperty("Request")) {
+            row_input.Request(
+                this.endpoint,
+                params,
+                (response) => {
+                    this.on_server_response(response, row_input);
+                },
+                this
+            );
+        }
+        else {
+            Dash.Request(
+                this,
+                (response) => {
+                    this.on_server_response(response);
+                },
+                this.endpoint,
+                params
+            );
+        }
     };
     this.on_server_response = function (response, row_input=null) {
         if (!Dash.Validate.Response(response)) {
@@ -46783,6 +46791,23 @@ function DashGuiPropertyBox (
         }
         this.set_property(data_key, value, text_area, false);
     };
+    this.get_row_label = function (label_text) {
+        label_text = label_text.trim();
+        if (!label_text.endsWith(":")) {
+            label_text += ":";
+        }
+        var label = $("<div>", {"text": label_text});
+        label.css({
+            "height": Dash.Size.RowHeight,
+            "line-height": Dash.Size.RowHeight + "px",
+            "text-align": "left",
+            "color": this.color.Text,
+            "font-family": "sans_serif_bold",
+            "font-size": Dash.Size.DesktopToMobileMode ? "60%" : "80%",
+            "flex": "none"
+        });
+        return label;
+    };
     this.setup_styles();
 }
 
@@ -46808,6 +46833,7 @@ function DashGuiPropertyBoxInterface () {
         this.num_headers = 0;
         this.custom_html = [];
         this.color_pickers = {};
+        this.phone_numbers = {};
         this.bottom_divider = null;
         this.top_right_delete_button = null;
     };
@@ -47177,16 +47203,7 @@ function DashGuiPropertyBoxInterface () {
             "display": "flex"
         });
         var label_height = Dash.Size.RowHeight;
-        var label = $("<div>" + label_text + "</div>");
-        label.css({
-            "height": label_height,
-            "line-height": label_height + "px",
-            "text-align": "left",
-            "color": this.color.Text,
-            "font-family": "sans_serif_bold",
-            "font-size": Dash.Size.DesktopToMobileMode ? "60%" : "80%",
-            "flex": "none"
-        });
+        var label = this.get_row_label(label_text);
         label_container.append(label);
         if (add_key_copy_button) {
             label_container.append(Dash.Gui.GetFlexSpacer());
@@ -47472,6 +47489,44 @@ function DashGuiPropertyBoxInterface () {
         this.indent_row(this.addresses[data_key]);
         this.track_row(this.addresses[data_key]);
         return this.addresses[data_key];
+    };
+    this.AddPhoneNumber = function (
+        data_key, can_edit=false, on_submit_cb=null, label_text="Phone",
+        return_with_separators=false, international=false, allow_incomplete=false
+    ) {
+        this.phone_numbers[data_key] = new Dash.Gui.PhoneNumber(
+            (
+                on_submit_cb ? on_submit_cb.bind(this.binder) : (
+                    function (phone_number) {
+                        (this.set_data_cb || this.set_property)(data_key, phone_number);
+                    }
+                ).bind(this)
+            ),
+            this.color,
+            return_with_separators,
+            international,
+            allow_incomplete
+        );
+        this.phone_numbers[data_key].SetBottomBorder("");
+        var label = this.get_row_label(label_text);
+        label.css({
+            "margin-right": Dash.Size.Padding * 0.5
+        });
+        this.phone_numbers[data_key].html.prepend(label);
+        if (!can_edit) {
+            this.phone_numbers[data_key].SetLocked(true);
+        }
+        var value = this.get_formatted_data_cb ? this.get_formatted_data_cb(data_key) : this.data[data_key];
+        if (value) {
+            this.phone_numbers[data_key].SetValue(value);
+        }
+        this.phone_numbers[data_key].html.css({
+            "border-bottom": this.bottom_border
+        });
+        this.html.append(this.phone_numbers[data_key].html);
+        this.indent_row(this.phone_numbers[data_key]);
+        this.track_row(this.phone_numbers[data_key]);
+        return this.phone_numbers[data_key];
     };
     // To visually break up rows when readability is getting tough due to too much stuff on the screen etc
     this.HighlightEveryOtherRow = function (odd_rows=false, color="") {
@@ -49983,6 +50038,7 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
     this.modal_profile = null;
     this.top_right_button = null;
     this.first_name_field = null;
+    this.edit_email_modal = null;
     this.pwa_reload_button = null;
     this.suggestion_badge = false;
     this.img_box = $("<div></div>");
@@ -50200,11 +50256,11 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
     };
     this.add_property_box = function () {
         this.property_box = new Dash.Gui.PropertyBox(
-            this,           // For binding
-            this.get_data,  // Function to return live data
-            this.set_data,  // Function to set saved data locally
-            "Users",        // Endpoint
-            this.user_data["email"], // Dash obj_id (unique for users)
+            this,
+            this.get_data,
+            this.set_data,
+            "Users",
+            this.user_data["email"],
             {"color": this.color}
         );
         this.html.append(this.property_box.html);
@@ -50216,67 +50272,193 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
             "border-radius": 0
         });
         if (!this.options["property_box"] || !this.options["property_box"]["replace"]) {
-            // TODO: Ideally, this should also be editable (with this.has_privileges), but I don't think
-            //  the right things are in place on the back-end, like renaming the user's folder etc
-            this.property_box.AddInput("email", "Email Address", "", null, false);
-            this.first_name_field = this.property_box.AddInput(
-                "first_name",
-                "First Name",
-                "",
-                null,
-                this.modal_of ? false : this.has_privileges,
-                {"placeholder_text": "Please enter a name"}
-            );
-            this.property_box.AddInput(
-                "last_name",
-                "Last Name",
-                "",
-                null,
-                this.modal_of ? false : this.has_privileges,
-                {"placeholder_text": "Please enter a name"}
-            );
-            if (!this.get_data()["first_name"]) {
-                this.ShowNameSuggestion();
-            }
+            this.setup_default_property_box();
         }
         if (this.options["property_box"] && this.options["property_box"]["properties"]) {
-            var additional_props = this.options["property_box"]["properties"];
-            for (var property_details of additional_props) {
+            this.setup_custom_property_box();
+        }
+        if (!this.options["property_box"] || !this.options["property_box"]["replace"]) {
+            this.add_password_update_field();
+        }
+    };
+    this.add_password_update_field = function () {
+        if (this.modal_of || !this.has_privileges) {
+            return;
+        }
+        this.property_box.AddLineBreak();
+        var row = this.property_box.AddInput(
+            "password", "Update Password", "", null, !this.modal_of, {"placeholder_text": "New Password"}
+        );
+        row.html.css({
+            "background": Dash.Color.GetTransparent(this.color.AccentBad, 0.1)
+        });
+        row.DisableAutosave();
+        row.input.DisableAuthForVisToggle();
+        row.input.visibility_toggle.Toggle();
+        // In this context, we don't want password managers to autofill the user's existing password,
+        // but some of them, like Chrome's password manager, ignore "autocomplete: off", so setting
+        // it to a non-standard/invalid value solves the problem, counteracting those bypasses
+        row.input.input.attr("autocomplete", "new-password");
+    };
+    this.setup_custom_property_box = function () {
+        var custom_props = Dash.GetDeepCopy(this.options["property_box"]["properties"]);
+        for (var property_details of custom_props) {
+            if (!property_details["key"]) {
+                continue;
+            }
+            var can_edit = (this.modal_of || property_details["editable"] === false) ? false : this.has_privileges;
+            if (property_details["func"] && property_details["params"]) {
+                // This is hacky, but not sure how else to handle this right now...
+                // Besides, you'd only be using this func/params flow if you
+                // know what you're doing, so is it really even an issue?
+                if (property_details["params"].includes("can_edit")) {
+                    property_details["params"][property_details["params"].indexOf("can_edit")] = can_edit;
+                }
+                // This isn't great either, but doing to best I can with
+                // this class' pre-existing, non-ideal property box data handling
+                if (property_details["params"].includes("callback")) {
+                    (function (self, property_details) {
+                        property_details["params"][
+                            property_details["params"].indexOf("callback")
+                            ] = function (value) {
+                            self.set_data(property_details["key"]);
+                            self.property_box.set_property(property_details["key"], value);
+                        };
+                    })(this, property_details);
+                }
+                this.property_box[property_details["func"]](...property_details["params"]);
+            }
+            else {
                 this.property_box.AddInput(
                     property_details["key"],
                     property_details["label_text"] || property_details["display_name"],
                     "",
                     null,
-                    (
-                          this.modal_of ? false
-                        : "editable" in property_details ? property_details["editable"]
-                        : this.has_privileges
-                    ),
+                    can_edit,
                     property_details["options"] || {}
                 );
-                // Extra callback if something else needs to happen
-                // in addition to the standard/basic set_data behavior
-                if (property_details["callback"]) {
-                    this.callbacks[property_details["key"]] = property_details["callback"];
-                }
+            }
+            // Extra callback if something else needs to happen
+            // in addition to the standard/basic set_data behavior
+            if (property_details["callback"]) {
+                this.callbacks[property_details["key"]] = property_details["callback"];
             }
         }
-        if (!this.options["property_box"] || !this.options["property_box"]["replace"] && this.has_privileges) {
-            this.property_box.AddLineBreak();
-            var row = this.property_box.AddInput(
-                "password", "Update Password", "", null, !this.modal_of, {"placeholder_text": "New Password"}
-            );
-            row.html.css({
-                "background": Dash.Color.GetTransparent(this.color.AccentBad, 0.1)
-            });
-            row.DisableAutosave();
-            row.input.DisableAuthForVisToggle();
-            row.input.visibility_toggle.Toggle();
-            // In this context, we don't want password managers to autofill the user's existing password,
-            // but some of them, like Chrome's password manager, ignore "autocomplete: off", so setting
-            // it to a non-standard/invalid value solves the problem, counteracting those bypasses
-            row.input.input.attr("autocomplete", "new-password");
+    };
+    this.setup_default_property_box = function () {
+        this.add_email_field();
+        this.first_name_field = this.property_box.AddInput(
+            "first_name",
+            "First Name",
+            "",
+            null,
+            this.modal_of ? false : this.has_privileges,
+            {"placeholder_text": "Please enter a name"}
+        );
+        this.property_box.AddInput(
+            "last_name",
+            "Last Name",
+            "",
+            null,
+            this.modal_of ? false : this.has_privileges,
+            {"placeholder_text": "Please enter a name"}
+        );
+        if (!this.get_data()["first_name"]) {
+            this.ShowNameSuggestion();
         }
+    };
+    this.add_email_field = function () {
+        var email_row = this.property_box.AddInput("email", "Email Address", "", null, false);
+        if (this.modal_of || !this.has_privileges) {
+            return;
+        }
+        var email_edit_button = new Dash.Gui.IconButton(
+            "edit",
+            () => {
+                this.show_email_modal();
+            },
+            this,
+            this.color,
+            {
+                "container_size": Dash.Size.RowHeight,
+                "size_mult": 0.8
+            }
+        );
+        email_row.html.append(email_edit_button.html);
+    };
+    this.show_email_modal = function () {
+        if (this.edit_email_modal) {
+            this.edit_email_modal.Show();
+            return;
+        }
+        this.edit_email_modal = new Dash.Gui.Modal(
+            this.color,
+            this.html.parent().parent(),
+            Dash.Size.ColumnWidth * 2.5,
+            Dash.Size.ColumnWidth * 1.15
+        );
+        var property_box = new Dash.Gui.PropertyBox(this);
+        property_box.html.css({
+            "padding-top": Dash.Size.Padding * 0.5
+        });
+        property_box.Flatten();
+        property_box.AddHeader("Change Email Address").ReplaceBorderWithIcon("email");
+        var hint = $(
+            "<div>",
+            {
+                "text": (
+                      "Once submitted, all existing records that reference\n"
+                    + "the old email will be updated to reflect the new email."
+                )
+            }
+        );
+        hint.css({
+            "color": this.color.Stroke,
+            "font-family": "sans_serif_normal",
+            "font-size": "95%",
+            "white-space": "pre-wrap",
+            "margin-top": Dash.Size.Padding,
+            "margin-bottom": Dash.Size.Padding * 2
+        });
+        property_box.AddHTML(hint);
+        var input = property_box.AddInput(
+            "new_email",
+            "",
+            "",
+            null,
+            true,
+            {"placeholder_text": this.user_data["email"]}
+        );
+        input.html.css({
+            "margin-left": 0,
+            "margin-bottom": Dash.Size.Padding * 2
+        });
+        property_box.AddButton(
+            "Update",
+            () => {
+                var new_email = input.Text();
+                if (!new_email || new_email === this.user_data["email"]) {
+                    alert("Must enter a new email address");
+                    return;
+                }
+                Dash.Request(
+                    this,
+                    (response) => {
+                        if (!Dash.Validate.Response(response)) {
+                            return;
+                        }
+                        this.edit_email_modal.Hide();
+                    },
+                    "Users",
+                    {
+                        "f": "update_email",
+                        "new_email": new_email,
+                        "email": this.user_data["email"]
+                    }
+                );
+            }
+        );
+        this.edit_email_modal.AddHTML(property_box.html);
     };
     this.add_user_image_box = function () {
         var img_url = "https://dash.guide/github/dash/client/full/bin/img/user_default.jpg";
@@ -50379,6 +50561,13 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
                 this.ShowNameSuggestion();
             }
             this.header.SetText(this.get_header_label_text());
+        }
+        if (  // Cover possible img update on name changes
+               typeof updated_data_or_key === "object"
+            && updated_data_or_key["updated_data"]?.["img"]?.["id"]
+            && ["first_name", "last_name"].includes(key)
+        ) {
+            this.on_user_img_uploaded(updated_data_or_key["updated_data"]);
         }
         // This is an extra, optional follow-up to that
         if (key in this.callbacks) {
