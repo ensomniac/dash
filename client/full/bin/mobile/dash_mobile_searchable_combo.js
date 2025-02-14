@@ -30,7 +30,7 @@ class DashMobileSearchableCombo {
         // even with very long lists drawing 1000 results without any noticeable
         // lag, but definitely need on iOS (see note at top). If performance on
         // is Android an issue at any point, this should be the first place to start.
-        this.max_results = Dash.IsMobileiOS ? 20 : 0;
+        this.max_results = Dash.IsMobileiOS ? 15 : 0;
 
         this.input = $(
             "<input>",
@@ -136,7 +136,7 @@ class DashMobileSearchableCombo {
             return this.label;
         }
 
-        this.label = $("<div>", {"text": "|" + text});  // TODO: TEST
+        this.label = $("<div>", {"text": "-" + text});  // TODO: TEST
 
         this.label.css({
             "position": "absolute",
@@ -453,9 +453,9 @@ class DashMobileSearchableCombo {
     }
 
     trigger_reclick () {
-        if (Dash.IsMobileiOS) {  // See note at the top regarding iOS
-            return;
-        }
+        // if (Dash.IsMobileiOS) {  // See note at the top regarding iOS
+        //     return;
+        // }
 
         setTimeout(
             () => {
