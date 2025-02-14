@@ -146,7 +146,7 @@ class DashMobileSearchableCombo {
             return this.label;
         }
 
-        this.label = $("<div>", {"text": (this.limit_for_webkit ? "y" : "n") + text});  // TODO: TEST
+        this.label = $("<div>", {"text": text});
 
         this.label.css({
             "position": "absolute",
