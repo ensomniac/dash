@@ -57075,7 +57075,7 @@ class DashMobileSearchableCombo {
         if (this.label) {
             return this.label;
         }
-        this.label = $("<div>", {"text": "/" + text});  // TODO: TEST
+        this.label = $("<div>", {"text": "`" + text});  // TODO: TEST
         this.label.css({
             "position": "absolute",
             "font-family": "sans_serif_bold",
@@ -57183,7 +57183,7 @@ class DashMobileSearchableCombo {
     }
     // Datalists have their own built-in native filtering, but it returns matches
     // for anything that includes the characters typed in the input, so this
-    // overwrites it. For example, typing the letter "m" should (typically) return
+    // overwrites it. For example, typing the letter "m" should (generally) return
     // results that start with "m", but datalists return any result that includes
     // the letter "m", which doesn't feel logical to the user, in most cases.
     filter_datalist () {
@@ -57191,7 +57191,7 @@ class DashMobileSearchableCombo {
         var label;
         var added_ids = [];
         var max_reached = false;
-        var search_text = this.GetLabel().toLocaleLowerCase("en-US");
+        var search_text = this.GetLabel().toLowerCase("en-US");
         // Currently, we're emptying the datalist, then creating and appending new options for
         // the included options. If performance becomes an issue, we can try detaching all the
         // options instead and manage which one's get re-appended each time, similar to what
@@ -57213,14 +57213,14 @@ class DashMobileSearchableCombo {
         // First, list options that start with the input text
         for (id in this.options) {
             label = (this.options[id] || "").toString();
-            if (!label.length || !label.toLocaleLowerCase("en-US").startsWith(search_text)) {
+            if (!label.length || !label.toLowerCase("en-US").startsWith(search_text)) {
                 continue;
             }
             this.AddOption(id, label, false, true);
             added_ids.push(id);
             if (this.max_results && added_ids.length >= this.max_results) {
                 max_reached = true;
-                return;
+                break;
             }
         }
         // Below those options, list options that don't start with the input text, but contain it
@@ -57230,14 +57230,14 @@ class DashMobileSearchableCombo {
                     continue;
                 }
                 label = (this.options[id] || "").toString();
-                if (!label.length || !label.toLocaleLowerCase("en-US").includes(search_text)) {
+                if (!label.length || !label.toLowerCase("en-US").includes(search_text)) {
                     continue;
                 }
                 this.AddOption(id, label, false, true);
                 added_ids.push(id);
                 if (this.max_results && added_ids.length >= this.max_results) {
                     max_reached = true;
-                    return;
+                    break;
                 }
             }
         }
@@ -57252,12 +57252,10 @@ class DashMobileSearchableCombo {
         // prop below, and then add special handling for this ID when it's selected
         this.AddOption(
             "_max_results",
-            "Showing the top " + this.max_results + " results – type to filter",
+            "– Showing the top " + this.max_results + " results, type to filter –",
             false,
             true
         );
-        // This is not guaranteed to be respected on most browsers, but doesn't hurt to add it  // TODO: TEST
-        // option_row.prop("disabled", true);
     }
     set_width(width, set_input=false, min_width=null, max_width=null) {
         var css = {
