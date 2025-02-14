@@ -56964,6 +56964,13 @@ function DashMobileUserProfile (
     this.setup_styles();
 }
 
+// This class implements special limitations on iOS because of their never-ending
+// webkit bugs related to datalists. In June 2024, events weren't firing, then
+// with iOS 18.0 in Sept 2024, it was resolved, but replaced by a severe lag
+// when redrawing (filtering), which still hasn't been resolved after three
+// version updates as of Feb 2025. These special limitations exist in the code
+// conditioned by `Dash.IsMobileiOS`. If at any point these limitations cease
+// to get around the bugs, we'll need to modify and leverage the desktop combo instead.
 class DashMobileSearchableCombo {
     constructor(
         color=null, options={}, placeholder_text="", binder=null, on_submit_cb=null, on_change_cb=null
@@ -56979,8 +56986,8 @@ class DashMobileSearchableCombo {
         // this.option_rows = [];
         this.html = $("<div>");
         this.clear_button = null;
-        // this.on_change_delay_ms = 0;
-        // this.on_change_timeout = null;
+        this.on_change_delay_ms = 0;
+        this.on_change_timeout = null;
         this.id = "DashMobileSearchableCombo_" + Dash.Math.RandomID();
         this.datalist = $("<datalist>", {"id": this.id});
         this.input = $(
@@ -57178,15 +57185,15 @@ class DashMobileSearchableCombo {
         var label;
         var added_ids = [];
         var search_text = this.GetLabel().toLocaleLowerCase("en-US");
-        // As of writing, this doesn't seem necessary for performance, even
-        // with very long lists drawing 1000 results without any noticeable
+        // As of writing, this doesn't seem necessary for performance on Android,
+        // even with very long lists drawing 1000 results without any noticeable
         // lag. If performance is an issue at any point, this should be the
         // first place to start. If moving forward with this in the future,
         // at the very least, need to display a little tag that says something
         // like "showing top 50 results" when the limit is hit, so it's
         // clear that not every potential match is shown. To do it right,
         // we'd need to also offer a way to load more, or load all, etc.
-        var max_results = 0;  // 100;
+        var max_results = Dash.IsMobileiOS ? 25 : 0;  // See note at the top regarding iOS
         // Currently, we're emptying the datalist, then creating and appending new options for
         // the included options. If performance becomes an issue, we can try detaching all the
         // options instead and manage which one's get re-appended each time, similar to what
@@ -57269,15 +57276,14 @@ class DashMobileSearchableCombo {
             }
         });
         this.input.on("input", () => {
-            // Since we're overriding the datalist's default filtering and
-            // that default filtering doesn't get delayed, delaying the
-            // custom filtering causes both default and custom filtering to
-            // occur, which is visibly noticeable. This doesn't appear to
-            // be necessary anyway for performance, so not a big deal.
-            // this.on_change();
-            this.filter_datalist();
-            if (this.on_change_cb) {
-                this.on_change_cb();
+            if (Dash.IsMobileiOS) {  // See note at the top regarding iOS
+                this.on_change();  // Debounced version of the below
+            }
+            else {
+                this.filter_datalist();
+                if (this.on_change_cb) {
+                    this.on_change_cb();
+                }
             }
         });
         this.input.on("click", (event, reclick=false) => {
@@ -57294,6 +57300,9 @@ class DashMobileSearchableCombo {
         });
     }
     trigger_reclick () {
+        // if (Dash.IsMobileiOS) {  // See note at the top regarding iOS
+        //     return;
+        // }
         setTimeout(
             () => {
                 // If the list is long, the list will cover the virtual
@@ -57304,34 +57313,28 @@ class DashMobileSearchableCombo {
             300
         );
     }
-    // on_change () {
-    //     if (!this.on_change_delay_ms) {
-    //         this.filter_datalist();
-    //
-    //         if (this.on_change_cb) {
-    //             this.on_change_cb();
-    //         }
-    //
-    //         return;
-    //     }
-    //
-    //     if (this.on_change_timeout) {
-    //         clearTimeout(this.on_change_timeout);
-    //
-    //         this.on_change_timeout = null;
-    //     }
-    //
-    //     this.on_change_timeout = setTimeout(
-    //         () => {
-    //             this.filter_datalist();
-    //
-    //             if (this.on_change_cb) {
-    //                 this.on_change_cb();
-    //             }
-    //         },
-    //         this.on_change_delay_ms
-    //     );
-    // }
+    on_change () {
+        if (!this.on_change_delay_ms) {
+            this.filter_datalist();
+            if (this.on_change_cb) {
+                this.on_change_cb();
+            }
+            return;
+        }
+        if (this.on_change_timeout) {
+            clearTimeout(this.on_change_timeout);
+            this.on_change_timeout = null;
+        }
+        this.on_change_timeout = setTimeout(
+            () => {
+                this.filter_datalist();
+                if (this.on_change_cb) {
+                    this.on_change_cb();
+                }
+            },
+            this.on_change_delay_ms
+        );
+    }
 }
 
 function DashMobileCardPullIcon (card, icon_name) {
