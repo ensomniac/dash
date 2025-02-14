@@ -56990,6 +56990,11 @@ class DashMobileSearchableCombo {
         this.on_change_timeout = null;
         this.id = "DashMobileSearchableCombo_" + Dash.Math.RandomID();
         this.datalist = $("<datalist>", {"id": this.id});
+        // As of writing, this doesn't seem necessary for performance on Android,
+        // even with very long lists drawing 1000 results without any noticeable
+        // lag, but definitely need on iOS (see note at top). If performance on
+        // is Android an issue at any point, this should be the first place to start.
+        this.max_results = Dash.IsMobileiOS ? 20 : 0;
         this.input = $(
             "<input>",
             {
@@ -57041,14 +57046,15 @@ class DashMobileSearchableCombo {
         // Unlike the select element, the datalist does not allow option elements
         // to contain both a value and a label, so for us to get the ID after a
         // selection is made, we loop through the options and match the current value (label)
-        var row = $("<option>",{"value": label});
-        row.css({
+        var option_row = $("<option>",{"value": label});
+        option_row.css({
             "height": Dash.Size.RowHeight
         });
         // if (!_from_filter) {
-        //     this.option_rows.push(row);
+        //     this.option_rows.push(option_row);
         // }
-        this.datalist.append(row);
+        this.datalist.append(option_row);
+        return option_row;
     }
     SetOptions(options={}) {
         this.datalist.empty();
@@ -57069,7 +57075,7 @@ class DashMobileSearchableCombo {
         if (this.label) {
             return this.label;
         }
-        this.label = $("<div>", {"text": text});
+        this.label = $("<div>", {"text": "|" + text});  // TODO: TEST
         this.label.css({
             "position": "absolute",
             "font-family": "sans_serif_bold",
@@ -57184,16 +57190,8 @@ class DashMobileSearchableCombo {
         var id;
         var label;
         var added_ids = [];
+        var max_reached = false;
         var search_text = this.GetLabel().toLocaleLowerCase("en-US");
-        // As of writing, this doesn't seem necessary for performance on Android,
-        // even with very long lists drawing 1000 results without any noticeable
-        // lag. If performance is an issue at any point, this should be the
-        // first place to start. If moving forward with this in the future,
-        // at the very least, need to display a little tag that says something
-        // like "showing top 50 results" when the limit is hit, so it's
-        // clear that not every potential match is shown. To do it right,
-        // we'd need to also offer a way to load more, or load all, etc.
-        var max_results = Dash.IsMobileiOS ? 25 : 0;  // See note at the top regarding iOS
         // Currently, we're emptying the datalist, then creating and appending new options for
         // the included options. If performance becomes an issue, we can try detaching all the
         // options instead and manage which one's get re-appended each time, similar to what
@@ -57220,25 +57218,46 @@ class DashMobileSearchableCombo {
             }
             this.AddOption(id, label, false, true);
             added_ids.push(id);
-            if (max_results && added_ids.length >= max_results) {
+            if (this.max_results && added_ids.length >= this.max_results) {
+                max_reached = true;
                 return;
             }
         }
         // Below those options, list options that don't start with the input text, but contain it
-        for (id in this.options) {
-            if (added_ids.includes(id)) {
-                continue;
-            }
-            label = (this.options[id] || "").toString();
-            if (!label.length || !label.toLocaleLowerCase("en-US").includes(search_text)) {
-                continue;
-            }
-            this.AddOption(id, label, false, true);
-            added_ids.push(id);
-            if (max_results && added_ids.length >= max_results) {
-                return;
+        if (!max_reached) {
+            for (id in this.options) {
+                if (added_ids.includes(id)) {
+                    continue;
+                }
+                label = (this.options[id] || "").toString();
+                if (!label.length || !label.toLocaleLowerCase("en-US").includes(search_text)) {
+                    continue;
+                }
+                this.AddOption(id, label, false, true);
+                added_ids.push(id);
+                if (this.max_results && added_ids.length >= this.max_results) {
+                    max_reached = true;
+                    return;
+                }
             }
         }
+        if (max_reached && Object.keys(this.options).length > this.max_results) {
+            this.add_max_results_option();
+        }
+    }
+    add_max_results_option () {
+        // If the above becomes problematic because it's not showing enough results but
+        // enforcing this.max_results is still necessary, then we'll need to change the
+        // language to end with something like " - load more...", remove the `disabled`
+        // prop below, and then add special handling for this ID when it's selected
+        var option_row = this.AddOption(
+            "_max_results",
+            "Showing the top " + this.max_results + " results – type to filter",
+            false,
+            true
+        );
+        // This is not guaranteed to be respected on most browsers, but doesn't hurt to add it
+        option_row.prop("disabled", true);
     }
     set_width(width, set_input=false, min_width=null, max_width=null) {
         var css = {
@@ -57259,8 +57278,16 @@ class DashMobileSearchableCombo {
         });
     }
     add_options(_from_filter=false) {
+        var added_ids = [];
         for (var id in this.options) {
             this.AddOption(id, this.options[id], false, _from_filter);
+            added_ids.push(id);
+            if (this.max_results && added_ids.length >= this.max_results) {
+                if (Object.keys(this.options).length > this.max_results) {
+                    this.add_max_results_option();
+                }
+                break;
+            }
         }
     }
     setup_connections () {
@@ -57300,9 +57327,9 @@ class DashMobileSearchableCombo {
         });
     }
     trigger_reclick () {
-        // if (Dash.IsMobileiOS) {  // See note at the top regarding iOS
-        //     return;
-        // }
+        if (Dash.IsMobileiOS) {  // See note at the top regarding iOS
+            return;
+        }
         setTimeout(
             () => {
                 // If the list is long, the list will cover the virtual
