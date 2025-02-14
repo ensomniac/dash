@@ -15,6 +15,20 @@ function _Dash () {
     this.IsMobileiOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
     this.IsMobile = this.IsMobileiOS || /Mobi|Android|webOS|BlackBerry|IEMobile|CriOS|OPiOS|Opera Mini/i.test(navigator.userAgent);
 
+    if (this.IsMobileiOS) {
+        try {
+            this.MobileiOSVersion = navigator.userAgent.split("OS ")[1].split(" ")[0].replaceAll("_", ".");
+        }
+
+        catch {
+            this.MobileiOSVersion = "";
+        }
+    }
+
+    else {
+        this.MobileiOSVersion = "";
+    }
+
     // Not exclusive to mobile, unless you also check for this.IsMobileiOS.
     // Safari will be present in the userAgent on Apple devices even when using other browsers,
     // so we have to make sure those other browser names aren't present in the userAgent.

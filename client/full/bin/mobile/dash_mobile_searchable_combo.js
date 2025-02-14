@@ -3,7 +3,7 @@
 // with iOS 18.0 in Sept 2024, it was resolved, but replaced by a severe lag
 // when redrawing (filtering), which still hasn't been resolved after three
 // version updates as of Feb 2025. These special limitations exist in the code
-// conditioned by `Dash.IsMobileiOS`. If at any point these limitations cease
+// conditioned by `this.limit_for_webkit`. If at any point these limitations cease
 // to get around the bugs, we'll need to modify and leverage the desktop combo instead.
 class DashMobileSearchableCombo {
     constructor(
@@ -26,11 +26,21 @@ class DashMobileSearchableCombo {
         this.id = "DashMobileSearchableCombo_" + Dash.Math.RandomID();
         this.datalist = $("<datalist>", {"id": this.id});
 
+        // iOS is the primary offender and issues vary across versions
+        this.limit_for_webkit = (
+            Dash.MobileiOSVersion && (
+                // Limits became necessary with the bugs introduced in 18.0
+                parseInt(Dash.MobileiOSVersion.split(".")) > 17
+
+                // Add more cases as needed, or limit the above case once issues are resolved
+            )
+        );
+
         // As of writing, this doesn't seem necessary for performance on Android,
         // even with very long lists drawing 1000 results without any noticeable
-        // lag, but definitely need on iOS (see note at top). If performance on
+        // lag, but definitely need on iOS (see notes at the top). If performance on
         // is Android an issue at any point, this should be the first place to start.
-        this.max_results = Dash.IsMobileiOS ? 15 : 0;
+        this.max_results = this.limit_for_webkit ? 15 : 0;
 
         this.input = $(
             "<input>",
@@ -136,7 +146,7 @@ class DashMobileSearchableCombo {
             return this.label;
         }
 
-        this.label = $("<div>", {"text": "`" + text});  // TODO: TEST
+        this.label = $("<div>", {"text": (this.limit_for_webkit ? "y" : "n") + text});  // TODO: TEST
 
         this.label.css({
             "position": "absolute",
@@ -420,7 +430,7 @@ class DashMobileSearchableCombo {
         });
 
         this.input.on("input", () => {
-            if (Dash.IsMobileiOS) {  // See note at the top regarding iOS
+            if (this.limit_for_webkit) {  // See notes at the top
                 this.on_change();  // Debounced version of the below
             }
 
@@ -451,7 +461,7 @@ class DashMobileSearchableCombo {
 
     trigger_reclick () {
         // This function doesn't seem to cause any trouble on iOS after all, so no need to skip it
-        // if (Dash.IsMobileiOS) {  // See note at the top regarding iOS
+        // if (this.limit_for_webkit) {  // See notes at the top
         //     return;
         // }
 
