@@ -136,7 +136,7 @@ class DashMobileSearchableCombo {
             return this.label;
         }
 
-        this.label = $("<div>", {"text": "-" + text});  // TODO: TEST
+        this.label = $("<div>", {"text": "/" + text});  // TODO: TEST
 
         this.label.css({
             "position": "absolute",
@@ -356,15 +356,15 @@ class DashMobileSearchableCombo {
         // enforcing this.max_results is still necessary, then we'll need to change the
         // language to end with something like " - load more...", remove the `disabled`
         // prop below, and then add special handling for this ID when it's selected
-        var option_row = this.AddOption(
+        this.AddOption(
             "_max_results",
             "Showing the top " + this.max_results + " results – type to filter",
             false,
             true
         );
 
-        // This is not guaranteed to be respected on most browsers, but doesn't hurt to add it
-        option_row.prop("disabled", true);
+        // This is not guaranteed to be respected on most browsers, but doesn't hurt to add it  // TODO: TEST
+        // option_row.prop("disabled", true);
     }
 
     set_width(width, set_input=false, min_width=null, max_width=null) {
@@ -453,6 +453,7 @@ class DashMobileSearchableCombo {
     }
 
     trigger_reclick () {
+        // This function doesn't seem to cause any trouble on iOS after all, so no need to skip it
         // if (Dash.IsMobileiOS) {  // See note at the top regarding iOS
         //     return;
         // }
