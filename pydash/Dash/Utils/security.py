@@ -7,6 +7,7 @@ import os
 import sys
 
 
+# Ref: https://developer.1password.com/docs/cli
 class OnePass:
     __signin_pass_: str
     _session_token: str
@@ -100,7 +101,8 @@ class OnePass:
         )
 
     def CreateItem(
-        self, vault_name, item_name, url="", tags=[], category="login", password_recipe="", debug=False
+        self, vault_name, item_name, url="", tags=[], category="login",
+        password_recipe="", username="", custom_fields={}, debug=False
     ):
         args = [
             "item",
@@ -117,15 +119,26 @@ class OnePass:
             args.extend(["--url", url])
 
         if tags:
-            tags.extend(["--tags", ",".join(tags)])
+            args.extend(["--tags", ",".join(tags)])
 
         args.append("--generate-password")
 
-        if password_recipe:  # Ex: "letters,digits,symbols,32"
-            args.append(password_recipe)
+        # Ex: "letters,digits,symbols,32"
+        # The default is 32-characters, and includes upper and lowercase letters, numbers, and symbols (!@.-_*).
+        if password_recipe:
+            args[-1] += f"={password_recipe}"
 
         if debug:
             args.append("--dry-run")
+
+        # This is technically a custom field, but it's a common one, so including it in the interface
+        if username:
+            args.append(f"username={username}")
+
+        # Ref: https://developer.1password.com/docs/cli/item-edit/#edit-built-in-and-custom-fields
+        if custom_fields:
+            for key, value in custom_fields.items():
+                args.append(f"{key}={value}")
 
         return self.run_command(
             args=args,
@@ -133,7 +146,10 @@ class OnePass:
         )
 
     # If this hangs when running within an IDE, run the script directly in the terminal
-    def EditItem(self, item_name_or_id, item_name="", vault_name="", tags=[], url="", debug=False):
+    def EditItem(
+        self, item_name_or_id, item_name="", vault_name="", tags=[],
+        custom_fields={}, url="", debug=False
+    ):
         args = [
             "item",
             "edit",
@@ -155,17 +171,19 @@ class OnePass:
         if debug:
             args.append("--dry-run")
 
-        # To edit an item's built-in and custom fields, update this to leverage assignment statements:
-        #  - https://developer.1password.com/docs/cli/item-edit/#edit-built-in-and-custom-fields
+        # Ref: https://developer.1password.com/docs/cli/item-edit/#edit-built-in-and-custom-fields
+        if custom_fields:
+            for key, value in custom_fields.items():
+                args.append(f"{key}={value}")
 
         return self.run_command(
             args=args,
             error_prefix="Failed to edit 1pass item"
         )
 
-    def run_command(self, args, cmd_input=None, error_prefix="", add_env=True):
+    def run_command(self, args, cmd_input=None, error_prefix="", add_env=True, timeout=30):
         from json import JSONDecodeError
-        from subprocess import CalledProcessError, run as sub_run
+        from subprocess import CalledProcessError, TimeoutExpired, run as sub_run
 
         op_arg_index = 2 if self._on_server else 0
 
@@ -195,7 +213,8 @@ class OnePass:
                 check=True,
                 input=cmd_input,
                 capture_output=True,
-                env=env
+                env=env,
+                timeout=timeout
             ).stdout
 
         except CalledProcessError as e:
@@ -203,12 +222,18 @@ class OnePass:
                 f"{error_prefix or 'Failed to run 1pass command'}:\n{error_midfix}\nError: {e.stderr}"
             ) from e
 
+        except TimeoutExpired as e:
+            raise Exception(
+                f"{error_prefix or 'Failed to run 1pass command'} (timed out):\n"
+                f"{error_midfix}\nError: {e.stderr or e.stdout or e.output}"
+            ) from e
+
         except JSONDecodeError as e:
             raise Exception(f"Failed to parse output from 1pass:\n{error_midfix}\nError: {e}") from e
 
         except FileNotFoundError as e:
             raise Exception(
-                f"{error_prefix or 'Failed to run 1pass command (file not found?'}:\n{error_midfix}\nError: {e}"
+                f"{error_prefix or 'Failed to run 1pass command'} (file not found?):\n{error_midfix}\nError: {e}"
             ) from e
 
         if "--format json" in " ".join(args):
