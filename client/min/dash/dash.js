@@ -24650,7 +24650,7 @@ function DashGuiLogin (on_login_binder=null, on_login_callback=null, color=null,
 /**@member DashGuiPrompt*/
 function DashGuiModal (
     color=null, parent_html=null, width=null, height=null, include_bg=true,
-    bg_opacity=0.5, include_close_button=true, bg_color=null, bg_blur="5px"
+    bg_opacity=0.7, include_close_button=true, bg_color=null
 ) {
     this.color = color || Dash.Color.Light;
     this.parent_html = parent_html;
@@ -24659,17 +24659,14 @@ function DashGuiModal (
     this.include_bg = include_bg;
     this.bg_opacity = bg_opacity;
     this.include_close_button = include_close_button;
-    this.bg_color = Dash.Color.GetTransparent(
-        (bg_color || Dash.Color.GetOpposite(this.color).BackgroundRaised),
-        this.bg_opacity
-    );
-    this.bg_blur = bg_blur;
+    this.bg_color = this.bg_color = bg_color || Dash.Color.GetOpposite(this.color).BackgroundRaised;;
     // Not using 'this.html' is unconventional, but it's not appropriate in
     // this context, since the modal consists of two individual elements with
     // 'this.parent_html' essentially being the equivalent of the usual 'this.html'.
     // It's also important to note that these elements automatically get appended
     // to 'this.parent_html' to ensure the elements get appended appropriately.
     this.modal = null;
+    this.bg_blur = "5px";
     this.background = null;
     this.appended_html = [];
     this.close_button = null;
@@ -24685,6 +24682,21 @@ function DashGuiModal (
         this.add_modal();
         this.add_close_button();
         this.add_esc_shortcut();
+    };
+    // Instead of default "faded" effect
+    this.UseBlur = function (bg_opacity=0.5, bg_blur="5px") {
+        this.bg_blur = bg_blur;
+        this.bg_opacity = bg_opacity;
+        this.bg_color = Dash.Color.GetTransparent(
+            (bg_color || Dash.Color.GetOpposite(this.color).BackgroundRaised),
+            this.bg_opacity
+        );
+        this.background.css({
+            "opacity": 1,
+            "background": this.bg_color,
+            "backdrop-filter": "blur(" + this.bg_blur + ")"
+        });
+        return this;
     };
     this.SetOnCloseCallback = function (binder=null, callback=null) {
         if (!this.include_close_button) {
@@ -24901,8 +24913,8 @@ function DashGuiModal (
             {
                 "z-index": this.get_bg_z_index(),
                 "background": this.bg_color,
-                "height": height,
-                "backdrop-filter": "blur(" + this.bg_blur + ")"
+                "opacity": this.bg_opacity,
+                "height": height
             }
         );
         // Block any elements behind this from being clicked
@@ -46189,7 +46201,7 @@ function DashGuiLoadingLabel (binder=null, label_text="Loading...", height=null,
 }
 
 function DashGuiLoadingOverlay (
-    color=null, progress=0, label_prefix="Loading", html_to_append_to=null, simple=false
+    color=null, progress=0, label_prefix="Loading", html_to_append_to=null, simple=false, bg_opacity=0.6
 ) {
     this.color = color || Dash.Color.Light;
     this.progress = progress;  // Set to "none" if progress indicator not desired
@@ -46200,6 +46212,7 @@ function DashGuiLoadingOverlay (
     // certain operations, like loading heavy data, drawing a ton of rows, etc, the loading dots
     // stay frozen and don't actually animate, so if it's heavy and/or quick, simple may be preferred.
     this.simple = simple;
+    this.bg_opacity = bg_opacity;
     // Not using 'this.html' is unconventional, but in order for this to be a single GUI element
     // with a transparent background and an opaque bubble, we can't use the typical 'this.html',
     // because then all the elements are either transparent or opaque, not able to be individually
@@ -46220,7 +46233,7 @@ function DashGuiLoadingOverlay (
             Dash.Size.ColumnWidth,  // Placeholder value for init
             Dash.Size.RowHeight,
             true,
-            0.6,
+            this.bg_opacity,
             false,
             this.color.BackgroundRaised
         );

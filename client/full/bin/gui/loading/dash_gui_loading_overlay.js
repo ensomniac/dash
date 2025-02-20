@@ -1,5 +1,5 @@
 function DashGuiLoadingOverlay (
-    color=null, progress=0, label_prefix="Loading", html_to_append_to=null, simple=false
+    color=null, progress=0, label_prefix="Loading", html_to_append_to=null, simple=false, bg_opacity=0.6
 ) {
     this.color = color || Dash.Color.Light;
     this.progress = progress;  // Set to "none" if progress indicator not desired
@@ -11,6 +11,8 @@ function DashGuiLoadingOverlay (
     // certain operations, like loading heavy data, drawing a ton of rows, etc, the loading dots
     // stay frozen and don't actually animate, so if it's heavy and/or quick, simple may be preferred.
     this.simple = simple;
+
+    this.bg_opacity = bg_opacity;
 
     // Not using 'this.html' is unconventional, but in order for this to be a single GUI element
     // with a transparent background and an opaque bubble, we can't use the typical 'this.html',
@@ -35,7 +37,7 @@ function DashGuiLoadingOverlay (
             Dash.Size.ColumnWidth,  // Placeholder value for init
             Dash.Size.RowHeight,
             true,
-            0.6,
+            this.bg_opacity,
             false,
             this.color.BackgroundRaised
         );
