@@ -384,7 +384,7 @@ class GUtils:
 
         return self._youtube_utils_
 
-    def PostToYouTube(self, channel_id):  # TODO
+    def PostToYouTube(self, channel_id):
         return self._youtube_utils.Post(channel_id)
 
     def GetYouTubeChannels(self, handle="", username=""):
@@ -404,11 +404,11 @@ class GUtils:
     def GetYouTubeVideo(self, video_id):
         return self._youtube_utils.GetVideo(video_id)
 
-    def GetYouTubeComments(self, comment_ids):
-        return self._youtube_utils.GetComments(comment_ids)
+    def DeleteYouTubeVideo(self, video_id):
+        return self._youtube_utils.DeleteVideo(video_id)
 
-    def GetYouTubeCommentReplies(self, comment_id):
-        return self._youtube_utils.GetCommentReplies(comment_id)
+    def GetYouTubeComments(self, comment_ids=[], video_id="", skip_comment_ids=[], include_replies=True):
+        return self._youtube_utils.GetComments(comment_ids, video_id, skip_comment_ids, include_replies)
 
     def GetYouTubeSubscriberCount(self, channel_id="", channel_handle="", music_channel_id=""):
         return self._youtube_utils.GetSubscriberCount(channel_id, channel_handle, music_channel_id)
@@ -1085,9 +1085,11 @@ class _YouTubeUtils:
         return self._video_categories
 
     def Post(self, channel_id):
+        raise NotImplementedError("The function to post to YouTube is not yet written")
+
         # TODO: any short content that goes to socials can go to youtube
         #  shorts, and any longer content can go to og youtube
-        return {}
+        # return {}
 
     def GetChannels(self, handle="", username=""):
         params = {
@@ -1218,7 +1220,25 @@ class _YouTubeUtils:
 
         return results[0]
 
-    def GetComments(self, comment_ids):
+    def DeleteVideo(self, video_id):  # TODO
+        raise NotImplementedError("The function to delete a YouTube video is not yet written")
+
+        # return False
+
+    def GetComments(self, comment_ids=[], video_id="", skip_comment_ids=[], include_replies=True):
+        if not comment_ids:
+            if not video_id:
+                raise ValueError("Must specify either comment_ids or video_id")
+
+            # TODO: get comment IDs from video
+            raise NotImplementedError("The ability to get YouTube comments from a video ID is not yet written")
+
+        if skip_comment_ids:
+            comment_ids = [cid for cid in comment_ids if cid not in skip_comment_ids]
+
+        if not comment_ids:
+            return []
+
         results = self.Client.comments().list(**{
             "part": "id, snippet",
             "id": ", ".join(comment_ids),
@@ -1231,14 +1251,28 @@ class _YouTubeUtils:
                 f"{len(comment_ids)} but got {len(results)}:\n{results}"
             )
 
-        return results
+        if not include_replies:
+            return results
 
-    def GetCommentReplies(self, comment_id):
-        return self.Client.comments().list(**{
-            "part": "id, snippet",
-            "parentId": comment_id,
-            "textFormat": "plainText"
-        }).execute()["items"]
+        combined = []
+
+        for comment in results:
+            comment["parent_id"] = ""  # Keep the data clear and consistent
+
+            combined.append(comment)
+
+            replies = self.Client.comments().list(**{
+                "part": "id, snippet",
+                "parentId": comment["id"],
+                "textFormat": "plainText"
+            }).execute()["items"]
+
+            for reply in replies:
+                reply["parent_id"] = comment["id"]
+
+                combined.append(reply)
+
+        return combined
 
     # Can't get this via API
     def GetSubscriberCount(self, channel_id="", channel_handle="", music_channel_id=""):
