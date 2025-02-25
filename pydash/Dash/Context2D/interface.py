@@ -53,10 +53,10 @@ class Interface:
         data = {
             "aspect_ratio_h": self.AspectRatioH,
             "aspect_ratio_w": self.AspectRatioW,
-            "created_by":     self.CreatedBy,
-            "created_on":     self.CreatedOn,
-            "display_name":   self.DisplayName,
-            "id":             self.ID,
+            "created_by": self.CreatedBy,
+            "created_on": self.CreatedOn,
+            "display_name": self.DisplayName,
+            "id": self.ID,
 
             # We don't want to save the "layers" key, since we store the layers separately, but we need to
             # save the "layer_order" to be able to populate the "layers" when serving this dict (not saving)

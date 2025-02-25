@@ -177,6 +177,13 @@ def FormatTime(dt_obj, time_format=1, tz="utc", update_tz=True):
     if time_format == 22:
         return dt_obj.strftime("%-m/%-d")
 
+    # Format: 10/09/23 at 02:51 PM EST
+    if time_format == 23:
+        formatted = dt_obj.strftime("%m/%d/%y at %I:%M %p")
+        tz_name = (tz if not update_tz else (dt_obj.strftime("%Z") or tz)).upper()
+
+        return f"{formatted} {tz_name}"
+
     # Format: Monday, October 9th, 2023 at 2:51 pm
     return f"{date_markup} at {time_markup}"
 

@@ -20925,26 +20925,20 @@ function DashRequest () {
         this.params["token"] = Dash.Local.Get("token");
         this.id = Math.random() * (999999 - 100000) + 100000;
         this.post = function () {
-            (function (self) {
-                $.post(
-                    self.url,
-                    self.params,
-                    function (response) {
-                        self.dash_requests.on_response(self, response);
-                    }
-                ).fail(function (request, status, error) {
-                    var response = request.responseJSON || request.responseText;
-                    if (response) {
-                        self.dash_requests.on_response(self, response);
-                        return;
-                    }
-                    Dash.Log.Warn(
-                        "Dash Request Warning: A request failed (status ", status, "), but callback " +
-                        "will be triggered regardless." + (error ? " Error:\n" + error.toString() : "")
-                    );
-                    self.dash_requests.on_response(self, response);
-                });
-            })(this);
+            $.post(
+                this.url,
+                this.params,
+                (response) => {
+                    this.dash_requests.on_response(this, response);
+                }
+            ).fail((request, status, error) => {
+                var response = request.responseJSON || request.responseText;
+                Dash.Log.Warn(
+                    "Dash Request Warning: A request failed (status ", status, "), but callback " +
+                    "will be triggered regardless." + (error ? " Error:\n" + error.toString() : "")
+                );
+                this.dash_requests.on_response(this, response);
+            });
         };
         this.post();
     }
@@ -32390,7 +32384,7 @@ function DashGuiContext2D (
     };
     this.set_data = function (key, value, callback=null, additional_params={}) {
         // Should never happen, but just in case
-        if (this.preview_mode) {
+        if (this.preview_mode || Number.isNaN(value)) {
             return;
         }
         if (this.get_data(key) === value) {
@@ -32399,29 +32393,27 @@ function DashGuiContext2D (
         if (typeof value === "object") {
             value = JSON.stringify(value);
         }
-        (function (self) {
-            Dash.Request(
-                self,
-                function (response) {
-                    if (!Dash.Validate.Response(response)) {
-                        return;
-                    }
-                    self.on_set_data(response, key, value, callback);
-                    if (self.linked_preview) {
-                        self.linked_preview.on_set_data(response, key, value);  // Don't pass callback here
-                    }
-                },
-                self.api,
-                {
-                    "f": "set_property",
-                    "c2d_id": self.c2d_id,
-                    "key": key + (self.override_mode ? "_override" : ""),
-                    "value": value,
-                    ...self.extra_request_params,
-                    ...additional_params
+        Dash.Request(
+            this,
+            (response) => {
+                if (!Dash.Validate.Response(response)) {
+                    return;
                 }
-            );
-        })(this);
+                this.on_set_data(response, key, value, callback);
+                if (this.linked_preview) {
+                    this.linked_preview.on_set_data(response, key, value);  // Don't pass callback here
+                }
+            },
+            this.api,
+            {
+                "f": "set_property",
+                "c2d_id": this.c2d_id,
+                "key": key + (this.override_mode ? "_override" : ""),
+                "value": value,
+                ...this.extra_request_params,
+                ...additional_params
+            }
+        );
     };
     this.on_set_data = function (response, key, value, callback=null) {
         this.data = response;
@@ -32441,7 +32433,7 @@ function DashGuiContext2D (
             this.initialize();
         }
         if (!this.preview_mode) {
-            Dash.Log.Log("Context2D data:", this.data);
+            Dash.Log.Log("Context2D data:", typeof this.data, this.data);
         }
         if (this.initialized && this.editor_panel && !this.preview_mode) {
             this.editor_panel.UpdatePropertyBox();
@@ -38530,6 +38522,9 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
                 self.color,
                 (label_text || data_key.Title()) + ":",
                 function (value) {
+                    if (Number.isNaN(value)) {
+                        return;
+                    }
                     self.set_data(data_key, value);
                 },
                 start_range,

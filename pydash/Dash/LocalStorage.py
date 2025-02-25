@@ -931,6 +931,15 @@ class DashLocalStorage:
 
             value = data.get(key)
 
+            if old_id == "NaN" and type(value) is float and str(value) == "nan":
+                data[key] = new_id
+
+                log.append(f"{indent_char * 3}updated value for key: {key}")
+
+                modified = True
+
+                continue
+
             if not value:
                 if verbose:
                     log.append(f"{indent_char * 3}key: {key}")

@@ -1285,6 +1285,10 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
                 self.color,
                 (label_text || data_key.Title()) + ":",
                 function (value) {
+                    if (Number.isNaN(value)) {
+                        return;
+                    }
+
                     self.set_data(data_key, value);
                 },
                 start_range,

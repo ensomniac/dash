@@ -616,7 +616,7 @@ function DashGuiContext2D (
 
     this.set_data = function (key, value, callback=null, additional_params={}) {
         // Should never happen, but just in case
-        if (this.preview_mode) {
+        if (this.preview_mode || Number.isNaN(value)) {
             return;
         }
 
@@ -628,31 +628,29 @@ function DashGuiContext2D (
             value = JSON.stringify(value);
         }
 
-        (function (self) {
-            Dash.Request(
-                self,
-                function (response) {
-                    if (!Dash.Validate.Response(response)) {
-                        return;
-                    }
-
-                    self.on_set_data(response, key, value, callback);
-
-                    if (self.linked_preview) {
-                        self.linked_preview.on_set_data(response, key, value);  // Don't pass callback here
-                    }
-                },
-                self.api,
-                {
-                    "f": "set_property",
-                    "c2d_id": self.c2d_id,
-                    "key": key + (self.override_mode ? "_override" : ""),
-                    "value": value,
-                    ...self.extra_request_params,
-                    ...additional_params
+        Dash.Request(
+            this,
+            (response) => {
+                if (!Dash.Validate.Response(response)) {
+                    return;
                 }
-            );
-        })(this);
+
+                this.on_set_data(response, key, value, callback);
+
+                if (this.linked_preview) {
+                    this.linked_preview.on_set_data(response, key, value);  // Don't pass callback here
+                }
+            },
+            this.api,
+            {
+                "f": "set_property",
+                "c2d_id": this.c2d_id,
+                "key": key + (this.override_mode ? "_override" : ""),
+                "value": value,
+                ...this.extra_request_params,
+                ...additional_params
+            }
+        );
     };
 
     this.on_set_data = function (response, key, value, callback=null) {
@@ -678,7 +676,7 @@ function DashGuiContext2D (
         }
 
         if (!this.preview_mode) {
-            Dash.Log.Log("Context2D data:", this.data);
+            Dash.Log.Log("Context2D data:", typeof this.data, this.data);
         }
 
         if (this.initialized && this.editor_panel && !this.preview_mode) {

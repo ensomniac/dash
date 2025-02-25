@@ -22,30 +22,22 @@ function DashRequest () {
         this.id = Math.random() * (999999 - 100000) + 100000;
 
         this.post = function () {
-            (function (self) {
-                $.post(
-                    self.url,
-                    self.params,
-                    function (response) {
-                        self.dash_requests.on_response(self, response);
-                    }
-                ).fail(function (request, status, error) {
-                    var response = request.responseJSON || request.responseText;
+            $.post(
+                this.url,
+                this.params,
+                (response) => {
+                    this.dash_requests.on_response(this, response);
+                }
+            ).fail((request, status, error) => {
+                var response = request.responseJSON || request.responseText;
 
-                    if (response) {
-                        self.dash_requests.on_response(self, response);
+                Dash.Log.Warn(
+                    "Dash Request Warning: A request failed (status ", status, "), but callback " +
+                    "will be triggered regardless." + (error ? " Error:\n" + error.toString() : "")
+                );
 
-                        return;
-                    }
-
-                    Dash.Log.Warn(
-                        "Dash Request Warning: A request failed (status ", status, "), but callback " +
-                        "will be triggered regardless." + (error ? " Error:\n" + error.toString() : "")
-                    );
-
-                    self.dash_requests.on_response(self, response);
-                });
-            })(this);
+                this.dash_requests.on_response(this, response);
+            });
         };
 
         this.post();
