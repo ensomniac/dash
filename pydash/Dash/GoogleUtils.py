@@ -556,7 +556,7 @@ class _DriveUtils:
         except HttpError as http_error:
             _params["media_body"] = "(MediaFileUpload object) truncated..."
 
-            ParseHTTPError(http_error, _params)
+            return ParseHTTPError(http_error, _params)
 
         except UnicodeEncodeError as e:
             if file_path:
@@ -600,7 +600,7 @@ class _DriveUtils:
             return self.Client.files().delete(**params).execute()
 
         except HttpError as http_error:
-            ParseHTTPError(http_error, params)
+            return ParseHTTPError(http_error, params)
 
     def MoveFile(self, file_id, old_parent_id, new_parent_id, in_shared_drive=False, fields=""):
         params = {
@@ -615,7 +615,7 @@ class _DriveUtils:
             return self.Client.files().update(**params).execute()
 
         except HttpError as http_error:
-            ParseHTTPError(http_error, params)
+            return ParseHTTPError(http_error, params)
 
     def UpdateFileByKeys(self, file_id, params, fields="", in_shared_drive=False):
         """
@@ -643,7 +643,7 @@ class _DriveUtils:
             return self.Client.files().update(**_params).execute()
 
         except HttpError as http_error:
-            ParseHTTPError(http_error, _params)
+            return ParseHTTPError(http_error, _params)
 
     def GetFileDataByID(self, file_id, in_shared_drive=False, fields_override=""):
         """
@@ -668,7 +668,7 @@ class _DriveUtils:
             return self.Client.files().get(**params).execute()
 
         except HttpError as http_error:
-            ParseHTTPError(http_error, params)
+            return ParseHTTPError(http_error, params)
 
         except:
             return None  # Why is this not being handled?
@@ -771,7 +771,7 @@ class _DriveUtils:
             return self.Client.files().list(**params).execute()["files"]
 
         except HttpError as http_error:
-            ParseHTTPError(http_error, params)
+            return ParseHTTPError(http_error, params)
 
     def GetFilePermissions(self, file_id, in_shared_drive=False, fields="id, emailAddress, role"):
         params = {
@@ -784,7 +784,7 @@ class _DriveUtils:
             return self.Client.permissions().list(**params).execute()["permissions"]
 
         except HttpError as http_error:
-            ParseHTTPError(http_error, params)
+            return ParseHTTPError(http_error, params)
 
     def AddPermissionToFile(
         self, user_email, file_id, permission_level="writer", notify_user=False, in_shared_drive=False
@@ -822,7 +822,7 @@ class _DriveUtils:
             return self.Client.permissions().create(**params).execute()
 
         except HttpError as http_error:
-            ParseHTTPError(http_error, params)
+            return ParseHTTPError(http_error, params)
 
     def RemovePermissionFromFile(self, user_email, file_id, in_shared_drive=False, permission_id=""):
         if not permission_id:
@@ -847,7 +847,7 @@ class _DriveUtils:
             return self.Client.permissions().delete(**params).execute()
 
         except HttpError as http_error:
-            ParseHTTPError(http_error, params)
+            return ParseHTTPError(http_error, params)
 
 
 class _SheetsUtils:
@@ -888,8 +888,6 @@ class _SheetsUtils:
         Note: This doesn't currently account for extra, empty rows at the bottom.
         """
 
-        data = {}
-
         params = {
             "spreadsheetId": sheet_id,
             "includeGridData": True
@@ -899,7 +897,7 @@ class _SheetsUtils:
             data = self.Client.spreadsheets().get(**params).execute()["sheets"][0]
 
         except HttpError as http_error:
-            ParseHTTPError(http_error, params)
+            return ParseHTTPError(http_error, params)
 
         if row_data_only and data.get("data"):
             return data["data"][0]["rowData"]
@@ -1118,7 +1116,11 @@ class _YouTubeUtils:
         else:
             params["mine"] = True
 
-        return self.Client.channels().list(**params).execute()["items"]
+        try:
+            return self.Client.channels().list(**params).execute()["items"]
+
+        except HttpError as http_error:
+            return ParseHTTPError(http_error, params)
 
     def GetPlaylists(self, channel_id="", single_playlist_id=""):
         params = {
@@ -1143,7 +1145,11 @@ class _YouTubeUtils:
         else:
             params["mine"] = True
 
-        results = self.Client.playlists().list(**params).execute()["items"]
+        try:
+            results = self.Client.playlists().list(**params).execute()["items"]
+
+        except HttpError as http_error:
+            return ParseHTTPError(http_error, params)
 
         if not single_playlist_id:
             return results
@@ -1188,10 +1194,14 @@ class _YouTubeUtils:
         else:
             params["forMine"] = True
 
-        return self.Client.search().list(**params).execute()["items"]
+        try:
+            return self.Client.search().list(**params).execute()["items"]
+
+        except HttpError as http_error:
+            return ParseHTTPError(http_error, params)
 
     def GetVideo(self, video_id):
-        results = self.Client.videos().list(**{
+        params = {
             "part": ", ".join([
                 "id",
                 "snippet",
@@ -1210,7 +1220,13 @@ class _YouTubeUtils:
                 # "topicDetails"
             ]),
             "id": video_id
-        }).execute()["items"]
+        }
+
+        try:
+            results = self.Client.videos().list(**params).execute()["items"]
+
+        except HttpError as http_error:
+            return ParseHTTPError(http_error, params)
 
         if not results:
             raise ValueError(f"No videos found for {video_id}")
@@ -1226,30 +1242,54 @@ class _YouTubeUtils:
         # return False
 
     def GetComments(self, comment_ids=[], video_id="", skip_comment_ids=[], include_replies=True):
+        results = None
+
         if not comment_ids:
             if not video_id:
                 raise ValueError("Must specify either comment_ids or video_id")
 
-            # TODO: get comment IDs from video
-            raise NotImplementedError("The ability to get YouTube comments from a video ID is not yet written")
+            fields = ["id", "snippet"]
 
-        if skip_comment_ids:
-            comment_ids = [cid for cid in comment_ids if cid not in skip_comment_ids]
+            if include_replies:
+                fields.append("replies")
 
-        if not comment_ids:
-            return []
+            params = {
+                "part": ", ".join(fields),
+                "videoId": video_id,
+                "textFormat": "plainText",
+                "maxResults": 100  # This is the highest allowed, unless we implement paging
+            }
 
-        results = self.Client.comments().list(**{
-            "part": "id, snippet",
-            "id": ", ".join(comment_ids),
-            "textFormat": "plainText"
-        }).execute()["items"]
+            try:
+                results = self.Client.commentThreads().list(**params).execute()["items"]
 
-        if len(comment_ids) != len(results):
-            raise ValueError(
-                "Not all comment IDs returned results, expected "
-                f"{len(comment_ids)} but got {len(results)}:\n{results}"
-            )
+            except HttpError as http_error:
+                return ParseHTTPError(http_error, params)
+
+        if results is None:
+            if skip_comment_ids:
+                comment_ids = [cid for cid in comment_ids if cid not in skip_comment_ids]
+
+            if not comment_ids:
+                return []
+
+            params = {
+                "part": "id, snippet",
+                "id": ", ".join(comment_ids),
+                "textFormat": "plainText"
+            }
+
+            try:
+                results = self.Client.comments().list(**params).execute()["items"]
+
+            except HttpError as http_error:
+                return ParseHTTPError(http_error, params)
+
+            if len(comment_ids) != len(results):
+                raise ValueError(
+                    "Not all comment IDs returned results, expected "
+                    f"{len(comment_ids)} but got {len(results)}:\n{results}"
+                )
 
         if not include_replies:
             return results
@@ -1259,15 +1299,30 @@ class _YouTubeUtils:
         for comment in results:
             comment["parent_id"] = ""  # Keep the data clear and consistent
 
+            if video_id:
+                replies = comment.pop("replies") if "replies" in comment else []
+
+                if replies and type(replies) is dict and "comments" in replies:
+                    replies = replies["comments"]
+            else:
+                params = {
+                    "part": "id, snippet",
+                    "parentId": comment["id"],
+                    "textFormat": "plainText"
+                }
+
+                try:
+                    replies = self.Client.comments().list(**params).execute()["items"]
+
+                except HttpError as http_error:
+                    return ParseHTTPError(http_error, params)
+
             combined.append(comment)
 
-            replies = self.Client.comments().list(**{
-                "part": "id, snippet",
-                "parentId": comment["id"],
-                "textFormat": "plainText"
-            }).execute()["items"]
-
             for reply in replies:
+                if reply["id"] in skip_comment_ids:
+                    continue
+
                 reply["parent_id"] = comment["id"]
 
                 combined.append(reply)
