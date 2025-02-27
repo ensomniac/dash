@@ -224,6 +224,55 @@ def GetReadableHoursMins(secs, include_secs=False):
     return readable
 
 
+def TimeAgoToDateTime(time_ago, reference_dt=None):
+    """
+    Converts a 'X time ago' string into a datetime object.
+
+    :param str time_ago: Ex: '4 days ago', '2 hours ago', etc.
+    :param reference_dt: A reference datetime, defaulting to now (default=None)
+
+    :return: A datetime object representing the parsed time.
+    """
+
+    from re import match
+    from datetime import datetime, timedelta
+
+    if reference_dt is None:
+        reference_dt = datetime.now()
+
+    matched = match(r"(\d+)\s+(\w+)\s+ago", time_ago)
+
+    if not matched:
+        raise ValueError(f"Failed to parse time-ago string: {time_ago}")
+
+    amount, unit = int(matched.group(1)), matched.group(2)
+
+    if unit in ["month", "months"]:
+        amount *= 30
+
+    elif unit in ["year", "years"]:
+        amount *= 365
+
+    unit_mapping = {
+        "second": "seconds",
+        "seconds": "seconds",
+        "minute": "minutes",
+        "minutes": "minutes",
+        "hour": "hours",
+        "hours": "hours",
+        "day": "days",
+        "days": "days",
+        "week": "weeks",
+        "weeks": "weeks",
+        "month": "days",  # Approximate a month as 30 days
+        "months": "days",
+        "year": "days",  # Approximate a year as 365 days
+        "years": "days"
+    }
+
+    return reference_dt - timedelta(**{unit_mapping[unit]: amount})
+
+
 def GetAssetPath(string):
     from unidecode import unidecode
 

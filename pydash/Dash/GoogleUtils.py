@@ -1241,6 +1241,7 @@ class _YouTubeUtils:
 
         # return False
 
+    # Will not work for comments on auto-generated music videos (no supported method for that in the API)
     def GetComments(self, comment_ids=[], video_id="", skip_comment_ids=[], include_replies=True):
         results = None
 

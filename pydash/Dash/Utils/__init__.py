@@ -264,6 +264,12 @@ def GetReadableHoursMins(secs, include_secs=False):
     return GetReadableHoursMins(secs, include_secs)
 
 
+def TimeAgoToDateTime(time_ago, reference_dt=None):
+    from .string import TimeAgoToDateTime
+
+    return TimeAgoToDateTime(time_ago, reference_dt)
+
+
 def GetAssetPath(name):
     from .string import GetAssetPath
 
