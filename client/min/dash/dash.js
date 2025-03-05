@@ -19735,6 +19735,7 @@ function DashUtils () {
 function DashLocal (context) {
     this.context = context;
     this.global_get_cbs = {};
+    this.global_disabled = false;
     this.on_init_pending_global_sets = {};
     this.on_init_pending_global_set_timer = null;
     this.Set = function (key, value, session=false, global=false) {
@@ -19811,8 +19812,15 @@ function DashLocal (context) {
             localStorage.removeItem(key);
         }
     };
+    this.DisableGlobal = function () {
+        this.global_disabled = true;
+    };
     this.global_allowed = function () {
-        return !Dash.IsMobile && (Dash.User.Init ? Dash.AdminEmails.includes(Dash.User.Init["email"]) : true);
+        return (
+               !this.global_disabled
+            && !Dash.IsMobile
+            && (Dash.User.Init ? Dash.AdminEmails.includes(Dash.User.Init["email"]) : true)
+        );
     };
     // Intended to be called by dash.js only
     this.on_global_storage_enabled = function () {

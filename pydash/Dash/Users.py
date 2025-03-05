@@ -826,6 +826,9 @@ class Users:
 
         user_data["conformed"] = True  # Keeping this around just in case it's used somewhere, but doesn't seem to be
 
+        if user_data.get("img", {}).get("exif"):
+            user_data["img"]["exif"] = {}  # See comment in Dash.Utils.file.get_image_with_data
+
         return self.set_display_name(user_data)
 
     def get_user_init(self, email):

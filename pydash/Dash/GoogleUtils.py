@@ -1082,7 +1082,7 @@ class _YouTubeUtils:
 
         return self._video_categories
 
-    def Post(self, channel_id):
+    def Post(self, channel_id):  # TODO
         raise NotImplementedError("The function to post to YouTube is not yet written")
 
         # TODO: any short content that goes to socials can go to youtube
@@ -1241,7 +1241,8 @@ class _YouTubeUtils:
 
         # return False
 
-    # Will not work for comments on auto-generated music videos (no supported method for that in the API)
+    # Will not work for comments on auto-generated music videos (no supported
+    # method for that in the API, but see Fantom for scraping example)
     def GetComments(self, comment_ids=[], video_id="", skip_comment_ids=[], include_replies=True):
         results = None
 
@@ -1298,8 +1299,6 @@ class _YouTubeUtils:
         combined = []
 
         for comment in results:
-            comment["parent_id"] = ""  # Keep the data clear and consistent
-
             if video_id:
                 replies = comment.pop("replies") if "replies" in comment else []
 
@@ -1324,11 +1323,39 @@ class _YouTubeUtils:
                 if reply["id"] in skip_comment_ids:
                     continue
 
-                reply["parent_id"] = comment["id"]
-
                 combined.append(reply)
 
-        return combined
+        cleaned = []
+
+        for comment in combined:
+            snippet = comment["snippet"]
+
+            if snippet.get("topLevelComment"):
+                snippet = snippet["topLevelComment"]
+
+                if snippet.get("snippet"):
+                    snippet = snippet["snippet"]
+
+            parsed = {
+                "id": comment["id"],
+                "message": snippet.get("textOriginal", snippet["textDisplay"]),
+
+                # Don't replace comment["snippet"] with snippet
+                "replies": comment["snippet"].get("totalReplyCount", 0),
+
+                "likes": snippet.get("likeCount", 0),
+                "author": {
+                    "channel_id": snippet["authorChannelId"]["value"],
+                    "channel_handle": snippet["authorDisplayName"].replace("@", "")
+                },
+                "published": snippet.get("publishedAt", snippet["updatedAt"]),
+                "parent_id": snippet.get("parentId", ""),
+                "url": ""  # YouTube comments don't have URLs, but keeping a consistent format
+            }
+
+            cleaned.append(parsed)
+
+        return cleaned
 
     # Can't get this via API
     def GetSubscriberCount(self, channel_id="", channel_handle="", music_channel_id=""):

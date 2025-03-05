@@ -1,6 +1,7 @@
 function DashLocal (context) {
     this.context = context;
     this.global_get_cbs = {};
+    this.global_disabled = false;
     this.on_init_pending_global_sets = {};
     this.on_init_pending_global_set_timer = null;
 
@@ -96,8 +97,16 @@ function DashLocal (context) {
         }
     };
 
+    this.DisableGlobal = function () {
+        this.global_disabled = true;
+    };
+
     this.global_allowed = function () {
-        return !Dash.IsMobile && (Dash.User.Init ? Dash.AdminEmails.includes(Dash.User.Init["email"]) : true);
+        return (
+               !this.global_disabled
+            && !Dash.IsMobile
+            && (Dash.User.Init ? Dash.AdminEmails.includes(Dash.User.Init["email"]) : true)
+        );
     };
 
     // Intended to be called by dash.js only

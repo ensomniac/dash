@@ -546,7 +546,7 @@ def get_image_with_data(
         "orig_aspect": img.size[0] / float(img.size[1]),
 
         # Disabled on 2/12/25, leaving the key around - we don't even need this, it just bloats the data for no reason
-        "exif": {},  # process_exif_image_data(img),
+        "exif": {}  # process_exif_image_data(img)
     }
 
     if file_data["exif"] and "Orientation" in file_data["exif"]:
