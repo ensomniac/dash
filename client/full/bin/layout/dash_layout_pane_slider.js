@@ -248,7 +248,10 @@ function DashLayoutPaneSlider (binder, is_vertical=false, default_size=null, ide
 
     this.on_drag_end = function () {
         this.set_cursor();
+        this.StoreRecallValue();
+    };
 
+    this.StoreRecallValue = function () {
         Dash.Local.Set(this.recall_id, this.locked_size);
     };
 
