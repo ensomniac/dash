@@ -413,6 +413,9 @@ class GUtils:
     def GetYouTubeSubscriberCount(self, channel_id="", channel_handle="", music_channel_id=""):
         return self._youtube_utils.GetSubscriberCount(channel_id, channel_handle, music_channel_id)
 
+    def GetYouTubeTrendingVideos(self, region_code="US", category_num=0, max_results=5):
+        return self._youtube_utils.GetTrendingVideos(region_code, category_num, max_results)
+
 
 # TODO: Placeholder for future - once ability to send email is added, can probably deprecate the Mail module
 class _GmailUtils:
@@ -1170,8 +1173,12 @@ class _YouTubeUtils:
         self, channel_id="", search_query="", category_num=0,
         by_views=False, by_rating=False, by_date=False, by_name=False
     ):
+
+        if category_num and category_num not in self.video_categories:
+            raise KeyError(f"Invalid video category number (see self.video_categories): {category_num}")
+
         params = {
-            "part": "id, snippet",  # Docs say to explicitly set this, doesn't seem like there are other options
+            "part": "snippet",  # Docs say to explicitly set this, doesn't seem like there are other options
             "order": (
                 "viewCount" if by_views else
                 "rating" if by_rating else
@@ -1180,11 +1187,9 @@ class _YouTubeUtils:
                 "relevance"
             ),
             "safeSearch": "none",
-            "type": "video"
+            "type": "video",
+            "videoCategoryId": str(category_num)
         }
-
-        if category_num and category_num in self.video_categories:
-            params["videoCategoryId"] = str(category_num)
 
         if search_query:
             params["q"] = search_query
@@ -1195,10 +1200,12 @@ class _YouTubeUtils:
             params["forMine"] = True
 
         try:
-            return self.Client.search().list(**params).execute()["items"]
+            videos = self.Client.search().list(**params).execute()["items"]
 
         except HttpError as http_error:
             return ParseHTTPError(http_error, params)
+
+        return self.parse_videos(videos)
 
     def GetVideo(self, video_id):
         params = {
@@ -1276,7 +1283,10 @@ class _YouTubeUtils:
                 return []
 
             params = {
-                "part": "id, snippet",
+                "part": ", ".join([
+                    "id",
+                    "snippet"
+                ]),
                 "id": ", ".join(comment_ids),
                 "textFormat": "plainText"
             }
@@ -1306,7 +1316,10 @@ class _YouTubeUtils:
                     replies = replies["comments"]
             else:
                 params = {
-                    "part": "id, snippet",
+                    "part": ", ".join([
+                        "id",
+                        "snippet"
+                    ]),
                     "parentId": comment["id"],
                     "textFormat": "plainText"
                 }
@@ -1396,6 +1409,131 @@ class _YouTubeUtils:
                 raise ValueError(f"Failed to parse YouTube subscriber count from response:\n{r.text}")
 
         return parsed
+
+    # For category_num, see self.video_categories
+    def GetTrendingVideos(self, region_code="US", category_num=0, max_results=5):
+        if not 1 <= max_results <= 50:
+            raise ValueError("Max results must be between 1 and 50")
+
+        if category_num and category_num not in self.video_categories:
+            raise KeyError(f"Invalid video category number (see self.video_categories): {category_num}")
+
+        params = {
+            "part": ", ".join([
+                "id",
+                "snippet",
+                "statistics",
+                "topicDetails",
+                "contentDetails",
+                "liveStreamingDetails",
+
+                # These are available but not useful
+                # "status",
+                # "player",  # For embedding
+                # "localizations",
+                # "recordingDetails",  # Physical recording info, like geolocation
+
+                # These are available but only to the owner
+                # "fileDetails",
+                # "suggestions",
+                # "processingDetails"
+            ]),
+            "regionCode": region_code,
+            "chart": "mostPopular",
+            "maxResults": max_results,
+            "videoCategoryId": category_num
+        }
+
+        try:
+            videos = self.Client.videos().list(**params).execute()["items"]
+
+        except HttpError as http_error:
+            return ParseHTTPError(http_error, params)
+
+        return self.parse_videos(videos)
+
+    def parse_videos(self, videos):
+        url_base = "https://www.youtube.com/"
+
+        for video in videos:
+            if video.get("snippet", {}).get("categoryId"):
+                cat_id = int(video["snippet"].pop("categoryId"))
+                cat_name = self.video_categories.get(cat_id)
+
+                if not cat_name:
+                    raise KeyError(f"Unhandled video category ID: {cat_id}")
+
+                video["snippet"]["category"] = {
+                    "id": cat_id,
+                    "display_name": cat_name,
+                }
+
+            if video.get("id") and video.get("contentDetails"):
+                video["shorts"] = self.video_is_a_short(video)
+                video["url"] = url_base + (f"shorts/{video['id']}" if video["shorts"] else f"watch?v={video['id']}")
+
+        return videos
+
+    def video_is_a_short(self, video):
+        duration = self.parse_video_duration_sec(video)
+
+        if duration > 60:
+            return False  # Longer than Shorts allow
+
+        # We don't get video dimensions, so use the thumbnail dimensions to check aspect ratio
+        thumbnail = self.parse_video_thumbnail(video)
+
+        if not thumbnail:
+            return False  # No thumbnail data to check aspect ratio
+
+        width = thumbnail.get("width")
+        height = thumbnail.get("height")
+
+        if not width or not height:
+            return False  # Missing size info
+
+        # Check if it's vertical
+        if height > width:
+            return True  # Likely a Short
+
+        return False
+
+    def parse_video_duration_sec(self, video):
+        duration = video.get("contentDetails", {}).get("duration")  # ISO 8601 duration
+
+        if not duration:
+            return 0
+
+        from isodate import parse_duration
+
+        return parse_duration(duration).total_seconds()
+
+    def parse_video_thumbnail(self, video):
+        thumbnails = video.get("snippet", {}).get("thumbnails")
+
+        if not thumbnails:
+            return {}
+
+        # Favor the highest-res available
+        return (
+            thumbnails.get("maxres")
+            or thumbnails.get("standard")
+            or thumbnails.get("high")
+            or thumbnails.get("medium")
+            or thumbnails.get("default")
+            or {}
+        )
+
+    def parse_video_stats(self, video):
+        if not video.get("statistics"):
+            return {}
+
+        return {
+            "views": int(video["statistics"].get("viewCount", 0)),
+            "likes": int(video["statistics"].get("likeCount", 0)),
+            "favorites": int(video["statistics"].get("favoriteCount", 0)),
+            "comments": int(video["statistics"].get("commentCount", 0))
+        }
 
 
 class _AuthUtils:
