@@ -23,7 +23,7 @@ class WebCrawler:
         self.wait_timeout_sec = wait_timeout_sec
         self.profile_root = profile_root  # Default to NO profile, otherwise, must explicitly provide one
         self.extra_stealth = extra_stealth  # Defaults to False because it may be over-kill for some sites
-        self.cookies_path = cookies_path
+        self.cookies_path = cookies_path  # Enables cookie management across sessions
 
         if self.profile_root and not os.path.exists(self.profile_root):
             raise FileNotFoundError(f"Profile root does not exist: {self.profile_root}")
@@ -205,19 +205,30 @@ class WebCrawler:
     def LoadPage(self, url, post_delay=True):
         self.driver.get(url)
 
-        if post_delay:
-            self.RandomDelay()
+        self.on_page_load(post_delay)
 
-        if not self.repositioned_window and not self.headless:
-            self.driver.set_window_position(0, 0)  # For auto_gui
+        return self
 
-            self.repositioned_window = True
+    def ReloadPage(self, post_delay=True):
+        self.driver.refresh()
+
+        self.on_page_load(post_delay)
+
+        return self
 
     def GetPageTitle(self):
         return self.driver.title
 
     def GetPageURL(self):
         return self.driver.current_url
+
+    def EnableTrafficInterception(self):
+        self.driver.execute_cdp_cmd("Network.enable", {})
+
+        return self
+
+    def GetRequestResponse(self, request_id):
+        return self.driver.execute_cdp_cmd("Network.getResponseBody", {"requestId": request_id})
 
     def PopulateInput(self, input_el, text, is_file_input=False):
         if self.extra_stealth and not is_file_input:
@@ -228,6 +239,8 @@ class WebCrawler:
         else:
             input_el.send_keys(text)
 
+        return self
+
     def ClearInput(self, input_el, custom_element=False):
         if custom_element:
             input_el.send_keys(f"{self.keys.CONTROL if self._on_server else self.keys.COMMAND}a")
@@ -235,8 +248,12 @@ class WebCrawler:
         else:
             input_el.clear()
 
+        return self
+
     def SubmitInput(self, input_el):
         input_el.send_keys(self.keys.RETURN)
+
+        return self
 
     def ClickElement(self, element, headless_delay=True, attempt=1):
         if attempt == 1:
@@ -260,6 +277,8 @@ class WebCrawler:
         else:
             raise ValueError("Invalid attempt number")
 
+        return self
+
     def MakeDropdownSelection(self, dropdown, value="", label_text=""):
         if value:
             dropdown.select_by_value(value)
@@ -276,6 +295,8 @@ class WebCrawler:
         )
 
         sleep(0.5)
+
+        return self
 
     def GetDropdownOptions(
         self, dropdown, values_only=False, ignore_no_value=False,
@@ -340,6 +361,14 @@ class WebCrawler:
 
         return self
 
+    def ScrollToElement(self, element, post_delay=True):
+        self.driver.execute_script("arguments[0].scrollIntoView();", element)
+
+        if post_delay:
+            self.RandomDelay()
+
+        return self
+
     def MoveMouse(self, x=-1, y=-1, to_element=None, headless_delay=True):
         if to_element is None and (x == -1 or y == -1):
             raise ValueError("Must supply either an element or x/y coordinates")
@@ -367,12 +396,14 @@ class WebCrawler:
             raise ValueError("Cookies path not set")
 
         if os.path.exists(self.cookies_path) and not force:
-            return
+            return self
 
         from pickle import dump as dump_pickle
 
         with open(self.cookies_path, "wb") as file:
             dump_pickle(self.driver.get_cookies(), file)
+
+        return self
 
     def WaitForElement(
         self, el_id="", el_name="", el_class="", css_selector="", xpath="",
@@ -402,29 +433,10 @@ class WebCrawler:
                 or list[selenium.webdriver.remote.webelement.WebElement]
         """
 
-        if el_id:
-            locator = (self.by.ID, el_id)
-
-        elif el_name:
-            locator = (self.by.NAME, el_name)
-
-        elif el_class:
-            locator = (self.by.CLASS_NAME, el_class)
-
-        elif css_selector:
-            locator = (self.by.CSS_SELECTOR, css_selector)
-
-        elif xpath:
-            locator = (self.by.XPATH, xpath)
-
-        else:
-            raise ValueError(
-                "Must supply one of the following params: el_id, el_name, class_name, css_selector, xpath"
-            )
-
         from selenium.common.exceptions import TimeoutException, StaleElementReferenceException
 
         wait = self.get_wait(wait_timeout_sec_override)
+        locator = self.get_locator(el_id, el_name, el_class, css_selector, xpath)
 
         try:
             if to_be_removed:
@@ -478,10 +490,73 @@ class WebCrawler:
             if not must_exist:
                 return None
 
-            raise Exception(
+            raise TimeoutException(
                 f"Failed to find '{locator[0]}' element ({locator[1]}) within timeout "
                 f"({wait_timeout_sec_override or self.wait_timeout_sec} secs)"
             ) from e
+
+    # See docstring of WaitForElement, params are shared
+    def FindChildElement(
+        self, parent_el, el_id="", el_name="", el_class="",
+        css_selector="", xpath="", must_exist=True, _stale_retry=False
+    ):
+        from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException
+
+        locator = self.get_locator(el_id, el_name, el_class, css_selector, xpath)
+
+        try:
+            return parent_el.find_element(*locator)
+
+        except StaleElementReferenceException as e:
+            if _stale_retry:
+                raise Exception(
+                    f"Failed to find valid '{locator[0]}' element ({locator[1]}), found to be stale twice"
+                ) from e
+
+            # Retry one more time
+            return self.FindChildElement(
+                parent_el, el_id, el_name, el_class, css_selector, xpath, must_exist, _stale_retry=True
+            )
+
+        except NoSuchElementException as e:
+            if not must_exist:
+                return None
+
+            raise NoSuchElementException(
+                f"Failed to find '{locator[0]}' element ({locator[1]}) in parent element"
+            ) from e
+
+    def on_page_load(self, post_delay=True):
+        if post_delay:
+            self.RandomDelay()
+
+        if not self.repositioned_window and not self.headless:
+            self.driver.set_window_position(0, 0)  # For auto_gui
+
+            self.repositioned_window = True
+
+    def get_locator(self, el_id="", el_name="", el_class="", css_selector="", xpath=""):
+        if el_id:
+            locator = (self.by.ID, el_id)
+
+        elif el_name:
+            locator = (self.by.NAME, el_name)
+
+        elif el_class:
+            locator = (self.by.CLASS_NAME, el_class)
+
+        elif css_selector:
+            locator = (self.by.CSS_SELECTOR, css_selector)
+
+        elif xpath:
+            locator = (self.by.XPATH, xpath)
+
+        else:
+            raise ValueError(
+                "Must supply one of the following params: el_id, el_name, class_name, css_selector, xpath"
+            )
+
+        return locator
 
     def get_wait(self, timeout_sec=0):
         if not timeout_sec:
