@@ -413,8 +413,8 @@ class GUtils:
     def GetYouTubeSubscriberCount(self, channel_id="", channel_handle="", music_channel_id=""):
         return self._youtube_utils.GetSubscriberCount(channel_id, channel_handle, music_channel_id)
 
-    def GetYouTubeTrendingVideos(self, region_code="US", category_num=0, max_results=5):
-        return self._youtube_utils.GetTrendingVideos(region_code, category_num, max_results)
+    def GetYouTubeMostPopularVideos(self, region_code="US", category_num=0, max_results=50):
+        return self._youtube_utils.GetMostPopularVideos(region_code, category_num, max_results)
 
 
 # TODO: Placeholder for future - once ability to send email is added, can probably deprecate the Mail module
@@ -1411,7 +1411,7 @@ class _YouTubeUtils:
         return parsed
 
     # For category_num, see self.video_categories
-    def GetTrendingVideos(self, region_code="US", category_num=0, max_results=5):
+    def GetMostPopularVideos(self, region_code="US", category_num=0, max_results=50):
         if not 1 <= max_results <= 50:
             raise ValueError("Max results must be between 1 and 50")
 
