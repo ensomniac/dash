@@ -384,7 +384,7 @@ class WebCrawler:
 
         self.auto_gui.moveTo(
             x,
-            y,
+            y + 120,  # Add padding for Chrome's top gui
             duration=uniform(0.5, 1.2)
         )
 
@@ -479,8 +479,16 @@ class WebCrawler:
 
             # Retry one more time
             return self.WaitForElement(
-                el_id, el_name, el_class, css_selector, xpath,
-                wait_timeout_sec_override, for_click, is_dropdown, must_exist, _stale_retry=True
+                el_id=el_id,
+                el_name=el_name,
+                el_class=el_class,
+                css_selector=css_selector,
+                xpath=xpath,
+                wait_timeout_sec_override=wait_timeout_sec_override,
+                for_click=for_click,
+                is_dropdown=is_dropdown,
+                must_exist=must_exist,
+                _stale_retry=True
             )
 
         except TimeoutException as e:
@@ -497,14 +505,17 @@ class WebCrawler:
 
     # See docstring of WaitForElement, params are shared
     def FindChildElement(
-        self, parent_el, el_id="", el_name="", el_class="",
-        css_selector="", xpath="", must_exist=True, _stale_retry=False
+        self, parent_el, el_id="", el_name="", el_class="", css_selector="",
+        xpath="", for_multiple=False, must_exist=True, _stale_retry=False
     ):
         from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException
 
         locator = self.get_locator(el_id, el_name, el_class, css_selector, xpath)
 
         try:
+            if for_multiple:
+                return parent_el.find_elements(*locator)
+
             return parent_el.find_element(*locator)
 
         except StaleElementReferenceException as e:
@@ -515,7 +526,15 @@ class WebCrawler:
 
             # Retry one more time
             return self.FindChildElement(
-                parent_el, el_id, el_name, el_class, css_selector, xpath, must_exist, _stale_retry=True
+                parent_el=parent_el,
+                el_id=el_id,
+                el_name=el_name,
+                el_class=el_class,
+                css_selector=css_selector,
+                xpath=xpath,
+                for_multiple=for_multiple,
+                must_exist=must_exist,
+                _stale_retry=True
             )
 
         except NoSuchElementException as e:
