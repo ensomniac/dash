@@ -226,49 +226,76 @@ def GetReadableHoursMins(secs, include_secs=False):
 
 def TimeAgoToDateTime(time_ago, reference_dt=None):
     """
-    Converts a 'X time ago' string into a datetime object.
+    Converts an 'X time ago' string into a datetime object.
 
-    :param str time_ago: Ex: '4 days ago', '2 hours ago', etc.
+    :param str time_ago: Ex: '4 days ago', '2 hours ago', '23h ago', etc.
     :param reference_dt: A reference datetime, defaulting to now (default=None)
 
     :return: A datetime object representing the parsed time.
+    :rtype: datetime.datetime
     """
 
     from re import match
-    from datetime import datetime, timedelta
 
     if reference_dt is None:
+        from datetime import datetime
+
         reference_dt = datetime.now()
 
-    matched = match(r"(\d+)\s+(\w+)\s+ago", time_ago)
+    matched = match(r"(\d+)\s*([a-zA-Z]+)\s+ago", time_ago)
 
     if not matched:
         raise ValueError(f"Failed to parse time-ago string: {time_ago}")
 
-    amount, unit = int(matched.group(1)), matched.group(2)
+    amount, unit = int(matched.group(1)), matched.group(2).lower()
 
-    if unit in ["month", "months"]:
+    # Convert months and years to days (approximation)
+    if unit in ["month", "months", "mo", "mon"]:
         amount *= 30
 
-    elif unit in ["year", "years"]:
+    elif unit in ["year", "years", "y", "yr", "yrs"]:
         amount *= 365
 
+    # Mapping to convert various unit formats to timedelta keyword arguments
     unit_mapping = {
+        "s": "seconds",
+        "sec": "seconds",
+        "secs": "seconds",
         "second": "seconds",
         "seconds": "seconds",
+        "m": "minutes",
+        "min": "minutes",
+        "mins": "minutes",
         "minute": "minutes",
         "minutes": "minutes",
+        "h": "hours",
+        "hr": "hours",
+        "hrs": "hours",
         "hour": "hours",
         "hours": "hours",
+        "d": "days",
         "day": "days",
         "days": "days",
+        "w": "weeks",
+        "wk": "weeks",
+        "wks": "weeks",
         "week": "weeks",
         "weeks": "weeks",
-        "month": "days",  # Approximate a month as 30 days
+        "mo": "days",  # Approximate month as 30 days
+        "mon": "days",
+        "month": "days",
         "months": "days",
-        "year": "days",  # Approximate a year as 365 days
+        "y": "days",   # Approximate year as 365 days
+        "yr": "days",
+        "yrs": "days",
+        "year": "days",
         "years": "days"
     }
+
+    if unit not in unit_mapping:
+        raise ValueError(f"Unsupported time unit: {unit}")
+
+    from datetime import timedelta
 
     return reference_dt - timedelta(**{unit_mapping[unit]: amount})
 

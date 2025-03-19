@@ -45,6 +45,8 @@ class WebCrawler:
             #             - TigerVNC works great for this, Apple's built-in Screen Sharing app doesn't
             #         - [TERMINAL 1]
             #             - Access the server as normal via `ssh user@ipaddress`
+            #             - Make sure there are no active sessions via `sudo killall Xvfb`
+            #               (also run `sudo rm /tmp/.X99-lock` for good measure)
             #             - Start virtual display session via `Xvfb :99 -screen 0 1920x1080x24 &`
             #             - Set DISPLAY via `export DISPLAY=:99`
             #             - Start VNC session via `x11vnc -display :99 -nopw -listen localhost -xkb &`
@@ -55,7 +57,10 @@ class WebCrawler:
             #         - [TERMINAL 2]
             #             - Run the server script that uses this class
             #             - Any graphics will be automatically routed to the VNC client
-            #     X11:
+            #         - [TERMINAL 1]
+            #             - Cleanup session via `sudo killall Xvfb`
+            #
+            #     X11 (not fully worked out):
             #         - Requires XQuartz on local machine
             #         - Access the server via `ssh -Y user@ipaddress`
             #         - DISPLAY will already be populated
@@ -173,8 +178,8 @@ class WebCrawler:
     @property
     def auto_gui(self):
         if not hasattr(self, "_auto_gui"):
-            if self.headless:
-                self._auto_gui = None  # Doesn't work in headless mode
+            if self.headless or self._on_server:
+                self._auto_gui = None  # Doesn't work in headless mode or on the server
             else:
                 import pyautogui
 
@@ -241,6 +246,11 @@ class WebCrawler:
 
         return self
 
+    def UnFocusInput(self, input_el):
+        self.driver.execute_script("arguments[0].blur();", input_el)
+
+        return self
+
     def ClearInput(self, input_el, custom_element=False):
         if custom_element:
             input_el.send_keys(f"{self.keys.CONTROL if self._on_server else self.keys.COMMAND}a")
@@ -252,6 +262,16 @@ class WebCrawler:
 
     def SubmitInput(self, input_el):
         input_el.send_keys(self.keys.RETURN)
+
+        return self
+
+    def HideElement(self, element):
+        self.driver.execute_script("arguments[0].style.display = 'none';", element)
+
+        return self
+
+    def RemoveElement(self, element):
+        self.driver.execute_script("arguments[0].remove();", element)
 
         return self
 
@@ -373,8 +393,8 @@ class WebCrawler:
         if to_element is None and (x == -1 or y == -1):
             raise ValueError("Must supply either an element or x/y coordinates")
 
-        if self.headless:
-            if headless_delay:
+        if not self.auto_gui:
+            if self.headless and headless_delay:
                 self.RandomDelay()
 
             return self
@@ -549,7 +569,7 @@ class WebCrawler:
         if post_delay:
             self.RandomDelay()
 
-        if not self.repositioned_window and not self.headless:
+        if not self.repositioned_window and self.auto_gui:
             self.driver.set_window_position(0, 0)  # For auto_gui
 
             self.repositioned_window = True
