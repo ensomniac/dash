@@ -17,6 +17,7 @@ function DashLayoutPaneSlider (binder, is_vertical=false, default_size=null, ide
     this.divider_color_active = "rgba(0, 0, 0, 0.6)";
     this.divider_hover_size = Dash.Size.Padding * 1.5; // A slightly larger size for dragging
     this.min_size = this.default_size || Dash.Size.ColumnWidth * 0.5;
+    this.on_drag_cb = null;
 
     this.recall_id = "dash_layout_pane_slider_" + (
         // If using multiple sliders with the same binder, they'll need their own, unique identifier strings
@@ -66,6 +67,10 @@ function DashLayoutPaneSlider (binder, is_vertical=false, default_size=null, ide
 
         this.draw();
         this.setup_connections();
+    };
+
+    this.SetDragCallback = function (on_drag_cb) {
+        this.on_drag_cb = on_drag_cb;
     };
 
     this.SetPaneContentA = function (html) {
@@ -286,6 +291,11 @@ function DashLayoutPaneSlider (binder, is_vertical=false, default_size=null, ide
         }
 
         this.draw();
+
+        if (this.on_drag_cb) {
+            this.on_drag_cb();
+        };
+
     };
 
     this.draw = function () {
