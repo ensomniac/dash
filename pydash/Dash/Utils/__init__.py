@@ -441,6 +441,7 @@ class Cron:
         self.DashContext = Memory.SetContext(dash_context_asset_path)
         self.User = Memory.SetUser(AdminEmails[0])
         self.AnalogContext = Memory.SetAnalogContext(analog_context_domain or self.DashContext["domain"])
+        self.default_email_notify_list = []
 
         self.DashContext["analog_context"] = self.AnalogContext
 
@@ -496,7 +497,7 @@ class Cron:
             subject=subject or f"{self.__class__.__name__} CRON",
             msg=msg,
             error=error,
-            notify_email_list=notify_email_list,
+            notify_email_list=notify_email_list or self.default_email_notify_list,
             bcc_email_list=bcc_email_list,
             strict_notify=strict_notify,
             sender_email=self.DashContext.get("admin_from_email"),
