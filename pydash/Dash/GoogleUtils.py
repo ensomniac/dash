@@ -83,6 +83,29 @@ def ParseHTTPError(http_error, params={}):
     raise Exception(message) from http_error
 
 
+def GetChromeProfileRoot(profile_name="Dash"):
+    user = os.path.expanduser("~")
+
+    if "root" in user:
+        return os.path.join(
+            user,
+            ".config",
+            "google-chrome",
+            profile_name
+        )
+
+    from Dash.Utils import OapiRoot
+
+    return os.path.join(
+        OapiRoot,
+        "httpdocs",
+        "shared",
+        "config",
+        "google-chrome",
+        profile_name
+    )
+
+
 class GUtils:
     _auth_utils_: callable
     _docs_utils_: callable
