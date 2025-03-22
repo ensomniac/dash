@@ -18,12 +18,16 @@ class WebCrawler:
     _actions: callable
     _auto_gui: callable
 
-    def __init__(self, headless=True, wait_timeout_sec=15, profile_root="", extra_stealth=False, cookies_path=""):
+    def __init__(
+        self, headless=True, wait_timeout_sec=15, profile_root="",
+        extra_stealth=False, cookies_path="", proxy_url=""
+    ):
         self.headless = headless
         self.wait_timeout_sec = wait_timeout_sec
         self.profile_root = profile_root  # Default to NO profile, otherwise, must explicitly provide one
         self.extra_stealth = extra_stealth  # Defaults to False because it may be over-kill for some sites
         self.cookies_path = cookies_path  # Enables cookie management across sessions
+        self.proxy_url = proxy_url  # Proxy IP URL (the server's IP may be blocked/restricted by certain sites)
 
         if self.profile_root and not os.path.exists(self.profile_root):
             raise FileNotFoundError(f"Profile root does not exist: {self.profile_root}")
@@ -43,9 +47,12 @@ class WebCrawler:
             #     Xvfb (recommended):
             #         - Requires a VNC client on local machine
             #             - TigerVNC works great for this, Apple's built-in Screen Sharing app doesn't
+            #         - Make sure no one else is using Xvfb
+            #           (use different display numbers if simultaneous work is required)
             #         - [TERMINAL 1]
             #             - Access the server as normal via `ssh user@ipaddress`
-            #             - Make sure there are no active sessions via `sudo killall Xvfb`
+            #             - (If no one else is using Xvfb)
+            #               Make sure there are no active sessions via `sudo killall Xvfb`
             #               (also run `sudo rm /tmp/.X99-lock` for good measure)
             #             - Start virtual display session via `Xvfb :99 -screen 0 1920x1080x24 &`
             #             - Set DISPLAY via `export DISPLAY=:99`
@@ -58,7 +65,8 @@ class WebCrawler:
             #             - Run the server script that uses this class
             #             - Any graphics will be automatically routed to the VNC client
             #         - [TERMINAL 1]
-            #             - Cleanup session via `sudo killall Xvfb`
+            #             - (If no one else is using Xvfb)
+            #               Cleanup session via `sudo killall Xvfb`
             #
             #     X11 (not fully worked out):
             #         - Requires XQuartz on local machine
@@ -118,19 +126,15 @@ class WebCrawler:
                 if mac:
                     options.add_argument("--dns-prefetch-disable")
 
+            args = {}
+
+            if not self.virtual_display:
+                args["headless"] = self.headless
+
             if options:
-                if self.virtual_display:
-                    self._driver = Chrome(options=options)
-                else:
-                    self._driver = Chrome(
-                        headless=self.headless,
-                        options=options
-                    )
-            else:  # In this case, we don't want to supply a default `options` object
-                if self.virtual_display:
-                    self._driver = Chrome()
-                else:
-                    self._driver = Chrome(headless=self.headless)
+                args["options"] = options
+
+            self._driver = Chrome(**args)
 
             stealth(
                 driver=self._driver,
@@ -198,7 +202,10 @@ class WebCrawler:
 
     def Quit(self):
         if self.extra_stealth:
-            self.RandomScroll().RandomDelay()
+            try:
+                self.RandomScroll().RandomDelay()
+            except:
+                pass
 
         self.driver.quit()
 
