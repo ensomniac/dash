@@ -27,10 +27,14 @@ class WebCrawler:
         self.profile_root = profile_root  # Default to NO profile, otherwise, must explicitly provide one
         self.extra_stealth = extra_stealth  # Defaults to False because it may be over-kill for some sites
         self.cookies_path = cookies_path  # Enables cookie management across sessions
-        self.proxy_url = proxy_url  # Proxy IP URL (the server's IP may be blocked/restricted by certain sites)
 
-        if self.profile_root and not os.path.exists(self.profile_root):
-            raise FileNotFoundError(f"Profile root does not exist: {self.profile_root}")
+        # For when the server's IP is blocked/restricted by certain
+        # sites (only use legit providers, such as BrightData)
+        self.proxy_url = proxy_url
+
+        # This actually doesn't matter, because it'll just be auto-created in this case
+        # if self.profile_root and not os.path.exists(self.profile_root):
+        #     raise FileNotFoundError(f"Profile root does not exist: {self.profile_root}")
 
         if self.cookies_path and not self.cookies_path.endswith(".pkl"):
             raise ValueError("Cookies path must end with '.pkl' extension (cookies get pickled)")
@@ -64,6 +68,7 @@ class WebCrawler:
             #         - [TERMINAL 2]
             #             - Run the server script that uses this class
             #             - Any graphics will be automatically routed to the VNC client
+            #             - If you need to use Chrome, simply run `google-chrome-stable`
             #         - [TERMINAL 1]
             #             - (If no one else is using Xvfb)
             #               Cleanup session via `sudo killall Xvfb`
@@ -89,7 +94,11 @@ class WebCrawler:
     def driver(self):
         if not hasattr(self, "_driver"):
             from selenium_stealth import stealth
-            from undetected_chromedriver import Chrome, ChromeOptions
+
+            if self.proxy_url:
+                from seleniumwire.undetected_chromedriver import Chrome, ChromeOptions
+            else:
+                from undetected_chromedriver import Chrome, ChromeOptions
 
             options = None
             mac = sys.platform == "darwin"
@@ -128,10 +137,19 @@ class WebCrawler:
 
             args = {}
 
+            if self.proxy_url:
+                args["seleniumwire_options"] = {
+                    "proxy": {
+                        "http": self.proxy_url,
+                        "https": self.proxy_url
+                    },
+                    "disable_capture": True
+                }
+
             if not self.virtual_display:
                 args["headless"] = self.headless
 
-            if options:
+            if options:  # Keep this last
                 args["options"] = options
 
             self._driver = Chrome(**args)
