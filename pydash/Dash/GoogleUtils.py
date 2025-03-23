@@ -1398,38 +1398,46 @@ class _YouTubeUtils:
         code_chars = ["{", "}", "[", "]", "(", ")", "'", '"', ":"]
 
         if channel_id:
-            from requests import get
-
-            r = get(f"https://www.youtube.com/channel/{channel_id}")
+            url = f"https://www.youtube.com/channel/{channel_id}"
 
         elif channel_handle:
-            from requests import get
-
-            r = get(f"https://www.youtube.com/@{channel_handle}")
+            url = f"https://www.youtube.com/@{channel_handle}"
 
         elif music_channel_id:
             from curl_cffi.requests import get
 
-            r = get(f"https://music.youtube.com/channel/{music_channel_id}", impersonate="chrome")
+            url = f"https://music.youtube.com/channel/{music_channel_id}"
+            r = get(url, impersonate="chrome")
 
             # Can be in multiple formats, don't convert to int
             parsed = r.text.split(r" subscribers\x22")[-3].split(r"\x22")[-1]
 
             for char in code_chars:
                 if char in parsed:
-                    raise ValueError(f"Failed to parse YouTube subscriber count from response:\n{r.text}")
+                    raise ValueError(
+                        f"Failed to parse YouTube subscriber count from response (URL: {url}):\n{r.text}"
+                    )
 
             return parsed
 
         else:
             raise ValueError("Must provide either a channel ID, channel handle, or music channel ID")
 
+        from requests import get
+
+        r = get(url)
+
         # Can be in multiple formats, don't convert to int
         parsed = r.text.split('{"metadataParts":[{"text":{"content":"')[-1].split(" subscriber")[0]
 
         for char in code_chars:
             if char in parsed:
-                raise ValueError(f"Failed to parse YouTube subscriber count from response:\n{r.text}")
+                if "subscribe to this channel" in r.text:
+                    return 0
+
+                raise ValueError(
+                    f"Failed to parse YouTube subscriber count from response (URL: {url}):\n{r.text}"
+                )
 
         return parsed
 

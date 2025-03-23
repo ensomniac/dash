@@ -441,7 +441,7 @@ class Cron:
         self.DashContext = Memory.SetContext(dash_context_asset_path)
         self.User = Memory.SetUser(AdminEmails[0])
         self.AnalogContext = Memory.SetAnalogContext(analog_context_domain or self.DashContext["domain"])
-        self.default_email_notify_list = []
+        self.default_error_notify_email_list = []
 
         self.DashContext["analog_context"] = self.AnalogContext
 
@@ -482,8 +482,8 @@ class Cron:
         from traceback import format_exc
 
         self.send_error_email(
-            f"Failed to run{self.get_error_detail()}",
-            format_exc()
+            msg=f"Failed to run{self.get_error_detail()}",
+            error=format_exc()
         )
 
     # Name is misleading, as it can also be used to send non-error emails, that's just uncommon in most crons
@@ -497,11 +497,11 @@ class Cron:
             subject=subject or f"{self.__class__.__name__} CRON",
             msg=msg,
             error=error,
-            notify_email_list=notify_email_list or self.default_email_notify_list,
+            notify_email_list=notify_email_list or (self.default_error_notify_email_list if error else []),
             bcc_email_list=bcc_email_list,
             strict_notify=strict_notify,
-            sender_email=self.DashContext.get("admin_from_email"),
-            sender_name=(self.DashContext.get("code_copyright_text") or self.DashContext.get("display_name"))
+            sender_email=self.DashContext.get("admin_from_email", ""),
+            sender_name=(self.DashContext.get("code_copyright_text") or self.DashContext.get("display_name", ""))
         )
 
 
