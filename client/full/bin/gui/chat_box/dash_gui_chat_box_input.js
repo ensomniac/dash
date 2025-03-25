@@ -9,13 +9,14 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
     this.pen_icon = null;
     this.at_button = null;
     this.submit_button = null;
+    this.height = Dash.Size.RowHeight;
     this.dark_mode = this.chat_box.dark_mode;
     this.secondary_css_color = this.chat_box.secondary_css_color;
 
     this.setup_styles = function () {
         var css = {
             "display": "flex",
-            "height": Dash.Size.RowHeight,
+            "height": this.height,
             "background": Dash.IsMobile ? Dash.Color.GetVerticalGradient("white", this.color.Background) : "none",
             "flex": "none"  // Don't allow this.html to flex in its parent container
         };
@@ -77,8 +78,9 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
         };
 
         if (Dash.IsMobile) {
-            html_css["height"] = Dash.Size.RowHeight * 0.75;
-            input_css["line-height"] = (Dash.Size.RowHeight * 0.75) + "px";
+            html_css["height"] = this.height * 0.75;
+
+            input_css["line-height"] = (this.height * 0.75) + "px";
         }
 
         this.input.html.css(html_css);
@@ -162,7 +164,13 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
     };
 
     this.add_mobile_at_icon = function () {
-        var icon = new Dash.Gui.Icon(this.color, "at_sign", Dash.Size.RowHeight * 0.68, 1, Dash.Color.Mobile.AccentPrimary);
+        var icon = new Dash.Gui.Icon(
+            this.color,
+            "at_sign",
+            this.height * 0.68,
+            1,
+            Dash.Color.Mobile.AccentPrimary
+        );
 
         icon.html.css({
             "position": "absolute",
@@ -181,14 +189,12 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
             this.on_combo_changed
         );
 
-        var size = Dash.Size.RowHeight;
-
         this.mobile_at_combo.select.css({
-            "width": size,
-            "height": size,
-            // "line-height": size + "px",
-            "min-width": size,
-            "max-width": size,
+            "width": this.height,
+            "height": this.height,
+            // "line-height": this.height + "px",
+            "min-width": this.height,
+            "max-width": this.height,
             "appearance": "none",
             "outline": "none",
             "margin-top": -(Dash.Size.Padding * 0.3),
@@ -246,7 +252,7 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
         );
 
         var css = {
-            "height": Dash.Size.RowHeight,
+            "height": this.height,
             "margin-left": Dash.Size.Padding * (Dash.IsMobile ? 0.25 : 1),
             "margin-right": Dash.Size.Padding * (Dash.IsMobile ? 0.8 : 0.3)
         };
@@ -274,7 +280,7 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
         );
 
         var css = {
-            "height": Dash.Size.RowHeight,
+            "height": this.height,
             "margin-left": Dash.IsMobile ? Dash.Size.Padding * 0.5 : Dash.Size.Padding * 0.25,
             "margin-right": Dash.Size.Padding * (Dash.IsMobile ? -0.5 : 0),
             "pointer-events": "none",

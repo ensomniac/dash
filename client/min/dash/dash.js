@@ -25623,16 +25623,18 @@ function DashGuiHeader (label_text, color=null, include_border=true) {
     this.SetText = function (label_text) {
         this.label.text(label_text);
     };
-    this.ReplaceBorderWithIcon = function (icon_name, icon_color=null, icon_html_css={}, icon_container_size=null) {
+    this.ReplaceBorderWithIcon = function (
+        icon_name, icon_color=null, icon_html_css={}, icon_container_size=null, icon_size_mult=1
+    ) {
         if (!icon_name) {
-            return;
+            return null;
         }
         this.html.empty();
         this.html.css({
             "display": "flex",
             "margin-left": -Dash.Size.Padding * 0.25
         });
-        this.icon = new Dash.Gui.Icon(this.color, icon_name, icon_container_size);
+        this.icon = new Dash.Gui.Icon(this.color, icon_name, icon_container_size, icon_size_mult);
         this.icon.html.css({
             ...icon_html_css,
             "cursor": "auto"
@@ -29090,7 +29092,12 @@ function DashGuiSelectorItem (tray, details) {
     this.setup_styles();
 }
 
-function DashGuiChatBox (binder, header_text="Messages", add_msg_cb=null, del_msg_cb=null, mention_cb=null, at_combo_options=[], color=null, dual_sided=true) {
+// This element is set up to work as a vertical, column-style box. It may not work in a
+// horizontal, row-style placement and may need alternate styling options for that type of use.
+function DashGuiChatBox (
+    binder, header_text="Messages", add_msg_cb=null, del_msg_cb=null, mention_cb=null,
+    at_combo_options=[], color=null, dual_sided=true, tab_config=[], tab_change_cb=null
+) {
     this.binder = binder;
     this.header_text = header_text;
     this.add_msg_callback = binder && add_msg_cb ? add_msg_cb.bind(binder) : add_msg_cb;
@@ -29099,22 +29106,43 @@ function DashGuiChatBox (binder, header_text="Messages", add_msg_cb=null, del_ms
     this.at_combo_options = at_combo_options;  // When mobile, this expects the mobile combo options structure
     this.color = color || (binder && binder.color ? binder.color : Dash.Color.Dark);
     this.dual_sided = dual_sided;
+    this.tab_config = tab_config;  // Use this to separate messages into tabs by `type`
+    this.tab_change_cb = binder && tab_change_cb ? tab_change_cb.bind(binder) : tab_change_cb;
+    this.tabs = Dash.Validate.Object(this.tab_config) ? {} : null;
     this.html = null;
-    this.messages = [];
     this.header = null;
+    this.held_messages = {};  // When using tabs, messages that are added when its respective tab isn't active
     this.header_area = null;
     this.message_area = null;
+    this.active_tab_key = "";
+    this.tabs_scroll_pos = {};  // When using tabs, remember the scroll position when switching tabs
     this.message_input = null;
     this.valid_mentions = null;
     this.callback_mentions = [];
     this.toggle_hide_side = null;
     this.toggle_hide_button = null;
     this.secondary_css_color = null;
+    this.messages = this.tabs ? {} : [];
     this.toggle_local_storage_key = null;
+    this.tabs_messages_key = "conversation";
+    this.tab_color_active = this.color.AccentGood;
     this.dark_mode = Dash.Color.IsDark(this.color);
+    this.tab_color_inactive = this.color.BackgroundRaised;
+    this.tab_color_hover = Dash.Color.Lighten(this.tab_color_inactive, 30);
     this.read_only = !this.add_msg_callback && !this.del_msg_callback && !this.mention_callback;
-    // This element is set up to work as a vertical, column-style box. It may not work in a
-    //  horizontal, row-style placement and may need alternate styling options for that type of use.
+    this.tab_text_shadow = this.tabs ? (
+        "0px 0px 1px " + (Dash.Color.IsLightColor(this.tab_color_active) ? "black" : "white")
+    ) : "";
+    if (this.tabs) {
+        if (this.header_text === "none") {
+            Dash.Log.Error("Error: `header_text` cannot be 'none' when using tabs");
+            return;
+        }
+        if (this.header_text) {
+            this.header_text = "";
+            Dash.Log.Warn("Warning: `header_text` is ignored when using tabs");
+        }
+    }
     this.setup_styles = function () {
         if (this.dark_mode) {
             this.secondary_css_color = Dash.Color.Darken(this.color.Text, 90);
@@ -29132,14 +29160,16 @@ function DashGuiChatBox (binder, header_text="Messages", add_msg_cb=null, del_ms
             this.color
         );
         this.set_valid_mentions();
-        this.SetHeaderText();
+        this.add_header_area();
         this.add_message_area();
         this.add_message_input();
     };
-    this.SetHeaderText = function (label_text) {
-        if (label_text) {
-            this.header_text = label_text;
+    this.SetHeaderText = function (label_text="Messages") {
+        if (this.tabs) {
+            Dash.Log.Warn("Warning: SetHeaderText() is not supported when using tabs");
+            return;
         }
+        this.header_text = label_text;
         if (this.header) {
             this.header.SetText(this.header_text);
         }
@@ -29148,8 +29178,7 @@ function DashGuiChatBox (binder, header_text="Messages", add_msg_cb=null, del_ms
         }
         return this.header;
     };
-    // If it needs to be different than the default, which is "comments_square"
-    this.SetHeaderIcon = function (icon_name) {
+    this.SetHeaderIcon = function (icon_name="comments_square") {
         if (!icon_name) {
             return;
         }
@@ -29157,11 +29186,34 @@ function DashGuiChatBox (binder, header_text="Messages", add_msg_cb=null, del_ms
             this.add_header_area();
         }
         this.header.ReplaceBorderWithIcon(icon_name);
+        return this;
     };
     this.AddMessage = function (
-        text, user_email=null, iso_ts=null, align_right=false,
-        fire_callback=false, delete_button=false, id=null, track_mentions=false
+        text, user_email=null, iso_ts=null, align_right=false, fire_callback=false,
+        delete_button=false, id=null, track_mentions=false, tab_key="", _held=false
     ) {
+        if (this.tabs) {
+            if (!tab_key) {
+                Dash.Log.Error("Error: AddMessage() requires a 'tab_key' param when using tabs");
+                return null;
+            }
+            if (tab_key !== this.active_tab_key) {
+                if (!this.held_messages[tab_key]) {
+                    this.held_messages[tab_key] = [];
+                }
+                this.held_messages[tab_key].push([
+                    text, user_email, iso_ts, align_right,
+                    fire_callback, delete_button, id, track_mentions, tab_key
+                ]);
+                return null;  // TODO?
+            }
+            if (!this.messages[tab_key]) {
+                this.messages[tab_key] = [];
+            }
+            if (!_held) {
+                this.add_held_messages(tab_key);
+            }
+        }
         text = text.trim();
         if (!text || text.length < 1) {
             if (user_email || iso_ts) {
@@ -29171,8 +29223,8 @@ function DashGuiChatBox (binder, header_text="Messages", add_msg_cb=null, del_ms
         }
         if (align_right && !this.dual_sided) {
             Dash.Log.Warn(
-                "Warning: ChatBox.dual_sided has been changed to 'true' to accommodate " +
-                "an AddMessage() call with the 'align_right' param set to 'true'"
+                  "Warning: ChatBox.dual_sided has been changed to 'true' to accommodate "
+                + "an AddMessage() call with the 'align_right' param set to 'true'"
             );
             this.dual_sided = true;
         }
@@ -29189,13 +29241,14 @@ function DashGuiChatBox (binder, header_text="Messages", add_msg_cb=null, del_ms
             iso_ts,
             align_right,
             delete_button,
-            this.messages.length,
+            (this.tabs ? this.messages[tab_key] : this.messages).length,
             this.color,
-            id
+            id,
+            tab_key
         );
         if (fire_callback) {
             if (this.add_msg_callback) {
-                this.add_msg_callback(text, message.ID(), user_email);
+                this.add_msg_callback(text, message.ID(), user_email, tab_key);
             }
             this.handle_mentions(text, message);
         }
@@ -29216,19 +29269,27 @@ function DashGuiChatBox (binder, header_text="Messages", add_msg_cb=null, del_ms
             this.message_area.append(message.html);
         }
         this.scroll_to_bottom_on_overflow();
-        this.messages.push(message);
+        (this.tabs ? this.messages[tab_key] : this.messages).push(message);
         return message;
     };
     this.ScrollToBottom = function () {
         Dash.Gui.ScrollToBottom(this.message_area);
+        return this;
     };
     this.ClearMessages = function () {
         this.message_area.empty();
+        return this;
     };
-    this.AddToggleHideButton = function (local_storage_key, default_state=true, toggle_right_side=true, include_border=false) {
+    this.AddToggleHideButton = function (
+        local_storage_key, default_state=true, toggle_right_side=true, include_border=false
+    ) {
         if (this.toggle_hide_button) {
-            Dash.Log.Warn("Warning: Toggle button already added to ChatBox, can't add another at this time.");
-            return;
+            Dash.Log.Warn("Warning: Toggle button already added to ChatBox, can't add another at this time");
+            return this;
+        }
+        if (this.tabs) {
+            Dash.Log.Warn("Warning: Toggle button is not supported when using tabs");
+            return this;
         }
         this.toggle_local_storage_key = local_storage_key;
         if (toggle_right_side) {
@@ -29249,18 +29310,44 @@ function DashGuiChatBox (binder, header_text="Messages", add_msg_cb=null, del_ms
             true,                           // Label first
             include_border                  // Include border
         );
-        this.toggle_hide_button.html.css({
-            "position": "absolute",
-            "top": 0,
-            "right": 0
-        });
         this.toggle_hide_button.label.label.css({
             "font-family": "sans_serif_bold"
         });
         if (!this.header_area) {
             this.add_header_area();
         }
+        this.header_area.append(Dash.Gui.GetFlexSpacer());
         this.header_area.append(this.toggle_hide_button.html);
+        return this;
+    };
+    this.on_tab_change = function (tab_key) {
+        this.tabs_scroll_pos[this.active_tab_key] = this.message_area.scrollTop();
+        this.active_tab_key = tab_key;
+        for (var key in this.tabs) {
+            this.change_tab_state(key);
+        }
+        this.ClearMessages();
+        if (Dash.Validate.Object(this.messages[tab_key])) {
+            for (var message of this.messages[tab_key]) {
+                this.message_area.append(message.html);
+            }
+        }
+        this.add_held_messages(tab_key);
+        if (this.tab_change_cb) {
+            this.tab_change_cb(tab_key);
+        }
+        if (this.tabs_scroll_pos[tab_key]) {
+            this.message_area.scrollTop(this.tabs_scroll_pos[tab_key]);
+        }
+    };
+    this.add_held_messages = function (tab_key) {
+        if (!Dash.Validate.Object(this.held_messages[tab_key])) {
+            return;
+        }
+        for (var msg of this.held_messages[tab_key]) {
+            this.AddMessage(...msg, true);
+        }
+        delete this.held_messages[tab_key];
     };
     this.handle_mentions = function (text, message_obj) {
         if (this.callback_mentions.length < 1) {
@@ -29396,20 +29483,105 @@ function DashGuiChatBox (binder, header_text="Messages", add_msg_cb=null, del_ms
             {
                 "margin-bottom": Dash.Size.Padding,
                 "margin-left": Dash.Size.Padding * 0.25,
-                "height": Dash.Size.RowHeight,
-                "flex": "none"
+                "flex": "none",
+                "gap": Dash.Size.Padding * 0.5,
+                "display": "flex"
             },
             this.color
         );
         this.header = new Dash.Gui.Header(this.header_text, this.color);
-        this.header.html.css({
-            "position": "absolute",
-            "top": 0,
-            "left": 0
-        });
-        this.header.ReplaceBorderWithIcon("comments_square");
+        this.header.ReplaceBorderWithIcon(
+            "comments_square",
+            undefined,
+            undefined,
+            this.tabs ? Dash.Size.ButtonHeight : undefined,
+            this.tabs ? 0.7 : undefined
+        );
         this.header_area.append(this.header.html);
         this.html.append(this.header_area);
+        if (this.tabs) {
+            this.add_tabs();
+        }
+    };
+    this.add_tabs = function () {
+        this.header.label.remove();
+        this.header.label = null;
+        var starting_key = "";
+        var container = $("<div>");
+        container.css({
+            "display": "flex",
+            "margin-left": Dash.Size.Padding * 0.5
+        });
+        for (var i in this.tab_config) {
+            var config = this.tab_config[i];
+            if (config["starting_tab"]) {
+                starting_key = config["key"];
+            }
+            this.tabs[config["key"]] = this.get_tab(config, parseInt(i));
+            container.append(this.tabs[config["key"]]);
+        }
+        if (!starting_key) {
+            starting_key = this.tab_config[0]["key"];
+        }
+        this.active_tab_key = starting_key;
+        this.change_tab_state(starting_key);
+        this.header_area.append(container);
+    };
+    this.get_tab = function (config, num) {
+        var css = {
+            "flex": "none",
+            "padding": Dash.Size.Padding,
+            "padding-top": Dash.Size.Padding * 0.5,
+            "padding-bottom": Dash.Size.Padding * 0.5,
+            "background": this.tab_color_inactive,
+            "cursor": "pointer",
+            "border": "1px solid " + this.color.PinstripeDark
+        };
+        if (num === 0) {
+            css["border-top-left-radius"] = Dash.Size.BorderRadius;
+            css["border-bottom-left-radius"] = Dash.Size.BorderRadius;
+        }
+        else if (num === this.tab_config.length - 1) {
+            css["border-top-right-radius"] = Dash.Size.BorderRadius;
+            css["border-bottom-right-radius"] = Dash.Size.BorderRadius;
+        }
+        var tab = Dash.Gui.GetHTMLContext(
+            config["display_name"] || config["key"].Title(),
+            css,
+            this.color
+        );
+        tab.on("click", () => {
+            if (config["key"] === this.active_tab_key) {
+                return;
+            }
+            this.on_tab_change(config["key"]);
+        });
+        tab.on("mouseenter", () => {
+            if (config["key"] === this.active_tab_key) {
+                return;
+            }
+            tab.css({
+                "background": this.tab_color_hover
+            });
+        });
+        tab.on("mouseleave", () => {
+            if (config["key"] === this.active_tab_key) {
+                return;
+            }
+            tab.css({
+                "background": this.tab_color_inactive
+            });
+        });
+        return tab;
+    };
+    this.change_tab_state = function (tab_key) {
+        var active = tab_key === this.active_tab_key;
+        this.tabs[tab_key].css({
+            "background": active ? this.tab_color_active : this.tab_color_inactive,
+            "font-family": active ? "sans_serif_bold" : "sans_serif_normal",
+            "text-shadow": active ? this.tab_text_shadow : "none",
+            "cursor": active ? "default" : "pointer"
+        });
     };
     this.scroll_to_bottom_on_overflow = function () {
         if (Dash.Gui.HasOverflow(this.message_area)) {
@@ -29440,10 +29612,10 @@ function DashGuiChatBox (binder, header_text="Messages", add_msg_cb=null, del_ms
         this.html.append(this.message_area);
     };
     this.delete_message = function (message) {
-        this.messages.Pop(message.Index());
+        (this.tabs ? this.messages[message.tab_key] : this.messages).Pop(message.Index());
         // Update indexes of remaining messages
-        for (var i in this.messages) {
-            var msg = this.messages[i];
+        for (var i in (this.tabs ? this.messages[message.tab_key] : this.messages)) {
+            var msg = (this.tabs ? this.messages[message.tab_key] : this.messages)[i];
             if (msg.Index() !== i) {
                 msg.SetIndex(i);
             }
@@ -29459,14 +29631,12 @@ function DashGuiChatBox (binder, header_text="Messages", add_msg_cb=null, del_ms
         var text = this.message_input.Text();
         // Wait for the user to make a mention selection or finish typing it out
         if (text.endsWith("@")) {
-            (function (self) {
-                setTimeout(
-                    function () {
-                        self.add_message_from_input();
-                    },
-                    100
-                );
-            })(this);
+            setTimeout(
+                () => {
+                    this.add_message_from_input();
+                },
+                100
+            );
             return;
         }
         if (!Dash.IsMobile && this.message_input.at_button.enter_key_event_fired) {
@@ -29481,7 +29651,8 @@ function DashGuiChatBox (binder, header_text="Messages", add_msg_cb=null, del_ms
             true,
             true,
             null,
-            true
+            true,
+            this.tabs_messages_key
         );
         this.message_input.SetText("");
         this.callback_mentions = [];
@@ -29489,6 +29660,15 @@ function DashGuiChatBox (binder, header_text="Messages", add_msg_cb=null, del_ms
     this.add_message_input = function () {
         if (this.read_only) {
             return;
+        }
+        if (this.tabs) {
+            var keys = [];
+            for (var config of this.tab_config) {
+                keys.push(config["key"]);
+            }
+            if (!(keys.includes(this.tabs_messages_key))) {
+                return;
+            }
         }
         this.message_input = new DashGuiChatBoxInput(
             this,
@@ -29512,12 +29692,13 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
     this.pen_icon = null;
     this.at_button = null;
     this.submit_button = null;
+    this.height = Dash.Size.RowHeight;
     this.dark_mode = this.chat_box.dark_mode;
     this.secondary_css_color = this.chat_box.secondary_css_color;
     this.setup_styles = function () {
         var css = {
             "display": "flex",
-            "height": Dash.Size.RowHeight,
+            "height": this.height,
             "background": Dash.IsMobile ? Dash.Color.GetVerticalGradient("white", this.color.Background) : "none",
             "flex": "none"  // Don't allow this.html to flex in its parent container
         };
@@ -29566,8 +29747,8 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
             "padding-right": padding
         };
         if (Dash.IsMobile) {
-            html_css["height"] = Dash.Size.RowHeight * 0.75;
-            input_css["line-height"] = (Dash.Size.RowHeight * 0.75) + "px";
+            html_css["height"] = this.height * 0.75;
+            input_css["line-height"] = (this.height * 0.75) + "px";
         }
         this.input.html.css(html_css);
         this.input.input.css(input_css);
@@ -29628,7 +29809,13 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
         this.html.append(this.at_button.html);
     };
     this.add_mobile_at_icon = function () {
-        var icon = new Dash.Gui.Icon(this.color, "at_sign", Dash.Size.RowHeight * 0.68, 1, Dash.Color.Mobile.AccentPrimary);
+        var icon = new Dash.Gui.Icon(
+            this.color,
+            "at_sign",
+            this.height * 0.68,
+            1,
+            Dash.Color.Mobile.AccentPrimary
+        );
         icon.html.css({
             "position": "absolute",
             "top": Dash.Size.Padding * 0.6,
@@ -29643,13 +29830,12 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
             this,
             this.on_combo_changed
         );
-        var size = Dash.Size.RowHeight;
         this.mobile_at_combo.select.css({
-            "width": size,
-            "height": size,
-            // "line-height": size + "px",
-            "min-width": size,
-            "max-width": size,
+            "width": this.height,
+            "height": this.height,
+            // "line-height": this.height + "px",
+            "min-width": this.height,
+            "max-width": this.height,
             "appearance": "none",
             "outline": "none",
             "margin-top": -(Dash.Size.Padding * 0.3),
@@ -29694,7 +29880,7 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
             {"size_mult": Dash.IsMobile ? 0.7 : 1}
         );
         var css = {
-            "height": Dash.Size.RowHeight,
+            "height": this.height,
             "margin-left": Dash.Size.Padding * (Dash.IsMobile ? 0.25 : 1),
             "margin-right": Dash.Size.Padding * (Dash.IsMobile ? 0.8 : 0.3)
         };
@@ -29715,7 +29901,7 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
             this.secondary_css_color
         );
         var css = {
-            "height": Dash.Size.RowHeight,
+            "height": this.height,
             "margin-left": Dash.IsMobile ? Dash.Size.Padding * 0.5 : Dash.Size.Padding * 0.25,
             "margin-right": Dash.Size.Padding * (Dash.IsMobile ? -0.5 : 0),
             "pointer-events": "none",
@@ -29731,7 +29917,10 @@ function DashGuiChatBoxInput (chat_box, msg_submit_callback, at_combo_options=nu
     this.setup_styles();
 }
 
-function DashGuiChatBoxMessage (chat_box, text, user_email, iso_ts, align_right=false, include_delete_button=false, index=0, color=null, id=null) {
+function DashGuiChatBoxMessage (
+    chat_box, text, user_email, iso_ts, align_right=false,
+    include_delete_button=false, index=0, color=null, id=null, tab_key=""
+) {
     this.chat_box = chat_box;
     this.text = text;
     this.user_email = user_email;
@@ -29741,6 +29930,7 @@ function DashGuiChatBoxMessage (chat_box, text, user_email, iso_ts, align_right=
     this.index = index;
     this.color = color || chat_box.color || Dash.Color.Light;
     this.id = id || Dash.Math.RandomID();
+    this.tab_key = tab_key;
     this.html = null;
     this.user_icon = null;
     this.text_label = null;
@@ -44249,7 +44439,10 @@ function DashGuiIcon (
     };
     this.AddStroke = function (color="black") {
         this.AddShadow(
-            "-1px 1px 0 " + color + ", 1px 1px 0 " + color + ", 1px -1px 0 " + color + ", -1px -1px 0 " + color
+            "-1px 1px 0 " + color + ", " +
+            "1px 1px 0 " + color + ", " +
+            "1px -1px 0 " + color + ", " +
+            "-1px -1px 0 " + color
         );
         return this;
     };

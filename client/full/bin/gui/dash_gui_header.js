@@ -55,9 +55,11 @@ function DashGuiHeader (label_text, color=null, include_border=true) {
         this.label.text(label_text);
     };
 
-    this.ReplaceBorderWithIcon = function (icon_name, icon_color=null, icon_html_css={}, icon_container_size=null) {
+    this.ReplaceBorderWithIcon = function (
+        icon_name, icon_color=null, icon_html_css={}, icon_container_size=null, icon_size_mult=1
+    ) {
         if (!icon_name) {
-            return;
+            return null;
         }
 
         this.html.empty();
@@ -67,7 +69,7 @@ function DashGuiHeader (label_text, color=null, include_border=true) {
             "margin-left": -Dash.Size.Padding * 0.25
         });
 
-        this.icon = new Dash.Gui.Icon(this.color, icon_name, icon_container_size);
+        this.icon = new Dash.Gui.Icon(this.color, icon_name, icon_container_size, icon_size_mult);
 
         this.icon.html.css({
             ...icon_html_css,

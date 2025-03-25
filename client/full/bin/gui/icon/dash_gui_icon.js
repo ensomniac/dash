@@ -238,7 +238,10 @@ function DashGuiIcon (
 
     this.AddStroke = function (color="black") {
         this.AddShadow(
-            "-1px 1px 0 " + color + ", 1px 1px 0 " + color + ", 1px -1px 0 " + color + ", -1px -1px 0 " + color
+            "-1px 1px 0 " + color + ", " +
+            "1px 1px 0 " + color + ", " +
+            "1px -1px 0 " + color + ", " +
+            "-1px -1px 0 " + color
         );
 
         return this;
