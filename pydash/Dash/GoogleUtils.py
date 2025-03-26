@@ -1203,7 +1203,7 @@ class _YouTubeUtils:
         params = {
             "part": "snippet",  # Docs say to explicitly set this, doesn't seem like there are other options
             "order": (
-                "viewCount" if by_views else
+                "viewCount" if by_views else  # For shorts, might need to use "views" instead (unconfirmed)
                 "rating" if by_rating else
                 "date" if by_date else
                 "title" if by_name else
@@ -1560,7 +1560,7 @@ class _YouTubeUtils:
             return {}
 
         return {
-            "views": int(video["statistics"].get("viewCount", 0)),
+            "views": int(video["statistics"].get("viewCount", video["statistics"].get("views", 0))),
             "likes": int(video["statistics"].get("likeCount", 0)),
             "favorites": int(video["statistics"].get("favoriteCount", 0)),
             "comments": int(video["statistics"].get("commentCount", 0))

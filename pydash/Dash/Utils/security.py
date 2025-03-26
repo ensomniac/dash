@@ -42,16 +42,33 @@ class OnePass:
                 needed = True
 
         if needed:
-            self._session_token = self.run_command(
-                args=["signin", "--account", self.account_shorthand, "--raw"],
-                cmd_input=self.__signin_pass,
-                error_prefix="Failed to sign in to 1pass",
-                add_env=False
-            )
+            retry_limit = 3
 
-            from datetime import datetime
+            for n in range(retry_limit):
+                try:
+                    self._session_token = self.run_command(
+                        args=["signin", "--account", self.account_shorthand, "--raw"],
+                        cmd_input=self.__signin_pass,
+                        error_prefix="Failed to sign in to 1pass",
+                        add_env=False
+                    )
 
-            self._last_session_token_dt = datetime.now()
+                    from datetime import datetime
+
+                    self._last_session_token_dt = datetime.now()
+
+                    break
+
+                except Exception as e:
+                    from time import sleep
+
+                    if (n + 1) >= retry_limit:
+                        # If we still hit this after three retries, we can try to just continue
+                        # without getting a fresh token. The docs say the token only lasts 10 mins, but
+                        # maybe if we can't get a new one, maybe the old one will just continue to work?
+                        raise Exception(f"Failed to sign in to 1pass after {retry_limit} retries") from e
+
+                    sleep(3 ** (n + 1))  # Exponential backoff
 
         return self._session_token
 
@@ -181,7 +198,7 @@ class OnePass:
             error_prefix="Failed to edit 1pass item"
         )
 
-    def run_command(self, args, cmd_input=None, error_prefix="", add_env=True, timeout=30):
+    def run_command(self, args, cmd_input=None, error_prefix="", add_env=True, timeout=30, _retry=False):
         from json import JSONDecodeError
         from subprocess import CalledProcessError, TimeoutExpired, run as sub_run
 
@@ -235,6 +252,23 @@ class OnePass:
             raise Exception(
                 f"{error_prefix or 'Failed to run 1pass command'} (file not found?):\n{error_midfix}\nError: {e}"
             ) from e
+
+        except Exception as e:
+            if "you are not currently signed in" in str(e).lower():
+                if _retry:
+                    raise Exception(
+                        "Command failed due to not being signed in, then failed again after forcing sign-in"
+                    ) from e
+
+                # Force sign-in
+                if hasattr(self, "_session_token"):
+                    del self._session_token
+
+                    _ = self.session_token
+
+                return self.run_command(args, cmd_input, error_prefix, add_env, timeout, _retry=True)
+
+            raise
 
         if "--format json" in " ".join(args):
             from json import loads
