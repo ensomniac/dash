@@ -26,7 +26,9 @@ class WebCrawler:
         self.wait_timeout_sec = wait_timeout_sec
         self.profile_root = profile_root  # Default to NO profile, otherwise, must explicitly provide one
         self.extra_stealth = extra_stealth  # Defaults to False because it may be over-kill for some sites
-        self.cookies_path = cookies_path  # Enables cookie management across sessions
+
+        # Enables cookie management across sessions (see self.SaveCookies and self.LoadCookies)
+        self.cookies_path = cookies_path
 
         # For when the server's IP is blocked/restricted by certain
         # sites (only use legit providers, such as BrightData)
@@ -160,13 +162,6 @@ class WebCrawler:
                 platform="MacIntel" if mac else "Linux",
                 fix_hairline=True
             )
-
-            if self.cookies_path and os.path.exists(self.cookies_path):
-                from pickle import load as load_pickle
-
-                with open(self.cookies_path, "rb") as file:
-                    for cookie in load_pickle(file):
-                        self.driver.add_cookie(cookie)
 
         return self._driver
 
@@ -447,6 +442,25 @@ class WebCrawler:
 
         with open(self.cookies_path, "wb") as file:
             dump_pickle(self.driver.get_cookies(), file)
+
+        return self
+
+    # This should typically be done once the expected URL is loaded (the one the cookies were saved for)
+    def LoadCookies(self, must_exist=True):
+        if not self.cookies_path:
+            raise ValueError("Cookies path not set")
+
+        if not os.path.exists(self.cookies_path):
+            if not must_exist:
+                return self
+
+            return FileNotFoundError("Cookies path does not exist")
+
+        from pickle import load as load_pickle
+
+        with open(self.cookies_path, "rb") as file:
+            for cookie in load_pickle(file):
+                self.driver.add_cookie(cookie)
 
         return self
 
