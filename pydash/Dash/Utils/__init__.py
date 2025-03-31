@@ -249,6 +249,12 @@ def GetReadableByteSize(total_bytes):
     return GetReadableByteSize(total_bytes)
 
 
+def GetAbbreviatedNumber(num):
+    from .number import GetAbbreviatedNumber
+
+    return GetAbbreviatedNumber(num)
+
+
 # ------------------------------------------------- STRING --------------------------------------------------
 
 

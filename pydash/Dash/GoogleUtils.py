@@ -1415,10 +1415,15 @@ class _YouTubeUtils:
             for char in code_chars:
                 if char in parsed:
                     raise ValueError(
-                        f"Failed to parse YouTube subscriber count from response (URL: {url}):\n{r.text}"
+                        f"[1] Failed to parse YouTube subscriber count from response (URL: {url}):\n{r.text}"
                     )
 
-            return parsed
+            if not str(parsed).isdigit():
+                raise ValueError(
+                    f"[2] Failed to parse YouTube subscriber count from response (URL: {url}):\n{r.text}"
+                )
+
+            return int(parsed)
 
         else:
             raise ValueError("Must provide either a channel ID, channel handle, or music channel ID")
@@ -1436,10 +1441,15 @@ class _YouTubeUtils:
                     return 0
 
                 raise ValueError(
-                    f"Failed to parse YouTube subscriber count from response (URL: {url}):\n{r.text}"
+                    f"[3] Failed to parse YouTube subscriber count from response (URL: {url}):\n{r.text}"
                 )
 
-        return parsed
+        if not str(parsed).isdigit():
+            raise ValueError(
+                f"[4] Failed to parse YouTube subscriber count from response (URL: {url}):\n{r.text}"
+            )
+
+        return int(parsed)
 
     # For category_num, see self.video_categories
     def GetMostPopularVideos(self, region_code="US", category_num=0, max_results=50):

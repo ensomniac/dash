@@ -152,3 +152,21 @@ def GetReadableByteSize(total_bytes):
         total_bytes /= 1000.0
 
     return f"{total_bytes:.2f}YB"
+
+
+def GetAbbreviatedNumber(num):
+    """
+    Abbreviates a number to a string with a suffix,
+    such as: 1500 -> "1.5K", 1000000 -> "1M"
+    """
+
+    for unit in ["", "K", "M", "B", "T"]:
+        if abs(num) < 1000:
+            if num == int(num):
+                return f"{int(num)}{unit}"
+
+            return f"{num:.1f}{unit}"
+
+        num /= 1000.0
+
+    return f"{num:.1f}P"  # Anything larger than can be handled, represented as "Peta"
