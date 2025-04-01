@@ -422,9 +422,16 @@ class DashLocalStorage:
 
     # Shortcut/wrapper for Read->Write
     def UpdateData(self, full_path, update_data, conform_permissions=True):
+        data = Read(full_path)
+
+        if type(data) is not dict:
+            raise ValueError(f"Data must be a dictionary, not {type(data).__name__}")
+
+        data.update(update_data)  # Leave this here (returns None)
+
         return Write(
             full_path=full_path,
-            data=Read(full_path).update(update_data),
+            data=data,
             conform_permissions=conform_permissions
         )
 
