@@ -137,7 +137,14 @@ class WebCrawler:
                 if mac:
                     options.add_argument("--dns-prefetch-disable")
 
-            args = {}
+            args = {
+                # Forcing this version as of 4/1/25 because undetected_chromedriver auto-updated and now
+                # expects version 135, but that version does not appear to be available in DNF's stable
+                # stream yet, as `dnf upgrade google-chrome-stable` results in no changes. We can leave
+                # this until it causes a different issue, or we can try to periodically check the stable
+                # stream for the new version via the upgrade call above, then remove this explicit version.
+                "version_main": 134
+            }
 
             if self.proxy_url:
                 args["seleniumwire_options"] = {

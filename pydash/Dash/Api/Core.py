@@ -361,18 +361,18 @@ class ApiCore:
                 required_params = [required_params]
 
         elif type(required_params) is not list:
-            raise Exception("ValidateParams requires a list")
+            raise TypeError("ValidateParams requires a list")
 
         for param in required_params:
             if falsy:
                 if param not in self.Params:
-                    raise Exception(f"Missing param '{param}'")
+                    raise ValueError(f"Missing (falsy) param '{param}'")
             else:
                 if not self.Params.get(param):
                     # if param == "file":
                     #     raise ClientAlert("File failed to properly upload, please try again.")
                     # else:
-                    raise Exception(f"Missing param '{param}'")
+                    raise ValueError(f"Missing param '{param}'")
 
     def SetParam(self, key, value):
         self._params[key] = value
