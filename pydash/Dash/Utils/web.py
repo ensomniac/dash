@@ -20,7 +20,7 @@ class WebCrawler:
 
     def __init__(
         self, headless=True, wait_timeout_sec=15, profile_root="",
-        extra_stealth=False, cookies_path="", proxy_url=""
+        extra_stealth=False, cookies_path="", proxy_url="", screenshot_root=""
     ):
         self.headless = headless
         self.wait_timeout_sec = wait_timeout_sec
@@ -33,6 +33,8 @@ class WebCrawler:
         # For when the server's IP is blocked/restricted by certain
         # sites (only use legit providers, such as BrightData)
         self.proxy_url = proxy_url
+
+        self.screenshot_root = screenshot_root
 
         # This actually doesn't matter, because it'll just be auto-created in this case
         # if self.profile_root and not os.path.exists(self.profile_root):
@@ -247,6 +249,22 @@ class WebCrawler:
         self.on_page_load(post_delay)
 
         return self
+
+    def SaveScreenshot(self, path="", _on_error=False):
+        if not path:
+            if not self.screenshot_root:
+                if _on_error:
+                    return
+
+                raise FileNotFoundError("'path' must be provided when screenshot_root is not set")
+
+            from Dash.Utils import GetRandomID
+
+            path = os.path.join(self.screenshot_root, f"{GetRandomID()}.png")
+
+        self.driver.save_screenshot(path)
+
+        return path
 
     def GetPageTitle(self):
         return self.driver.title
