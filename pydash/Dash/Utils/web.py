@@ -17,31 +17,26 @@ class WebCrawler:
     _driver: callable
     _actions: callable
     _auto_gui: callable
+    _dash_context: dict
 
     def __init__(
         self, headless=True, wait_timeout_sec=15, profile_root="",
-        extra_stealth=False, cookies_path="", proxy_url="", screenshot_root=""
+        extra_stealth=False, proxy_url="", file_storage_root=""
     ):
         self.headless = headless
         self.wait_timeout_sec = wait_timeout_sec
         self.profile_root = profile_root  # Default to NO profile, otherwise, must explicitly provide one
         self.extra_stealth = extra_stealth  # Defaults to False because it may be over-kill for some sites
 
-        # Enables cookie management across sessions (see self.SaveCookies and self.LoadCookies)
-        self.cookies_path = cookies_path
-
         # For when the server's IP is blocked/restricted by certain
         # sites (only use legit providers, such as BrightData)
         self.proxy_url = proxy_url
 
-        self.screenshot_root = screenshot_root
+        self.file_storage_root = file_storage_root
 
         # This actually doesn't matter, because it'll just be auto-created in this case
         # if self.profile_root and not os.path.exists(self.profile_root):
         #     raise FileNotFoundError(f"Profile root does not exist: {self.profile_root}")
-
-        if self.cookies_path and not self.cookies_path.endswith(".pkl"):
-            raise ValueError("Cookies path must end with '.pkl' extension (cookies get pickled)")
 
         from Dash.Utils import OapiRoot  # Leave this here, can't be top-level import
 
@@ -222,6 +217,18 @@ class WebCrawler:
 
         return self._actions
 
+    @property
+    def dash_context(self):
+        if not hasattr(self, "_dash_context"):
+            if self._on_server:
+                from Dash.Utils import Memory
+
+                self._dash_context = Memory.DashContext
+            else:
+                self._dash_context = None
+
+        return self._dash_context
+
     def Quit(self):
         if self.extra_stealth:
             try:
@@ -252,15 +259,15 @@ class WebCrawler:
 
     def SaveScreenshot(self, path="", _on_error=False):
         if not path:
-            if not self.screenshot_root:
+            if not self.file_storage_root:
                 if _on_error:
-                    return
+                    return ""
 
-                raise FileNotFoundError("'path' must be provided when screenshot_root is not set")
+                raise FileNotFoundError("'path' must be provided when file_storage_root is not set")
 
             from Dash.Utils import GetRandomID
 
-            path = os.path.join(self.screenshot_root, f"{GetRandomID()}.png")
+            path = os.path.join(self.file_storage_root, f"{GetRandomID()}.png")
 
         self.driver.save_screenshot(path)
 
@@ -268,6 +275,9 @@ class WebCrawler:
 
     def GetPageTitle(self):
         return self.driver.title
+
+    def GetPageHTML(self):
+        return self.driver.page_source
 
     def GetPageURL(self):
         return self.driver.current_url
@@ -321,43 +331,60 @@ class WebCrawler:
         return self
 
     def ClickElement(self, element, headless_delay=True, attempt=1):
-        if attempt == 1:
-            if self.extra_stealth:
-                self.MoveMouse(
-                    to_element=element,
-                    headless_delay=headless_delay
-                )
-
-            # This is unaware of success, so manual checks are necessary,
-            # such as checking for expected visual changes. If those manual
-            # checks fail, the below approaches may help, depending on the scenario.
-            element.click()
-
-        elif attempt == 2:
-            self.actions.move_to_element(element).click().perform()
-
-        elif attempt == 3:
-            self.driver.execute_script("arguments[0].click();", element)
-
-        else:
+        if not 1 <= attempt <= 3:
             raise ValueError("Invalid attempt number")
+
+        try:
+            if attempt == 1:
+                if self.extra_stealth:
+                    self.MoveMouse(
+                        to_element=element,
+                        headless_delay=headless_delay
+                    )
+
+                # This is unaware of success, so manual checks are necessary,
+                # such as checking for expected visual changes. If those manual
+                # checks fail, the below approaches may help, depending on the scenario.
+                element.click()
+
+            elif attempt == 2:
+                self.actions.move_to_element(element).click().perform()
+
+            elif attempt == 3:
+                self.driver.execute_script("arguments[0].click();", element)
+
+        except Exception as e:
+            self.raise_with_context(
+                exception=e,
+                message=f"Failed to click element after {attempt} attempt(s)"
+            )
 
         return self
 
     def MakeDropdownSelection(self, dropdown, value="", label_text=""):
-        if value:
-            dropdown.select_by_value(value)
-
-        elif label_text:
-            dropdown.select_by_visible_text(label_text)
-
-        else:
+        if not value and not label_text:
             raise ValueError("Must provide either value or label_text")
 
-        self.driver.execute_script(
-            "arguments[0].dispatchEvent(new Event('change', {bubbles: true}));",
-            dropdown._el  # noqa
-        )
+        try:
+            if value:
+                dropdown.select_by_value(value)
+
+            elif label_text:
+                dropdown.select_by_visible_text(label_text)
+
+            self.driver.execute_script(
+                "arguments[0].dispatchEvent(new Event('change', {bubbles: true}));",
+                dropdown._el  # noqa
+            )
+
+        except Exception as e:
+            self.raise_with_context(
+                exception=e,
+                message=(
+                    f"Failed to select {'value' if value else 'label'} "
+                    f"'{value or label_text}' from dropdown"
+                )
+            )
 
         sleep(0.5)
 
@@ -455,27 +482,29 @@ class WebCrawler:
 
         return self
 
-    # This should typically be done after logging in and will only save if it doesn't exist (unless forced)
-    def SaveCookies(self, force=False):
-        if not self.cookies_path:
-            raise ValueError("Cookies path not set")
+    # This should typically be done after logging in and will only save if it doesn't exist (unless forced).
+    # When managing cookies this way, note that cookies are typically different for each URL.
+    def SaveCookies(self, path, force=False):
+        if not path.endswith(".pkl"):
+            raise ValueError("Cookies path must end with '.pkl' extension (cookies get pickled)")
 
-        if os.path.exists(self.cookies_path) and not force:
+        if os.path.exists(path) and not force:
             return self
 
         from pickle import dump as dump_pickle
 
-        with open(self.cookies_path, "wb") as file:
+        with open(path, "wb") as file:
             dump_pickle(self.driver.get_cookies(), file)
 
         return self
 
-    # This should typically be done once the expected URL is loaded (the one the cookies were saved for)
-    def LoadCookies(self, must_exist=True):
-        if not self.cookies_path:
-            raise ValueError("Cookies path not set")
+    # This should typically be done once the expected URL is loaded (the one the cookies were saved for).
+    # When managing cookies this way, note that cookies are typically different for each URL.
+    def LoadCookies(self, path, must_exist=True):
+        if not path.endswith(".pkl"):
+            raise ValueError("Cookies path must end with '.pkl' extension (cookies are pickled)")
 
-        if not os.path.exists(self.cookies_path):
+        if not os.path.exists(path):
             if not must_exist:
                 return self
 
@@ -483,7 +512,7 @@ class WebCrawler:
 
         from pickle import load as load_pickle
 
-        with open(self.cookies_path, "rb") as file:
+        with open(path, "rb") as file:
             for cookie in load_pickle(file):
                 self.driver.add_cookie(cookie)
 
@@ -557,9 +586,12 @@ class WebCrawler:
 
         except StaleElementReferenceException as e:
             if _stale_retry:
-                raise Exception(
-                    f"Failed to find valid '{locator[0]}' element ({locator[1]}), found to be stale twice"
-                ) from e
+                self.raise_with_context(
+                    exception=e,
+                    message=(
+                        f"Failed to find valid '{locator[0]}' element ({locator[1]}), found to be stale twice"
+                    )
+                )
 
             # Retry one more time
             return self.WaitForElement(
@@ -582,10 +614,22 @@ class WebCrawler:
             if not must_exist:
                 return None
 
-            raise TimeoutException(
-                f"Failed to find '{locator[0]}' element ({locator[1]}) within timeout "
-                f"({wait_timeout_sec_override or self.wait_timeout_sec} secs)"
-            ) from e
+            self.raise_with_context(
+                exception=e,
+                message=(
+                    f"Failed to find '{locator[0]}' element ({locator[1]}) within timeout "
+                    f"({wait_timeout_sec_override or self.wait_timeout_sec} secs)"
+                )
+            )
+
+        except Exception as e:
+            self.raise_with_context(
+                exception=e,
+                message=(
+                    f"Failed to find '{locator[0]}' element ({locator[1]}) within timeout "
+                    f"({wait_timeout_sec_override or self.wait_timeout_sec} secs)"
+                )
+            )
 
     # See docstring of WaitForElement, params are shared
     def FindChildElement(
@@ -604,9 +648,10 @@ class WebCrawler:
 
         except StaleElementReferenceException as e:
             if _stale_retry:
-                raise Exception(
-                    f"Failed to find valid '{locator[0]}' element ({locator[1]}), found to be stale twice"
-                ) from e
+                self.raise_with_context(
+                    exception=e,
+                    message=f"Failed to find valid '{locator[0]}' element ({locator[1]}), found to be stale twice"
+                )
 
             # Retry one more time
             return self.FindChildElement(
@@ -625,9 +670,16 @@ class WebCrawler:
             if not must_exist:
                 return None
 
-            raise NoSuchElementException(
-                f"Failed to find '{locator[0]}' element ({locator[1]}) in parent element"
-            ) from e
+            self.raise_with_context(
+                exception=e,
+                message=f"Failed to find '{locator[0]}' element ({locator[1]}) in parent element"
+            )
+
+        except Exception as e:
+            self.raise_with_context(
+                exception=e,
+                message=f"Failed to find '{locator[0]}' element ({locator[1]}) in parent element"
+            )
 
     def on_page_load(self, post_delay=True):
         if post_delay:
@@ -695,3 +747,54 @@ class WebCrawler:
 
         if os.path.exists(lock_path):
             os.remove(lock_path)
+
+    def raise_with_context(self, exception, message):
+        from Dash.LocalStorage import Write
+
+        screenshot_path = self.SaveScreenshot(_on_error=True)
+
+        if screenshot_path:
+            error_id = screenshot_path.split("/")[-1].split(".")[0]
+
+            if self.dash_context:
+                from Dash.Utils import GetFileURLFromPath
+
+                screenshot_url = GetFileURLFromPath(
+                    dash_context=self.dash_context,
+                    server_file_path=screenshot_path
+                )
+
+                screenshot_tag = f"- Screenshot of last state: {screenshot_url}"
+            else:
+                screenshot_tag = (
+                    f"- Screenshot of last state: {screenshot_path} (no Dash Context for URL conversion)"
+                )
+        else:
+            error_id = ""
+            screenshot_tag = "- No screenshot saved, must provide `file_storage_root` on init"
+
+        if self.file_storage_root:
+            if not error_id:
+                from Dash.Utils import GetRandomID
+
+                error_id = GetRandomID()
+
+            html_path = os.path.join(self.file_storage_root, f"{error_id}.html")
+
+            Write(html_path, self.GetPageHTML())
+
+            if self.dash_context:
+                from Dash.Utils import GetFileURLFromPath
+
+                html_url = GetFileURLFromPath(
+                    dash_context=self.dash_context,
+                    server_file_path=html_path
+                )
+
+                html_tag = f"\n- HTML of last state: {html_url}"
+            else:
+                html_tag = f"\n- HTML of last state: {html_path} (no Dash Context for URL conversion)"
+        else:
+            html_tag = "- No HTML saved, must provide `file_storage_root` on init"
+
+        raise type(exception)(f"{message}\n{screenshot_tag}\n{html_tag}") from exception
