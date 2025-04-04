@@ -291,44 +291,47 @@ class WebCrawler:
         return self.driver.execute_cdp_cmd("Network.getResponseBody", {"requestId": request_id})
 
     def PopulateInput(self, input_el, text, is_file_input=False):
-        if self.extra_stealth and not is_file_input:
-            for char in text:
-                input_el.send_keys(char)
-
-                sleep(uniform(0.1, 0.3))
-        else:
-            input_el.send_keys(text)
-
-        return self
+        return self._execute_action_on_element(
+            func=self._populate_input,
+            kwargs={
+                "input_el": input_el,
+                "text": text,
+                "is_file_input": is_file_input
+            }
+        )
 
     def UnFocusInput(self, input_el):
-        self.driver.execute_script("arguments[0].blur();", input_el)
-
-        return self
+        return self._execute_action_on_element(
+            func=self._unfocus_element,
+            kwargs={"input_el": input_el}
+        )
 
     def ClearInput(self, input_el, custom_element=False):
-        if custom_element:
-            input_el.send_keys(f"{self.keys.CONTROL if self._on_server else self.keys.COMMAND}a")
-            input_el.send_keys(self.keys.BACKSPACE)
-        else:
-            input_el.clear()
-
-        return self
+        return self._execute_action_on_element(
+            func=self._clear_input,
+            kwargs={
+                "input_el": input_el,
+                "custom_element": custom_element
+            }
+        )
 
     def SubmitInput(self, input_el):
-        input_el.send_keys(self.keys.RETURN)
-
-        return self
+        return self._execute_action_on_element(
+            func=self._submit_input,
+            kwargs={"input_el": input_el}
+        )
 
     def HideElement(self, element):
-        self.driver.execute_script("arguments[0].style.display = 'none';", element)
-
-        return self
+        return self._execute_action_on_element(
+            func=self._hide_element,
+            kwargs={"element": element}
+        )
 
     def RemoveElement(self, element):
-        self.driver.execute_script("arguments[0].remove();", element)
-
-        return self
+        return self._execute_action_on_element(
+            func=self._remove_element,
+            kwargs={"element": element}
+        )
 
     def ClickElement(self, element, headless_delay=True, attempt=1):
         if not 1 <= attempt <= 3:
@@ -454,12 +457,13 @@ class WebCrawler:
         return self
 
     def ScrollToElement(self, element, post_delay=True):
-        self.driver.execute_script("arguments[0].scrollIntoView();", element)
-
-        if post_delay:
-            self.RandomDelay()
-
-        return self
+        return self._execute_action_on_element(
+            func=self._scroll_to_element,
+            kwargs={
+                "element": element,
+                "post_delay": post_delay
+            }
+        )
 
     def MoveMouse(self, x=-1, y=-1, to_element=None, headless_delay=True):
         if to_element is None and (x == -1 or y == -1):
@@ -798,3 +802,77 @@ class WebCrawler:
             html_tag = "- No HTML saved, must provide `file_storage_root` on init"
 
         raise type(exception)(f"{message}\n{screenshot_tag}\n{html_tag}") from exception
+
+    def _populate_input(self, input_el, text, is_file_input=False):
+        if self.extra_stealth and not is_file_input:
+            for char in text:
+                input_el.send_keys(char)
+
+                sleep(uniform(0.1, 0.3))
+        else:
+            input_el.send_keys(text)
+
+        return self
+
+    def _execute_action_on_element(self, func, kwargs, _stale_retry=False):
+        from selenium.common.exceptions import StaleElementReferenceException
+
+        try:
+            return func(**kwargs)
+
+        except StaleElementReferenceException as e:
+            if _stale_retry:
+                self.raise_with_context(
+                    exception=e,
+                    message=f"Failed to execute action on element, found to be stale twice"
+                )
+
+            # Retry one more time
+            return self._execute_action_on_element(
+                func=func,
+                kwargs=kwargs,
+                _stale_retry=True
+            )
+
+        except Exception as e:
+            self.raise_with_context(
+                exception=e,
+                message="Failed to execute action on element, found to be stale twice"
+            )
+
+    def _unfocus_element(self, input_el):
+        self.driver.execute_script("arguments[0].blur();", input_el)
+
+        return self
+
+    def _clear_input(self, input_el, custom_element=False):
+        if custom_element:
+            input_el.send_keys(f"{self.keys.CONTROL if self._on_server else self.keys.COMMAND}a")
+            input_el.send_keys(self.keys.BACKSPACE)
+        else:
+            input_el.clear()
+
+        return self
+
+    def _submit_input(self, input_el):
+        input_el.send_keys(self.keys.RETURN)
+
+        return self
+
+    def _hide_element(self, element):
+        self.driver.execute_script("arguments[0].style.display = 'none';", element)
+
+        return self
+
+    def _remove_element(self, element):
+        self.driver.execute_script("arguments[0].remove();", element)
+
+        return self
+
+    def _scroll_to_element(self, element, post_delay=True):
+        self.driver.execute_script("arguments[0].scrollIntoView();", element)
+
+        if post_delay:
+            self.RandomDelay()
+
+        return self
