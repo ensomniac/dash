@@ -230,18 +230,19 @@ class WebCrawler:
         return self._dash_context
 
     def Quit(self):
-        if self.extra_stealth:
-            try:
-                self.RandomScroll().RandomDelay()
-            except:
-                pass
+        if hasattr(self, "_driver"):
+            if self.extra_stealth:
+                try:
+                    self.RandomScroll().RandomDelay()
+                except:
+                    pass
 
-        self.driver.quit()
+            self.driver.quit()
+
+            delattr(self, "_driver")
 
         self.waits = {}
         self.repositioned_window = False
-
-        delattr(self, "_driver")
 
     def LoadPage(self, url, post_delay=True):
         self.driver.get(url)
@@ -257,17 +258,38 @@ class WebCrawler:
 
         return self
 
-    def SaveScreenshot(self, path="", _on_error=False):
+    def SaveScreenshot(self, path="", viewport_only=False, _on_error=False):
+        if _on_error:
+            viewport_only = False
+
         if not path:
             if not self.file_storage_root:
                 if _on_error:
                     return ""
 
-                raise FileNotFoundError("'path' must be provided when file_storage_root is not set")
+                return self.raise_exc(
+                    exc_type=FileNotFoundError,
+                    message="'path' must be provided when file_storage_root is not set"
+                )
 
             from Dash.Utils import GetRandomID
 
             path = os.path.join(self.file_storage_root, f"{GetRandomID()}.png")
+
+        if not viewport_only:
+            try:  # Try to capture the entire page content (including content that must be scrolled to)
+                current_width = self.driver.execute_script("return window.innerWidth")
+                current_height = self.driver.execute_script("return window.innerHeight")
+                scroll_width = self.driver.execute_script("return document.body.scrollWidth")
+                scroll_height = self.driver.execute_script("return document.body.scrollHeight")
+
+                if current_height < scroll_height or current_width < scroll_width:
+                    self.driver.set_window_size(
+                        max(scroll_width, current_width),
+                        max(scroll_height, current_height)
+                    )
+            except:
+                pass
 
         self.driver.save_screenshot(path)
 
@@ -335,7 +357,10 @@ class WebCrawler:
 
     def ClickElement(self, element, headless_delay=True, attempt=1):
         if not 1 <= attempt <= 3:
-            raise ValueError("Invalid attempt number")
+            return self.raise_exc(
+                exc_type=ValueError,
+                message="Attempt number must be between 1 and 3"
+            )
 
         try:
             if attempt == 1:
@@ -357,16 +382,19 @@ class WebCrawler:
                 self.driver.execute_script("arguments[0].click();", element)
 
         except Exception as e:
-            self.raise_with_context(
-                exception=e,
-                message=f"Failed to click element after {attempt} attempt(s)"
+            return self.RaiseContextualException(
+                message=f"Failed to click element after {attempt} attempt(s)",
+                from_exc=e
             )
 
         return self
 
     def MakeDropdownSelection(self, dropdown, value="", label_text=""):
         if not value and not label_text:
-            raise ValueError("Must provide either value or label_text")
+            return self.raise_exc(
+                exc_type=ValueError,
+                message="Must provide either value or label_text"
+            )
 
         try:
             if value:
@@ -381,12 +409,12 @@ class WebCrawler:
             )
 
         except Exception as e:
-            self.raise_with_context(
-                exception=e,
+            return self.RaiseContextualException(
                 message=(
                     f"Failed to select {'value' if value else 'label'} "
                     f"'{value or label_text}' from dropdown"
-                )
+                ),
+                from_exc=e
             )
 
         sleep(0.5)
@@ -467,7 +495,10 @@ class WebCrawler:
 
     def MoveMouse(self, x=-1, y=-1, to_element=None, headless_delay=True):
         if to_element is None and (x == -1 or y == -1):
-            raise ValueError("Must supply either an element or x/y coordinates")
+            return self.raise_exc(
+                exc_type=ValueError,
+                message="Must supply either an element or x/y coordinates"
+            )
 
         if not self.auto_gui:
             if self.headless and headless_delay:
@@ -490,7 +521,10 @@ class WebCrawler:
     # When managing cookies this way, note that cookies are typically different for each URL.
     def SaveCookies(self, path, force=False):
         if not path.endswith(".pkl"):
-            raise ValueError("Cookies path must end with '.pkl' extension (cookies get pickled)")
+            return self.raise_exc(
+                exc_type=ValueError,
+                message="Cookies path must end with '.pkl' extension (cookies get pickled)"
+            )
 
         if os.path.exists(path) and not force:
             return self
@@ -506,7 +540,10 @@ class WebCrawler:
     # When managing cookies this way, note that cookies are typically different for each URL.
     def LoadCookies(self, path, must_exist=True):
         if not path.endswith(".pkl"):
-            raise ValueError("Cookies path must end with '.pkl' extension (cookies are pickled)")
+            return self.raise_exc(
+                exc_type=ValueError,
+                message="Cookies path must end with '.pkl' extension (cookies are pickled)"
+            )
 
         if not os.path.exists(path):
             if not must_exist:
@@ -590,11 +627,11 @@ class WebCrawler:
 
         except StaleElementReferenceException as e:
             if _stale_retry:
-                self.raise_with_context(
-                    exception=e,
+                return self.RaiseContextualException(
                     message=(
                         f"Failed to find valid '{locator[0]}' element ({locator[1]}), found to be stale twice"
-                    )
+                    ),
+                    from_exc=e
                 )
 
             # Retry one more time
@@ -618,21 +655,21 @@ class WebCrawler:
             if not must_exist:
                 return None
 
-            self.raise_with_context(
-                exception=e,
+            return self.RaiseContextualException(
                 message=(
                     f"Failed to find '{locator[0]}' element ({locator[1]}) within timeout "
                     f"({wait_timeout_sec_override or self.wait_timeout_sec} secs)"
-                )
+                ),
+                from_exc=e
             )
 
         except Exception as e:
-            self.raise_with_context(
-                exception=e,
+            return self.RaiseContextualException(
                 message=(
                     f"Failed to find '{locator[0]}' element ({locator[1]}) within timeout "
                     f"({wait_timeout_sec_override or self.wait_timeout_sec} secs)"
-                )
+                ),
+                from_exc=e
             )
 
     # See docstring of WaitForElement, params are shared
@@ -652,9 +689,9 @@ class WebCrawler:
 
         except StaleElementReferenceException as e:
             if _stale_retry:
-                self.raise_with_context(
-                    exception=e,
-                    message=f"Failed to find valid '{locator[0]}' element ({locator[1]}), found to be stale twice"
+                return self.RaiseContextualException(
+                    message=f"Failed to find valid '{locator[0]}' element ({locator[1]}), found to be stale twice",
+                    from_exc=e
                 )
 
             # Retry one more time
@@ -674,85 +711,18 @@ class WebCrawler:
             if not must_exist:
                 return None
 
-            self.raise_with_context(
-                exception=e,
-                message=f"Failed to find '{locator[0]}' element ({locator[1]}) in parent element"
+            return self.RaiseContextualException(
+                message=f"Failed to find '{locator[0]}' element ({locator[1]}) in parent element",
+                from_exc=e
             )
 
         except Exception as e:
-            self.raise_with_context(
-                exception=e,
-                message=f"Failed to find '{locator[0]}' element ({locator[1]}) in parent element"
+            return self.RaiseContextualException(
+                message=f"Failed to find '{locator[0]}' element ({locator[1]}) in parent element",
+                from_exc=e
             )
 
-    def on_page_load(self, post_delay=True):
-        if post_delay:
-            self.RandomDelay()
-
-        if not self.repositioned_window and self.auto_gui:
-            self.driver.set_window_position(0, 0)  # For auto_gui
-
-            self.repositioned_window = True
-
-    def get_locator(self, el_id="", el_name="", el_class="", css_selector="", xpath=""):
-        if el_id:
-            locator = (self.by.ID, el_id)
-
-        elif el_name:
-            locator = (self.by.NAME, el_name)
-
-        elif el_class:
-            locator = (self.by.CLASS_NAME, el_class)
-
-        elif css_selector:
-            locator = (self.by.CSS_SELECTOR, css_selector)
-
-        elif xpath:
-            locator = (self.by.XPATH, xpath)
-
-        else:
-            raise ValueError(
-                "Must supply one of the following params: el_id, el_name, class_name, css_selector, xpath"
-            )
-
-        return locator
-
-    def get_wait(self, timeout_sec=0):
-        if not timeout_sec:
-            timeout_sec = self.wait_timeout_sec
-
-        if timeout_sec not in self.waits:
-            from selenium.webdriver.support.ui import WebDriverWait
-
-            self.waits[timeout_sec] = WebDriverWait(self.driver, timeout_sec)
-
-        return self.waits[timeout_sec]
-
-    def get_element_center_coords(self, element):
-        return (
-            element.location["x"] + (element.size["width"] * 0.5),
-            element.location["y"] + (element.size["height"] * 0.5)
-        )
-
-    def clear_profile_lock_files(self, profile_dir):
-        from glob import glob
-
-        patterns = [
-            os.path.join(profile_dir, "SingletonLock"),
-            os.path.join(profile_dir, "SingletonSocket*"),
-            os.path.join(profile_dir, "SingletonCookie")
-        ]
-
-        for pattern in patterns:
-            for lock_file in glob(pattern):
-                os.remove(lock_file)
-
-        lock_path = os.path.join(profile_dir, "LOCK")
-
-        if os.path.exists(lock_path):
-            os.remove(lock_path)
-
-    def raise_with_context(self, exception, message):
+    def RaiseContextualException(self, message="", from_exc=None, exc_type=None):
         from Dash.LocalStorage import Write
 
         screenshot_path = self.SaveScreenshot(_on_error=True)
@@ -801,7 +771,87 @@ class WebCrawler:
         else:
             html_tag = "- No HTML saved, must provide `file_storage_root` on init"
 
-        raise type(exception)(f"{message}\n{screenshot_tag}\n{html_tag}") from exception
+        return self.raise_exc(
+            exc_type=exc_type,
+            message=f"{message}\n{screenshot_tag}\n{html_tag}",
+            from_exc=from_exc
+        )
+
+    def raise_exc(self, exc_type=None, message="", from_exc=None):
+        self.Quit()
+
+        if from_exc:
+            raise (exc_type or type(from_exc))(message) from from_exc
+
+        raise (exc_type or Exception)(message)
+
+    def on_page_load(self, post_delay=True):
+        if post_delay:
+            self.RandomDelay()
+
+        if not self.repositioned_window and self.auto_gui:
+            self.driver.set_window_position(0, 0)  # For auto_gui
+
+            self.repositioned_window = True
+
+    def get_locator(self, el_id="", el_name="", el_class="", css_selector="", xpath=""):
+        if el_id:
+            locator = (self.by.ID, el_id)
+
+        elif el_name:
+            locator = (self.by.NAME, el_name)
+
+        elif el_class:
+            locator = (self.by.CLASS_NAME, el_class)
+
+        elif css_selector:
+            locator = (self.by.CSS_SELECTOR, css_selector)
+
+        elif xpath:
+            locator = (self.by.XPATH, xpath)
+
+        else:
+            return self.raise_exc(
+                exc_type=ValueError,
+                message="Must supply one of: el_id, el_name, class_name, css_selector, xpath"
+            )
+
+        return locator
+
+    def get_wait(self, timeout_sec=0):
+        if not timeout_sec:
+            timeout_sec = self.wait_timeout_sec
+
+        if timeout_sec not in self.waits:
+            from selenium.webdriver.support.ui import WebDriverWait
+
+            self.waits[timeout_sec] = WebDriverWait(self.driver, timeout_sec)
+
+        return self.waits[timeout_sec]
+
+    def get_element_center_coords(self, element):
+        return (
+            element.location["x"] + (element.size["width"] * 0.5),
+            element.location["y"] + (element.size["height"] * 0.5)
+        )
+
+    def clear_profile_lock_files(self, profile_dir):
+        from glob import glob
+
+        patterns = [
+            os.path.join(profile_dir, "SingletonLock"),
+            os.path.join(profile_dir, "SingletonSocket*"),
+            os.path.join(profile_dir, "SingletonCookie")
+        ]
+
+        for pattern in patterns:
+            for lock_file in glob(pattern):
+                os.remove(lock_file)
+
+        lock_path = os.path.join(profile_dir, "LOCK")
+
+        if os.path.exists(lock_path):
+            os.remove(lock_path)
 
     def _populate_input(self, input_el, text, is_file_input=False):
         if self.extra_stealth and not is_file_input:
@@ -822,9 +872,9 @@ class WebCrawler:
 
         except StaleElementReferenceException as e:
             if _stale_retry:
-                self.raise_with_context(
-                    exception=e,
-                    message=f"Failed to execute action on element, found to be stale twice"
+                return self.RaiseContextualException(
+                    message=f"Failed to execute action on element, found to be stale twice",
+                    from_exc=e
                 )
 
             # Retry one more time
@@ -835,9 +885,9 @@ class WebCrawler:
             )
 
         except Exception as e:
-            self.raise_with_context(
-                exception=e,
-                message="Failed to execute action on element, found to be stale twice"
+            return self.RaiseContextualException(
+                message="Failed to execute action on element, found to be stale twice",
+                from_exc=e
             )
 
     def _unfocus_element(self, input_el):

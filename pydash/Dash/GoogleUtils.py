@@ -407,8 +407,8 @@ class GUtils:
 
         return self._youtube_utils_
 
-    def PostToYouTube(self, channel_id):
-        return self._youtube_utils.Post(channel_id)
+    def PostVideoToYouTube(self, channel_id):
+        return self._youtube_utils.PostVideo(channel_id)
 
     def GetYouTubeChannels(self, handle="", username=""):
         return self._youtube_utils.GetChannels(handle, username)
@@ -1108,12 +1108,86 @@ class _YouTubeUtils:
 
         return self._video_categories
 
-    def Post(self, channel_id):  # TODO
-        raise NotImplementedError("The function to post to YouTube is not yet written")
+    # TODO: any short content that goes to socials can go to youtube
+    #  shorts, and any longer content can go to og youtube - what about regular social posts?
+    # - For category_num, see self.video_categories
+    def PostVideo(
+        self, channel_id, video_path, title, description="",
+        tags=[], visibility="public", category_num=0, future_iso=""
+    ):
+        if visibility not in ["public", "private", "unlisted"]:
+            raise ValueError(f"Invalid visibility '{visibility}', expected 'public', 'private', or 'unlisted'")
 
-        # TODO: any short content that goes to socials can go to youtube
-        #  shorts, and any longer content can go to og youtube
-        # return {}
+        if category_num and category_num not in self.video_categories:
+            raise KeyError(f"Invalid video category number (see self.video_categories): {category_num}")
+
+        if tags:
+            char_count = 0
+
+            for tag in tags:
+                char_count += len(tag)
+
+                # If a tag contains a space, the API server handles the tag value as though it were
+                # wrapped in quotation marks, and the quotation marks count toward the character limit
+                if " " in tag:
+                    char_count += 2  #
+
+                if char_count > 500:
+                    raise ValueError("Combined tags can't exceed 500 characters - see comments for more info")
+
+        from googleapiclient.http import MediaFileUpload
+
+        params = {
+            "part": ", ".join([
+                "id",
+                "snippet",
+                "status",
+
+                # These are available but not useful
+                # "contentDetails",
+                # "fileDetails",
+                # "liveStreamingDetails",
+                # "localizations",
+                # "paidProductPlacementDetails",
+                # "player",
+                # "processingDetails",
+                # "recordingDetails",
+                # "statistics",
+                # "suggestions",
+                # "topicDetails"
+            ]),
+            "body": {
+                "snippet": {
+                    "title": title,
+                    "description": description
+                },
+                "status": {
+                    "embeddable": True,
+                    "privacyStatus": visibility
+                }
+            },
+            "media_body": MediaFileUpload(video_path)
+        }
+
+        if category_num:
+            params["body"]["snippet"]["categoryId"] = str(category_num)
+
+        if future_iso:
+            params["body"]["status"]["publishAt"] = future_iso
+
+        try:
+            response = self.Client.videos().insert(**params).execute()
+
+        except HttpError as http_error:
+            params["media_body"] = "(MediaFileUpload object) truncated..."
+
+            return ParseHTTPError(http_error, params)
+
+        is_shorts = self.video_is_a_short(response)
+
+        response["url"] = f"https://youtube.com/{'shorts/' if is_shorts else 'watch?v='}{response['id']}"
+
+        return response
 
     def GetChannels(self, handle="", username=""):
         params = {
@@ -1210,9 +1284,11 @@ class _YouTubeUtils:
                 "relevance"
             ),
             "safeSearch": "none",
-            "type": "video",
-            "videoCategoryId": str(category_num)
+            "type": "video"
         }
+
+        if category_num:
+            params["videoCategoryId"] = str(category_num)
 
         if search_query:
             params["q"] = search_query
