@@ -753,7 +753,8 @@ class WebCrawler:
 
                 error_id = GetRandomID()
 
-            html_path = os.path.join(self.file_storage_root, f"{error_id}.html")
+            # Use .txt so the browser doesn't try to render it when clicking on the URL
+            html_path = os.path.join(self.file_storage_root, f"{error_id}.txt")
 
             Write(html_path, self.GetPageHTML())
 
