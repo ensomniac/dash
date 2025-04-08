@@ -11,7 +11,7 @@ function DashGuiModal (
     this.include_bg = include_bg;
     this.bg_opacity = bg_opacity;
     this.include_close_button = include_close_button;
-    this.bg_color = this.bg_color = bg_color || Dash.Color.GetOpposite(this.color).BackgroundRaised;;
+    this.bg_color = bg_color || Dash.Color.GetOpposite(this.color).BackgroundRaised;
 
     // Not using 'this.html' is unconventional, but it's not appropriate in
     // this context, since the modal consists of two individual elements with
