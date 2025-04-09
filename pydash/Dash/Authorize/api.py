@@ -81,6 +81,11 @@ class Api:
 
             return
 
+        if self.data.get("service_name") == "set_brand_account_email":
+            self.set_brand_account_email()
+
+            return
+
         if self.data.get("token"):
             self.get_token()
 
@@ -114,7 +119,7 @@ class Api:
         button = f'''<div style="padding:0px;margin:10px;margin-top:15px;border:0px;"><a href="{auth_uri}'''
         button += '''" style="text-decoration:none;font-weight:normal;color:#FFFFFF;font-size:12px;'''
         button += '''background-color:#4865C7;text-align:center;font-family:arial, helvetica, sans-serif;'''
-        button += f'''padding:10px;margin:0px;border:0px;">Authorize {auth.service.name.title()} Now</a></div>'''
+        button += f'''padding:10px;margin:0px;border:0px;">Authorize {auth.service.display_name} Now</a></div>'''
 
         # Keep this
         self.write_data(
@@ -127,6 +132,43 @@ class Api:
 
         self.html_content = button
         self.return_data = {"error": None, "url": auth_uri}
+
+    def set_brand_account_email(self):
+        from Dash.Utils import ValidateEmailAddress
+
+        self.data["f"] = "set_brand_account_email"  # Not that it matters at this point, but just for clarity
+        self.data["service_name"] = self.data["filename"].split("_")[-1]
+
+        # raise Exception(str(self.data))
+
+        email_error = ValidateEmailAddress(self.data["email"], verbose=True)
+
+        if email_error:
+            self.return_data = {"error": email_error}
+
+            return
+
+        from Dash.LocalStorage import Read, Write
+
+        temp_path = os.path.join(self.flow_path, self.data["filename"])
+        new_path = os.path.join(self.flow_path, f"{self.data['email']}_{self.data['service_name']}")
+        data = Read(temp_path)
+
+        data["token_data"]["email"] = self.data["email"]
+        data["token_data"]["hd"] = self.data["email"].split("@")[-1]
+
+        if os.path.exists(new_path):
+            os.remove(new_path)
+
+        Write(new_path, data)
+
+        os.remove(temp_path)
+
+        self.return_data = {
+            "error": None,
+            "new_path": new_path,
+            "updated_data": str(data)
+        }
 
     # Print the error to the window rather than displaying it as json
     def format_error_html(self):
@@ -168,7 +210,12 @@ class Api:
         all_flows.sort()
 
         if not all_flows:
-            self.return_data = {"error": "Authorization failed. Error x23489"}
+            self.return_data = {
+                "error": (
+                    "Flow timed out. This likely happened from loading the auth page and "
+                    "waiting too long before going through the auth flow. Try again, but faster."
+                )
+            }
 
             return
 
@@ -191,6 +238,9 @@ class Api:
         flow_data["token_data"] = token_result["token_data"]
         flow_data["token_stored_on"] = datetime.now()
 
+        if service_name == "youtube":
+            flow_data["is_brand_account"] = False
+
         email = ""
 
         # TODO: Once Spotify service error has been resolved (see TODO in services.py),
@@ -199,13 +249,60 @@ class Api:
             email = flow_data["token_data"]["id_token"].get("email")
 
         if not email:
-            raise Exception("User email missing from response data, can't identify who these credentials are for.")
+            if service_name != "youtube":
+                raise ValueError("User email missing from response data, can't identify who these credentials are for.")
+
+            from Dash.Utils import GetRandomID
+
+            ts = int(now.timestamp())
+
+            # Simulate this dict for YT brand accounts, since we can't get it through the auth flow (see comment in services.py)
+            flow_data["token_data"]["id_token"] = {
+                "email": "TODO: full email",
+                "hd": "TODO: email domain (after the @)",
+                "at_hash": "",  # Not available
+                "aud": flow_data["token_data"]["client_id"],
+                "azp": flow_data["token_data"]["client_id"],
+                "email_verified": True,
+                "exp": ts + flow_data["token_data"]["token_response"]["expires_in"],
+                "iat": ts,
+                "iss": "https://accounts.google.com",
+                "sub": ""  # Not available
+            }
+
+            if not flow_data["token_data"]["token_response"].get("id_token"):
+                flow_data["token_data"]["token_response"]["id_token"] = ""
+
+            if not flow_data["token_data"].get("id_token_jwt"):
+                flow_data["token_data"]["id_token_jwt"] = flow_data["token_data"]["token_response"]["id_token"]
+
+            flow_data["is_brand_account"] = True
+
+            email = f"{GetRandomID()}@brandaccount"  # Don't use underscores
 
         path = self.get_data_path(service_name, email)
 
         self.write_data(path, flow_data)
 
-        self.return_data = {"error": None, "authorization_successful": True, "path": path, "data": str(flow_data)}
+        if flow_data.get("is_brand_account"):
+            from Dash.Utils import SendEmail
+
+            SendEmail(
+                subject="ACTION REQUIRED – Dash Authorize",
+                msg=(  # It's not possible to get this through the auth flow, manual intervention required
+                    f"A new {service_name} brand account has been authorized. If you're the one who did this, please "
+                    "manually set its email using the following link, replacing {{email}} with the actual email:\n\n"
+                    f"https://authorize.oapi.co/set_brand_account_email?filename={os.path.basename(path)}"
+                    "&email={{email}}"  # For the user to populate (must exclude from the f-string)
+                )
+            )
+
+        self.return_data = {
+            "error": None,
+            "authorization_successful": True,
+            "path": path,
+            "data": str(flow_data)
+        }
 
     def get_data_path(self, service_name, email=""):
         return os.path.join(self.flow_path, f"{email}_{service_name}")

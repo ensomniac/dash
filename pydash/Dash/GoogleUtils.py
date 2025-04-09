@@ -1109,8 +1109,9 @@ class _YouTubeUtils:
         return self._video_categories
 
     # TODO: any short content that goes to socials can go to youtube
-    #  shorts, and any longer content can go to og youtube - what about regular social posts?
-    # - For category_num, see self.video_categories
+    #  shorts, and any longer content can go to og youtube
+    #  - what about regular social posts? (not possible with API)
+    # For category_num, see self.video_categories
     def PostVideo(
         self, channel_id, video_path, title, description="",
         tags=[], visibility="public", category_num=0, future_iso=""

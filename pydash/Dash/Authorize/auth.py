@@ -68,7 +68,7 @@ class Auth:
 
     def exchange_code_for_token_oauth(self, code):
         error = None
-        auth_str = f"{self.service._client_id}:{self.service._client_secret}".replace("\n", "")
+        auth_str = f"{self.service._client_id}:{self.service._client_secret}".replace("\n", "")  # noqa
 
         # TODO: This doesn't appear to be used
         auth_bytes = b64encode(auth_str.encode())
@@ -85,8 +85,8 @@ class Auth:
                 "grant_type": "authorization_code",
                 "code": code,
                 "redirect_uri": self.service.redirect_uri,
-                "client_id": self.service._client_id,
-                "client_secret": self.service._client_secret
+                "client_id": self.service._client_id,  # noqa
+                "client_secret": self.service._client_secret  # noqa
             }
         )
 
@@ -95,7 +95,7 @@ class Auth:
         except:
             return {
                 "token_data": None,
-                "error": f"Unable to read return data for token exchange from {self.service.name.title()}. Raw: {token_request_response.text}"
+                "error": f"Unable to read return data for token exchange from {self.service.display_name}. Raw: {token_request_response.text}"
             }
 
         if self.service.success_token_exchange_key not in token_json:
@@ -177,8 +177,8 @@ class Auth:
                 "Authorization": f"Bearer {self.get_token().get('token')}"
             },
             data={
-                "client_id": self.service._client_id,
-                "client_secret": self.service._client_secret
+                "client_id": self.service._client_id,  # noqa
+                "client_secret": self.service._client_secret  # noqa
             }
         )
 
@@ -199,14 +199,14 @@ class Auth:
                 "Accept": "*/*",
                 "Content-Type": "application/x-www-form-urlencoded",
                 "User-Agent": "runscope/0.1",
-                "Authorization": "Basic " + b64encode("%s:%s" % (self.service._client_id, self.service._client_secret)).replace("\n", "")
+                "Authorization": "Basic " + b64encode("%s:%s" % (self.service._client_id, self.service._client_secret)).replace("\n", "")  # noqa
             },
             data={
                 "grant_type": "refresh_token",
                 "refresh_token": refresh_token,
                 "redirect_uri": self.service.redirect_uri,
-                "client_id": self.service._client_id,
-                "client_secret": self.service._client_secret
+                "client_id": self.service._client_id,  # noqa
+                "client_secret": self.service._client_secret  # noqa
             }
         )
 
@@ -225,8 +225,8 @@ class Auth:
         from oauth2client.client import OAuth2WebServerFlow
 
         flow = OAuth2WebServerFlow(
-            client_id=self.service._client_id,
-            client_secret=self.service._client_secret,
+            client_id=self.service._client_id,  # noqa
+            client_secret=self.service._client_secret,  # noqa
             scope=self.service.scope,
             redirect_uri=self.service.redirect_uri,
             **{

@@ -102,7 +102,6 @@ class ApiCore:
         - "email_access_csv"     : "ryan@ensomniac.com, stetandrew@gmail.com",
         - "email_git_webhook_csv": "ryan@ensomniac.com, rmartin@candy.io, stetandrew@gmail.com",
         - "id"                   : "2021102719491527462",
-        - "is_server"            : "/var/www/vhosts/oapi.co/logs",
         - "is_valid"             : True,
         - "srv_path_git_oapi"    : "/var/www/vhosts/oapi.co/candy/realtimecandy/",
         - "srv_path_http_root"   : "/var/www/vhosts/oapi.co/candy/",

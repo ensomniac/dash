@@ -114,7 +114,7 @@ def ValidateEmailAddress(email, verbose=False, verbose_success_msg=False):
 
     except Exception as e:
         if verbose:
-            return f", validation error:\n{e}"
+            return f"{error_tag}, validation error:\n{e}"
 
         return False
 
