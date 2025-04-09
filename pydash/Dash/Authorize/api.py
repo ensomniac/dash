@@ -287,13 +287,24 @@ class Api:
         if flow_data.get("is_brand_account"):
             from Dash.Utils import SendEmail
 
+            bs = "&#47;"  # Backslash
+            cln = "&#58;"  # Colon
+            zws = "&#8203;"  # Zero-width space
+
             SendEmail(
                 subject="ACTION REQUIRED – Dash Authorize",
                 msg=(  # It's not possible to get this through the auth flow, manual intervention required
-                    f"A new {service_name} brand account has been authorized. If you're the one who did this, please "
-                    "manually set its email using the following link, replacing {{email}} with the actual email:\n\n"
-                    f"https://authorize.oapi.co/set_brand_account_email?filename={os.path.basename(path)}"
-                    "&email={{email}}"  # For the user to populate (must exclude from the f-string)
+                    f"A new {service_name} brand account has been authorized.\n\n"
+                    "<b><i>If you're the one who did this</i></b>, please "
+                    "manually set its email using the following URL, replacing "
+                    "<code>{{email}}</code> with the actual email:\n\n"
+                    
+                    # Use span and html entity replacements to prevent this from becoming a hyperlink
+                    f"<span>https{cln}{bs}{bs}{zws}authorize{zws}.oapi{zws}.co/"
+                    f"set_brand_account_email?filename={os.path.basename(path)}"
+                    
+                    # For the user to populate (must exclude from the f-string)
+                    "&email=</span><code>{{email}}</code>"
                 )
             )
 
