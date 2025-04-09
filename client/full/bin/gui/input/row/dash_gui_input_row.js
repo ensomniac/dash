@@ -10,16 +10,18 @@ function DashGuiInputRow (
     this.color = color || (on_click_bind && on_click_bind.color ? on_click_bind.color : Dash.Color.Light);
     this.data_key = data_key;
 
-    this.end_tag                 = null;
-    this.disabled                = false;
-    this.icon_button_count       = 0;
-    this.html                    = $("<div></div>");
-    this.save_button_visible     = false;
-    this.height                  = Dash.Size.RowHeight;
-    this.highlight               = $("<div></div>");
-    this.flash_save              = $("<div></div>");
+    this.end_tag = null;
+    this.disabled = false;
+    this.icon_button_count = 0;
+    this.key_copy_button = null;
+    this.html = $("<div></div>");
+    this.value_copy_button = null;
+    this.on_label_click_url = null;
+    this.save_button_visible = false;
+    this.height = Dash.Size.RowHeight;
+    this.highlight = $("<div></div>");
+    this.flash_save = $("<div></div>");
     this.invalid_input_highlight = $("<div></div>");
-    this.on_label_click_url      = null;
 
     // For lock toggle
     this.locked = false;

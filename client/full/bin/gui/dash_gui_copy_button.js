@@ -1,6 +1,6 @@
 function DashGuiCopyButton (
     binder, getter_cb, size_mult=1, container_size=null, style="default",
-    icon_name="copy", color=null, label_text="Copied!"
+    icon_name="copy", color=null, label_text="Copied!", font_size_override=0
 ) {
     this.binder = binder;
     this.getter_cb = getter_cb.bind(binder);
@@ -10,6 +10,7 @@ function DashGuiCopyButton (
     this.icon_name = icon_name;
     this.color = color || binder.color || Dash.Color.Light;
     this.label_text = label_text;
+    this.font_size_override = font_size_override;
 
     this.button = null;
     this.icon_color = null;
@@ -68,7 +69,7 @@ function DashGuiCopyButton (
             "padding-bottom": Dash.Size.Padding * 0.5,
             "padding-top": Dash.Size.Padding * 0.1,
             "border-radius": Dash.Size.BorderRadius,
-            "font-size": (85 * this.size_mult) + "%",
+            "font-size": (this.font_size_override || (85 * this.size_mult)) + "%",
             "pointer-events": "none",
             "user-select": "none",
             "width": "fit-content",
@@ -88,18 +89,16 @@ function DashGuiCopyButton (
 
         this.label.hide();
 
-        (function (self) {
-            setTimeout(
-                function () {
-                    self.label.css({
-                        "position": "absolute",
-                        "top": -self.label.innerHeight() - ((Dash.Size.Padding * 0.25) * self.size_mult),
-                        "left": -((self.label.innerWidth() * 0.5) - (self.button.html.innerWidth() * 0.5))
-                    });
-                },
-                500
-            );
-        })(this);
+        setTimeout(
+            () => {
+                this.label.css({
+                    "position": "absolute",
+                    "top": -this.label.innerHeight() - ((Dash.Size.Padding * 0.25) * this.size_mult),
+                    "left": -((this.label.innerWidth() * 0.5) - (this.button.html.innerWidth() * 0.5))
+                });
+            },
+            500
+        );
     };
 
     this.on_click = function () {
@@ -107,25 +106,23 @@ function DashGuiCopyButton (
 
         this.button.SetIconColor(this.color.Button.Background.Selected);
 
-        (function (self) {
-            navigator.clipboard.writeText(text).then(function () {
-                Dash.Log.Log("Copied '" + text + "' to clipboard");
+        navigator.clipboard.writeText(text).then(() => {
+            Dash.Log.Log("Copied '" + text + "' to clipboard");
 
-                self.label.stop().fadeIn(
-                    "fast",
-                    function () {
-                        self.button.SetIconColor(self.icon_color || self.color.Button.Background.Base);
+            this.label.stop().fadeIn(
+                "fast",
+                () => {
+                    this.button.SetIconColor(this.icon_color || this.color.Button.Background.Base);
 
-                        setTimeout(
-                            function () {
-                                self.label.stop().fadeOut("slow");
-                            },
-                            1250
-                        );
-                    }
-                );
-            });
-        })(this);
+                    setTimeout(
+                        () => {
+                            this.label.stop().fadeOut("slow");
+                        },
+                        1250
+                    );
+                }
+            );
+        });
     };
 
     this.setup_styles();

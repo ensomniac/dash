@@ -695,6 +695,17 @@ function DashGuiPropertyBoxInterface () {
 
         if (highlight_row) {
             checkbox._property_box_highlight = this.add_hover_highlight(checkbox.html);
+
+            if (end_tag_text) {
+                setTimeout(
+                    () => {
+                        checkbox._property_box_highlight.css({
+                            "right": checkbox._end_tag.width() + Dash.Size.Padding
+                        });
+                    },
+                    250
+                );
+            }
         }
 
         this.AddHTML(checkbox.html);

@@ -18605,7 +18605,6 @@ function DashGui () {
         return icon;
     };
     this.GetKeyCopyButton = function (size, data_key, dash_color) {
-        var right_margin = Dash.Size.Padding * 0.3;
         var button = new Dash.Gui.CopyButton(
             this,
             () => {
@@ -18622,7 +18621,7 @@ function DashGui () {
         button.SetIconColor(dash_color.Stroke);
         button.html.css({
             "padding-top": size * 0.5,
-            "margin-left": right_margin
+            "margin-left": Dash.Size.Padding * 0.3
         });
         return button;
     };
@@ -27129,7 +27128,7 @@ function DashGuiSignature (width=null, height=null, binder=null, on_save_cb=null
 
 function DashGuiCopyButton (
     binder, getter_cb, size_mult=1, container_size=null, style="default",
-    icon_name="copy", color=null, label_text="Copied!"
+    icon_name="copy", color=null, label_text="Copied!", font_size_override=0
 ) {
     this.binder = binder;
     this.getter_cb = getter_cb.bind(binder);
@@ -27139,6 +27138,7 @@ function DashGuiCopyButton (
     this.icon_name = icon_name;
     this.color = color || binder.color || Dash.Color.Light;
     this.label_text = label_text;
+    this.font_size_override = font_size_override;
     this.button = null;
     this.icon_color = null;
     this.html = $("<div></div>");
@@ -27185,7 +27185,7 @@ function DashGuiCopyButton (
             "padding-bottom": Dash.Size.Padding * 0.5,
             "padding-top": Dash.Size.Padding * 0.1,
             "border-radius": Dash.Size.BorderRadius,
-            "font-size": (85 * this.size_mult) + "%",
+            "font-size": (this.font_size_override || (85 * this.size_mult)) + "%",
             "pointer-events": "none",
             "user-select": "none",
             "width": "fit-content",
@@ -27202,39 +27202,35 @@ function DashGuiCopyButton (
         });
         this.html.append(this.label);
         this.label.hide();
-        (function (self) {
-            setTimeout(
-                function () {
-                    self.label.css({
-                        "position": "absolute",
-                        "top": -self.label.innerHeight() - ((Dash.Size.Padding * 0.25) * self.size_mult),
-                        "left": -((self.label.innerWidth() * 0.5) - (self.button.html.innerWidth() * 0.5))
-                    });
-                },
-                500
-            );
-        })(this);
+        setTimeout(
+            () => {
+                this.label.css({
+                    "position": "absolute",
+                    "top": -this.label.innerHeight() - ((Dash.Size.Padding * 0.25) * this.size_mult),
+                    "left": -((this.label.innerWidth() * 0.5) - (this.button.html.innerWidth() * 0.5))
+                });
+            },
+            500
+        );
     };
     this.on_click = function () {
         var text = this.getter_cb();
         this.button.SetIconColor(this.color.Button.Background.Selected);
-        (function (self) {
-            navigator.clipboard.writeText(text).then(function () {
-                Dash.Log.Log("Copied '" + text + "' to clipboard");
-                self.label.stop().fadeIn(
-                    "fast",
-                    function () {
-                        self.button.SetIconColor(self.icon_color || self.color.Button.Background.Base);
-                        setTimeout(
-                            function () {
-                                self.label.stop().fadeOut("slow");
-                            },
-                            1250
-                        );
-                    }
-                );
-            });
-        })(this);
+        navigator.clipboard.writeText(text).then(() => {
+            Dash.Log.Log("Copied '" + text + "' to clipboard");
+            this.label.stop().fadeIn(
+                "fast",
+                () => {
+                    this.button.SetIconColor(this.icon_color || this.color.Button.Background.Base);
+                    setTimeout(
+                        () => {
+                            this.label.stop().fadeOut("slow");
+                        },
+                        1250
+                    );
+                }
+            );
+        });
     };
     this.setup_styles();
 }
@@ -45676,16 +45672,18 @@ function DashGuiInputRow (
     this.on_click_bind = on_click_bind;
     this.color = color || (on_click_bind && on_click_bind.color ? on_click_bind.color : Dash.Color.Light);
     this.data_key = data_key;
-    this.end_tag                 = null;
-    this.disabled                = false;
-    this.icon_button_count       = 0;
-    this.html                    = $("<div></div>");
-    this.save_button_visible     = false;
-    this.height                  = Dash.Size.RowHeight;
-    this.highlight               = $("<div></div>");
-    this.flash_save              = $("<div></div>");
+    this.end_tag = null;
+    this.disabled = false;
+    this.icon_button_count = 0;
+    this.key_copy_button = null;
+    this.html = $("<div></div>");
+    this.value_copy_button = null;
+    this.on_label_click_url = null;
+    this.save_button_visible = false;
+    this.height = Dash.Size.RowHeight;
+    this.highlight = $("<div></div>");
+    this.flash_save = $("<div></div>");
     this.invalid_input_highlight = $("<div></div>");
-    this.on_label_click_url      = null;
     // For lock toggle
     this.locked = false;
     this.lock_button = null;
@@ -46022,25 +46020,70 @@ function DashGuiInputRowInterface () {
     this.SetPlaceholder = function (placeholder_text) {
         this.input.SetPlaceholder(placeholder_text);
     };
-    this.AddKeyCopyButton = function (data_key="") {
-        if (!data_key) {
-            data_key = this.data_key;
+    this.AddValueCopyButton = function () {
+        if (this.value_copy_button) {
+            return;
         }
-        if (!data_key) {
-            Dash.Log.Warn("No data key assigned to this input, skipping key copy button...");
+        if (this.key_copy_button) {  // Can support both of these in the future
+            Dash.Log.Warn("Key-copy button already exists, skipping value-copy button...");
             return;
         }
         var size = this.height * 0.5;
-        var right_margin = Dash.Size.Padding * 0.3;
-        var button = Dash.Gui.GetKeyCopyButton(size, data_key, this.color);
+        var right_margin = Dash.Size.Padding;
+        this.value_copy_button = new Dash.Gui.CopyButton(
+            this,
+            () => {
+                return this.Text();
+            },
+            1.5,
+            size,
+            undefined,
+            undefined,
+            this.color,
+            undefined,
+            85
+        );
+        this.value_copy_button.SetIconColor(this.color.Stroke);
+        this.value_copy_button.html.css({
+            "padding-top": size * 0.5,
+            "margin-left": right_margin,
+            "margin-right": Dash.Size.Padding * 0.3
+        });
         this.highlight.css({
             "right": size + right_margin
         });
         this.flash_save.css({
             "right": size + right_margin
         });
-        this.html.append(button.html);
-        return button;
+        this.html.append(this.value_copy_button.html);
+        return this.value_copy_button;
+    };
+    this.AddKeyCopyButton = function (data_key="") {
+        if (this.key_copy_button) {
+            return;
+        }
+        if (this.value_copy_button) {  // Can support both of these in the future
+            Dash.Log.Warn("Value-copy button already exists, skipping key-copy button...");
+            return;
+        }
+        if (!data_key) {
+            data_key = this.data_key;
+        }
+        if (!data_key) {
+            Dash.Log.Warn("No data key assigned to this input, skipping key-copy button...");
+            return;
+        }
+        var size = this.height * 0.5;
+        var right_margin = Dash.Size.Padding * 0.3;
+        this.key_copy_button = Dash.Gui.GetKeyCopyButton(size, data_key, this.color);
+        this.highlight.css({
+            "right": size + right_margin
+        });
+        this.flash_save.css({
+            "right": size + right_margin
+        });
+        this.html.append(this.key_copy_button.html);
+        return this.key_copy_button;
     };
     this.InFocus = function () {
         return (this.input && this.input.InFocus());
@@ -46115,6 +46158,9 @@ function DashGuiInputRowInterface () {
         setTimeout(
             () => {
                 var right = this.end_tag.width() + Dash.Size.Padding;
+                if (this.value_copy_button || this.key_copy_button) {
+                    right += this.height;
+                }
                 if (this.highlight) {
                     this.highlight.css({
                         "right": right
@@ -46128,6 +46174,7 @@ function DashGuiInputRowInterface () {
             },
             250
         );
+        return this;
     };
     this.SetupCombo = function (combo_options) {
         this.initial_value = this.initial_value || combo_options[0]["id"];
@@ -47562,6 +47609,16 @@ function DashGuiPropertyBoxInterface () {
         }
         if (highlight_row) {
             checkbox._property_box_highlight = this.add_hover_highlight(checkbox.html);
+            if (end_tag_text) {
+                setTimeout(
+                    () => {
+                        checkbox._property_box_highlight.css({
+                            "right": checkbox._end_tag.width() + Dash.Size.Padding
+                        });
+                    },
+                    250
+                );
+            }
         }
         this.AddHTML(checkbox.html);
         this.track_row(checkbox);

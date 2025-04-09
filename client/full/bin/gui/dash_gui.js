@@ -603,8 +603,6 @@ function DashGui () {
     };
 
     this.GetKeyCopyButton = function (size, data_key, dash_color) {
-        var right_margin = Dash.Size.Padding * 0.3;
-
         var button = new Dash.Gui.CopyButton(
             this,
             () => {
@@ -624,7 +622,7 @@ function DashGui () {
 
         button.html.css({
             "padding-top": size * 0.5,
-            "margin-left": right_margin
+            "margin-left": Dash.Size.Padding * 0.3
         });
 
         return button;

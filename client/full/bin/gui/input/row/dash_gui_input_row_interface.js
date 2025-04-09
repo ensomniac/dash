@@ -22,20 +22,41 @@ function DashGuiInputRowInterface () {
         this.input.SetPlaceholder(placeholder_text);
     };
 
-    this.AddKeyCopyButton = function (data_key="") {
-        if (!data_key) {
-            data_key = this.data_key;
+    this.AddValueCopyButton = function () {
+        if (this.value_copy_button) {
+            return;
         }
 
-        if (!data_key) {
-            Dash.Log.Warn("No data key assigned to this input, skipping key copy button...");
+        if (this.key_copy_button) {  // Can support both of these in the future
+            Dash.Log.Warn("Key-copy button already exists, skipping value-copy button...");
 
             return;
         }
 
         var size = this.height * 0.5;
-        var right_margin = Dash.Size.Padding * 0.3;
-        var button = Dash.Gui.GetKeyCopyButton(size, data_key, this.color);
+        var right_margin = Dash.Size.Padding;
+
+        this.value_copy_button = new Dash.Gui.CopyButton(
+            this,
+            () => {
+                return this.Text();
+            },
+            1.5,
+            size,
+            undefined,
+            undefined,
+            this.color,
+            undefined,
+            85
+        );
+
+        this.value_copy_button.SetIconColor(this.color.Stroke);
+
+        this.value_copy_button.html.css({
+            "padding-top": size * 0.5,
+            "margin-left": right_margin,
+            "margin-right": Dash.Size.Padding * 0.3
+        });
 
         this.highlight.css({
             "right": size + right_margin
@@ -45,9 +66,48 @@ function DashGuiInputRowInterface () {
             "right": size + right_margin
         });
 
-        this.html.append(button.html);
+        this.html.append(this.value_copy_button.html);
 
-        return button;
+        return this.value_copy_button;
+    };
+
+    this.AddKeyCopyButton = function (data_key="") {
+        if (this.key_copy_button) {
+            return;
+        }
+
+        if (this.value_copy_button) {  // Can support both of these in the future
+            Dash.Log.Warn("Value-copy button already exists, skipping key-copy button...");
+
+            return;
+        }
+
+        if (!data_key) {
+            data_key = this.data_key;
+        }
+
+        if (!data_key) {
+            Dash.Log.Warn("No data key assigned to this input, skipping key-copy button...");
+
+            return;
+        }
+
+        var size = this.height * 0.5;
+        var right_margin = Dash.Size.Padding * 0.3;
+
+        this.key_copy_button = Dash.Gui.GetKeyCopyButton(size, data_key, this.color);
+
+        this.highlight.css({
+            "right": size + right_margin
+        });
+
+        this.flash_save.css({
+            "right": size + right_margin
+        });
+
+        this.html.append(this.key_copy_button.html);
+
+        return this.key_copy_button;
     };
 
     this.InFocus = function () {
@@ -145,6 +205,10 @@ function DashGuiInputRowInterface () {
             () => {
                 var right = this.end_tag.width() + Dash.Size.Padding;
 
+                if (this.value_copy_button || this.key_copy_button) {
+                    right += this.height;
+                }
+
                 if (this.highlight) {
                     this.highlight.css({
                         "right": right
@@ -159,6 +223,8 @@ function DashGuiInputRowInterface () {
             },
             250
         );
+
+        return this;
     };
 
     this.SetupCombo = function (combo_options) {
