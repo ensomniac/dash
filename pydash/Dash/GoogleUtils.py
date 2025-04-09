@@ -407,8 +407,16 @@ class GUtils:
 
         return self._youtube_utils_
 
-    def PostVideoToYouTube(self, channel_id):
-        return self._youtube_utils.PostVideo(channel_id)
+    def PostVideoToYouTube(
+        self, video_path, title, description="",
+        tags=[], visibility="public", category_num=0, future_iso=""
+    ):
+        return self._youtube_utils.PostVideo(
+            video_path, title, description, tags, visibility, category_num, future_iso
+        )
+
+    def PostSocialToYouTube(self, text):
+        return self._youtube_utils.PostSocial(text)
 
     def GetYouTubeChannels(self, handle="", username=""):
         return self._youtube_utils.GetChannels(handle, username)
@@ -1108,12 +1116,9 @@ class _YouTubeUtils:
 
         return self._video_categories
 
-    # TODO: any short content that goes to socials can go to youtube
-    #  shorts, and any longer content can go to og youtube
-    #  - what about regular social posts? (not possible with API)
     # For category_num, see self.video_categories
     def PostVideo(
-        self, channel_id, video_path, title, description="",
+        self, video_path, title, description="",
         tags=[], visibility="public", category_num=0, future_iso=""
     ):
         if visibility not in ["public", "private", "unlisted"]:
@@ -1174,6 +1179,12 @@ class _YouTubeUtils:
             params["body"]["snippet"]["categoryId"] = str(category_num)
 
         if future_iso:
+            from datetime import datetime
+            from dateutil.parser import isoparse
+
+            if isoparse(future_iso) <= datetime.now():
+                raise ValueError("Future ISO must be in the future")
+
             params["body"]["status"]["publishAt"] = future_iso
 
         try:
@@ -1184,11 +1195,14 @@ class _YouTubeUtils:
 
             return ParseHTTPError(http_error, params)
 
-        is_shorts = self.video_is_a_short(response)
-
-        response["url"] = f"https://youtube.com/{'shorts/' if is_shorts else 'watch?v='}{response['id']}"
+        response["shorts"] = self.video_is_a_short(response)
+        response["url"] = f"https://youtube.com/{'shorts/' if response['shorts'] else 'watch?v='}{response['id']}"
 
         return response
+
+    # This functionality is not available via API as of 4/9/25
+    def PostSocial(self, text):  # TODO
+        raise NotImplementedError("The function to create a social-media-style YouTube post is not yet written")
 
     def GetChannels(self, handle="", username=""):
         params = {
@@ -1343,10 +1357,16 @@ class _YouTubeUtils:
 
         return results[0]
 
-    def DeleteVideo(self, video_id):  # TODO
-        raise NotImplementedError("The function to delete a YouTube video is not yet written")
+    def DeleteVideo(self, video_id):
+        params = {"id": video_id}
 
-        # return False
+        try:
+            self.Client.videos().delete(**params).execute()
+
+        except HttpError as http_error:
+            return ParseHTTPError(http_error, params)
+
+        return True
 
     # Will not work for comments on auto-generated music videos (no supported
     # method for that in the API, but see Fantom for scraping example)
