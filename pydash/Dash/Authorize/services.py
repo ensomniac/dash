@@ -56,7 +56,7 @@ class __Services:
     __photos: Service
     __spotify: Service
     __youtube: Service
-    __google_drive: Service
+    __gdrive: Service
     __youtube_brand_account: Service
 
     def __init__(self):
@@ -84,8 +84,12 @@ class __Services:
         return self._youtube_brand_account
 
     @property
+    def GDrive(self):
+        return self._gdrive
+
+    @property  # In case there are some cases that refer to this instead of GDrive
     def GoogleDrive(self):
-        return self._google_drive
+        return self._gdrive
 
     @property
     def Gmail(self):
@@ -131,9 +135,9 @@ class __Services:
         return self.__youtube_brand_account
 
     @property
-    def _google_drive(self):
-        if not hasattr(self, "__google_drive"):
-            self.__google_drive = Service(
+    def _gdrive(self):
+        if not hasattr(self, "__gdrive"):
+            self.__gdrive = Service(
                 name="gdrive",
                 token_endpoint="google",
                 scope=[
@@ -147,7 +151,11 @@ class __Services:
                 ]
             )
 
-        return self.__google_drive
+        return self.__gdrive
+
+    @property  # Seems there might be some cases that refer to this instead of gdrive
+    def _google_drive(self):
+        return self._gdrive
 
     @property
     def _gmail(self):
