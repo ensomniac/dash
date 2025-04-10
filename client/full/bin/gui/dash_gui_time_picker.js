@@ -9,6 +9,7 @@ function DashGuiTimePicker (
     color=null,
 
     // (in 24-hour format)
+    // (shortcuts: now)
     // hh:mm (or hh:mm:ss if including seconds)
     min="",
     max="",
@@ -16,6 +17,28 @@ function DashGuiTimePicker (
     include_seconds=false
 ) {
     this.include_seconds = include_seconds;
+
+    if (min === "now" || max === "now") {
+        var now = new Date();
+
+        now = (
+              now.getHours().toString().ZFill(2)
+            + ":"
+            + now.getMinutes().toString().ZFill(2)
+        );
+
+        if (this.include_seconds) {
+            now += ":" + now.getSeconds().toString().ZFill(2);
+        }
+
+        if (min === "now") {
+            min = now;
+        }
+
+        if (max === "now") {
+            max = now;
+        }
+    }
 
     var _attrs = {"type": "time"};
 

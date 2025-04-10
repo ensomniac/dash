@@ -6,20 +6,28 @@ function DashGuiInputRowInterface () {
         this.setup_connections();
 
         this.input.RefreshConnections();
+
+        return this;
     };
 
     this.BreakConnections = function () {
         this.html.off("click");
         this.html.off("mouseenter");
         this.html.off("mouseleave");
+
+        return this;
     };
 
     this.SetMaxCharacters = function (num) {
         this.input.SetMaxCharacters(num);
+
+        return this;
     };
 
     this.SetPlaceholder = function (placeholder_text) {
         this.input.SetPlaceholder(placeholder_text);
+
+        return this;
     };
 
     this.AddValueCopyButton = function () {

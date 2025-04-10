@@ -438,6 +438,9 @@ class GUtils:
     def DeleteYouTubeVideo(self, video_id):
         return self._youtube_utils.DeleteVideo(video_id)
 
+    def GetYouTubeVideoCategories(self):
+        return self._youtube_utils.video_categories
+
     def GetYouTubeComments(self, comment_ids=[], video_id="", skip_comment_ids=[], include_replies=True):
         return self._youtube_utils.GetComments(comment_ids, video_id, skip_comment_ids, include_replies)
 
@@ -1126,6 +1129,25 @@ class _YouTubeUtils:
 
         if category_num and category_num not in self.video_categories:
             raise KeyError(f"Invalid video category number (see self.video_categories): {category_num}")
+
+        if "<" in title or ">" in title:
+            raise ValueError("Title can't contain '<' or '>'")
+
+        if len(title) > 100:
+            raise ValueError("Title can't be longer than 100 characters")
+
+        if description:
+            if "<" in description or ">" in description:
+                raise ValueError("Description can't contain '<' or '>'")
+
+            num_bytes = len(description.encode())
+
+            if num_bytes > 5000:
+                raise ValueError(
+                    f"Description can't exceed 5000 bytes.\nThe current description is {num_bytes} bytes, "
+                    f"with {len(description)} characters.\n\nMost characters are equal to 1 byte, but some "
+                    "special characters, as well as emojis, can range from 2-4 bytes each."
+                )
 
         if tags:
             char_count = 0
