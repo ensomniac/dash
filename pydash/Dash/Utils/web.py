@@ -229,6 +229,8 @@ class WebCrawler:
 
         return self._dash_context
 
+    # Don't ever call this in this class, it's too presumptive and will inevitably cause external logic
+    # to break. It should only ever be called deliberately when an external script is finished running.
     def Quit(self):
         if hasattr(self, "_driver"):
             if self.extra_stealth:
@@ -276,6 +278,10 @@ class WebCrawler:
 
             path = os.path.join(self.file_storage_root, f"{GetRandomID()}.png")
 
+        adjusted = False
+        current_width = 0
+        current_height = 0
+
         if not viewport_only:
             try:  # Try to capture the entire page content (including content that must be scrolled to)
                 current_width = self.driver.execute_script("return window.innerWidth")
@@ -288,10 +294,24 @@ class WebCrawler:
                         max(scroll_width, current_width),
                         max(scroll_height, current_height)
                     )
+
+                    adjusted = True
+
+                    if self.virtual_display:
+                        print("Adjusted window size to capture entire page content")
             except:
                 pass
 
+        if self.virtual_display:
+            print(f"Taking screenshot of: {self.GetPageURL()}")
+
         self.driver.save_screenshot(path)
+
+        if adjusted:
+            self.driver.set_window_size(current_width, current_height)
+
+            if self.virtual_display:
+                print("Adjusted window size back to original")
 
         return path
 
@@ -779,7 +799,8 @@ class WebCrawler:
         )
 
     def raise_exc(self, exc_type=None, message="", from_exc=None):
-        self.Quit()
+        if self.virtual_display and message:
+            print(message)
 
         if from_exc:
             raise (exc_type or type(from_exc))(message) from from_exc
