@@ -1228,7 +1228,9 @@ class _YouTubeUtils:
 
             return ParseHTTPError(http_error, params)
 
-        response["shorts"] = self.video_is_a_short(response)
+        # Response does not have what we need, so we have to check the video
+        response["shorts"] = self.video_is_a_short(video_path=video_path)
+
         response["url"] = f"https://youtube.com/{'shorts/' if response['shorts'] else 'watch?v='}{response['id']}"
         response["alt_url"] = f"https://youtube.com/watch?v={response['id']}" if response['shorts'] else ""
 
@@ -1646,32 +1648,47 @@ class _YouTubeUtils:
 
         return videos
 
-    def video_is_a_short(self, video):
-        duration = self.parse_video_duration_sec(video)
+    # YouTube decides on their end whether a video that's uploaded will be a short,
+    # seemingly based only on the duration and aspect ratio. We don't have any control over this.
+    # They also don't provide any indicator in the video data/response of whether a video is a short,
+    # nor do they provide a URL for the video (which would tell us). Our only option is to assume
+    # a video is a short if it's under their max duration and a vertical aspect ratio.
+    def video_is_a_short(self, video_data={}, video_path=""):
+        if not video_data and not video_path:
+            raise ValueError("Must provide either video_data or video_path")
+
+        if video_data:
+            duration = self.parse_video_duration_sec(video_data)
+
+            # We don't get video dimensions, so use the thumbnail dimensions to check aspect ratio
+            thumbnail = self.parse_video_thumbnail(video_data)
+
+            width = thumbnail.get("width")
+            height = thumbnail.get("height")
+        else:
+            if not os.path.exists(video_path):
+                raise FileNotFoundError(f"Video path {video_path} does not exist")
+
+            from Dash.Utils import GetVideoDetails
+
+            details = GetVideoDetails(video_path)
+            width = details.get("width")
+            height = details.get("height")
+            duration = float(details.get("duration_sec"))
 
         if duration > 180:  # Formerly 60
-            return False  # Longer than Shorts allow
-
-        # We don't get video dimensions, so use the thumbnail dimensions to check aspect ratio
-        thumbnail = self.parse_video_thumbnail(video)
-
-        if not thumbnail:
-            return False  # No thumbnail data to check aspect ratio
-
-        width = thumbnail.get("width")
-        height = thumbnail.get("height")
+            return False  # Too long to be a Short
 
         if not width or not height:
-            return False  # Missing size info
+            return False  # No size info
 
-        # Check if it's vertical or square
         if height >= width:
-            return True  # Likely a Short
+            return True  # It's vertical or square, likely a Short
 
         return False
 
-    def parse_video_duration_sec(self, video):
-        duration = video.get("contentDetails", {}).get("duration")  # ISO 8601 duration
+    def parse_video_duration_sec(self, video_data):
+        duration = video_data.get("contentDetails", {}).get("duration")  # ISO 8601 duration
 
         if not duration:
             return 0
@@ -1680,8 +1697,8 @@ class _YouTubeUtils:
 
         return parse_duration(duration).total_seconds()
 
-    def parse_video_thumbnail(self, video):
-        thumbnails = video.get("snippet", {}).get("thumbnails")
+    def parse_video_thumbnail(self, video_data):
+        thumbnails = video_data.get("snippet", {}).get("thumbnails")
 
         if not thumbnails:
             return {}
@@ -1696,15 +1713,15 @@ class _YouTubeUtils:
             or {}
         )
 
-    def parse_video_stats(self, video):
-        if not video.get("statistics"):
+    def parse_video_stats(self, video_data):
+        if not video_data.get("statistics"):
             return {}
 
         return {
-            "views": int(video["statistics"].get("viewCount", video["statistics"].get("views", 0))),
-            "likes": int(video["statistics"].get("likeCount", 0)),
-            "favorites": int(video["statistics"].get("favoriteCount", 0)),
-            "comments": int(video["statistics"].get("commentCount", 0))
+            "views": int(video_data["statistics"].get("viewCount", video_data["statistics"].get("views", 0))),
+            "likes": int(video_data["statistics"].get("likeCount", 0)),
+            "favorites": int(video_data["statistics"].get("favoriteCount", 0)),
+            "comments": int(video_data["statistics"].get("commentCount", 0))
         }
 
 

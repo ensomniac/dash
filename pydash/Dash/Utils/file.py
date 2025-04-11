@@ -182,7 +182,7 @@ def ValidateVideoAspectRatio(video_bytes_or_existing_path, target_aspect_ratio, 
         Write(path, video_bytes_or_existing_path)
 
     try:
-        video_details = get_video_details(path)
+        video_details = GetVideoDetails(path)
 
         if abs(video_details["aspect"] - target_aspect_ratio) > 0.01:
             valid = False
@@ -402,6 +402,22 @@ def CreateMonogramImage(
     img.save(output_path)
 
     return output_path
+
+
+def GetVideoDetails(path):
+    from videoprops import get_video_properties
+
+    props = get_video_properties(path)
+
+    return {  # Filter out the useless stuff
+        "width": props["width"],
+        "height": props["height"],
+        "aspect": props["width"] / props["height"],
+        "codec": props.get("codec_name", props.get("codec_long_name", "Unknown")),
+        "frame_rate": props.get("avg_frame_rate", props.get("r_frame_rate", "Unknown")),
+        "num_frames": props.get("nb_frames", "Unknown"),
+        "duration_sec": str(props.get("duration", "Unknown")).strip("0")
+    }
 
 
 def get_tagless_filename(filename):
@@ -722,7 +738,7 @@ def update_data_with_saved_file(file_data, file_root, file_ext, file_bytes_or_ex
 
     elif file_ext in VideoExtensions:
         try:
-            file_data.update(get_video_details(file_path))
+            file_data.update(GetVideoDetails(file_path))
 
         except Exception as e:
             from Dash.Utils import SendDebugEmail
@@ -732,22 +748,6 @@ def update_data_with_saved_file(file_data, file_root, file_ext, file_bytes_or_ex
         # TODO: create some sort of compressed version or something?
 
     return file_data
-
-
-def get_video_details(path):
-    from videoprops import get_video_properties
-
-    props = get_video_properties(path)
-
-    return {  # Filter out the useless stuff
-        "width": props["width"],
-        "height": props["height"],
-        "aspect": props["width"] / props["height"],
-        "codec": props.get("codec_name", props.get("codec_long_name", "Unknown")),
-        "frame_rate": props.get("avg_frame_rate", props.get("r_frame_rate", "Unknown")),
-        "num_frames": props.get("nb_frames", "Unknown"),
-        "duration_sec": str(props.get("duration", "Unknown")).strip("0")
-    }
 
 
 def update_filename_based_on_matches(filename, matches=[]):

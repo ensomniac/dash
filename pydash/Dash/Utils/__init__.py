@@ -183,6 +183,12 @@ def CreateMonogramImage(
     )
 
 
+def GetVideoDetails(path):
+    from .file import GetVideoDetails
+
+    return GetVideoDetails(path)
+
+
 # ------------------------------------------------- MODEL ---------------------------------------------------
 
 
