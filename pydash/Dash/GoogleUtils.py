@@ -1091,10 +1091,8 @@ class _YouTubeUtils:
                 10: "Music",
                 15: "Pets & Animals",
                 17: "Sports",
-                18: "Short Movies",
                 19: "Travel & Events",
                 20: "Gaming",
-                21: "Videoblogging",
                 22: "People & Blogs",
                 23: "Comedy",
                 24: "Entertainment",
@@ -1102,21 +1100,7 @@ class _YouTubeUtils:
                 26: "Howto & Style",
                 27: "Education",
                 28: "Science & Technology",
-                29: "Nonprofits & Activism",
-                30: "Movies",
-                31: "Anime/Animation",
-                32: "Action/Adventure",
-                33: "Classics",
-                35: "Documentary",
-                36: "Drama",
-                37: "Family",
-                38: "Foreign",
-                39: "Horror",
-                40: "Sci-Fi/Fantasy",
-                41: "Thriller",
-                42: "Shorts",
-                43: "Shows",
-                44: "Trailers"
+                29: "Nonprofits & Activism"
             }
 
         return self._video_categories
@@ -1139,6 +1123,9 @@ class _YouTubeUtils:
         parsed = {}
 
         for item in response["items"]:
+            if not item["snippet"].get("assignable"):
+                continue
+
             parsed[int(item["id"])] = item["snippet"]["title"]
 
         return parsed
@@ -1243,6 +1230,7 @@ class _YouTubeUtils:
 
         response["shorts"] = self.video_is_a_short(response)
         response["url"] = f"https://youtube.com/{'shorts/' if response['shorts'] else 'watch?v='}{response['id']}"
+        response["alt_url"] = f"https://youtube.com/watch?v={response['id']}" if response['shorts'] else ""
 
         return response
 
@@ -1661,7 +1649,7 @@ class _YouTubeUtils:
     def video_is_a_short(self, video):
         duration = self.parse_video_duration_sec(video)
 
-        if duration > 60:
+        if duration > 180:  # Formerly 60
             return False  # Longer than Shorts allow
 
         # We don't get video dimensions, so use the thumbnail dimensions to check aspect ratio
@@ -1676,8 +1664,8 @@ class _YouTubeUtils:
         if not width or not height:
             return False  # Missing size info
 
-        # Check if it's vertical
-        if height > width:
+        # Check if it's vertical or square
+        if height >= width:
             return True  # Likely a Short
 
         return False
