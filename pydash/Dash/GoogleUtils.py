@@ -438,8 +438,8 @@ class GUtils:
     def DeleteYouTubeVideo(self, video_id):
         return self._youtube_utils.DeleteVideo(video_id)
 
-    def GetYouTubeVideoCategories(self):
-        return self._youtube_utils.video_categories
+    def GetYouTubeVideoCategories(self, from_cache=True):
+        return self._youtube_utils.GetVideoCategories(from_cache)
 
     def GetYouTubeComments(self, comment_ids=[], video_id="", skip_comment_ids=[], include_replies=True):
         return self._youtube_utils.GetComments(comment_ids, video_id, skip_comment_ids, include_replies)
@@ -1079,6 +1079,9 @@ class _YouTubeUtils:
 
         return self._client
 
+    # This is hard-coded to reduce redundant calls, but if there's every an error along the lines of
+    # "snippet.categoryId property specifies an invalid category ID", need to make the call below and update this:
+    # Ref: https://developers.google.com/youtube/v3/docs/videoCategories/list
     @property
     def video_categories(self):
         if not hasattr(self, "_video_categories"):
@@ -1104,7 +1107,6 @@ class _YouTubeUtils:
                 31: "Anime/Animation",
                 32: "Action/Adventure",
                 33: "Classics",
-                34: "Comedy",
                 35: "Documentary",
                 36: "Drama",
                 37: "Family",
@@ -1118,6 +1120,28 @@ class _YouTubeUtils:
             }
 
         return self._video_categories
+
+    def GetVideoCategories(self, from_cache=True):
+        if from_cache:
+            return self.video_categories
+
+        params = {
+            "part": "snippet",
+            "regionCode": "US"
+        }
+
+        try:
+            response = self.Client.videoCategories().list(**params).execute()
+
+        except HttpError as http_error:
+            return ParseHTTPError(http_error, params)
+
+        parsed = {}
+
+        for item in response["items"]:
+            parsed[int(item["id"])] = item["snippet"]["title"]
+
+        return parsed
 
     # For category_num, see self.video_categories
     def PostVideo(
