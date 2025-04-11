@@ -1,7 +1,6 @@
-function DashLayoutSearchableListRow (slist, row_id, optional_row_data) {
+function DashLayoutSearchableListRow (slist, row_id) {
     this.slist = slist;
     this.row_id = row_id;
-    this.optional_row_data = optional_row_data;
 
     this.observer = null;
     this.is_visible = false;
@@ -44,13 +43,26 @@ function DashLayoutSearchableListRow (slist, row_id, optional_row_data) {
 
         this.setup_connections();
 
-        (function (self) {
-            // This has to process on the next frame since
-            // the dom elements aren't attached this frame
-            requestAnimationFrame(function () {
-                self.initialize_visibility();
-            });
-        })(this);
+        // This has to process on the next frame since
+        // the dom elements aren't attached this frame
+        requestAnimationFrame(() => {
+            this.initialize_visibility();
+        });
+    };
+
+    // Call to redraw / on new data
+    this.Update = function () {
+        this.pending_drawable = this.on_row_draw_callback || this.update_display_name_label.bind(this);
+
+        if (this.is_visible) {
+            this.cached_draw_response = this.pending_drawable(this.row_id);
+
+            return this.cached_draw_response;
+        }
+
+        this.pending_update = true;
+
+        return this.cached_draw_response || this.get_label();
     };
 
     this.IsVisible = function () {
@@ -67,6 +79,34 @@ function DashLayoutSearchableListRow (slist, row_id, optional_row_data) {
             (row_top < list_top && list_top < row_bottom) ||
             (row_top < list_bottom && list_bottom < row_bottom)
         );
+    };
+
+    this.SetContent = function (html) {
+        this.content_layer.empty().append(html);
+    };
+
+    this.SetActive = function (is_active) {
+        if (is_active) {
+            this.html.css({
+                "border-top": "1px solid " + "rgba(255, 255, 255, 0.5)",
+                "background": Dash.Color.Light.AccentGood,
+            });
+
+            this.content_layer.css({
+                "opacity": 1.0,
+            });
+        }
+
+        else {
+            this.html.css({
+                "background": "none",
+                "border-top": "1px solid " + "rgba(0, 0, 0, 0)",
+            });
+
+            this.content_layer.css({
+                "opacity": 0.6,
+            });
+        }
     };
 
     this.initialize_visibility = function () {
@@ -100,31 +140,9 @@ function DashLayoutSearchableListRow (slist, row_id, optional_row_data) {
         this.is_visible = false;
     };
 
-    this.SetContent = function (html) {
-        this.content_layer.empty().append(html);
-    };
-
-    // Call to redraw / on new data
-    this.Update = function () {
-        this.pending_drawable = this.on_row_draw_callback || this.update_display_name_label.bind(this);
-
-        if (this.is_visible) {
-            this.cached_draw_response = this.pending_drawable(this.row_id);
-
-            return this.cached_draw_response;
-        }
-
-        else {
-            this.pending_update = true;
-
-            return this.cached_draw_response || this.get_label();
-        }
-    };
-
+    // The display name label is used if there is no callback to draw the
+    // row. This can be useful for simply populating a list of elements.
     this.setup_display_name_label = function () {
-        // The display name label is used if there is no callback to draw the
-        // row. This can be useful for simply populating a list of elements.
-
         this.display_name_label = $("<div></div>");
 
         this.display_name_label.css({
@@ -162,30 +180,6 @@ function DashLayoutSearchableListRow (slist, row_id, optional_row_data) {
         }
 
         return data[this.row_id]["display_name"] || data[this.row_id]["label_text"] || this.row_id || "";
-    };
-
-    this.SetActive = function (is_active) {
-        if (is_active) {
-            this.html.css({
-                "border-top": "1px solid " + "rgba(255, 255, 255, 0.5)",
-                "background": Dash.Color.Light.AccentGood,
-            });
-
-            this.content_layer.css({
-                "opacity": 1.0,
-            });
-        }
-
-        else {
-            this.html.css({
-                "background": "none",
-                "border-top": "1px solid " + "rgba(0, 0, 0, 0)",
-            });
-
-            this.content_layer.css({
-                "opacity": 0.6,
-            });
-        }
     };
 
     this.setup_connections = function () {
