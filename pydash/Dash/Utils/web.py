@@ -40,6 +40,7 @@ class WebCrawler:
 
         from Dash.Utils import OapiRoot  # Leave this here, can't be top-level import
 
+        self.logs = []
         self.waits = {}
         self.virtual_display = False
         self.repositioned_window = False
@@ -247,18 +248,62 @@ class WebCrawler:
         self.repositioned_window = False
 
     def LoadPage(self, url, post_delay=True):
-        self.driver.get(url)
+        from selenium.common.exceptions import WebDriverException
 
-        self.on_page_load(post_delay)
+        retry_limit = 3
 
-        return self
+        for n in range(retry_limit):
+            self.log(f"Loading {url} (attempt {n + 1}/{retry_limit})")
+
+            try:
+                self.driver.get(url)
+
+                self.on_page_load(post_delay)
+
+                return self
+
+            except WebDriverException as e:
+                self.log(f"\tFailed, error: {e}")
+
+                if (n + 1) <= retry_limit:
+                    sleep(3 ** (n + 1))  # Exponential backoff
+
+                    continue
+
+                return self.raise_exc(
+                    message=f"Failed to load {url} after {retry_limit} attempts",
+                    from_exc=e
+                )
 
     def ReloadPage(self, post_delay=True):
-        self.driver.refresh()
+        from selenium.common.exceptions import WebDriverException
 
-        self.on_page_load(post_delay)
+        retry_limit = 3
 
-        return self
+        for n in range(retry_limit):
+            url = self.GetPageURL()
+
+            self.log(f"Reloading page ({url}) (attempt {n + 1}/{retry_limit})")
+
+            try:
+                self.driver.refresh()
+
+                self.on_page_load(post_delay)
+
+                return self
+
+            except WebDriverException as e:
+                self.log(f"\tFailed, error: {e}")
+
+                if (n + 1) <= retry_limit:
+                    sleep(3 ** (n + 1))  # Exponential backoff
+
+                    continue
+
+                return self.raise_exc(
+                    message=f"Failed to reload page ({url}) after {retry_limit} attempts",
+                    from_exc=e
+                )
 
     def SaveScreenshot(self, path="", viewport_only=False, _on_error=False):
         if _on_error:
@@ -297,21 +342,18 @@ class WebCrawler:
 
                     adjusted = True
 
-                    if self.virtual_display:
-                        print("Adjusted window size to capture entire page content")
+                    self.log("Adjusted window size to capture entire page content")
             except:
                 pass
 
-        if self.virtual_display:
-            print(f"Taking screenshot of: {self.GetPageURL()}")
+        self.log(f"Taking screenshot of: {self.GetPageURL()}")
 
         self.driver.save_screenshot(path)
 
         if adjusted:
             self.driver.set_window_size(current_width, current_height)
 
-            if self.virtual_display:
-                print("Adjusted window size back to original")
+            self.log("Adjusted window size back to original")
 
         return path
 
@@ -416,30 +458,42 @@ class WebCrawler:
                 message="Must provide either value or label_text"
             )
 
-        try:
-            if value:
-                dropdown.select_by_value(value)
+        retry_limit = 3
 
-            elif label_text:
-                dropdown.select_by_visible_text(label_text)
+        for n in range(retry_limit):
+            try:
+                self.log(f"Making dropdown ({value or label_text}) selection (attempt {n + 1}/{retry_limit})")
 
-            self.driver.execute_script(
-                "arguments[0].dispatchEvent(new Event('change', {bubbles: true}));",
-                dropdown._el  # noqa
-            )
+                if value:
+                    dropdown.select_by_value(value)
 
-        except Exception as e:
-            return self.RaiseContextualException(
-                message=(
-                    f"Failed to select {'value' if value else 'label'} "
-                    f"'{value or label_text}' from dropdown"
-                ),
-                from_exc=e
-            )
+                elif label_text:
+                    dropdown.select_by_visible_text(label_text)
 
-        sleep(0.5)
+                self.driver.execute_script(
+                    "arguments[0].dispatchEvent(new Event('change', {bubbles: true}));",
+                    dropdown._el  # noqa
+                )
 
-        return self
+                sleep(0.5)
+
+                return self
+
+            except Exception as e:
+                self.log(f"\tFailed, error: {e}")
+
+                if (n + 1) <= retry_limit:
+                    sleep(2)
+
+                    continue
+
+                return self.RaiseContextualException(
+                    message=(
+                        f"Failed to select {'value' if value else 'label'} "
+                        f"'{value or label_text}' from dropdown"
+                    ),
+                    from_exc=e
+                )
 
     def GetDropdownOptions(
         self, dropdown, values_only=False, ignore_no_value=False,
@@ -573,11 +627,30 @@ class WebCrawler:
 
         from pickle import load as load_pickle
 
-        with open(path, "rb") as file:
-            for cookie in load_pickle(file):
-                self.driver.add_cookie(cookie)
+        retry_limit = 3
 
-        return self
+        for n in range(retry_limit):
+            self.log(f"Loading cookies from {path} (attempt {n + 1}/{retry_limit})")
+
+            try:
+                with open(path, "rb") as file:
+                    for cookie in load_pickle(file):
+                        self.driver.add_cookie(cookie)
+
+                return self
+
+            except Exception as e:
+                self.log(f"\tFailed, error: {e}")
+
+                if (n + 1) <= retry_limit:
+                    sleep(2)
+
+                    continue
+
+                return self.raise_exc(
+                    message=f"Failed to load cookies from {path} after {retry_limit} attempts",
+                    from_exc=e
+                )
 
     def WaitForElement(
         self, el_id="", el_name="", el_class="", css_selector="", xpath="",
@@ -799,8 +872,15 @@ class WebCrawler:
         )
 
     def raise_exc(self, exc_type=None, message="", from_exc=None):
-        if self.virtual_display and message:
-            print(message)
+        if message:
+            self.log(message)
+
+            if self.logs:
+                message += "\n\n"
+
+        if self.logs:
+            message += "===== Logs =====\n- "
+            message += "\n- ".join(self.logs)
 
         if from_exc:
             raise (exc_type or type(from_exc))(message) from from_exc
@@ -874,6 +954,12 @@ class WebCrawler:
 
         if os.path.exists(lock_path):
             os.remove(lock_path)
+
+    def log(self, text):
+        if self.virtual_display:
+            print(text)
+
+        self.logs.append(text)
 
     def _populate_input(self, input_el, text, is_file_input=False):
         if self.extra_stealth and not is_file_input:
