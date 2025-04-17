@@ -1459,12 +1459,15 @@ class _YouTubeUtils:
                     f"{len(comment_ids)} but got {len(results)}:\n{results}"
                 )
 
-        if not include_replies:
-            return results
-
         combined = []
 
         for comment in results:
+            if comment["id"] not in skip_comment_ids:
+                combined.append(comment)
+
+            if not include_replies:
+                continue
+
             if video_id:
                 replies = comment.pop("replies") if "replies" in comment else []
 
@@ -1485,8 +1488,6 @@ class _YouTubeUtils:
 
                 except HttpError as http_error:
                     return ParseHTTPError(http_error, params)
-
-            combined.append(comment)
 
             for reply in replies:
                 if reply["id"] in skip_comment_ids:
