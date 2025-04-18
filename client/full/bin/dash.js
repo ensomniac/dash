@@ -93,15 +93,16 @@ function _Dash () {
         };
     }
 
-    this.GetDeepCopy      = this.Utils.GetDeepCopy.bind(this.Utils);
-    this.Logout           = this.User.Logout;
-    this.OnAnimationFrame = this.Utils.OnAnimationFrame.bind(this.Utils);
-    this.OnHTMLResized    = this.Utils.OnHTMLResized.bind(this.Utils);
-    this.OnFrame          = this.Utils.OnFrame.bind(this.Utils);
-    this.Request          = this.Requests.Request.bind(this.Requests);
-    this.SendEmail        = this.Requests.SendEmail.bind(this.Requests);
-    this.SetInterval      = this.Utils.SetTimer.bind(this.Utils);
-    this.SetTimer         = this.Utils.SetTimer.bind(this.Utils);
+    this.GetDeepCopy         = this.Utils.GetDeepCopy.bind(this.Utils);
+    this.Logout              = this.User.Logout;
+    this.OnAnimationFrame    = this.Utils.OnAnimationFrame.bind(this.Utils);
+    this.OnHTMLResized       = this.Utils.OnHTMLResized.bind(this.Utils);
+    this.OnInitialVisibility = this.Utils.OnInitialVisibility.bind(this.Utils);
+    this.OnFrame             = this.Utils.OnFrame.bind(this.Utils);
+    this.Request             = this.Requests.Request.bind(this.Requests);
+    this.SendEmail           = this.Requests.SendEmail.bind(this.Requests);
+    this.SetInterval         = this.Utils.SetTimer.bind(this.Utils);
+    this.SetTimer            = this.Utils.SetTimer.bind(this.Utils);
 
     // |-------------------------------------------------------------------------------------------------------------|
     // | DEPRECATED: These exist to prevent older projects from breaking due to these having been moved/restructured |

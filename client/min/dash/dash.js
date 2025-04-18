@@ -17558,15 +17558,16 @@ function _Dash () {
             View:   DashDocsView
         };
     }
-    this.GetDeepCopy      = this.Utils.GetDeepCopy.bind(this.Utils);
-    this.Logout           = this.User.Logout;
-    this.OnAnimationFrame = this.Utils.OnAnimationFrame.bind(this.Utils);
-    this.OnHTMLResized    = this.Utils.OnHTMLResized.bind(this.Utils);
-    this.OnFrame          = this.Utils.OnFrame.bind(this.Utils);
-    this.Request          = this.Requests.Request.bind(this.Requests);
-    this.SendEmail        = this.Requests.SendEmail.bind(this.Requests);
-    this.SetInterval      = this.Utils.SetTimer.bind(this.Utils);
-    this.SetTimer         = this.Utils.SetTimer.bind(this.Utils);
+    this.GetDeepCopy         = this.Utils.GetDeepCopy.bind(this.Utils);
+    this.Logout              = this.User.Logout;
+    this.OnAnimationFrame    = this.Utils.OnAnimationFrame.bind(this.Utils);
+    this.OnHTMLResized       = this.Utils.OnHTMLResized.bind(this.Utils);
+    this.OnInitialVisibility = this.Utils.OnInitialVisibility.bind(this.Utils);
+    this.OnFrame             = this.Utils.OnFrame.bind(this.Utils);
+    this.Request             = this.Requests.Request.bind(this.Requests);
+    this.SendEmail           = this.Requests.SendEmail.bind(this.Requests);
+    this.SetInterval         = this.Utils.SetTimer.bind(this.Utils);
+    this.SetTimer            = this.Utils.SetTimer.bind(this.Utils);
     // |-------------------------------------------------------------------------------------------------------------|
     // | DEPRECATED: These exist to prevent older projects from breaking due to these having been moved/restructured |
     // |-------------------------------------------------------------------------------------------------------------|
@@ -19576,6 +19577,27 @@ function DashUtils () {
             "height": binder.html.height(),
             "on_resize": true
         });
+    };
+    this.OnInitialVisibility = function (html, callback) {
+        // Fires callback once the first time html becomes visible
+        if (!(html instanceof Element)) {
+            html = html[0];
+        };
+        if (!(html instanceof Element)) {
+            throw new Error("Invalid element passed");
+        };
+        let observer = new IntersectionObserver((entries, observerInstance) => {
+            for (let entry of entries) {
+                if (entry.isIntersecting) {
+                    observerInstance.disconnect(); // stop observing
+                    callback(); // fire callback once
+                    break;
+                }
+            }
+        }, {
+            threshold: 0, // triggers as soon as *any* part is visible
+        });
+        observer.observe(html);
     };
     // Store a tiny bit of information about this request
     this.OnFrame = function (binder, callback) {

@@ -127,6 +127,33 @@ function DashUtils () {
         });
     };
 
+    this.OnInitialVisibility = function (html, callback) {
+        // Fires callback once the first time html becomes visible
+
+        if (!(html instanceof Element)) {
+            html = html[0];
+        };
+
+        if (!(html instanceof Element)) {
+            throw new Error("Invalid element passed");
+        };
+
+        let observer = new IntersectionObserver((entries, observerInstance) => {
+            for (let entry of entries) {
+                if (entry.isIntersecting) {
+                    observerInstance.disconnect(); // stop observing
+                    callback(); // fire callback once
+                    break;
+                }
+            }
+        }, {
+            threshold: 0, // triggers as soon as *any* part is visible
+        });
+
+        observer.observe(html);
+
+    };
+
     // Store a tiny bit of information about this request
     this.OnFrame = function (binder, callback) {
         this.register_anim_frame_worker({
