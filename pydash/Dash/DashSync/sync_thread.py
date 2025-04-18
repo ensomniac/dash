@@ -17,7 +17,6 @@ from Dash.Utils import Memory
 from subprocess import check_output
 from Dash.DashLint import DashLint as Lint
 
-
 class SyncThread:
     _initialized: bool
 
