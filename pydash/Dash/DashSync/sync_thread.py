@@ -144,7 +144,6 @@ class SyncThread:
             return
 
         if not response.get("success"):
-            print(json.dumps(response, indent=4))
             print("\n\n*** SERVER ERROR set_sync_state() ***\n\n")
 
         if has_changes:
