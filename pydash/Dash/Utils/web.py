@@ -42,6 +42,7 @@ class WebCrawler:
 
         self.logs = []
         self.waits = {}
+        self.screenshots = []
         self.virtual_display = False
         self.repositioned_window = False
         self._on_server = os.path.exists(OapiRoot)
@@ -354,6 +355,8 @@ class WebCrawler:
             self.driver.set_window_size(current_width, current_height)
 
             self.log("Adjusted window size back to original")
+
+        self.screenshots.append(path)
 
         return path
 
@@ -821,11 +824,11 @@ class WebCrawler:
         screenshot_path = self.SaveScreenshot(_on_error=True)
 
         if screenshot_path:
+            from Dash.Utils import GetFileURLFromPath
+
             error_id = screenshot_path.split("/")[-1].split(".")[0]
 
             if self.dash_context:
-                from Dash.Utils import GetFileURLFromPath
-
                 screenshot_url = GetFileURLFromPath(
                     dash_context=self.dash_context,
                     server_file_path=screenshot_path
@@ -836,9 +839,23 @@ class WebCrawler:
                 screenshot_tag = (
                     f"- Screenshot of last state: {screenshot_path} (no Dash Context for URL conversion)"
                 )
+
+            if len(self.screenshots) > 1:
+                screenshot_tag += "\n\nOther screenshots:"
+
+                for other_screenshot_path in self.screenshots:
+                    if other_screenshot_path == screenshot_path:
+                        continue
+
+                    other_screenshot_url = GetFileURLFromPath(
+                        dash_context=self.dash_context,
+                        server_file_path=other_screenshot_path
+                    ) if self.dash_context else ""
+
+                    screenshot_tag += f"\n\t- {other_screenshot_url or other_screenshot_path}"
         else:
             error_id = ""
-            screenshot_tag = "- No screenshot saved, must provide `file_storage_root` on init"
+            screenshot_tag = "- No final screenshot saved, must provide `file_storage_root` on init"
 
         if self.file_storage_root:
             if not error_id:
