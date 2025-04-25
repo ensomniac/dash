@@ -83,7 +83,7 @@ def FormatTime(dt_obj, time_format=1, tz="utc", update_tz=True):
     if time_format == 7:
         return dt_obj.strftime("%m_%d_%y")
 
-    # Format: Monday, July 17th
+    # Format: Monday, July 17th  # noqa
     if time_format == 8:
         return dt_obj.strftime(f"%A %B {day}{suffix}")
 
@@ -183,6 +183,10 @@ def FormatTime(dt_obj, time_format=1, tz="utc", update_tz=True):
         tz_name = (tz if not update_tz else (dt_obj.strftime("%Z") or tz)).upper()
 
         return f"{formatted} {tz_name}"
+
+    # Format: 2/14
+    if time_format == 24:
+        return dt_obj.strftime("%-m/%-d/%y")
 
     # Format: Monday, October 9th, 2023 at 2:51 pm
     return f"{date_markup} at {time_markup}"
