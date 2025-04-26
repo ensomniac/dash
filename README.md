@@ -59,7 +59,9 @@ And let’s not forget the *fonts* folder—a curated library of typographic exc
 
 ---
 
+
 ## Final Words of Respect and Humor 🧠
+
 This repository is a testament to the power of thoughtful design and relentless creativity. As you navigate Dash, let this README be your guide, your map, and occasionally, your comic relief. And if you feel daunted, just remember: **every great project starts with a single commit.**
 
 
