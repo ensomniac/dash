@@ -17514,7 +17514,7 @@ function _Dash () {
         || window.matchMedia("(display-mode: standalone)").matches  // Android
     );
     try {
-        this.InChromeExtension = this.IsMobile ? false : Boolean(chrome?.runtime);
+        this.InChromeExtension = this.IsMobile ? false : Boolean(chrome?.runtime?.sendMessage);
     }
     catch {
         this.InChromeExtension = false;

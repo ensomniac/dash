@@ -43,7 +43,7 @@ function _Dash () {
     );
 
     try {
-        this.InChromeExtension = this.IsMobile ? false : Boolean(chrome?.runtime);
+        this.InChromeExtension = this.IsMobile ? false : Boolean(chrome?.runtime?.sendMessage);
     }
 
     catch {
