@@ -37115,17 +37115,16 @@ function DashGuiContext2DEditorPanelContent (panel) {
             "margin-left": 0,
             "margin-bottom": 0
         });
-        (function (self) {
-            tool_row.AddComboRow(
-                label_text,
-                options,
-                default_value,
-                callback,
-                {},
-                {"read_only": !self.can_edit},
-                false
-            );
-        })(this);
+        var container = tool_row.AddComboRow(
+            label_text,
+            options,
+            default_value,
+            callback,
+            {},
+            {"read_only": !this.can_edit},
+            false
+        );
+        container.combo.SetMaxRowsBeforeScroll(10);
         return tool_row;
     };
     this.FloatCombos = function (instantiated_class) {
