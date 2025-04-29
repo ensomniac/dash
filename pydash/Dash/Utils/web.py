@@ -819,8 +819,13 @@ class WebCrawler:
             )
 
     def RaiseContextualException(self, message="", from_exc=None, exc_type=None):
-        from Dash.LocalStorage import Write
+        return self.raise_exc(
+            exc_type=exc_type,
+            message=f"{message}\n{self.GetExceptionContext()}",
+            from_exc=from_exc
+        )
 
+    def GetExceptionContext(self):
         screenshot_path = self.SaveScreenshot(_on_error=True)
 
         if screenshot_path:
@@ -858,6 +863,8 @@ class WebCrawler:
             screenshot_tag = "- No final screenshot saved, must provide `file_storage_root` on init"
 
         if self.file_storage_root:
+            from Dash.LocalStorage import Write
+
             if not error_id:
                 from Dash.Utils import GetRandomID
 
@@ -882,11 +889,7 @@ class WebCrawler:
         else:
             html_tag = "- No HTML saved, must provide `file_storage_root` on init"
 
-        return self.raise_exc(
-            exc_type=exc_type,
-            message=f"{message}\n{screenshot_tag}\n{html_tag}",
-            from_exc=from_exc
-        )
+        return f"{screenshot_tag}\n{html_tag}"
 
     def raise_exc(self, exc_type=None, message="", from_exc=None):
         if message:
