@@ -84,15 +84,17 @@ def ParseHTTPError(http_error, params={}):
 
 
 def GetChromeProfileRoot(profile_name="Dash"):
-    user = os.path.expanduser("~")
-
-    if "root" in user:
-        return os.path.join(
-            user,
-            ".config",
-            "google-chrome",
-            profile_name
-        )
+    # As of Chromium v136, can't do any automation (like Selenium) from
+    # this default config root, but the shared root works just fine
+    # user = os.path.expanduser("~")
+    #
+    # if "root" in user:
+    #     return os.path.join(
+    #         user,
+    #         ".config",
+    #         "google-chrome",
+    #         profile_name
+    #     )
 
     from Dash.Utils import OapiRoot
 

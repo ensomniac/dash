@@ -34,16 +34,11 @@ class WebCrawler:
 
         self.file_storage_root = file_storage_root
 
-        # This actually doesn't matter, because it'll just be auto-created in this case
-        # if self.profile_root and not os.path.exists(self.profile_root):
-        #     raise FileNotFoundError(f"Profile root does not exist: {self.profile_root}")
-
         from Dash.Utils import OapiRoot  # Leave this here, can't be top-level import
 
         self.logs = []
         self.waits = {}
         self.screenshots = []
-        self.virtual_display = False
         self.repositioned_window = False
         self._on_server = os.path.exists(OapiRoot)
 
@@ -90,6 +85,8 @@ class WebCrawler:
                 os.environ["XAUTHORITY"] = os.path.expanduser("~/.Xauthority")
 
             self.virtual_display = True
+        else:
+            self.virtual_display = False
 
     @property
     def driver(self):
@@ -110,7 +107,7 @@ class WebCrawler:
 
                 # After upgrading, there were intermittent conflicts and I can't
                 # seem to track it down, so explicitly setting this seems to solve it
-                options.binary_location = os.path.join("/usr", "bin", "google-chrome-stable")
+                options.binary_location = os.path.join("/opt", "google", "chrome", "google-chrome")
 
             if self.profile_root:
                 if options is None:
@@ -137,12 +134,14 @@ class WebCrawler:
                     options.add_argument("--dns-prefetch-disable")
 
             args = {
-                # Forcing this version as of 4/1/25 because undetected_chromedriver auto-updated and now
-                # expects version 135, but that version does not appear to be available in DNF's stable
-                # stream yet, as `dnf upgrade google-chrome-stable` results in no changes. We can leave
-                # this until it causes a different issue, or we can try to periodically check the stable
-                # stream for the new version via the upgrade call above, then remove this explicit version.
-                "version_main": 134
+                # There is a rare, temporary scenario where undetected_chromedriver auto-updates and
+                # expects a specific Chromium version, but `dnf upgrade google-chrome-stable` results
+                # in no changes because that version is not yet available in DNF's stable stream.
+                # In that case, we can explicitly specify the latest available Chromium version
+                # (`google-chrome-stable --version`) for undetected_chromedriver as a temporary solution
+                # while periodically checking the stable stream for the new version via the upgrade call
+                # above. Once successfully upgraded, comment-out the explicit version.
+                # "version_main": 136
             }
 
             if self.proxy_url:
@@ -249,7 +248,7 @@ class WebCrawler:
         self.repositioned_window = False
 
     def LoadPage(self, url, post_delay=True):
-        from selenium.common.exceptions import WebDriverException
+        from selenium.common.exceptions import WebDriverException, SessionNotCreatedException
 
         retry_limit = 3
 
@@ -262,6 +261,9 @@ class WebCrawler:
                 self.on_page_load(post_delay)
 
                 return self
+
+            except SessionNotCreatedException:
+                raise
 
             except WebDriverException as e:
                 self.log(f"\tFailed, error: {e}")
@@ -277,7 +279,7 @@ class WebCrawler:
                 )
 
     def ReloadPage(self, post_delay=True):
-        from selenium.common.exceptions import WebDriverException
+        from selenium.common.exceptions import WebDriverException, SessionNotCreatedException
 
         retry_limit = 3
 
@@ -292,6 +294,9 @@ class WebCrawler:
                 self.on_page_load(post_delay)
 
                 return self
+
+            except SessionNotCreatedException:
+                raise
 
             except WebDriverException as e:
                 self.log(f"\tFailed, error: {e}")
@@ -629,6 +634,7 @@ class WebCrawler:
             return FileNotFoundError("Cookies path does not exist")
 
         from pickle import load as load_pickle
+        from selenium.common.exceptions import SessionNotCreatedException
 
         retry_limit = 3
 
@@ -641,6 +647,9 @@ class WebCrawler:
                         self.driver.add_cookie(cookie)
 
                 return self
+
+            except SessionNotCreatedException:
+                raise
 
             except Exception as e:
                 self.log(f"\tFailed, error: {e}")
@@ -963,7 +972,9 @@ class WebCrawler:
         patterns = [
             os.path.join(profile_dir, "SingletonLock"),
             os.path.join(profile_dir, "SingletonSocket*"),
-            os.path.join(profile_dir, "SingletonCookie")
+            os.path.join(profile_dir, "SingletonCookie"),
+            os.path.join(profile_dir, ".com.google.Chrome.*"),
+            os.path.join(profile_dir, ".org.chromium.Chromium.*")
         ]
 
         for pattern in patterns:
@@ -976,7 +987,8 @@ class WebCrawler:
             os.remove(lock_path)
 
     def log(self, text):
-        if self.virtual_display:
+        # if self.virtual_display:
+        if self._on_server:
             print(text)
 
         self.logs.append(text)
