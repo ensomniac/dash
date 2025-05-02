@@ -119,18 +119,25 @@ class OnePass:
 
     def CreateItem(
         self, vault_name, item_name, url="", tags=[], category="login",
-        password_recipe="", username="", custom_fields={}, debug=False
+        password_recipe="", username="", custom_fields={}, debug=False, json_template_path=""
     ):
-        args = [
-            "item",
-            "create",
+        args = ["item", "create"]
+
+        # Add this first
+        if json_template_path:
+            if not os.path.exists(json_template_path):
+                raise FileNotFoundError(json_template_path)
+
+            args.extend(["--template", json_template_path])
+
+        args.extend([
             "--category",
             category,
             "--vault",
             vault_name,
             "--title",
             item_name
-        ]
+        ])
 
         if url:
             args.extend(["--url", url])
@@ -200,6 +207,7 @@ class OnePass:
 
     def run_command(self, args, cmd_input=None, error_prefix="", add_env=True, timeout=30, _retry=False):
         from json import JSONDecodeError
+        from shlex import join as shlex_join
         from subprocess import CalledProcessError, TimeoutExpired, run as sub_run
 
         op_arg_index = 2 if self._on_server else 0
@@ -221,7 +229,7 @@ class OnePass:
             if add_env else None
         )
 
-        error_midfix = f"Command: {args}\nEnv: {env}"
+        error_midfix = f"Command: {shlex_join(args)}\nEnv: {env}"
 
         try:
             result = sub_run(
