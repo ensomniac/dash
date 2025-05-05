@@ -26645,6 +26645,8 @@ function DashGuiTextArea (
     // it was going to be specific to mobile, but that ended up not being the case.
     DashMobileTextBox.call(this, color, placeholder_text, binder, on_change_cb, delay_change_cb);
     this.counter = null;
+    this.counter_valid_bg_color = "";
+    this.counter_invalid_bg_color = "";
     this.textarea.css({
         "line-height": Dash.Size.RowHeight + "px"
     });
@@ -26681,11 +26683,15 @@ function DashGuiTextArea (
         if (!include_counter) {
             return;
         }
+        if (!this.counter_valid_bg_color) {
+            this.counter_valid_bg_color = this.textarea.css("background-color");
+        }
         this.counter = $(
               "<div>"
             + (this.GetText().length + " / " + num)
             + "</div>"
         );
+        this.counter._maxlength = num;
         this.counter.css({
             "position": "absolute",
             "right": 0,
@@ -26696,15 +26702,18 @@ function DashGuiTextArea (
             "color": this.color.Text,
             "font-family": "sans_serif_normal",
             "font-size": "90%",
-            "background": this.textarea.css("background-color"),
+            "background": this.counter_valid_bg_color,
             "padding-left": Dash.Size.Padding * 0.5,
             "padding-right": Dash.Size.Padding * 0.5,
-            "border": "1px solid " + this.color.StrokeLight,
+            "border": this.border_size + "px solid " + (this.locked ? this.color.StrokeLight : this.color.Stroke),
             "border-bottom": "",
             "border-top-left-radius": Dash.Size.BorderRadius,
             "border-top-right-radius": Dash.Size.BorderRadius
         });
         this.html.append(this.counter);
+        if (!this.counter_invalid_bg_color) {
+            this.counter_invalid_bg_color = Dash.Color.GetTransparent(this.color.AccentBad, 0.2);
+        }
         return this.counter;
     };
     // Override
@@ -26715,12 +26724,23 @@ function DashGuiTextArea (
         if (!this.counter) {
             return "";
         }
-        var counter_text = this.GetText().length + " / " + this.textarea.attr("maxlength");
+        var counter_text = this.GetText().length + " / " + this.counter._maxlength;
         var valid = eval(counter_text) <= 1;
+        var border = (
+            this.border_size
+            + "px solid "
+            + (valid ? (this.locked ? this.color.StrokeLight : this.color.Stroke) : this.color.AccentBad)
+        );
         this.counter.text(counter_text);
         this.counter.css({
             "font-family": "sans_serif_" + (valid ? "normal" : "bold"),
-            "color": valid ? this.color.Text : this.color.AccentBad
+            "color": valid ? this.color.Text : this.color.AccentBad,
+            "border": border,
+            "border-bottom": ""
+        });
+        this.textarea.css({
+            "border": border,
+            "background": valid ? this.counter_valid_bg_color : this.counter_invalid_bg_color
         });
     };
 }
