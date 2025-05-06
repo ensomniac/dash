@@ -52,8 +52,8 @@ class WebCrawler:
             #         - [TERMINAL 1]
             #             - Access the server as normal via `ssh user@ipaddress`
             #             - (If no one else is using Xvfb)
-            #               Make sure there are no active sessions via `sudo killall Xvfb`
-            #               (also run `sudo rm /tmp/.X99-lock` for good measure)
+            #               Make sure there are no active sessions via `killall Xvfb`
+            #               (also run `rm /tmp/.X99-lock` for good measure)
             #             - Start virtual display session via `Xvfb :99 -screen 0 1920x1080x24 &`
             #             - Set DISPLAY via `export DISPLAY=:99`
             #             - Start VNC session via `x11vnc -display :99 -nopw -listen localhost -xkb &`
@@ -67,7 +67,7 @@ class WebCrawler:
             #             - If you need to use Chrome, simply run `google-chrome-stable`
             #         - [TERMINAL 1]
             #             - (If no one else is using Xvfb)
-            #               Cleanup session via `sudo killall Xvfb`
+            #               Cleanup session via `killall Xvfb`
             #
             #     X11 (not fully worked out):
             #         - Requires XQuartz on local machine
@@ -694,6 +694,9 @@ class WebCrawler:
 
         from selenium.common.exceptions import TimeoutException, StaleElementReferenceException
 
+        if for_click and for_multiple:
+            raise ValueError("Can't use `for_click` and `for_multiple` together")
+
         wait = self.get_wait(wait_timeout_sec_override)
         locator = self.get_locator(el_id, el_name, el_class, css_selector, xpath)
 
@@ -882,7 +885,11 @@ class WebCrawler:
             # Use .txt so the browser doesn't try to render it when clicking on the URL
             html_path = os.path.join(self.file_storage_root, f"{error_id}.txt")
 
-            Write(html_path, self.GetPageHTML())
+            Write(
+                full_path=html_path,
+                data=self.GetPageHTML(),
+                conform_permissions=self._on_server
+            )
 
             if self.dash_context:
                 from Dash.Utils import GetFileURLFromPath
