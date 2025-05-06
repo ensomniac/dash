@@ -156,8 +156,8 @@ def GetReadableByteSize(total_bytes):
 
 def GetAbbreviatedNumber(num):
     """
-    Abbreviates a number to a string with a suffix,
-    such as: 1500 -> "1.5K", 1000000 -> "1M"
+    (Inverse of ParseAbbreviatedNumber)
+    Abbreviates a number to a string with a suffix, such as: 1500 -> "1.5K", 1000000 -> "1M".
     """
 
     for unit in ["", "K", "M", "B", "T"]:
@@ -170,3 +170,31 @@ def GetAbbreviatedNumber(num):
         num /= 1000.0
 
     return f"{num:.1f}P"  # Anything larger than can be handled, represented as "Peta"
+
+
+def ParseAbbreviatedNumber(abrv_num):
+    """
+    (Inverse of GetAbbreviatedNumber)
+    Parses strings like "1.5K", "2M", "123" back into the numeric value .
+    """
+
+    multipliers = {
+        "K": 1e3,
+        "M": 1e6,
+        "B": 1e9,
+        "T": 1e12,
+        "P": 1e15
+    }
+
+    # Look at the last character
+    suffix = abrv_num.strip()[-1].upper()
+
+    if suffix in multipliers:
+        parsed = float(abrv_num.strip()[:-1]) * multipliers[suffix]
+    else:
+        parsed = float(abrv_num)  # No recognized suffix, just parse the whole string
+
+    if str(parsed).endswith(".0"):
+        parsed = int(parsed)
+
+    return parsed

@@ -994,8 +994,8 @@ class WebCrawler:
             os.remove(lock_path)
 
     def log(self, text):
-        # if self.virtual_display:
-        if self._on_server:
+        # if self._on_server:  # Use this instead when debugging on the server, but can't use this for requests
+        if self.virtual_display:
             print(text)
 
         self.logs.append(text)

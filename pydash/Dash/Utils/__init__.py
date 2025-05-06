@@ -261,6 +261,12 @@ def GetAbbreviatedNumber(num):
     return GetAbbreviatedNumber(num)
 
 
+def ParseAbbreviatedNumber(abrv_num):
+    from .number import ParseAbbreviatedNumber
+
+    return ParseAbbreviatedNumber(abrv_num)
+
+
 # ------------------------------------------------- STRING --------------------------------------------------
 
 
