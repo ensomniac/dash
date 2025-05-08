@@ -248,6 +248,9 @@ class WebCrawler:
         self.repositioned_window = False
 
     def LoadPage(self, url, post_delay=True):
+        if url == self.GetPageURL():
+            return self.ReloadPage()
+
         from selenium.common.exceptions import WebDriverException, SessionNotCreatedException
 
         retry_limit = 3
@@ -329,41 +332,50 @@ class WebCrawler:
 
             path = os.path.join(self.file_storage_root, f"{GetRandomID()}.png")
 
-        adjusted = False
-        current_width = 0
-        current_height = 0
+        original_width = 0
+        original_height = 0
 
         if not viewport_only:
-            try:  # Try to capture the entire page content (including content that must be scrolled to)
-                current_width = self.driver.execute_script("return window.innerWidth")
-                current_height = self.driver.execute_script("return window.innerHeight")
-                scroll_width = self.driver.execute_script("return document.body.scrollWidth")
-                scroll_height = self.driver.execute_script("return document.body.scrollHeight")
+            # Try to capture the entire page content (including content that must be scrolled to)
+            original_width, original_height = self.MaximizeViewport(raise_on_fail=False)
 
-                if current_height < scroll_height or current_width < scroll_width:
-                    self.driver.set_window_size(
-                        max(scroll_width, current_width),
-                        max(scroll_height, current_height)
-                    )
-
-                    adjusted = True
-
-                    self.log("Adjusted window size to capture entire page content")
-            except:
-                pass
+            if original_width and original_height:
+                self.log("Adjusted window size to capture entire page content")
 
         self.log(f"Taking screenshot of: {self.GetPageURL()}")
 
         self.driver.save_screenshot(path)
 
-        if adjusted:
-            self.driver.set_window_size(current_width, current_height)
+        if original_width and original_height:
+            self.driver.set_window_size(original_width, original_height)
 
             self.log("Adjusted window size back to original")
 
         self.screenshots.append(path)
 
         return path
+
+    def MaximizeViewport(self, raise_on_fail=True):
+        try:
+            original_width = self.driver.execute_script("return window.innerWidth")
+            original_height = self.driver.execute_script("return window.innerHeight")
+            scroll_width = self.driver.execute_script("return document.body.scrollWidth")
+            scroll_height = self.driver.execute_script("return document.body.scrollHeight")
+
+            if original_height < scroll_height or original_width < scroll_width:
+                self.driver.set_window_size(
+                    max(scroll_width, original_width),
+                    max(scroll_height, original_height)
+                )
+
+                self.log(f"Adjusted window size to {scroll_width}x{scroll_height}")
+
+                return original_width, original_height
+        except:
+            if raise_on_fail:
+                raise
+
+        return 0, 0
 
     def GetPageTitle(self):
         return self.driver.title
