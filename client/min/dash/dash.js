@@ -18626,6 +18626,139 @@ function DashGui () {
         });
         return button;
     };
+    // Ex: A container filled with vertically stacked rows that you want to be able to reorder via drag/drop
+    this.SetupVerticalReorderDragDrop = function (
+        container_html, item_class_name, item_id_name, callback=null, color=null
+    ) {
+        var drag_start_index = null;
+        var drag_placeholder = null;
+        var drag_button_html = null;
+        var accent_color = color instanceof DashColorSet ? color.AccentGood : (color || Dash.Color.Light.AccentGood);
+        var drag_bg_color = Dash.Color.GetTransparent(accent_color, 0.15);
+        container_html.on(
+            "dragstart",
+            "." + item_class_name,
+            (e) => {
+                var event = e.originalEvent;
+                drag_button_html = $(e.target).closest("." + item_class_name);
+                drag_start_index = drag_button_html.index();
+                event.dataTransfer.effectAllowed = "move";
+                event.dataTransfer.setData("text/plain", "drag");  // Required for Firefox
+                drag_placeholder = $(
+                    "<div>",
+                    {"class": item_class_name + "_placeholder"}
+                );
+                drag_placeholder.css({
+                    "border": "1px dashed " + accent_color,
+                    "background": drag_bg_color,
+                    "height": drag_button_html.outerHeight(),
+                    "margin": drag_button_html.css("margin"),
+                    "border-radius": drag_button_html.css("border-radius")
+                });
+                // Can't hide it or change visibility or height because it will affect
+                // the floating element, but for some reason, changing the opacity doesn't
+                drag_button_html.css({
+                    "opacity": 0.25
+                });
+            }
+        );
+        // Don't include selector (`"." + item_class_name`)
+        container_html.on(
+            "dragover",
+            (e) => {
+                if (!drag_button_html) {
+                    return;
+                }
+                e.preventDefault();  // Allow drop
+                var event = e.originalEvent;
+                event.dataTransfer.dropEffect = "move";
+                var inserted = false;
+                var y = event.clientY;
+                container_html.children("." + item_class_name).not(drag_button_html).each((_, element) => {
+                    var r = $(element);
+                    var mid = r.offset().top + (r.outerHeight() / 2);
+                    if (y < mid) {
+                        drag_placeholder.insertBefore(r);
+                        inserted = true;
+                        return false;  // break out of .each()
+                    }
+                });
+                if (!inserted) {
+                    container_html.append(drag_placeholder);
+                }
+            }
+        );
+        container_html.on(
+            "dragend",
+            "." + item_class_name,
+            (e) => {
+                if (drag_placeholder) {
+                    drag_placeholder.remove();
+                }
+                $(e.currentTarget).css({
+                    "opacity": 1
+                });
+                drag_button_html = null;
+                drag_placeholder = null;
+                drag_start_index = null;
+            }
+        );
+        // Don't include selector (`"." + item_class_name`)
+        $(document).on(
+            "drop.drag_drop_vertical_reorder_" + item_class_name,
+            (e) => {
+                if (!drag_button_html) {
+                    return;
+                }
+                e.preventDefault();
+                if (drag_placeholder.parent().length) {
+                    drag_button_html.insertBefore(drag_placeholder);
+                    drag_placeholder.remove();
+                    drag_button_html.css({
+                        "opacity": 1
+                    });
+                    var new_index = drag_button_html.index();
+                    if (new_index !== drag_start_index) {
+                        var new_order = [];
+                        for (var el of container_html.children("." + item_class_name)) {
+                            new_order.push($(el).attr(item_id_name));
+                        }
+                        if (callback) {
+                            callback(
+                                new_order,
+                                drag_button_html.attr(item_id_name),  // Item ID that was moved
+                                drag_start_index,
+                                new_index
+                            );
+                        }
+                    }
+                }
+                if (drag_placeholder) {
+                    drag_placeholder.remove();
+                }
+                if (drag_button_html) {
+                    drag_button_html.css({
+                        "opacity": 1
+                    });
+                }
+                drag_button_html = null;
+                drag_placeholder = null;
+                drag_start_index = null;
+            }
+        );
+        // Does nothing but allowing drops anywhere on the document once a drag has
+        // started by telling the browser to trigger drop events from the document level
+        // Don't include selector (`"." + item_class_name`)
+        $(document).on(
+            "dragover",
+            e => {
+                if (!drag_button_html) {
+                    return;
+                }
+                e.preventDefault();
+            }
+        );
+    };
     this.add_corner_button_to_image_container = function (image_container, container_height, minimize=true) {
         var opacity = 0.75;
         var color = Dash.Color.Light;
@@ -18633,7 +18766,7 @@ function DashGui () {
             return self.GetTopRightIconButton(
                 this,
                 function () {
-                    // Dummy, will be overwritten
+                    // Dummy - will be overwritten
                 },
                 minimize ? "minimize" : "expand"
             );
