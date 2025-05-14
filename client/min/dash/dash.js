@@ -18385,14 +18385,15 @@ function DashGui () {
         html, text="", delay_ms=750, fade_in_ms=200, fade_out_ms=400,
         additional_css={}, text_getter=null, offset_px=10, color=null
     ) {
+        var class_name = "dash_gui_tooltip";
         var existing_title = html.attr("title");
         if (existing_title) {
             html.data("title", existing_title);
             html.removeAttr("title");
         }
-        html.off("mouseenter.dash_gui_tooltip");
-        html.off("mouseleave.dash_gui_tooltip");
-        html.off("mousemove.dash_gui_tooltip");
+        html.off("mouseenter." + class_name);
+        html.off("mouseleave." + class_name);
+        html.off("mousemove." + class_name);
         if (!text && !text_getter) {
             return;
         }
@@ -18402,7 +18403,8 @@ function DashGui () {
         var _timer;
         var css = null;
         var tooltip = null;
-        html.on("mouseenter.dash_gui_tooltip", (e) => {
+        var body = $("body");
+        html.on("mouseenter." + class_name, (e) => {
             if (_timer) {
                 clearTimeout(_timer);
             }
@@ -18415,13 +18417,14 @@ function DashGui () {
                 tooltip = $(
                     "<div>",
                     {
-                        "class": "dash_gui_tooltip",
+                        "class": class_name,
                         "text": text_getter ? text_getter() : text
                     }
                 );
                 tooltip.hide();
                 css = {
                     "position": "absolute",
+                    "pointer-events": "none",
                     "padding": Dash.Size.Padding * 0.3,
                     "border": "1px solid " + color.Pinstripe,
                     "background": color.BackgroundRaised,
@@ -18436,7 +18439,8 @@ function DashGui () {
             }
             _timer = setTimeout(
                 () => {
-                    $("body").append(tooltip);
+                    body.find("." + class_name).remove();
+                    body.append(tooltip);
                     css["top"] = e.pageY + offset_px + "px";
                     css["left"] = e.pageX + offset_px + "px";
                     tooltip.css(css).stop().fadeIn(fade_in_ms);
@@ -18444,7 +18448,7 @@ function DashGui () {
                 delay_ms
             );
         });
-        html.on("mouseleave.dash_gui_tooltip", () => {
+        html.on("mouseleave." + class_name, () => {
             if (_timer) {
                 clearTimeout(_timer);
             }
@@ -22150,11 +22154,22 @@ function DashColor (dark_mode_active=false) {
         }
         return "linear-gradient(" + degrees + "deg, " + value + ")";
     };
-    this.ToRGBA = function (color_data) {
-        return this.to_rgba(color_data);
+    this.ParseToHex = function (cstr) {
+        return this.to_hex(this.Parse(cstr));
     };
     this.ParseToRGB = function (cstr) {
         return this.to_rgb(this.Parse(cstr));
+    };
+    this.ParseToRGBA = function (cstr, opacity_override=null) {
+        var rgba = this.Parse(cstr);
+        if (opacity_override != null) {
+            rgba[3] = opacity_override;
+        }
+        return this.to_rgba(rgba);
+    };
+    // Requires a parsed array (from .Parse()) already
+    this.ToRGBA = function (color_data) {
+        return this.to_rgba(color_data);
     };
     this.IsLightColor = function (color, threshold=127.5) {
         var r;
@@ -22176,13 +22191,6 @@ function DashColor (dark_mode_active=false) {
         var brightness = Math.sqrt(0.299 * (r * r) + 0.587 * (g * g) + 0.114 * (b * b));
         // Compare brightness to the threshold
         return brightness > threshold;
-    };
-    this.ParseToRGBA = function (cstr, opacity_override=null) {
-        var rgba = this.Parse(cstr);
-        if (opacity_override != null) {
-            rgba[3] = opacity_override;
-        }
-        return this.to_rgba(rgba);
     };
     this.Lighten = function (cstr, lighten_rgb=15) {  // How many units to add to r/g/b
         var pcolor = this.Parse(cstr);
@@ -22503,6 +22511,13 @@ function DashColor (dark_mode_active=false) {
     this.to_rgb = function (color_data) {
         return "rgb(" + color_data[0] + ", " + color_data[1] + ", " + color_data[2] + ")";
     };
+    this.to_hex = function (color_data) {
+        return "#" + [0, 1, 2].map(function (i) {
+            var h = color_data[i].toString(16);
+            return h.length === 1 ? "0" + h : h;
+        }).join("");
+    };
+
     this._get_background_raised = function (color) {
         return this.Lighten(color, this.IsLightColor(color) ? 10: 40);
     };

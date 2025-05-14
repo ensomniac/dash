@@ -324,6 +324,7 @@ function DashGui () {
         html, text="", delay_ms=750, fade_in_ms=200, fade_out_ms=400,
         additional_css={}, text_getter=null, offset_px=10, color=null
     ) {
+        var class_name = "dash_gui_tooltip";
         var existing_title = html.attr("title");
 
         if (existing_title) {
@@ -331,9 +332,9 @@ function DashGui () {
             html.removeAttr("title");
         }
 
-        html.off("mouseenter.dash_gui_tooltip");
-        html.off("mouseleave.dash_gui_tooltip");
-        html.off("mousemove.dash_gui_tooltip");
+        html.off("mouseenter." + class_name);
+        html.off("mouseleave." + class_name);
+        html.off("mousemove." + class_name);
 
         if (!text && !text_getter) {
             return;
@@ -346,8 +347,9 @@ function DashGui () {
         var _timer;
         var css = null;
         var tooltip = null;
+        var body = $("body");
 
-        html.on("mouseenter.dash_gui_tooltip", (e) => {
+        html.on("mouseenter." + class_name, (e) => {
             if (_timer) {
                 clearTimeout(_timer);
             }
@@ -362,7 +364,7 @@ function DashGui () {
                 tooltip = $(
                     "<div>",
                     {
-                        "class": "dash_gui_tooltip",
+                        "class": class_name,
                         "text": text_getter ? text_getter() : text
                     }
                 );
@@ -371,6 +373,7 @@ function DashGui () {
 
                 css = {
                     "position": "absolute",
+                    "pointer-events": "none",
                     "padding": Dash.Size.Padding * 0.3,
                     "border": "1px solid " + color.Pinstripe,
                     "background": color.BackgroundRaised,
@@ -386,7 +389,8 @@ function DashGui () {
 
             _timer = setTimeout(
                 () => {
-                    $("body").append(tooltip);
+                    body.find("." + class_name).remove();
+                    body.append(tooltip);
 
                     css["top"] = e.pageY + offset_px + "px";
                     css["left"] = e.pageX + offset_px + "px";
@@ -397,7 +401,7 @@ function DashGui () {
             );
         });
 
-        html.on("mouseleave.dash_gui_tooltip", () => {
+        html.on("mouseleave." + class_name, () => {
             if (_timer) {
                 clearTimeout(_timer);
             }

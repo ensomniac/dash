@@ -160,12 +160,27 @@ function DashColor (dark_mode_active=false) {
         return "linear-gradient(" + degrees + "deg, " + value + ")";
     };
 
-    this.ToRGBA = function (color_data) {
-        return this.to_rgba(color_data);
+    this.ParseToHex = function (cstr) {
+        return this.to_hex(this.Parse(cstr));
     };
 
     this.ParseToRGB = function (cstr) {
         return this.to_rgb(this.Parse(cstr));
+    };
+
+    this.ParseToRGBA = function (cstr, opacity_override=null) {
+        var rgba = this.Parse(cstr);
+
+        if (opacity_override != null) {
+            rgba[3] = opacity_override;
+        }
+
+        return this.to_rgba(rgba);
+    };
+
+    // Requires a parsed array (from .Parse()) already
+    this.ToRGBA = function (color_data) {
+        return this.to_rgba(color_data);
     };
 
     this.IsLightColor = function (color, threshold=127.5) {
@@ -192,16 +207,6 @@ function DashColor (dark_mode_active=false) {
 
         // Compare brightness to the threshold
         return brightness > threshold;
-    };
-
-    this.ParseToRGBA = function (cstr, opacity_override=null) {
-        var rgba = this.Parse(cstr);
-
-        if (opacity_override != null) {
-            rgba[3] = opacity_override;
-        }
-
-        return this.to_rgba(rgba);
     };
 
     this.Lighten = function (cstr, lighten_rgb=15) {  // How many units to add to r/g/b
@@ -590,6 +595,15 @@ function DashColor (dark_mode_active=false) {
     this.to_rgb = function (color_data) {
         return "rgb(" + color_data[0] + ", " + color_data[1] + ", " + color_data[2] + ")";
     };
+
+    this.to_hex = function (color_data) {
+        return "#" + [0, 1, 2].map(function (i) {
+            var h = color_data[i].toString(16);
+
+            return h.length === 1 ? "0" + h : h;
+        }).join("");
+    };
+
 
     this._get_background_raised = function (color) {
         return this.Lighten(color, this.IsLightColor(color) ? 10: 40);
