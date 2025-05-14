@@ -246,29 +246,26 @@ function DashGuiVDBEntry (
             var key = this.get_color_key(num + 1, key_prefix);
             var color_picker = this.get_color_picker(num + 1, key_prefix, false);
 
-            colors_box.append(color_picker.html);
+            color_picker.SetHoverHint("Color code:\n" + key);
 
-            color_picker.html.attr("title", "Color code:\n" + key);
+            colors_box.append(color_picker.html);
         }
 
         this.property_box.AddHTML(colors_box);
     };
 
     this.get_color_picker = function (color_num, key_prefix="", include_label=true) {
-        var color_picker = (function (self) {
-            return Dash.Gui.GetColorPicker(
-                self,
-                function (color_val) {
-                    self.on_color_selected(color_num, color_val, key_prefix);
-                },
-                include_label ? ("Color #" + color_num.toString()) : "none",
-                self.color,
-                self.get_data()[self.get_color_key(color_num, key_prefix)]
-            );
-        })(this);
+        var color_picker = new Dash.Gui.ColorPicker(
+            this,
+            (color_val) => {
+                this.on_color_selected(color_num, color_val, key_prefix);
+            },
+            include_label ? ("Color #" + color_num.toString()) : "none",
+            this.get_data()[this.get_color_key(color_num, key_prefix)]
+        );
 
         if (this.read_only) {
-            color_picker.input.attr("disabled", true);
+            color_picker.Lock();
         }
 
         return color_picker;

@@ -490,9 +490,10 @@ def JSON2HTML(data, indent=4, sort_keys=True):
     return json2html.convert(json=dumps(data, indent=indent, sort_keys=sort_keys))
 
 
-# BMP (Basic Multilingual Plane) includes most commonly used characters, but characters
+# BMP (Basic Multilingual Plane) includes the most commonly used characters, but characters
 # like certain emojis, special symbols, and rare Unicode characters are in supplementary
 # planes and not supported directly by certain systems, such as Selenium/ChromeDriver.
+# List of emojis within BMP: https://www.johndcook.com/emoji.html
 def IsWithinBMP(text, return_chars=False):
     if not return_chars:
         return all(ord(char) <= 0xFFFF for char in text)

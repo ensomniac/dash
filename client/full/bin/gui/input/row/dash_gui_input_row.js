@@ -1,5 +1,6 @@
-function DashGuiInputRow (
-    label_text, initial_value, placeholder_text, button_text, on_click, on_click_bind, color=null, data_key=""
+function  DashGuiInputRow (
+    label_text, initial_value="", placeholder_text="", button_text="",
+    on_click=null, on_click_bind=null, color=null, data_key=""
 ) {
     this.label_text = label_text;
     this.initial_value = initial_value;
@@ -400,7 +401,11 @@ function DashGuiInputRow (
 
         this.invalid_input_highlight.stop().animate({"opacity": 0}, 100);
 
-        var response_callback = this.on_click.bind(this.on_click_bind);
+        var response_callback = this.on_click;
+
+        if (this.on_click && this.on_click_bind) {
+            response_callback = this.on_click.bind(this.on_click_bind);
+        }
 
         // Leaving this disabled for now - enable this to lock the row as soon as it receives input
         // if (this.lock_button && this.Text() && !this.locked) {
@@ -409,7 +414,9 @@ function DashGuiInputRow (
 
         this.update_label_cursor();
 
-        response_callback(this);
+        if (response_callback) {
+            response_callback(this);
+        }
     };
 
     this.update_label_cursor = function () {

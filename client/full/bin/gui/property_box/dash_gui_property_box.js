@@ -75,7 +75,7 @@ function DashGuiPropertyBox (
 
     this.update_color_pickers = function () {
         for (var data_key in this.color_pickers) {
-            var og_val = this.color_pickers[data_key].input.val();
+            var og_val = this.color_pickers[data_key].GetValue();
             var new_val = this.get_update_value(data_key);
 
             if (!new_val) {
@@ -86,7 +86,7 @@ function DashGuiPropertyBox (
                 continue;
             }
 
-            this.color_pickers[data_key].input.val(new_val);
+            this.color_pickers[data_key].SetValue(new_val);
         }
     };
 

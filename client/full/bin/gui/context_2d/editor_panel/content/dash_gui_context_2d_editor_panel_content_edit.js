@@ -1228,25 +1228,24 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
     };
 
     this.get_color_picker = function (context_key, data_key, label_text="", include_clear_button=true) {
-        var color_picker = (function (self) {
-            return Dash.Gui.GetColorPicker(
-                self,
-                function (color_val) {
-                    if (!color_val) {
-                        return;
-                    }
-
-                    self.set_data(data_key, color_val);
-                },
-                (label_text || data_key.Title()) + ":",
-                self.color,
-                self.get_data()[data_key] || "#000000",
-                include_clear_button,
-                function () {
-                    self.set_data(data_key, "");
+        var color_picker = new Dash.Gui.ColorPicker(
+            this,
+            (color_val) => {
+                if (!color_val) {
+                    return;
                 }
-            );
-        })(this);
+
+                this.set_data(data_key, color_val);
+            },
+            (label_text || data_key.Title()) + ":",
+            this.get_data()[data_key],
+            include_clear_button,
+            () => {
+                this.set_data(data_key, "");
+            },
+            undefined,
+            "#000000"
+        );
 
         if (color_picker.label) {
             if (!(label_text.includes("\n"))) {

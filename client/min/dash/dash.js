@@ -18127,6 +18127,7 @@ function DashGui () {
     this.ButtonBar                 = DashGuiButtonBar;
     this.ChatBox                   = DashGuiChatBox;
     this.Checkbox                  = DashGuiCheckbox;
+    this.ColorPicker               = DashGuiColorPicker;
     this.Combo                     = DashGuiCombo;
     this.Confirm                   = DashGuiConfirm;
     this.Context2D                 = DashGuiContext2D;
@@ -18301,113 +18302,6 @@ function DashGui () {
         });
         return html;
     };
-    // TODO: This needs to be its own class/element
-    this.GetColorPicker = function (
-        binder=null, callback=null, label_text="Color Picker", dash_color=null,
-        default_picker_hex_color="", include_clear_button=false, clear_button_cb=null, height=null
-    ) {
-        if (!default_picker_hex_color) {
-            default_picker_hex_color = Dash.Color.PickerDefault;  // Using it as a default above doesn't cut it
-        }
-        if (!dash_color) {
-            dash_color = binder?.color || Dash.Color.Light;
-        }
-        height = height || Dash.Size.ButtonHeight;
-        var include_label = label_text && label_text.replace(":", "") !== "none";
-        var id = "colorpicker_" + Dash.Math.Random();
-        var color_picker = {
-            "height": height,
-            "html": $("<div></div>"),
-            "input": $(
-                "<input>",
-                {
-                    "type": "color",
-                    "id": id,
-                    "value": default_picker_hex_color
-                }
-            ),
-            "default_hex_color": default_picker_hex_color
-        };
-        if (include_label) {
-            color_picker["label"] = $("<label for='" + id + "'>" + label_text + "</label>");
-            var line_break = label_text.includes("\n");
-            var label_css = {
-                "font-family": "sans_serif_bold",
-                "font-size": "80%",
-                "color": dash_color.Text || "black",
-                "top": line_break ? 0 : (Dash.Size.Padding * (include_clear_button ? 0.5 : -0.5))
-            };
-            if (line_break) {
-                label_css = {
-                    ...label_css,
-                    "white-space": "pre",
-                    "height": height,
-                    "display": "block",
-                    "float": "left",
-                    "text-align": "right",
-                    "line-height": (height * 0.5) + "px"
-                };
-            }
-            color_picker.label.css(label_css);
-        }
-        color_picker.input.css({
-            "height": height,
-            "margin-left": Dash.Size.Padding * 0.5,
-            "background": "none",
-            "cursor": "pointer",
-            "border": "1px solid " + dash_color.StrokeLight,
-            "border-radius": Dash.Size.Padding * 0.3
-        });
-        if (include_label) {
-            color_picker.html.append(color_picker.label);
-        }
-        color_picker.html.append(color_picker.input);
-        if (include_clear_button) {
-            var small = height < Dash.Size.RowHeight;
-            color_picker.html.css({
-                "display": "flex"
-            });
-            if (clear_button_cb && binder) {
-                clear_button_cb = clear_button_cb.bind(binder);
-            }
-            color_picker["clear_button"] = new Dash.Gui.IconButton(
-                "close_square",
-                function () {
-                    color_picker.input.val(default_picker_hex_color);
-                    if (clear_button_cb) {
-                        clear_button_cb();
-                    }
-                },
-                this,
-                dash_color,
-                {
-                    "container_size": height,
-                    "size_mult": small ? 0.75 : 0.5
-                }
-            );
-            color_picker["clear_button"].SetIconColor(dash_color.AccentBad);
-            if (small) {
-                color_picker["clear_button"].html.css({
-                    "margin-left": Dash.Size.Padding * 0.1
-                });
-            }
-            else {
-                color_picker["clear_button"].html.css({
-                    "padding-top": Dash.Size.Padding * 0.1
-                });
-            }
-            color_picker.html.append(color_picker.clear_button.html);
-        }
-        if (callback) {
-            if (binder) {
-                callback = callback.bind(binder);
-            }
-            color_picker.input.on("change", function () {
-                callback(color_picker.input.val());
-            });
-        }
-        return color_picker;
-    };
     // This function is old and not written well
     this.GetTopRightIconButton = function (
         binder, callback, icon_id="trash", data_key=null, additional_data=null, existing_top_right_label=null
@@ -18487,28 +18381,82 @@ function DashGui () {
             callback
         );
     };
-    // This is rather quick/dirty and should probably become its own style at some point (will require it to first be visually improved)
-    // This can also be taken even further by appending html to the tooltip div after it's returned, rather than supplying text
-    this.AddTooltip = function (html, static_text=null, monospaced=true, additional_css={}, delay_ms=1000, override_element=null, text_getter=null) {
-        var tooltip = $("<div></div>");
-        html.append(tooltip);
-        this.set_tooltip_css(tooltip, additional_css, monospaced);
-        if (static_text) {
-            tooltip.text(static_text);
+    this.AddTooltip = function (
+        html, text="", delay_ms=750, fade_in_ms=200, fade_out_ms=400,
+        additional_css={}, text_getter=null, offset_px=10, color=null
+    ) {
+        var existing_title = html.attr("title");
+        if (existing_title) {
+            html.data("title", existing_title);
+            html.removeAttr("title");
         }
-        tooltip.hide();
-        (function (self, html, additional_css, override_element, delay_ms, tooltip, text_getter) {
-            var timer;
-            html.hover(
-                function () {
-                    timer = self.tooltip_on_hover_in(html, tooltip, override_element, additional_css, delay_ms, text_getter);
-                },
-                function () {
-                    self.tooltip_on_hover_out(tooltip, override_element, timer);
+        html.off("mouseenter.dash_gui_tooltip");
+        html.off("mouseleave.dash_gui_tooltip");
+        html.off("mousemove.dash_gui_tooltip");
+        if (!text && !text_getter) {
+            return;
+        }
+        if (!color) {
+            color = Dash.Color.Dark;
+        }
+        var _timer;
+        var css = null;
+        var tooltip = null;
+        html.on("mouseenter.dash_gui_tooltip", (e) => {
+            if (_timer) {
+                clearTimeout(_timer);
+            }
+            if (tooltip) {
+                if (text_getter) {
+                    tooltip.text(text_getter());
                 }
+            }
+            else {
+                tooltip = $(
+                    "<div>",
+                    {
+                        "class": "dash_gui_tooltip",
+                        "text": text_getter ? text_getter() : text
+                    }
+                );
+                tooltip.hide();
+                css = {
+                    "position": "absolute",
+                    "padding": Dash.Size.Padding * 0.3,
+                    "border": "1px solid " + color.Pinstripe,
+                    "background": color.BackgroundRaised,
+                    "color": color.Text,
+                    "border-radius": Dash.Size.BorderRadius * 0.5,
+                    "box-shadow": "0 0 4px rgba(0, 0, 0, 0.3)",
+                    "font-size": "90%",
+                    "z-index": 100000,
+                    "white-space": "pre-wrap",
+                    ...additional_css
+                };
+            }
+            _timer = setTimeout(
+                () => {
+                    $("body").append(tooltip);
+                    css["top"] = e.pageY + offset_px + "px";
+                    css["left"] = e.pageX + offset_px + "px";
+                    tooltip.css(css).stop().fadeIn(fade_in_ms);
+                },
+                delay_ms
             );
-        })(this, html, additional_css, override_element, delay_ms, tooltip, text_getter);
-        return tooltip;
+        });
+        html.on("mouseleave.dash_gui_tooltip", () => {
+            if (_timer) {
+                clearTimeout(_timer);
+            }
+            if (tooltip) {
+                tooltip.stop().fadeOut(
+                    fade_out_ms,
+                    () => {
+                        tooltip.remove();
+                    }
+                );
+            }
+        });
     };
     this.GetImageContainer = function (url, height=100, centered=false, minimizable=false, start_minimized=false) {
         if (start_minimized && !minimizable) {
@@ -18759,6 +18707,7 @@ function DashGui () {
             }
         );
     };
+
     this.add_corner_button_to_image_container = function (image_container, container_height, minimize=true) {
         var opacity = 0.75;
         var color = Dash.Color.Light;
@@ -18819,39 +18768,6 @@ function DashGui () {
             });
         })(this);
         image_container.append(button.html);
-    };
-    this.set_tooltip_css = function (tooltip, additional_css, monospaced) {
-        var color = Dash.Color.Dark;
-        var padding = Dash.Size.Padding * 0.5;
-        tooltip.css({
-            "padding": padding,
-            "color": color.Text,
-            "background": color.Background,
-            "border": "2px solid " + color.BackgroundRaised,
-            "border-radius": padding,
-            "box-shadow": "0px 0px 10px 1px rgba(0, 0, 0, 0.5)",
-            "position": "fixed",
-            "z-index": 100000,
-            "white-space": "pre-wrap",
-            "opacity": 0.95,
-            "cursor": "auto",
-            "width": Dash.Size.ColumnWidth * 3,
-            "pointer-events": "none",
-            ...additional_css
-        });
-        if (monospaced) {
-            tooltip.css({
-                "font-family": "Andale Mono, Monaco, monospace",
-                "font-size": "85%"
-            });
-        }
-        else {
-            tooltip.css({
-                "font-family": "sans_serif_normal",
-                "font-size": "90%"
-            });
-        }
-        return tooltip;
     };
     this.tooltip_on_hover_in = function (html, tooltip, override_element, additional_css, delay_ms, text_getter=null) {
         if (override_element) {
@@ -26248,6 +26164,155 @@ function DashGuiCheckbox (
     this.setup_styles();
 }
 
+class DashGuiColorPicker {
+    constructor (
+        binder=null, callback=null, label_text="Color:", initial_hex_color="",
+        include_clear_button=false, clear_cb=null, height=null, default_hex_color=""
+    ) {
+        this.binder = binder;
+        this.callback = this.binder && callback ? callback.bind(this.binder) : callback;
+        this.label_text = label_text;
+        this.initial_hex_color = initial_hex_color;
+        this.include_clear_button = include_clear_button;
+        this.clear_cb = this.binder && clear_cb ? clear_cb.bind(this.binder) : clear_cb;
+        this.height = height || Dash.Size.ButtonHeight;
+        this.default_hex_color = default_hex_color || Dash.Color.PickerDefault;  // Picker must have a value
+        this.label = null;
+        this.html = $("<div>");
+        this.clear_button = null;
+        this.color = this.binder?.color || Dash.Color.Light;
+        this.id = "dash_gui_color_picker_" + Dash.Math.Random();
+        this.input = $(
+            "<input>",
+            {
+                "type": "color",
+                "id": this.id,
+                "value": this.initial_hex_color || this.default_hex_color
+            }
+        );
+        this.setup_styles();
+    }
+    setup_styles () {
+        var text = this.label_text.replace(":", "").trim();
+        if (text && text !== "none") {
+            this.add_label();
+        }
+        this.input.css({
+            "height": this.height,
+            "margin-left": Dash.Size.Padding * 0.5,
+            "background": "none",
+            "cursor": "pointer",
+            "border": "1px solid " + this.color.StrokeLight,
+            "border-radius": Dash.Size.Padding * 0.3
+        });
+        this.html.append(this.input);
+        if (this.include_clear_button) {
+            this.add_clear_button();
+        }
+        if (this.callback) {
+            this.input.on("change", () => {
+                // noinspection JSValidateTypes
+                this.callback(this.input.val() || "");
+            });
+        }
+    }
+    GetValue (allow_default_return=false) {
+        var val = this.input.val() || "";
+        if (val === this.default_hex_color) {
+            return allow_default_return ? val : "";
+        }
+        return val;
+    };
+    SetValue (color="", fallback_to_default=false) {
+        return this.input.val(
+            color ? color : (fallback_to_default ? this.default_hex_color : "")
+        );
+    };
+    SetHoverHint (text) {
+        this.html.attr("title", text);
+    }
+    Disable (opacity=0.5) {
+        this.Lock();
+        this.html.css({
+            "opacity": opacity
+        });
+    };
+    Enable () {
+        this.Unlock();
+        this.html.css({
+            "opacity": 1
+        });
+    };
+    Lock () {
+        this.input.attr("disabled", true);
+    }
+    Unlock () {
+        this.input.attr("disabled", false);
+    }
+    add_label () {
+        this.label = $(
+            "<label>",
+            {
+                "for": this.id,
+                "text": this.label_text
+            }
+        );
+        var line_break = this.label_text.includes("\n");
+        var label_css = {
+            "font-family": "sans_serif_bold",
+            "font-size": "80%",
+            "color": this.color.Text,
+            "top": line_break ? 0 : (Dash.Size.Padding * (this.include_clear_button ? 0.5 : -0.5))
+        };
+        if (line_break) {
+            label_css = {
+                ...label_css,
+                "white-space": "pre",
+                "height": this.height,
+                "display": "block",
+                "float": "left",
+                "text-align": "right",
+                "line-height": (this.height * 0.5) + "px"
+            };
+        }
+        this.label.css(label_css);
+        this.html.append(this.label);
+    }
+    add_clear_button () {
+        var small = this.height < Dash.Size.RowHeight;
+        this.html.css({
+            "display": "flex"
+        });
+        this.clear_button = new Dash.Gui.IconButton(
+            "close_square",
+            () => {
+                this.input.val(this.default_hex_color);
+                if (this.clear_cb) {
+                    this.clear_cb();
+                }
+            },
+            this,
+            this.color,
+            {
+                "container_size": this.height,
+                "size_mult": small ? 0.75 : 0.5
+            }
+        );
+        this.clear_button.SetIconColor(this.color.AccentBad);
+        if (small) {
+            this.clear_button.html.css({
+                "margin-left": Dash.Size.Padding * 0.1
+            });
+        }
+        else {
+            this.clear_button.html.css({
+                "padding-top": Dash.Size.Padding * 0.1
+            });
+        }
+        this.html.append(this.clear_button.html);
+    }
+}
+
 function DashGuiToolRow (binder, get_data_cb=null, set_data_cb=null, color=null) {
     this.binder = binder;
     this.get_data_cb = get_data_cb ? get_data_cb.bind(binder) : null;
@@ -30882,7 +30947,7 @@ function DashGuiCombo (
         this.rows.stop();
         var start_height = this.rows.height();
         this.rows.css({
-            "height": "auto",
+            "height": "auto"
         });
         this.last_rows_height = this.rows.height();
         var top_set = this.determine_gravity(this.last_rows_height);
@@ -30901,14 +30966,12 @@ function DashGuiCombo (
             this.manage_search_list();
         }
         if (!this.is_searchable) {
-            (function (self) {
-                $(window).on(
-                    "keydown." + self.random_id,
-                    function (event) {
-                        self.handle_arrow_input(self, event);
-                    }
-                );
-            })(this);
+            $(window).on(
+                "keydown." + this.random_id,
+                (event) => {
+                    this.handle_arrow_input(this, event);
+                }
+            );
         }
     };
     this.hide = function () {
@@ -30942,14 +31005,12 @@ function DashGuiCombo (
         }
         this.hide_highlight();
         if (this.on_collapse_cb) {
-            (function (self) {
-                setTimeout(
-                    function () {
-                        self.on_collapse_cb();
-                    },
-                    delay_ms
-                );
-            })(this);
+            setTimeout(
+                () => {
+                    this.on_collapse_cb();
+                },
+                delay_ms
+            );
         }
     };
     this.show_highlight = function () {
@@ -31471,17 +31532,32 @@ function DashGuiComboRow (combo, option) {
     this.highlight = $("<div>", {"class": "Combo"});
     this.label = $("<div>" + this.label_text + "</div>", {"class": "Combo"});
     this.setup_styles = function () {
-        this.html.css({
+        var html_css = {
             "border-bottom": this.multi_select ? "1px solid rgba(255, 255, 255, 0.1)" : "none",
             "height": this.height
-        });
-        this.highlight.css({
+        };
+        if (this.option["html_css"]) {
+            html_css = {
+                ...html_css,
+                ...this.option["html_css"]
+            };
+        }
+        this.html.css(html_css);
+        var highlight_css = {
             "position": "absolute",
             "inset": 0,
             "background": "rgba(255, 255, 255, 0.2)",
             "opacity": 0
-        });
-        this.label.css({
+        };
+        if (this.option["highlight_css"]) {
+            highlight_css = {
+                ...highlight_css,
+                ...this.option["highlight_css"]
+            };
+        }
+        this.highlight.css(highlight_css);
+        this.html.append(this.highlight);
+        var label_css = {
             "border-bottom": this.multi_select ? "none" : "1px solid rgba(255, 255, 255, 0.1)",
             "text-align": this.combo.text_alignment,
             "height": this.height,
@@ -31489,8 +31565,14 @@ function DashGuiComboRow (combo, option) {
             "white-space": "nowrap",
             "color": this.color_set.Text.Base,
             "font-size": this.combo.row_font_size || this.combo.font_size
-        });
-        this.html.append(this.highlight);
+        };
+        if (this.option["label_css"]) {
+            label_css = {
+                ...label_css,
+                ...this.option["label_css"]
+            };
+        }
+        this.label.css(label_css);
         this.html.append(this.label);
         this.add_user_icon();
         this.add_checkbox();
@@ -33345,11 +33427,10 @@ class DashGuiContext2DLayerLinks {
         label.html.css({
             "margin-right": 0
         });
-        this.color_picker = Dash.Gui.GetColorPicker(
+        this.color_picker = new Dash.Gui.ColorPicker(
             null,
             null,
             "",
-            this.color,
             this.linked_color,
             false,
             null,
@@ -33459,7 +33540,7 @@ class DashGuiContext2DLayerLinks {
         }
         this.save_button.SetLoading(true);
         this.disable();
-        var color = this.color_picker.input.val();
+        var color = this.color_picker.GetValue();
         if (!this.linked_color && color === Dash.Color.PickerDefault) {
             color = "";  // If color not chosen, a random color will be assigned on the backend
         }
@@ -38860,24 +38941,23 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         return tool_row;
     };
     this.get_color_picker = function (context_key, data_key, label_text="", include_clear_button=true) {
-        var color_picker = (function (self) {
-            return Dash.Gui.GetColorPicker(
-                self,
-                function (color_val) {
-                    if (!color_val) {
-                        return;
-                    }
-                    self.set_data(data_key, color_val);
-                },
-                (label_text || data_key.Title()) + ":",
-                self.color,
-                self.get_data()[data_key] || "#000000",
-                include_clear_button,
-                function () {
-                    self.set_data(data_key, "");
+        var color_picker = new Dash.Gui.ColorPicker(
+            this,
+            (color_val) => {
+                if (!color_val) {
+                    return;
                 }
-            );
-        })(this);
+                this.set_data(data_key, color_val);
+            },
+            (label_text || data_key.Title()) + ":",
+            this.get_data()[data_key],
+            include_clear_button,
+            () => {
+                this.set_data(data_key, "");
+            },
+            undefined,
+            "#000000"
+        );
         if (color_picker.label) {
             if (!(label_text.includes("\n"))) {
                 color_picker.label.css({
@@ -39068,38 +39148,34 @@ function DashGuiContext2DEditorPanelContentPreComps (content) {
         row["input"].input.css({
             "color": this.color.Text
         });
-        row["color_picker"] = (function (self) {
-            return Dash.Gui.GetColorPicker(
-                self,
-                function (color_val) {
-                    if (!color_val) {
-                        return;
-                    }
-                    self.set_data("color", color_val, letter);
-                },
-                "",
-                self.color,
-                data["color"] || "#000000",
-                true,
-                function () {
-                    self.set_data("color", "", letter);
+        row["color_picker"] = new Dash.Gui.ColorPicker(
+            this,
+            (color_val) => {
+                if (!color_val) {
+                    return;
                 }
-            );
-        })(this);
-
+                this.set_data("color", color_val, letter);
+            },
+            "",
+            data["color"],
+            true,
+            () => {
+                this.set_data("color", "", letter);
+            },
+            undefined,
+            "#000000"
+        );
         row["toolbar"].AddHTML(row["color_picker"].html);
-        row["download_button"] = (function (self) {
-            return row["toolbar"].AddIconButton(
-                "download",
-                function () {
-                    self.download(letter);
-                },
-                null,
-                null,
-                Dash.Size.ButtonHeight,
-                0.65
-            );
-        })(this);
+        row["download_button"] = row["toolbar"].AddIconButton(
+            "download",
+            () => {
+                this.download(letter);
+            },
+            null,
+            null,
+            Dash.Size.ButtonHeight,
+            0.65
+        );
         this.rows.push(row);
         this.html.append(row["container"]);
     };
@@ -39236,7 +39312,7 @@ function DashGuiContext2DEditorPanelContentPreComps (content) {
                     }
                     self.editor.data = response;
                     if (key === "color" && !value) {
-                        self.rows[letter]["color_picker"].input.val(self.get_data()[letter]["color"]);
+                        self.rows[letter]["color_picker"].SetValue(self.get_data()[letter]["color"]);
                     }
                     self.panel.layers_box.UpdatePreCompColors();
                 },
@@ -44491,10 +44567,10 @@ function DashGuiIcon (
     //  the "background" to essentially "combine" two different icons into one
     this.AddColorFill = function (color) {
         if (this.icon_fill) {
-            console.warn("Warning: A color-fill already exists for this icon. Its color will be updated instead.");
-            this.icon_fill.css({
-                "color": color
-            });
+            // Dash.Log.Warn(
+            //     "Warning: A color-fill already exists for this icon. Its color will be updated instead."
+            // );
+            this.icon_fill.SetColor(color);
             return this.icon_fill;
         }
         var fill_icon_name = this.name + "_solid";
@@ -44683,365 +44759,368 @@ DashGuiIconWeights = {
     // "duotone": "d"  // We must not have access to these because it doesn't work
 };
 DashGuiIconMap = {
-    "abacus":                  ["Abacus", DashGuiIconWeights["regular"], "abacus"],
-    "accessible":              ["Accessible", DashGuiIconWeights["regular"], "universal-access"],
-    "add":                     ["Add", DashGuiIconWeights["regular"], "plus"],
-    "add_circle":              ["Add (Circle)", DashGuiIconWeights["regular"], "plus-circle"],
-    "add_layer":               ["Add Layer", DashGuiIconWeights["regular"], "layer-plus"],
-    "add_light":               ["Add (Light)", DashGuiIconWeights["light"], "plus"],
-    "add_person":              ["Add Person", DashGuiIconWeights["regular"], "user-plus"],
-    "add_phone":               ["Add Phone", DashGuiIconWeights["regular"], "phone-plus"],
-    "add_square":              ["Add (Square)", DashGuiIconWeights["regular"], "plus-square"],
-    "add_square_light":        ["Add (Square)", DashGuiIconWeights["light"], "plus-square"],
-    "add_to_cart":             ["Add To Cart", DashGuiIconWeights["regular"], "cart-plus"],
-    "admin_tools":             ["Admin Tools", DashGuiIconWeights["regular"], "shield-alt"],
-    "alert":                   ["Alert", DashGuiIconWeights["solid"], "exclamation"],
-    "alert_bulb":              ["Alert Bulb", DashGuiIconWeights["regular"], "lightbulb-exclamation"],
-    "alert_square":            ["Alert Square", DashGuiIconWeights["regular"], "exclamation-square"],
-    "alert_square_solid":      ["Alert Square Solid", DashGuiIconWeights["solid"], "exclamation-square"],
-    "alert_triangle":          ["Alert Triangle", DashGuiIconWeights["solid"], "exclamation-triangle"],
-    "align_left":              ["Align Left", DashGuiIconWeights["regular"], "align-left"],
-    "align_right":             ["Align Right", DashGuiIconWeights["regular"], "align-right"],
-    "align_center":            ["Align Center", DashGuiIconWeights["regular"], "align-center"],
-    "analytics":               ["Analytics", DashGuiIconWeights["regular"], "analytics"],
-    "angle_left":              ["Angle Left", DashGuiIconWeights["solid"], "angle-double-left"],
-    "angle_right":             ["Angle Right", DashGuiIconWeights["solid"], "angle-double-right"],
-    "apple_logo":              ["Apple Logo", DashGuiIconWeights["brand"], "apple"],
-    "archive":                 ["Archive", DashGuiIconWeights["regular"], "archive"],
-    "archive_light":           ["Archive (Light)", DashGuiIconWeights["light"], "archive"],
-    "arrow_down":              ["Arrow Down", DashGuiIconWeights["regular"], "angle-down"],
-    "arrow_down_heavy":        ["Arrow Down", DashGuiIconWeights["solid"], "angle-down"],
-    "arrow_down_alt":          ["Arrow Down Alt", DashGuiIconWeights["regular"], "arrow-down"],
-    "arrow_down_alt_heavy":    ["Arrow Down Alt (Heavy)", DashGuiIconWeights["solid"], "arrow-down"],
-    "arrow_left":              ["Arrow Left", DashGuiIconWeights["regular"], "angle-left"],
-    "arrow_left_heavy":        ["Arrow Left (Heavy)", DashGuiIconWeights["solid"], "angle-left"],
-    "arrow_left_alt":          ["Arrow Left Alt", DashGuiIconWeights["regular"], "arrow-left"],
-    "arrow_left_alt_heavy":    ["Arrow Left Alt (Heavy)", DashGuiIconWeights["solid"], "arrow-left"],
-    "arrow_left_alt2":         ["Arrow Left Alt 2", DashGuiIconWeights["regular"], "chevron-left"],
-    "arrow_left_alt2_heavy":   ["Arrow Left Alt 2 (Heavy)", DashGuiIconWeights["solid"], "chevron-left"],
-    "arrow_left_long":         ["Arrow Left Long", DashGuiIconWeights["regular"], "long-arrow-left"],
-    "arrow_left_circled":      ["Arrow Left Circled", DashGuiIconWeights["light"], "arrow-circle-left"],
-    "arrow_left_from_right":   ["Arrow Left From Right", DashGuiIconWeights["regular"], "arrow-from-right"],
-    "arrow_right_from_left":   ["Arrow Right From Left", DashGuiIconWeights["regular"], "arrow-from-left"],
-    "arrow_right":             ["Arrow Right", DashGuiIconWeights["regular"], "angle-right"],
-    "arrow_right_alt":         ["Arrow Right Alt", DashGuiIconWeights["regular"], "arrow-right"],
-    "arrow_right_alt_2":       ["Arrow Right Alt 2", DashGuiIconWeights["regular"], "arrow-alt-right"],
-    "arrow_right_alt_2_heavy": ["Arrow Right Alt 2", DashGuiIconWeights["solid"], "arrow-alt-right"],
-    "arrow_right_alt_heavy":   ["Arrow Right Alt (Heavy)", DashGuiIconWeights["solid"], "arrow-right"],
-    "arrow_right_circled":     ["Arrow Right Circled", DashGuiIconWeights["regular"], "arrow-circle-right"],
-    "arrow_right_circled_alt": ["Arrow Right Circled Alt", DashGuiIconWeights["regular"], "arrow-alt-circle-right"],
-    "arrow_right_heavy":       ["Arrow Right (Heavy)", DashGuiIconWeights["solid"], "angle-right"],
-    "arrow_right_to_right":    ["Arrow Left From Right", DashGuiIconWeights["regular"], "arrow-to-right"],
-    "arrow_to_left":           ["Arrow To Left", DashGuiIconWeights["regular"], "arrow-to-left"],
-    "arrow_up":                ["Arrow Up", DashGuiIconWeights["regular"], "angle-up"],
-    "arrow_up_alt":            ["Arrow Up Alt", DashGuiIconWeights["regular"], "arrow-up"],
-    "arrow_up_alt_heavy":      ["Arrow Up Alt (Heavy)", DashGuiIconWeights["solid"], "arrow-up"],
-    "asterisk":                ["Asterisk", DashGuiIconWeights["solid"], "asterisk"],
-    "at_sign":                 ["At Sign", DashGuiIconWeights["regular"], "at"],
-    "award":                   ["Award", DashGuiIconWeights["regular"], "award"],
-    "aws_logo":                ["AWS Logo", DashGuiIconWeights["brand"], "aws"],
-    "backward":                ["Backward", DashGuiIconWeights["solid"], "backward"],
-    "barcode":                 ["Barcode", DashGuiIconWeights["light"], "barcode-alt"],
-    "baseball":                ["Baseball", DashGuiIconWeights["regular"], "baseball-ball"],
-    "baseball_bat":            ["Baseball Bat", DashGuiIconWeights["regular"], "baseball"],
-    "basketball":              ["Basketball", DashGuiIconWeights["regular"], "basketball-ball"],
-    "bat":                     ["Bat", DashGuiIconWeights["regular"], "bat"],
-    "battle_axe":              ["Battle Axe", DashGuiIconWeights["regular"], "axe-battle"],
-    "binoculars":              ["Binoculars", DashGuiIconWeights["regular"], "binoculars"],
-    "bolt":                    ["Bolt", DashGuiIconWeights["solid"], "bolt"],
-    "book_open":               ["Book (Open)", DashGuiIconWeights["regular"], "book-open"],
-    "box":                     ["Box", DashGuiIconWeights["regular"], "box"],
-    "box_open":                ["Box (Open)", DashGuiIconWeights["regular"], "box-open"],
-    "boxes":                   ["Boxes", DashGuiIconWeights["regular"], "boxes"],
-    "browser_window":          ["Browser Window", DashGuiIconWeights["solid"], "window"],
-    "bug":                     ["Bug", DashGuiIconWeights["regular"], "bug"],
-    "building":                ["Building", DashGuiIconWeights["regular"], "building"],
-    "building_solid":          ["Building (Solid)", DashGuiIconWeights["solid"], "building"],
-    "business_time":           ["Business Time", DashGuiIconWeights["regular"], "business-time"],
-    "calendar":                ["Calendar", DashGuiIconWeights["regular"], "calendar-alt"],
-    "camera":                  ["Camera", DashGuiIconWeights["regular"], "camera"],
-    "camera_alt":              ["Camera (Alt)", DashGuiIconWeights["regular"], "camera-retro"],
-    "camera_alt_solid":        ["Camera (Alt, Solid)", DashGuiIconWeights["solid"], "camera-retro"],
-    "cancel":                  ["Cancel", DashGuiIconWeights["regular"], "ban"],
-    "cancel_thick":            ["Cancel (Thick)", DashGuiIconWeights["solid"], "ban"],
-    "car":                     ["Car", DashGuiIconWeights["regular"], "car"],
-    "caret_down":              ["Caret Down", DashGuiIconWeights["solid"], "caret-down"],
-    "caret_left":              ["Caret Left", DashGuiIconWeights["solid"], "caret-left"],
-    "caret_right":             ["Caret Right", DashGuiIconWeights["solid"], "caret-right"],
-    "caret_up":                ["Caret Up", DashGuiIconWeights["solid"], "caret-up"],
-    "cd":                      ["CD", DashGuiIconWeights["regular"], "compact-disc"],
-    "cdn_tool_accordion":      ["Accordion Tool", DashGuiIconWeights["regular"], "angle-double-down"],
-    "cdn_tool_block_layout":   ["Block Layout Tool", DashGuiIconWeights["regular"], "th-large"],
-    "cdn_tool_career_path":    ["Career Path Tool", DashGuiIconWeights["regular"], "shoe-prints"],
-    "cdn_tool_embed":          ["Embed Tool", DashGuiIconWeights["regular"], "expand-arrows"],
-    "cdn_tool_file":           ["File Tool", DashGuiIconWeights["light"], "file"],
-    "cdn_tool_gallery":        ["Gallery Tool", DashGuiIconWeights["regular"], "images"],
-    "cdn_tool_header":         ["Header Tool", DashGuiIconWeights["regular"], "heading"],
-    "cdn_tool_hrule":          ["Hrule Tool", DashGuiIconWeights["regular"], "ruler-horizontal"],
-    "cdn_tool_image":          ["Image Tool", DashGuiIconWeights["regular"], "image"],
-    "cdn_tool_layout":         ["Layout Tool", DashGuiIconWeights["regular"], "columns"],
-    "cdn_tool_lightbox":       ["Lightbox Tool", DashGuiIconWeights["regular"], "expand-wide"],
-    "cdn_tool_link":           ["Link Tool", DashGuiIconWeights["light"], "external-link"],
-    "cdn_tool_link_bank":      ["Link Bank Tool", DashGuiIconWeights["regular"], "link"],
-    "cdn_tool_subheader":      ["Sub Header Tool", DashGuiIconWeights["light"], "heading"],
-    "cdn_tool_text":           ["Text Tool", DashGuiIconWeights["regular"], "font"],
-    "cdn_tool_video":          ["Text Tool", DashGuiIconWeights["regular"], "video"],
-    "cell":                    ["Cell Phone", DashGuiIconWeights["regular"], "mobile-alt"],
-    "checked_box":             ["Checked Box", DashGuiIconWeights["regular"], "check-square"],
-    "checked_box_solid":       ["Checked Box", DashGuiIconWeights["solid"], "check-square"],
-    "circle":                  ["Circle", DashGuiIconWeights["regular"], "circle"],
-    "circle_dot":              ["Circle Dot", DashGuiIconWeights["regular"], "dot-circle"],
-    "circle_arrow_right":      ["Circle Arrow (Right)", DashGuiIconWeights["solid"], "chevron-circle-right"],
-    "circle_notch":            ["Circle Notch (Top)", DashGuiIconWeights["solid"], "circle-notch"],
-    "click":                   ["Click", DashGuiIconWeights["regular"], "bullseye-pointer"],
-    "clipboard":               ["Clipboard", DashGuiIconWeights["regular"], "clipboard-list"],
-    "cloud_logs":              ["Cloud Logs", DashGuiIconWeights["regular"], "fog"],
-    "clone":                   ["Clone", DashGuiIconWeights["regular"], "clone"],
-    "close":                   ["Close", DashGuiIconWeights["regular"], "times"],
-    "close_circle":            ["Close (Circle)", DashGuiIconWeights["regular"], "times-circle"],
-    "close_square":            ["Close (Square)", DashGuiIconWeights["regular"], "times-square"],
-    "close_thin":              ["Close (Thin)", DashGuiIconWeights["light"], "times"],
-    "cloud":                   ["Cloud", DashGuiIconWeights["regular"], "cloud"],
-    "code_branch":             ["Code Branch", DashGuiIconWeights["regular"], "code-branch"],
-    "code_merge":              ["Code Merge", DashGuiIconWeights["regular"], "code-merge"],
-    "color_palette":           ["Color Palette", DashGuiIconWeights["regular"], "palette"],
-    "comment":                 ["Conversation Bubble", DashGuiIconWeights["solid"], "comment"],
-    "comment_square":          ["Conversation Box", DashGuiIconWeights["regular"], "comment-alt-lines"],
-    "comment_square_smile":    ["Conversation Box Smile", DashGuiIconWeights["regular"], "comment-alt-smile"],
-    "comments":                ["Multiple Conversations Bubble", DashGuiIconWeights["solid"], "comments"],
-    "comments_square":         ["Multiple Conversations Boxes", DashGuiIconWeights["regular"], "comments-alt"],
-    "complete":                ["Complete", DashGuiIconWeights["regular"], "check"],
-    "contacts":                ["Contacts", DashGuiIconWeights["regular"], "address-book"],
-    "copy":                    ["Copy", DashGuiIconWeights["regular"], "copy"],
-    "crown":                   ["Crown", DashGuiIconWeights["regular"], "crown"],
-    "cube":                    ["Cube", DashGuiIconWeights["regular"], "cube"],
-    "cubes":                   ["Cubes", DashGuiIconWeights["regular"], "cubes"],
-    "database":                ["Database", DashGuiIconWeights["regular"], "database"],
-    "delete":                  ["Delete", DashGuiIconWeights["regular"], "times"],
-    "delete_thin":             ["Delete (thin_", DashGuiIconWeights["light"], "times"],
-    "dollar_sign":             ["Dollar Sign", DashGuiIconWeights["solid"], "dollar-sign"],
-    "dollar_sign_circle":      ["Dollar Sign Circle", DashGuiIconWeights["regular"], "usd-circle"],
-    "dollar_sign_square":      ["Dollar Sign Square", DashGuiIconWeights["regular"], "usd-square"],
-    "dot":                     ["Dot", DashGuiIconWeights["light"], "circle"],
-    "dot_solid":               ["Dot", DashGuiIconWeights["solid"], "circle"],
-    "dots_horizontal":         ["Horizontal Dots", DashGuiIconWeights["solid"], "ellipsis-h"],
-    "dots_vertical":           ["Vertical Dots", DashGuiIconWeights["solid"], "ellipsis-v"],
-    "download":                ["Download", DashGuiIconWeights["regular"], "download"],
-    "download_solid":          ["Download", DashGuiIconWeights["solid"], "download"],
-    "download_file":           ["Download File", DashGuiIconWeights["regular"], "file-download"],
-    "dropbox_logo":            ["Dropbox Logo", DashGuiIconWeights["brand"], "dropbox"],
-    "edit":                    ["Edit", DashGuiIconWeights["regular"], "pencil"],
-    "edit_square":             ["Edit (Square)", DashGuiIconWeights["regular"], "edit"],
-    "email":                   ["Email", DashGuiIconWeights["regular"], "at"],
-    "empty":                   ["Empty", DashGuiIconWeights["regular"], "empty-set"],
-    "empty_folder":            ["Empty Folder", DashGuiIconWeights["regular"], "folder-times"],
-    "envelope":                ["Email Envelope", DashGuiIconWeights["regular"], "envelope"],
-    "envelope_solid":          ["Email Envelope (Solid)", DashGuiIconWeights["solid"], "envelope"],
-    "eraser":                  ["Eraser", DashGuiIconWeights["solid"], "eraser"],
-    "exec":                    ["Executive", DashGuiIconWeights["light"], "business-time"],
-    "expand":                  ["Expand View", DashGuiIconWeights["regular"], "expand-alt"],
-    "expand_square":           ["Expand View", DashGuiIconWeights["regular"], "expand"],
-    "expand_square_arrows":    ["Expand View", DashGuiIconWeights["regular"], "expand-arrows-alt"],
-    "file":                    ["File", DashGuiIconWeights["regular"], "file"],
-    "file_audio":              ["Audio File", DashGuiIconWeights["regular"], "file-audio"],
-    "file_bar_chart":          ["Bar Chart File", DashGuiIconWeights["regular"], "file-chart-line"],
-    "file_code":               ["Code File", DashGuiIconWeights["regular"], "file-code"],
-    "file_csv":                ["CSV File", DashGuiIconWeights["regular"], "file-csv"],
-    "file_edit":               ["Edit File", DashGuiIconWeights["regular"], "file-edit"],
-    "file_image":              ["Image File", DashGuiIconWeights["regular"], "file-image"],
-    "file_lined":              ["File Lined", DashGuiIconWeights["regular"], "file-alt"],
-    "file_pdf":                ["PDF File", DashGuiIconWeights["regular"], "file-pdf"],
-    "file_powerpoint":         ["Powerpoint File", DashGuiIconWeights["regular"], "file-powerpoint"],
-    "file_signed":             ["Signed File", DashGuiIconWeights["regular"], "file-contract"],
-    "file_spreadsheet":        ["Spreadsheet File", DashGuiIconWeights["regular"], "file-spreadsheet"],
-    "file_video":              ["Video File", DashGuiIconWeights["regular"], "file-video"],
-    "file_word":               ["Word File", DashGuiIconWeights["regular"], "file-word"],
-    "filter":                  ["Filter", DashGuiIconWeights["regular"], "filter"],
-    "filter_solid":            ["Filter", DashGuiIconWeights["solid"], "filter"],
-    "flag":                    ["Flag", DashGuiIconWeights["solid"], "flag-alt"],
-    "flag_checkered":          ["Flag", DashGuiIconWeights["solid"], "flag-checkered"],
-    "film":                    ["Film", DashGuiIconWeights["regular"], "film"],
-    "folder":                  ["Folder", DashGuiIconWeights["regular"], "folder"],
-    "folder_solid":            ["Folder (Solid)", DashGuiIconWeights["solid"], "folder"],
-    "folder_tree":             ["Folder Tree", DashGuiIconWeights["regular"], "folder-tree"],
-    "font":                    ["Font", DashGuiIconWeights["regular"], "font"],
-    "font_alt":                ["Font", DashGuiIconWeights["regular"], "bold"],
-    "football":                ["Football", DashGuiIconWeights["regular"], "football-ball"],
-    "forward":                 ["Forward", DashGuiIconWeights["solid"], "forward"],
-    "gauge":                   ["Gauge", DashGuiIconWeights["regular"], "tachometer-alt"],
-    "gear":                    ["Gear", DashGuiIconWeights["regular"], "cog"],
-    "gears":                   ["Gears", DashGuiIconWeights["regular"], "cogs"],
-    "gem":                     ["Gem", DashGuiIconWeights["solid"], "gem"],
-    "ghost":                   ["Ghost", DashGuiIconWeights["regular"], "ghost"],
-    "git":                     ["Git", DashGuiIconWeights["brand"], "git-square"],
-    "github":                  ["Github", DashGuiIconWeights["brand"], "github"],
-    "goal_reply":              ["Goal Reply", DashGuiIconWeights["solid"], "reply"],
-    "golf_ball":               ["Golf Ball", DashGuiIconWeights["regular"], "golf-ball"],
-    "google_drive":            ["Google Drive", DashGuiIconWeights["brand"], "google-drive"],
-    "graph":                   ["Graph", DashGuiIconWeights["solid"], "bezier-curve"],
-    "group":                   ["Group", DashGuiIconWeights["solid"], "layer-group"],
-    "hand_holding_box":        ["Hand Holding Box", DashGuiIconWeights["regular"], "hand-holding-box"],
-    "hand_pointer":            ["Hand Pointer", DashGuiIconWeights["regular"], "hand-pointer"],
-    "handshake":               ["Handshake", DashGuiIconWeights["regular"], "handshake"],
-    "hashtag":                 ["Hashtag", DashGuiIconWeights["solid"], "hashtag"],
-    "headphones":              ["Audio", DashGuiIconWeights["regular"], "headphones"],
-    "hidden":                  ["Hidden", DashGuiIconWeights["regular"], "eye-slash"],
-    "history":                 ["History", DashGuiIconWeights["regular"], "history"],
-    "hockey_puck":             ["Hockey Puck", DashGuiIconWeights["regular"], "hockey-puck"],
-    "hr":                      ["Human Resources", DashGuiIconWeights["light"], "poll-people"],
-    "hyphen":                  ["Hyphen", DashGuiIconWeights["regular"], "minus"],
-    "hyphen_solid":            ["Hyphen (Solid)", DashGuiIconWeights["solid"], "minus"],
-    "id_card":                 ["ID Card", DashGuiIconWeights["regular"], "address-card"],
-    "image":                   ["Image", DashGuiIconWeights["regular"], "image"],
-    "images":                  ["Images", DashGuiIconWeights["regular"], "images"],
-    "import_file":             ["Import File", DashGuiIconWeights["regular"], "file-import"],
-    "infinity":                ["Infinity", DashGuiIconWeights["regular"], "infinity"],
-    "info":                    ["Info Circle", DashGuiIconWeights["regular"], "info-circle"],
-    "invoice":                 ["Invoice", DashGuiIconWeights["regular"], "file-invoice-dollar"],
-    "invoice_alt":             ["Invoice Alt", DashGuiIconWeights["regular"], "file-invoice"],
-    "javascript_logo":         ["JavaScript", DashGuiIconWeights["brand"], "js-square"],
-    "key":                     ["Key", DashGuiIconWeights["regular"], "key"],
-    "key_solid":               ["Key (Solid)", DashGuiIconWeights["solid"], "key"],
-    "layers":                  ["Layers", DashGuiIconWeights["regular"], "layer-group"],
-    "level_up":                ["Level Up", DashGuiIconWeights["regular"], "level-up"],
-    "level_down":              ["Level Down", DashGuiIconWeights["regular"], "level-down"],
-    "link":                    ["Link", DashGuiIconWeights["regular"], "external-link"],
-    "link_heavy":              ["Link (Solid)", DashGuiIconWeights["solid"], "external-link"],
-    "linked":                  ["Linked", DashGuiIconWeights["regular"], "link"],
-    "list":                    ["List", DashGuiIconWeights["regular"], "bars"],
-    "list_boxed":              ["List Boxed", DashGuiIconWeights["regular"], "list-alt"],
-    "list_bulleted":           ["Bulleted List", DashGuiIconWeights["regular"], "list"],
-    "list_offset":             ["List Offset", DashGuiIconWeights["regular"], "stream"],
-    "lock":                    ["Lock", DashGuiIconWeights["regular"], "lock"],
-    "location_circled":        ["Location - Circled", DashGuiIconWeights["regular"], "location-circle"],
-    "log_in":                  ["Log In", DashGuiIconWeights["regular"], "sign-in"],
-    "log_out":                 ["Log Out", DashGuiIconWeights["regular"], "sign-out"],
-    "magic_wand":              ["Magic Wand", DashGuiIconWeights["solid"], "magic"],
-    "map_marked":              ["Map - Marked", DashGuiIconWeights["regular"],"map-marked-alt"],
-    "map_marked_solid":        ["Map - Marked", DashGuiIconWeights["solid"],"map-marked-alt"],
-    "map_marker":              ["Map Marker", DashGuiIconWeights["regular"], "map-marker-alt"],
-    "map_marker_solid":        ["Map Marker", DashGuiIconWeights["solid"], "map-marker-alt"],
-    "minimize":                ["Minimize", DashGuiIconWeights["regular"], "compress-alt"],
-    "minus_circle":            ["Minus Circle", DashGuiIconWeights["regular"], "minus-circle"],
-    "minus_sign":              ["Minus Sign", DashGuiIconWeights["regular"], "minus"],
-    "minus_square":            ["Minus Square", DashGuiIconWeights["regular"], "minus-square"],
-    "moon":                    ["Moon", DashGuiIconWeights["regular"], "moon"],
-    "more":                    ["More", DashGuiIconWeights["regular"], "window-restore"],
-    "move":                    ["Move", DashGuiIconWeights["regular"], "arrows-alt"],
-    "music":                   ["Music", DashGuiIconWeights["regular"], "music"],
-    "navigation":              ["Navigation - Top Level", DashGuiIconWeights["regular"], "tasks"],
-    "next":                    ["Next", DashGuiIconWeights["solid"], "step-forward"],
-    "newsfeed":                ["Newsfeed", DashGuiIconWeights["regular"], "newspaper"],
-    "note":                    ["Note", DashGuiIconWeights["regular"], "sticky-note"],
-    "notify":                  ["Notify", DashGuiIconWeights["regular"], "bell"],
-    "object_group":            ["Object Group", DashGuiIconWeights["regular"], "object-group"],
-    "open_folder":             ["Open Folder", DashGuiIconWeights["regular"], "folder-open"],
-    "paperclip":               ["Paperclip", DashGuiIconWeights["regular"], "paperclip"],
-    "pause":                   ["Pause", DashGuiIconWeights["regular"], "pause"],
-    "pen":                     ["Pen", DashGuiIconWeights["regular"], "pen"],
-    "pencil_paintbrush":       ["Pencil and Paintbrush", DashGuiIconWeights["regular"], "pencil-paintbrush"],
-    "pencil_ruler":            ["Pencil and Ruler", DashGuiIconWeights["regular"], "pencil-ruler"],
-    "phone":                   ["Phone", DashGuiIconWeights["regular"], "phone"],
-    "phone_solid":             ["Phone (Solid)", DashGuiIconWeights["solid"], "phone"],
-    "play":                    ["Play", DashGuiIconWeights["solid"], "play"],
-    "portal_editor":           ["Content Builder", DashGuiIconWeights["regular"], "toolbox"],
-    "previous":                ["Previous", DashGuiIconWeights["solid"], "step-backward"],
-    "print":                   ["Print", DashGuiIconWeights["regular"], "print"],
-    "print_alt":               ["Print (Alt)", DashGuiIconWeights["solid"], "print"],
-    "project_diagram":         ["Project Diagram", DashGuiIconWeights["regular"], "project-diagram"],
-    "python_logo":             ["Python Logo", DashGuiIconWeights["brand"], "python"],
-    "random":                  ["Random", DashGuiIconWeights["solid"], "random"],
-    "read":                    ["Read", DashGuiIconWeights["regular"], "book-reader"],
-    "refresh":                 ["Refresh", DashGuiIconWeights["regular"], "redo"],
-    "remove_person":           ["Remove Person", DashGuiIconWeights["regular"], "user-slash"],
-    "remove_notification":     ["Remove Notification", DashGuiIconWeights["regular"], "bell-slash"],
-    "robot":                   ["Robot", DashGuiIconWeights["regular"], "robot"],
-    "rocket":                  ["Rocket", DashGuiIconWeights["regular"], "rocket"],
-    "rotate":                  ["Rotate", DashGuiIconWeights["regular"], "sync-alt"],
-    "save":                    ["Save", DashGuiIconWeights["regular"],"save"],
-    "scale":                   ["Scale", DashGuiIconWeights["regular"], "expand-arrows-alt"],
-    "search":                  ["Search", DashGuiIconWeights["regular"],"search"],
-    "send":                    ["Send", DashGuiIconWeights["solid"],"paper-plane"],
-    "server":                  ["Server", DashGuiIconWeights["regular"], "server"],
-    "share":                   ["Share", DashGuiIconWeights["regular"],"share"],
-    "share_alt":               ["Share (Alt)", DashGuiIconWeights["regular"],"share-alt"],
-    "share_alt_solid":         ["Share (Alt, Solid)", DashGuiIconWeights["solid"],"share-alt"],
-    "shield":                  ["Shield", DashGuiIconWeights["regular"],"shield-alt"],
-    "signal_full":             ["Full Signal", DashGuiIconWeights["regular"],"signal-alt"],
-    "signal_none":             ["No Signal", DashGuiIconWeights["regular"],"signal-alt-slash"],
-    "signal_some":             ["Some Signal", DashGuiIconWeights["regular"],"signal-alt-2"],
-    "signature":               ["Signature", DashGuiIconWeights["regular"],"signature"],
-    "sitemap":                 ["Sitemap", DashGuiIconWeights["regular"],"sitemap"],
-    "slash":                   ["Slash", DashGuiIconWeights["regular"],"slash"],
-    "slash_heavy":             ["Slash Heavy", DashGuiIconWeights["solid"],"slash"],
-    "sliders_horizontal":      ["Sliders (Horizontal)", DashGuiIconWeights["regular"],"sliders-h"],
-    "soccer_ball":             ["Soccer Ball", DashGuiIconWeights["regular"], "futbol"],
-    "sort":                    ["Sort", DashGuiIconWeights["regular"], "sort"],
-    "sort_numeric_down":       ["Sort (Numeric - Down)", DashGuiIconWeights["regular"], "sort-numeric-down"],
-    "spinner":                 ["Spinner", DashGuiIconWeights["regular"],"spinner"],
-    "stars":                   ["Stars", DashGuiIconWeights["regular"], "stars"],
-    "stop":                    ["Stop", DashGuiIconWeights["solid"], "stop"],
-    "stopwatch":               ["Stopwatch", DashGuiIconWeights["regular"], "stopwatch"],
-    "stroopwafel":             ["Stroopwafel", DashGuiIconWeights["regular"], "stroopwafel"],
-    "sun":                     ["Sun", DashGuiIconWeights["regular"], "sun"],
-    "sun_dust":                ["Sun Dust", DashGuiIconWeights["regular"], "sun-dust"],
-    "sword":                   ["Sword", DashGuiIconWeights["regular"],"sword"],
-    "swords":                  ["Swords", DashGuiIconWeights["regular"],"swords"],
-    "sync":                    ["Sync", DashGuiIconWeights["regular"], "sync"],
-    "tablet":                  ["Tablet", DashGuiIconWeights["regular"], "tablet-alt"],
-    "tablet_alt":              ["Tablet (Alt)", DashGuiIconWeights["regular"], "tablet-android-alt"],
-    "tag":                     ["Tag", DashGuiIconWeights["regular"], "tag"],
-    "tally":                   ["Tally", DashGuiIconWeights["regular"], "tally"],
-    "tasks":                   ["Tasks", DashGuiIconWeights["regular"], "tasks"],
-    "tasks_alt":               ["Tasks", DashGuiIconWeights["regular"], "tasks-alt"],
-    "tennis_ball":             ["Tennis Ball", DashGuiIconWeights["regular"], "tennis-ball"],
-    "text":                    ["Text", DashGuiIconWeights["regular"], "font"],
-    "terminal":                ["Terminal", DashGuiIconWeights["regular"], "terminal"],
-    "thumbs_up":               ["Thumbs Up", DashGuiIconWeights["regular"], "thumbs-up"],
-    "ticket":                  ["Ticket", DashGuiIconWeights["regular"], "ticket-alt"],
-    "toggle_off":              ["Toggle Off", DashGuiIconWeights["regular"], "toggle-off"],
-    "toggle_off_light":        ["Toggle Off (Light)", DashGuiIconWeights["light"], "toggle-off"],
-    "toggle_off_solid":        ["Toggle Off (Solid)", DashGuiIconWeights["solid"], "toggle-off"],
-    "toggle_on":               ["Toggle On", DashGuiIconWeights["regular"], "toggle-on"],
-    "toggle_on_light":         ["Toggle On (Light)", DashGuiIconWeights["light"], "toggle-on"],
-    "toggle_on_solid":         ["Toggle On (Solid)", DashGuiIconWeights["solid"], "toggle-on"],
-    "toilet_paper":            ["Toilet Paper", DashGuiIconWeights["regular"], "toilet-paper-alt"],
-    "tools":                   ["Tools", DashGuiIconWeights["regular"], "tools"],
-    "transferring":            ["Transferring", DashGuiIconWeights["regular"], "exchange"],
-    "trash":                   ["Trash", DashGuiIconWeights["regular"], "trash"],
-    "trash_alt":               ["Trash Alt", DashGuiIconWeights["regular"], "trash-alt"],
-    "trash_alt_light":         ["Trash Alt (Light)", DashGuiIconWeights["light"], "trash-alt"],
-    "trash_alt_solid":         ["Trash Alt (Solid)", DashGuiIconWeights["solid"], "trash-alt"],
-    "trash_restore":           ["Trash Undo", DashGuiIconWeights["regular"], "trash-restore"],
-    "trash_solid":             ["Trash", DashGuiIconWeights["solid"], "trash"],
-    "triangle":                ["Triangle", DashGuiIconWeights["regular"], "triangle"],
-    "truck":                   ["Truck", DashGuiIconWeights["regular"], "truck"],
-    "unchecked_box":           ["Unchecked Box", DashGuiIconWeights["regular"],"square"],
-    "unchecked_box_thin":      ["Unchecked Box", DashGuiIconWeights["light"],"square"],
-    "undo":                    ["Undo", DashGuiIconWeights["regular"], "undo"],
-    "unknown":                 ["Unknown Icon", DashGuiIconWeights["light"], "spider-black-widow"],
-    "unlink":                  ["Unlink", DashGuiIconWeights["regular"], "unlink"],
-    "unlock":                  ["Unlocked", DashGuiIconWeights["regular"], "unlock"],
-    "unlock_alt":              ["Unlocked", DashGuiIconWeights["regular"], "lock-open"],
-    "upload":                  ["Upload", DashGuiIconWeights["regular"], "upload"],
-    "upload_file":             ["Upload File", DashGuiIconWeights["regular"], "file-upload"],
-    "user":                    ["User", DashGuiIconWeights["regular"], "user"],
-    "user_solid":              ["User (Solid)", DashGuiIconWeights["solid"], "user"],
-    "users":                   ["Users", DashGuiIconWeights["regular"], "users"],
-    "users_solid":             ["Users (Solid)", DashGuiIconWeights["solid"], "users"],
-    "user_settings":           ["User Settings", DashGuiIconWeights["regular"], "user-cog"],
-    "video":                   ["Video", DashGuiIconWeights["regular"], "video"],
-    "video_solid":             ["Video (Solid)", DashGuiIconWeights["solid"], "video"],
-    "view":                    ["View", DashGuiIconWeights["regular"], "eye"],
-    "visible":                 ["Visible", DashGuiIconWeights["regular"], "eye"],
-    "web":                     ["Web", DashGuiIconWeights["solid"], "spider-web"],
-    "windows_logo":            ["Windows Logo", DashGuiIconWeights["brand"], "windows"],
-    "worker":                  ["Worker", DashGuiIconWeights["regular"], "user-hard-hat"],
-    "world":                   ["World", DashGuiIconWeights["regular"], "globe"],
-    "wrench":                  ["Wrench", DashGuiIconWeights["regular"], "wrench"],
-    "wrestling_mask":          ["Wrestling Mask", DashGuiIconWeights["regular"], "luchador"],
-    "zoom_in":                 ["Zoom In", DashGuiIconWeights["regular"],"search-plus"],
-    "zoom_out":                ["Zoom Out", DashGuiIconWeights["regular"],"search-minus"],
+    "abacus":                    ["Abacus", DashGuiIconWeights["regular"], "abacus"],
+    "accessible":                ["Accessible", DashGuiIconWeights["regular"], "universal-access"],
+    "add":                       ["Add", DashGuiIconWeights["regular"], "plus"],
+    "add_circle":                ["Add (Circle)", DashGuiIconWeights["regular"], "plus-circle"],
+    "add_layer":                 ["Add Layer", DashGuiIconWeights["regular"], "layer-plus"],
+    "add_light":                 ["Add (Light)", DashGuiIconWeights["light"], "plus"],
+    "add_person":                ["Add Person", DashGuiIconWeights["regular"], "user-plus"],
+    "add_phone":                 ["Add Phone", DashGuiIconWeights["regular"], "phone-plus"],
+    "add_square":                ["Add (Square)", DashGuiIconWeights["regular"], "plus-square"],
+    "add_square_light":          ["Add (Square)", DashGuiIconWeights["light"], "plus-square"],
+    "add_to_cart":               ["Add To Cart", DashGuiIconWeights["regular"], "cart-plus"],
+    "admin_tools":               ["Admin Tools", DashGuiIconWeights["regular"], "shield-alt"],
+    "alert":                     ["Alert", DashGuiIconWeights["solid"], "exclamation"],
+    "alert_bulb":                ["Alert Bulb", DashGuiIconWeights["regular"], "lightbulb-exclamation"],
+    "alert_square":              ["Alert Square", DashGuiIconWeights["regular"], "exclamation-square"],
+    "alert_square_solid":        ["Alert Square Solid", DashGuiIconWeights["solid"], "exclamation-square"],
+    "alert_triangle":            ["Alert Triangle", DashGuiIconWeights["solid"], "exclamation-triangle"],
+    "align_left":                ["Align Left", DashGuiIconWeights["regular"], "align-left"],
+    "align_right":               ["Align Right", DashGuiIconWeights["regular"], "align-right"],
+    "align_center":              ["Align Center", DashGuiIconWeights["regular"], "align-center"],
+    "analytics":                 ["Analytics", DashGuiIconWeights["regular"], "analytics"],
+    "angle_left":                ["Angle Left", DashGuiIconWeights["solid"], "angle-double-left"],
+    "angle_right":               ["Angle Right", DashGuiIconWeights["solid"], "angle-double-right"],
+    "apple_logo":                ["Apple Logo", DashGuiIconWeights["brand"], "apple"],
+    "archive":                   ["Archive", DashGuiIconWeights["regular"], "archive"],
+    "archive_light":             ["Archive (Light)", DashGuiIconWeights["light"], "archive"],
+    "arrow_down":                ["Arrow Down", DashGuiIconWeights["regular"], "angle-down"],
+    "arrow_down_heavy":          ["Arrow Down", DashGuiIconWeights["solid"], "angle-down"],
+    "arrow_down_alt":            ["Arrow Down Alt", DashGuiIconWeights["regular"], "arrow-down"],
+    "arrow_down_alt_heavy":      ["Arrow Down Alt (Heavy)", DashGuiIconWeights["solid"], "arrow-down"],
+    "arrow_left":                ["Arrow Left", DashGuiIconWeights["regular"], "angle-left"],
+    "arrow_left_heavy":          ["Arrow Left (Heavy)", DashGuiIconWeights["solid"], "angle-left"],
+    "arrow_left_alt":            ["Arrow Left Alt", DashGuiIconWeights["regular"], "arrow-left"],
+    "arrow_left_alt_heavy":      ["Arrow Left Alt (Heavy)", DashGuiIconWeights["solid"], "arrow-left"],
+    "arrow_left_alt2":           ["Arrow Left Alt 2", DashGuiIconWeights["regular"], "chevron-left"],
+    "arrow_left_alt2_heavy":     ["Arrow Left Alt 2 (Heavy)", DashGuiIconWeights["solid"], "chevron-left"],
+    "arrow_left_long":           ["Arrow Left Long", DashGuiIconWeights["regular"], "long-arrow-left"],
+    "arrow_left_circled":        ["Arrow Left Circled", DashGuiIconWeights["light"], "arrow-circle-left"],
+    "arrow_left_from_right":     ["Arrow Left From Right", DashGuiIconWeights["regular"], "arrow-from-right"],
+    "arrow_right_from_left":     ["Arrow Right From Left", DashGuiIconWeights["regular"], "arrow-from-left"],
+    "arrow_right":               ["Arrow Right", DashGuiIconWeights["regular"], "angle-right"],
+    "arrow_right_alt":           ["Arrow Right Alt", DashGuiIconWeights["regular"], "arrow-right"],
+    "arrow_right_alt_2":         ["Arrow Right Alt 2", DashGuiIconWeights["regular"], "arrow-alt-right"],
+    "arrow_right_alt_2_heavy":   ["Arrow Right Alt 2", DashGuiIconWeights["solid"], "arrow-alt-right"],
+    "arrow_right_alt_heavy":     ["Arrow Right Alt (Heavy)", DashGuiIconWeights["solid"], "arrow-right"],
+    "arrow_right_circled":       ["Arrow Right Circled", DashGuiIconWeights["regular"], "arrow-circle-right"],
+    "arrow_right_circled_alt":   ["Arrow Right Circled Alt", DashGuiIconWeights["regular"], "arrow-alt-circle-right"],
+    "arrow_right_heavy":         ["Arrow Right (Heavy)", DashGuiIconWeights["solid"], "angle-right"],
+    "arrow_right_to_right":      ["Arrow Left From Right", DashGuiIconWeights["regular"], "arrow-to-right"],
+    "arrow_to_left":             ["Arrow To Left", DashGuiIconWeights["regular"], "arrow-to-left"],
+    "arrow_up":                  ["Arrow Up", DashGuiIconWeights["regular"], "angle-up"],
+    "arrow_up_alt":              ["Arrow Up Alt", DashGuiIconWeights["regular"], "arrow-up"],
+    "arrow_up_alt_heavy":        ["Arrow Up Alt (Heavy)", DashGuiIconWeights["solid"], "arrow-up"],
+    "asterisk":                  ["Asterisk", DashGuiIconWeights["solid"], "asterisk"],
+    "at_sign":                   ["At Sign", DashGuiIconWeights["regular"], "at"],
+    "award":                     ["Award", DashGuiIconWeights["regular"], "award"],
+    "aws_logo":                  ["AWS Logo", DashGuiIconWeights["brand"], "aws"],
+    "backward":                  ["Backward", DashGuiIconWeights["solid"], "backward"],
+    "barcode":                   ["Barcode", DashGuiIconWeights["light"], "barcode-alt"],
+    "baseball":                  ["Baseball", DashGuiIconWeights["regular"], "baseball-ball"],
+    "baseball_bat":              ["Baseball Bat", DashGuiIconWeights["regular"], "baseball"],
+    "basketball":                ["Basketball", DashGuiIconWeights["regular"], "basketball-ball"],
+    "bat":                       ["Bat", DashGuiIconWeights["regular"], "bat"],
+    "battle_axe":                ["Battle Axe", DashGuiIconWeights["regular"], "axe-battle"],
+    "binoculars":                ["Binoculars", DashGuiIconWeights["regular"], "binoculars"],
+    "bolt":                      ["Bolt", DashGuiIconWeights["solid"], "bolt"],
+    "book_open":                 ["Book (Open)", DashGuiIconWeights["regular"], "book-open"],
+    "box":                       ["Box", DashGuiIconWeights["regular"], "box"],
+    "box_open":                  ["Box (Open)", DashGuiIconWeights["regular"], "box-open"],
+    "boxes":                     ["Boxes", DashGuiIconWeights["regular"], "boxes"],
+    "browser_window":            ["Browser Window", DashGuiIconWeights["solid"], "window"],
+    "bug":                       ["Bug", DashGuiIconWeights["regular"], "bug"],
+    "building":                  ["Building", DashGuiIconWeights["regular"], "building"],
+    "building_solid":            ["Building (Solid)", DashGuiIconWeights["solid"], "building"],
+    "business_time":             ["Business Time", DashGuiIconWeights["regular"], "business-time"],
+    "calendar":                  ["Calendar", DashGuiIconWeights["regular"], "calendar-alt"],
+    "camera":                    ["Camera", DashGuiIconWeights["regular"], "camera"],
+    "camera_alt":                ["Camera (Alt)", DashGuiIconWeights["regular"], "camera-retro"],
+    "camera_alt_solid":          ["Camera (Alt, Solid)", DashGuiIconWeights["solid"], "camera-retro"],
+    "cancel":                    ["Cancel", DashGuiIconWeights["regular"], "ban"],
+    "cancel_thick":              ["Cancel (Thick)", DashGuiIconWeights["solid"], "ban"],
+    "car":                       ["Car", DashGuiIconWeights["regular"], "car"],
+    "caret_down":                ["Caret Down", DashGuiIconWeights["solid"], "caret-down"],
+    "caret_left":                ["Caret Left", DashGuiIconWeights["solid"], "caret-left"],
+    "caret_right":               ["Caret Right", DashGuiIconWeights["solid"], "caret-right"],
+    "caret_up":                  ["Caret Up", DashGuiIconWeights["solid"], "caret-up"],
+    "cd":                        ["CD", DashGuiIconWeights["regular"], "compact-disc"],
+    "cdn_tool_accordion":        ["Accordion Tool", DashGuiIconWeights["regular"], "angle-double-down"],
+    "cdn_tool_block_layout":     ["Block Layout Tool", DashGuiIconWeights["regular"], "th-large"],
+    "cdn_tool_career_path":      ["Career Path Tool", DashGuiIconWeights["regular"], "shoe-prints"],
+    "cdn_tool_embed":            ["Embed Tool", DashGuiIconWeights["regular"], "expand-arrows"],
+    "cdn_tool_file":             ["File Tool", DashGuiIconWeights["light"], "file"],
+    "cdn_tool_gallery":          ["Gallery Tool", DashGuiIconWeights["regular"], "images"],
+    "cdn_tool_header":           ["Header Tool", DashGuiIconWeights["regular"], "heading"],
+    "cdn_tool_hrule":            ["Hrule Tool", DashGuiIconWeights["regular"], "ruler-horizontal"],
+    "cdn_tool_image":            ["Image Tool", DashGuiIconWeights["regular"], "image"],
+    "cdn_tool_layout":           ["Layout Tool", DashGuiIconWeights["regular"], "columns"],
+    "cdn_tool_lightbox":         ["Lightbox Tool", DashGuiIconWeights["regular"], "expand-wide"],
+    "cdn_tool_link":             ["Link Tool", DashGuiIconWeights["light"], "external-link"],
+    "cdn_tool_link_bank":        ["Link Bank Tool", DashGuiIconWeights["regular"], "link"],
+    "cdn_tool_subheader":        ["Sub Header Tool", DashGuiIconWeights["light"], "heading"],
+    "cdn_tool_text":             ["Text Tool", DashGuiIconWeights["regular"], "font"],
+    "cdn_tool_video":            ["Text Tool", DashGuiIconWeights["regular"], "video"],
+    "cell":                      ["Cell Phone", DashGuiIconWeights["regular"], "mobile-alt"],
+    "checked_box":               ["Checked Box", DashGuiIconWeights["regular"], "check-square"],
+    "checked_box_solid":         ["Checked Box", DashGuiIconWeights["solid"], "check-square"],
+    "circle":                    ["Circle", DashGuiIconWeights["regular"], "circle"],
+    "circle_dot":                ["Circle Dot", DashGuiIconWeights["regular"], "dot-circle"],
+    "circle_arrow_right":        ["Circle Arrow (Right)", DashGuiIconWeights["solid"], "chevron-circle-right"],
+    "circle_notch":              ["Circle Notch (Top)", DashGuiIconWeights["solid"], "circle-notch"],
+    "click":                     ["Click", DashGuiIconWeights["regular"], "bullseye-pointer"],
+    "clipboard":                 ["Clipboard", DashGuiIconWeights["regular"], "clipboard-list"],
+    "cloud_logs":                ["Cloud Logs", DashGuiIconWeights["regular"], "fog"],
+    "clone":                     ["Clone", DashGuiIconWeights["regular"], "clone"],
+    "close":                     ["Close", DashGuiIconWeights["regular"], "times"],
+    "close_circle":              ["Close (Circle)", DashGuiIconWeights["regular"], "times-circle"],
+    "close_square":              ["Close (Square)", DashGuiIconWeights["regular"], "times-square"],
+    "close_thin":                ["Close (Thin)", DashGuiIconWeights["light"], "times"],
+    "cloud":                     ["Cloud", DashGuiIconWeights["regular"], "cloud"],
+    "code_branch":               ["Code Branch", DashGuiIconWeights["regular"], "code-branch"],
+    "code_merge":                ["Code Merge", DashGuiIconWeights["regular"], "code-merge"],
+    "color_palette":             ["Color Palette", DashGuiIconWeights["regular"], "palette"],
+    "comment":                   ["Conversation Bubble", DashGuiIconWeights["solid"], "comment"],
+    "comment_square":            ["Conversation Box", DashGuiIconWeights["regular"], "comment-alt-lines"],
+    "comment_square_smile":      ["Conversation Box Smile", DashGuiIconWeights["regular"], "comment-alt-smile"],
+    "comments":                  ["Multiple Conversations Bubble", DashGuiIconWeights["solid"], "comments"],
+    "comments_square":           ["Multiple Conversations Boxes", DashGuiIconWeights["regular"], "comments-alt"],
+    "complete":                  ["Complete", DashGuiIconWeights["regular"], "check"],
+    "contacts":                  ["Contacts", DashGuiIconWeights["regular"], "address-book"],
+    "copy":                      ["Copy", DashGuiIconWeights["regular"], "copy"],
+    "crown":                     ["Crown", DashGuiIconWeights["regular"], "crown"],
+    "cube":                      ["Cube", DashGuiIconWeights["regular"], "cube"],
+    "cubes":                     ["Cubes", DashGuiIconWeights["regular"], "cubes"],
+    "database":                  ["Database", DashGuiIconWeights["regular"], "database"],
+    "delete":                    ["Delete", DashGuiIconWeights["regular"], "times"],
+    "delete_thin":               ["Delete (thin_", DashGuiIconWeights["light"], "times"],
+    "dollar_sign":               ["Dollar Sign", DashGuiIconWeights["solid"], "dollar-sign"],
+    "dollar_sign_circle":        ["Dollar Sign Circle", DashGuiIconWeights["regular"], "usd-circle"],
+    "dollar_sign_square":        ["Dollar Sign Square", DashGuiIconWeights["regular"], "usd-square"],
+    "dot":                       ["Dot", DashGuiIconWeights["light"], "circle"],
+    "dot_solid":                 ["Dot", DashGuiIconWeights["solid"], "circle"],
+    "dots_horizontal":           ["Horizontal Dots", DashGuiIconWeights["solid"], "ellipsis-h"],
+    "dots_vertical":             ["Vertical Dots", DashGuiIconWeights["solid"], "ellipsis-v"],
+    "download":                  ["Download", DashGuiIconWeights["regular"], "download"],
+    "download_solid":            ["Download", DashGuiIconWeights["solid"], "download"],
+    "download_file":             ["Download File", DashGuiIconWeights["regular"], "file-download"],
+    "dropbox_logo":              ["Dropbox Logo", DashGuiIconWeights["brand"], "dropbox"],
+    "edit":                      ["Edit", DashGuiIconWeights["regular"], "pencil"],
+    "edit_square":               ["Edit (Square)", DashGuiIconWeights["regular"], "edit"],
+    "email":                     ["Email", DashGuiIconWeights["regular"], "at"],
+    "empty":                     ["Empty", DashGuiIconWeights["regular"], "empty-set"],
+    "empty_folder":              ["Empty Folder", DashGuiIconWeights["regular"], "folder-times"],
+    "envelope":                  ["Email Envelope", DashGuiIconWeights["regular"], "envelope"],
+    "envelope_solid":            ["Email Envelope (Solid)", DashGuiIconWeights["solid"], "envelope"],
+    "eraser":                    ["Eraser", DashGuiIconWeights["solid"], "eraser"],
+    "exec":                      ["Executive", DashGuiIconWeights["light"], "business-time"],
+    "expand":                    ["Expand View", DashGuiIconWeights["regular"], "expand-alt"],
+    "expand_square":             ["Expand View", DashGuiIconWeights["regular"], "expand"],
+    "expand_square_arrows":      ["Expand View", DashGuiIconWeights["regular"], "expand-arrows-alt"],
+    "file":                      ["File", DashGuiIconWeights["regular"], "file"],
+    "file_audio":                ["Audio File", DashGuiIconWeights["regular"], "file-audio"],
+    "file_bar_chart":            ["Bar Chart File", DashGuiIconWeights["regular"], "file-chart-line"],
+    "file_code":                 ["Code File", DashGuiIconWeights["regular"], "file-code"],
+    "file_csv":                  ["CSV File", DashGuiIconWeights["regular"], "file-csv"],
+    "file_edit":                 ["Edit File", DashGuiIconWeights["regular"], "file-edit"],
+    "file_image":                ["Image File", DashGuiIconWeights["regular"], "file-image"],
+    "file_lined":                ["File Lined", DashGuiIconWeights["regular"], "file-alt"],
+    "file_pdf":                  ["PDF File", DashGuiIconWeights["regular"], "file-pdf"],
+    "file_powerpoint":           ["Powerpoint File", DashGuiIconWeights["regular"], "file-powerpoint"],
+    "file_signed":               ["Signed File", DashGuiIconWeights["regular"], "file-contract"],
+    "file_spreadsheet":          ["Spreadsheet File", DashGuiIconWeights["regular"], "file-spreadsheet"],
+    "file_video":                ["Video File", DashGuiIconWeights["regular"], "file-video"],
+    "file_word":                 ["Word File", DashGuiIconWeights["regular"], "file-word"],
+    "filter":                    ["Filter", DashGuiIconWeights["regular"], "filter"],
+    "filter_solid":              ["Filter", DashGuiIconWeights["solid"], "filter"],
+    "flag":                      ["Flag", DashGuiIconWeights["solid"], "flag-alt"],
+    "flag_checkered":            ["Flag", DashGuiIconWeights["solid"], "flag-checkered"],
+    "film":                      ["Film", DashGuiIconWeights["regular"], "film"],
+    "folder":                    ["Folder", DashGuiIconWeights["regular"], "folder"],
+    "folder_solid":              ["Folder (Solid)", DashGuiIconWeights["solid"], "folder"],
+    "folder_tree":               ["Folder Tree", DashGuiIconWeights["regular"], "folder-tree"],
+    "font":                      ["Font", DashGuiIconWeights["regular"], "font"],
+    "font_alt":                  ["Font", DashGuiIconWeights["regular"], "bold"],
+    "football":                  ["Football", DashGuiIconWeights["regular"], "football-ball"],
+    "forward":                   ["Forward", DashGuiIconWeights["solid"], "forward"],
+    "gauge":                     ["Gauge", DashGuiIconWeights["regular"], "tachometer-alt"],
+    "gear":                      ["Gear", DashGuiIconWeights["regular"], "cog"],
+    "gears":                     ["Gears", DashGuiIconWeights["regular"], "cogs"],
+    "gem":                       ["Gem", DashGuiIconWeights["solid"], "gem"],
+    "ghost":                     ["Ghost", DashGuiIconWeights["regular"], "ghost"],
+    "git":                       ["Git", DashGuiIconWeights["brand"], "git-square"],
+    "github":                    ["Github", DashGuiIconWeights["brand"], "github"],
+    "goal_reply":                ["Goal Reply", DashGuiIconWeights["solid"], "reply"],
+    "golf_ball":                 ["Golf Ball", DashGuiIconWeights["regular"], "golf-ball"],
+    "google_drive":              ["Google Drive", DashGuiIconWeights["brand"], "google-drive"],
+    "graph":                     ["Graph", DashGuiIconWeights["solid"], "bezier-curve"],
+    "group":                     ["Group", DashGuiIconWeights["solid"], "layer-group"],
+    "hand_holding_box":          ["Hand Holding Box", DashGuiIconWeights["regular"], "hand-holding-box"],
+    "hand_pointer":              ["Hand Pointer", DashGuiIconWeights["regular"], "hand-pointer"],
+    "handshake":                 ["Handshake", DashGuiIconWeights["regular"], "handshake"],
+    "hashtag":                   ["Hashtag", DashGuiIconWeights["solid"], "hashtag"],
+    "headphones":                ["Audio", DashGuiIconWeights["regular"], "headphones"],
+    "hidden":                    ["Hidden", DashGuiIconWeights["regular"], "eye-slash"],
+    "history":                   ["History", DashGuiIconWeights["regular"], "history"],
+    "hockey_puck":               ["Hockey Puck", DashGuiIconWeights["regular"], "hockey-puck"],
+    "hr":                        ["Human Resources", DashGuiIconWeights["light"], "poll-people"],
+    "hyphen":                    ["Hyphen", DashGuiIconWeights["regular"], "minus"],
+    "hyphen_solid":              ["Hyphen (Solid)", DashGuiIconWeights["solid"], "minus"],
+    "id_card":                   ["ID Card", DashGuiIconWeights["regular"], "address-card"],
+    "image":                     ["Image", DashGuiIconWeights["regular"], "image"],
+    "images":                    ["Images", DashGuiIconWeights["regular"], "images"],
+    "import_file":               ["Import File", DashGuiIconWeights["regular"], "file-import"],
+    "infinity":                  ["Infinity", DashGuiIconWeights["regular"], "infinity"],
+    "info":                      ["Info Circle", DashGuiIconWeights["regular"], "info-circle"],
+    "invoice":                   ["Invoice", DashGuiIconWeights["regular"], "file-invoice-dollar"],
+    "invoice_alt":               ["Invoice Alt", DashGuiIconWeights["regular"], "file-invoice"],
+    "javascript_logo":           ["JavaScript", DashGuiIconWeights["brand"], "js-square"],
+    "key":                       ["Key", DashGuiIconWeights["regular"], "key"],
+    "key_solid":                 ["Key (Solid)", DashGuiIconWeights["solid"], "key"],
+    "layers":                    ["Layers", DashGuiIconWeights["regular"], "layer-group"],
+    "level_up":                  ["Level Up", DashGuiIconWeights["regular"], "level-up"],
+    "level_down":                ["Level Down", DashGuiIconWeights["regular"], "level-down"],
+    "link":                      ["Link", DashGuiIconWeights["regular"], "external-link"],
+    "link_heavy":                ["Link (Solid)", DashGuiIconWeights["solid"], "external-link"],
+    "linked":                    ["Linked", DashGuiIconWeights["regular"], "link"],
+    "list":                      ["List", DashGuiIconWeights["regular"], "bars"],
+    "list_boxed":                ["List Boxed", DashGuiIconWeights["regular"], "list-alt"],
+    "list_bulleted":             ["Bulleted List", DashGuiIconWeights["regular"], "list"],
+    "list_offset":               ["List Offset", DashGuiIconWeights["regular"], "stream"],
+    "lock":                      ["Lock", DashGuiIconWeights["regular"], "lock"],
+    "location_circled":          ["Location - Circled", DashGuiIconWeights["regular"], "location-circle"],
+    "log_in":                    ["Log In", DashGuiIconWeights["regular"], "sign-in"],
+    "log_out":                   ["Log Out", DashGuiIconWeights["regular"], "sign-out"],
+    "magic_wand":                ["Magic Wand", DashGuiIconWeights["solid"], "magic"],
+    "map_marked":                ["Map - Marked", DashGuiIconWeights["regular"],"map-marked-alt"],
+    "map_marked_solid":          ["Map - Marked", DashGuiIconWeights["solid"],"map-marked-alt"],
+    "map_marker":                ["Map Marker", DashGuiIconWeights["regular"], "map-marker-alt"],
+    "map_marker_solid":          ["Map Marker", DashGuiIconWeights["solid"], "map-marker-alt"],
+    "minimize":                  ["Minimize", DashGuiIconWeights["regular"], "compress-alt"],
+    "minus_circle":              ["Minus Circle", DashGuiIconWeights["regular"], "minus-circle"],
+    "minus_sign":                ["Minus Sign", DashGuiIconWeights["regular"], "minus"],
+    "minus_square":              ["Minus Square", DashGuiIconWeights["regular"], "minus-square"],
+    "moon":                      ["Moon", DashGuiIconWeights["regular"], "moon"],
+    "more":                      ["More", DashGuiIconWeights["regular"], "window-restore"],
+    "move":                      ["Move", DashGuiIconWeights["regular"], "arrows-alt"],
+    "music":                     ["Music", DashGuiIconWeights["regular"], "music"],
+    "navigation":                ["Navigation - Top Level", DashGuiIconWeights["regular"], "tasks"],
+    "next":                      ["Next", DashGuiIconWeights["solid"], "step-forward"],
+    "newsfeed":                  ["Newsfeed", DashGuiIconWeights["regular"], "newspaper"],
+    "note":                      ["Note", DashGuiIconWeights["regular"], "sticky-note"],
+    "notify":                    ["Notify", DashGuiIconWeights["regular"], "bell"],
+    "notify_solid":              ["Notify (Solid)", DashGuiIconWeights["solid"], "bell"],
+    "object_group":              ["Object Group", DashGuiIconWeights["regular"], "object-group"],
+    "open_folder":               ["Open Folder", DashGuiIconWeights["regular"], "folder-open"],
+    "paperclip":                 ["Paperclip", DashGuiIconWeights["regular"], "paperclip"],
+    "pause":                     ["Pause", DashGuiIconWeights["regular"], "pause"],
+    "pen":                       ["Pen", DashGuiIconWeights["regular"], "pen"],
+    "pencil_paintbrush":         ["Pencil and Paintbrush", DashGuiIconWeights["regular"], "pencil-paintbrush"],
+    "pencil_ruler":              ["Pencil and Ruler", DashGuiIconWeights["regular"], "pencil-ruler"],
+    "phone":                     ["Phone", DashGuiIconWeights["regular"], "phone"],
+    "phone_solid":               ["Phone (Solid)", DashGuiIconWeights["solid"], "phone"],
+    "play":                      ["Play", DashGuiIconWeights["solid"], "play"],
+    "portal_editor":             ["Content Builder", DashGuiIconWeights["regular"], "toolbox"],
+    "previous":                  ["Previous", DashGuiIconWeights["solid"], "step-backward"],
+    "print":                     ["Print", DashGuiIconWeights["regular"], "print"],
+    "print_alt":                 ["Print (Alt)", DashGuiIconWeights["solid"], "print"],
+    "project_diagram":           ["Project Diagram", DashGuiIconWeights["regular"], "project-diagram"],
+    "python_logo":               ["Python Logo", DashGuiIconWeights["brand"], "python"],
+    "random":                    ["Random", DashGuiIconWeights["solid"], "random"],
+    "read":                      ["Read", DashGuiIconWeights["regular"], "book-reader"],
+    "refresh":                   ["Refresh", DashGuiIconWeights["regular"], "redo"],
+    "remove_person":             ["Remove Person", DashGuiIconWeights["regular"], "user-slash"],
+    "remove_notification":       ["Remove Notification", DashGuiIconWeights["regular"], "bell-slash"],
+    "remove_notification_solid": ["Remove Notification (Solid)", DashGuiIconWeights["solid"], "bell-slash"],
+    "robot":                     ["Robot", DashGuiIconWeights["regular"], "robot"],
+    "rocket":                    ["Rocket", DashGuiIconWeights["regular"], "rocket"],
+    "rotate":                    ["Rotate", DashGuiIconWeights["regular"], "sync-alt"],
+    "save":                      ["Save", DashGuiIconWeights["regular"],"save"],
+    "scale":                     ["Scale", DashGuiIconWeights["regular"], "expand-arrows-alt"],
+    "search":                    ["Search", DashGuiIconWeights["regular"],"search"],
+    "send":                      ["Send", DashGuiIconWeights["solid"],"paper-plane"],
+    "server":                    ["Server", DashGuiIconWeights["regular"], "server"],
+    "share":                     ["Share", DashGuiIconWeights["regular"],"share"],
+    "share_alt":                 ["Share (Alt)", DashGuiIconWeights["regular"],"share-alt"],
+    "share_alt_solid":           ["Share (Alt, Solid)", DashGuiIconWeights["solid"],"share-alt"],
+    "shield":                    ["Shield", DashGuiIconWeights["regular"],"shield-alt"],
+    "signal_full":               ["Full Signal", DashGuiIconWeights["regular"],"signal-alt"],
+    "signal_none":               ["No Signal", DashGuiIconWeights["regular"],"signal-alt-slash"],
+    "signal_some":               ["Some Signal", DashGuiIconWeights["regular"],"signal-alt-2"],
+    "signature":                 ["Signature", DashGuiIconWeights["regular"],"signature"],
+    "sitemap":                   ["Sitemap", DashGuiIconWeights["regular"],"sitemap"],
+    "slash":                     ["Slash", DashGuiIconWeights["regular"],"slash"],
+    "slash_heavy":               ["Slash Heavy", DashGuiIconWeights["solid"],"slash"],
+    "sliders_horizontal":        ["Sliders (Horizontal)", DashGuiIconWeights["regular"],"sliders-h"],
+    "soccer_ball":               ["Soccer Ball", DashGuiIconWeights["regular"], "futbol"],
+    "sort":                      ["Sort", DashGuiIconWeights["regular"], "sort"],
+    "sort_numeric_down":         ["Sort (Numeric - Down)", DashGuiIconWeights["regular"], "sort-numeric-down"],
+    "spinner":                   ["Spinner", DashGuiIconWeights["regular"],"spinner"],
+    "stars":                     ["Stars", DashGuiIconWeights["regular"], "stars"],
+    "stop":                      ["Stop", DashGuiIconWeights["solid"], "stop"],
+    "stopwatch":                 ["Stopwatch", DashGuiIconWeights["regular"], "stopwatch"],
+    "stroopwafel":               ["Stroopwafel", DashGuiIconWeights["regular"], "stroopwafel"],
+    "sun":                       ["Sun", DashGuiIconWeights["regular"], "sun"],
+    "sun_dust":                  ["Sun Dust", DashGuiIconWeights["regular"], "sun-dust"],
+    "sword":                     ["Sword", DashGuiIconWeights["regular"],"sword"],
+    "swords":                    ["Swords", DashGuiIconWeights["regular"],"swords"],
+    "sync":                      ["Sync", DashGuiIconWeights["regular"], "sync"],
+    "tablet":                    ["Tablet", DashGuiIconWeights["regular"], "tablet-alt"],
+    "tablet_alt":                ["Tablet (Alt)", DashGuiIconWeights["regular"], "tablet-android-alt"],
+    "tag":                       ["Tag", DashGuiIconWeights["regular"], "tag"],
+    "tag_solid":                 ["Tag (Solid)", DashGuiIconWeights["solid"], "tag"],
+    "tally":                     ["Tally", DashGuiIconWeights["regular"], "tally"],
+    "tasks":                     ["Tasks", DashGuiIconWeights["regular"], "tasks"],
+    "tasks_alt":                 ["Tasks", DashGuiIconWeights["regular"], "tasks-alt"],
+    "tennis_ball":               ["Tennis Ball", DashGuiIconWeights["regular"], "tennis-ball"],
+    "text":                      ["Text", DashGuiIconWeights["regular"], "font"],
+    "terminal":                  ["Terminal", DashGuiIconWeights["regular"], "terminal"],
+    "thumbs_up":                 ["Thumbs Up", DashGuiIconWeights["regular"], "thumbs-up"],
+    "ticket":                    ["Ticket", DashGuiIconWeights["regular"], "ticket-alt"],
+    "toggle_off":                ["Toggle Off", DashGuiIconWeights["regular"], "toggle-off"],
+    "toggle_off_light":          ["Toggle Off (Light)", DashGuiIconWeights["light"], "toggle-off"],
+    "toggle_off_solid":          ["Toggle Off (Solid)", DashGuiIconWeights["solid"], "toggle-off"],
+    "toggle_on":                 ["Toggle On", DashGuiIconWeights["regular"], "toggle-on"],
+    "toggle_on_light":           ["Toggle On (Light)", DashGuiIconWeights["light"], "toggle-on"],
+    "toggle_on_solid":           ["Toggle On (Solid)", DashGuiIconWeights["solid"], "toggle-on"],
+    "toilet_paper":              ["Toilet Paper", DashGuiIconWeights["regular"], "toilet-paper-alt"],
+    "tools":                     ["Tools", DashGuiIconWeights["regular"], "tools"],
+    "transferring":              ["Transferring", DashGuiIconWeights["regular"], "exchange"],
+    "trash":                     ["Trash", DashGuiIconWeights["regular"], "trash"],
+    "trash_alt":                 ["Trash Alt", DashGuiIconWeights["regular"], "trash-alt"],
+    "trash_alt_light":           ["Trash Alt (Light)", DashGuiIconWeights["light"], "trash-alt"],
+    "trash_alt_solid":           ["Trash Alt (Solid)", DashGuiIconWeights["solid"], "trash-alt"],
+    "trash_restore":             ["Trash Undo", DashGuiIconWeights["regular"], "trash-restore"],
+    "trash_solid":               ["Trash", DashGuiIconWeights["solid"], "trash"],
+    "triangle":                  ["Triangle", DashGuiIconWeights["regular"], "triangle"],
+    "truck":                     ["Truck", DashGuiIconWeights["regular"], "truck"],
+    "unchecked_box":             ["Unchecked Box", DashGuiIconWeights["regular"],"square"],
+    "unchecked_box_thin":        ["Unchecked Box", DashGuiIconWeights["light"],"square"],
+    "undo":                      ["Undo", DashGuiIconWeights["regular"], "undo"],
+    "unknown":                   ["Unknown Icon", DashGuiIconWeights["light"], "spider-black-widow"],
+    "unlink":                    ["Unlink", DashGuiIconWeights["regular"], "unlink"],
+    "unlock":                    ["Unlocked", DashGuiIconWeights["regular"], "unlock"],
+    "unlock_alt":                ["Unlocked", DashGuiIconWeights["regular"], "lock-open"],
+    "upload":                    ["Upload", DashGuiIconWeights["regular"], "upload"],
+    "upload_file":               ["Upload File", DashGuiIconWeights["regular"], "file-upload"],
+    "user":                      ["User", DashGuiIconWeights["regular"], "user"],
+    "user_solid":                ["User (Solid)", DashGuiIconWeights["solid"], "user"],
+    "users":                     ["Users", DashGuiIconWeights["regular"], "users"],
+    "users_solid":               ["Users (Solid)", DashGuiIconWeights["solid"], "users"],
+    "user_settings":             ["User Settings", DashGuiIconWeights["regular"], "user-cog"],
+    "video":                     ["Video", DashGuiIconWeights["regular"], "video"],
+    "video_solid":               ["Video (Solid)", DashGuiIconWeights["solid"], "video"],
+    "view":                      ["View", DashGuiIconWeights["regular"], "eye"],
+    "visible":                   ["Visible", DashGuiIconWeights["regular"], "eye"],
+    "web":                       ["Web", DashGuiIconWeights["solid"], "spider-web"],
+    "windows_logo":              ["Windows Logo", DashGuiIconWeights["brand"], "windows"],
+    "worker":                    ["Worker", DashGuiIconWeights["regular"], "user-hard-hat"],
+    "world":                     ["World", DashGuiIconWeights["regular"], "globe"],
+    "wrench":                    ["Wrench", DashGuiIconWeights["regular"], "wrench"],
+    "wrestling_mask":            ["Wrestling Mask", DashGuiIconWeights["regular"], "luchador"],
+    "zoom_in":                   ["Zoom In", DashGuiIconWeights["regular"],"search-plus"],
+    "zoom_out":                  ["Zoom Out", DashGuiIconWeights["regular"],"search-minus"],
 };
 
 function DashGuiIconDefinition (icon, label, fa_style, fa_id) {
@@ -45853,8 +45932,9 @@ function DashGuiInputType (
     this.setup_styles();
 }
 
-function DashGuiInputRow (
-    label_text, initial_value, placeholder_text, button_text, on_click, on_click_bind, color=null, data_key=""
+function  DashGuiInputRow (
+    label_text, initial_value="", placeholder_text="", button_text="",
+    on_click=null, on_click_bind=null, color=null, data_key=""
 ) {
     this.label_text = label_text;
     this.initial_value = initial_value;
@@ -46163,13 +46243,18 @@ function DashGuiInputRow (
             this.highlight.stop().animate({"opacity": 0}, 100);
         }
         this.invalid_input_highlight.stop().animate({"opacity": 0}, 100);
-        var response_callback = this.on_click.bind(this.on_click_bind);
+        var response_callback = this.on_click;
+        if (this.on_click && this.on_click_bind) {
+            response_callback = this.on_click.bind(this.on_click_bind);
+        }
         // Leaving this disabled for now - enable this to lock the row as soon as it receives input
         // if (this.lock_button && this.Text() && !this.locked) {
         //     this.toggle_lock();
         // }
         this.update_label_cursor();
-        response_callback(this);
+        if (response_callback) {
+            response_callback(this);
+        }
     };
     this.update_label_cursor = function () {
         var cursor = "auto";
@@ -46904,7 +46989,7 @@ function DashGuiPropertyBox (
     };
     this.update_color_pickers = function () {
         for (var data_key in this.color_pickers) {
-            var og_val = this.color_pickers[data_key].input.val();
+            var og_val = this.color_pickers[data_key].GetValue();
             var new_val = this.get_update_value(data_key);
             if (!new_val) {
                 new_val = this.color_pickers[data_key].default_hex_color;
@@ -46912,7 +46997,7 @@ function DashGuiPropertyBox (
             if (og_val === new_val) {
                 continue;
             }
-            this.color_pickers[data_key].input.val(new_val);
+            this.color_pickers[data_key].SetValue(new_val);
         }
     };
     this.update_text_areas = function () {
@@ -47863,7 +47948,7 @@ function DashGuiPropertyBoxInterface () {
     };
     this.AddColorPicker = function (
         data_key, label_text="Color", can_edit=false, include_clear_button=true,
-        end_tag_text="", default_picker_hex_color=""
+        end_tag_text="", initial_hex_color="", default_hex_color=""
     ) {
         this.data = this.get_data_cb ? this.get_data_cb() : {};
         // var value = this.get_formatted_data_cb ? this.get_formatted_data_cb(data_key) : this.data[data_key];
@@ -47871,19 +47956,19 @@ function DashGuiPropertyBoxInterface () {
             label_text += ":";
         }
         var pad = Dash.Size.Padding * 0.2;
-        this.color_pickers[data_key] = Dash.Gui.GetColorPicker(
+        this.color_pickers[data_key] = new Dash.Gui.ColorPicker(
             this.binder,
             (value) => {
                 (this.set_data_cb || this.set_property)(data_key, value);
             },
             label_text,
-            this.color,
-            default_picker_hex_color,
+            initial_hex_color,
             include_clear_button,
             () => {
                 (this.set_data_cb || this.set_property)(data_key, "");
             },
-            Dash.Size.RowHeight - (pad * 2)
+            Dash.Size.RowHeight - (pad * 2),
+            default_hex_color
         );
         this.color_pickers[data_key].html.css({
             "margin-left": this.indent_px,
@@ -47900,7 +47985,7 @@ function DashGuiPropertyBoxInterface () {
             });
             var spacer = Dash.Gui.GetFlexSpacer();
             this.color_pickers[data_key].html.append(spacer);
-            this.color_pickers[data_key]["end_tag_spacer"] = spacer;
+            this.color_pickers[data_key].end_tag_spacer = spacer;
             var tag = $("<div>" + end_tag_text + "</div>");
             tag.css({
                 "color": this.color.Stroke,
@@ -47913,10 +47998,10 @@ function DashGuiPropertyBoxInterface () {
                 "flex": "none"
             });
             this.color_pickers[data_key].html.append(tag);
-            this.color_pickers[data_key]["end_tag"] = tag;
+            this.color_pickers[data_key].end_tag = tag;
         }
         if (!can_edit) {
-            this.color_pickers[data_key]["input"].attr("disabled", true);
+            this.color_pickers[data_key].Lock();
         }
         this.html.append(this.color_pickers[data_key].html);
         this.track_row(this.color_pickers[data_key]);
@@ -48806,25 +48891,22 @@ function DashGuiVDBEntry (
         for (var num of Array(num_colors).keys()) {
             var key = this.get_color_key(num + 1, key_prefix);
             var color_picker = this.get_color_picker(num + 1, key_prefix, false);
+            color_picker.SetHoverHint("Color code:\n" + key);
             colors_box.append(color_picker.html);
-            color_picker.html.attr("title", "Color code:\n" + key);
         }
         this.property_box.AddHTML(colors_box);
     };
     this.get_color_picker = function (color_num, key_prefix="", include_label=true) {
-        var color_picker = (function (self) {
-            return Dash.Gui.GetColorPicker(
-                self,
-                function (color_val) {
-                    self.on_color_selected(color_num, color_val, key_prefix);
-                },
-                include_label ? ("Color #" + color_num.toString()) : "none",
-                self.color,
-                self.get_data()[self.get_color_key(color_num, key_prefix)]
-            );
-        })(this);
+        var color_picker = new Dash.Gui.ColorPicker(
+            this,
+            (color_val) => {
+                this.on_color_selected(color_num, color_val, key_prefix);
+            },
+            include_label ? ("Color #" + color_num.toString()) : "none",
+            this.get_data()[this.get_color_key(color_num, key_prefix)]
+        );
         if (this.read_only) {
-            color_picker.input.attr("disabled", true);
+            color_picker.Lock();
         }
         return color_picker;
     };

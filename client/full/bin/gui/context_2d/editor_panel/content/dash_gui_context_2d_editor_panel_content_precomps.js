@@ -106,41 +106,37 @@ function DashGuiContext2DEditorPanelContentPreComps (content) {
             "color": this.color.Text
         });
 
-        row["color_picker"] = (function (self) {
-            return Dash.Gui.GetColorPicker(
-                self,
-                function (color_val) {
-                    if (!color_val) {
-                        return;
-                    }
-
-                    self.set_data("color", color_val, letter);
-                },
-                "",
-                self.color,
-                data["color"] || "#000000",
-                true,
-                function () {
-                    self.set_data("color", "", letter);
+        row["color_picker"] = new Dash.Gui.ColorPicker(
+            this,
+            (color_val) => {
+                if (!color_val) {
+                    return;
                 }
-            );
-        })(this);
 
+                this.set_data("color", color_val, letter);
+            },
+            "",
+            data["color"],
+            true,
+            () => {
+                this.set_data("color", "", letter);
+            },
+            undefined,
+            "#000000"
+        );
 
         row["toolbar"].AddHTML(row["color_picker"].html);
 
-        row["download_button"] = (function (self) {
-            return row["toolbar"].AddIconButton(
-                "download",
-                function () {
-                    self.download(letter);
-                },
-                null,
-                null,
-                Dash.Size.ButtonHeight,
-                0.65
-            );
-        })(this);
+        row["download_button"] = row["toolbar"].AddIconButton(
+            "download",
+            () => {
+                this.download(letter);
+            },
+            null,
+            null,
+            Dash.Size.ButtonHeight,
+            0.65
+        );
 
         this.rows.push(row);
 
@@ -310,7 +306,7 @@ function DashGuiContext2DEditorPanelContentPreComps (content) {
                     self.editor.data = response;
 
                     if (key === "color" && !value) {
-                        self.rows[letter]["color_picker"].input.val(self.get_data()[letter]["color"]);
+                        self.rows[letter]["color_picker"].SetValue(self.get_data()[letter]["color"]);
                     }
 
                     self.panel.layers_box.UpdatePreCompColors();

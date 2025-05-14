@@ -47,11 +47,11 @@ function DashGuiIcon (
     //  the "background" to essentially "combine" two different icons into one
     this.AddColorFill = function (color) {
         if (this.icon_fill) {
-            console.warn("Warning: A color-fill already exists for this icon. Its color will be updated instead.");
+            // Dash.Log.Warn(
+            //     "Warning: A color-fill already exists for this icon. Its color will be updated instead."
+            // );
 
-            this.icon_fill.css({
-                "color": color
-            });
+            this.icon_fill.SetColor(color);
 
             return this.icon_fill;
         }

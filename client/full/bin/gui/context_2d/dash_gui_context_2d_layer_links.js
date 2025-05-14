@@ -181,11 +181,10 @@ class DashGuiContext2DLayerLinks {
             "margin-right": 0
         });
 
-        this.color_picker = Dash.Gui.GetColorPicker(
+        this.color_picker = new Dash.Gui.ColorPicker(
             null,
             null,
             "",
-            this.color,
             this.linked_color,
             false,
             null,
@@ -327,7 +326,7 @@ class DashGuiContext2DLayerLinks {
 
         this.disable();
 
-        var color = this.color_picker.input.val();
+        var color = this.color_picker.GetValue();
 
         if (!this.linked_color && color === Dash.Color.PickerDefault) {
             color = "";  // If color not chosen, a random color will be assigned on the backend

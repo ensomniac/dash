@@ -17,19 +17,39 @@ function DashGuiComboRow (combo, option) {
     this.label = $("<div>" + this.label_text + "</div>", {"class": "Combo"});
 
     this.setup_styles = function () {
-        this.html.css({
+        var html_css = {
             "border-bottom": this.multi_select ? "1px solid rgba(255, 255, 255, 0.1)" : "none",
             "height": this.height
-        });
+        };
 
-        this.highlight.css({
+        if (this.option["html_css"]) {
+            html_css = {
+                ...html_css,
+                ...this.option["html_css"]
+            };
+        }
+
+        this.html.css(html_css);
+
+        var highlight_css = {
             "position": "absolute",
             "inset": 0,
             "background": "rgba(255, 255, 255, 0.2)",
             "opacity": 0
-        });
+        };
 
-        this.label.css({
+        if (this.option["highlight_css"]) {
+            highlight_css = {
+                ...highlight_css,
+                ...this.option["highlight_css"]
+            };
+        }
+
+        this.highlight.css(highlight_css);
+
+        this.html.append(this.highlight);
+
+        var label_css = {
             "border-bottom": this.multi_select ? "none" : "1px solid rgba(255, 255, 255, 0.1)",
             "text-align": this.combo.text_alignment,
             "height": this.height,
@@ -37,9 +57,17 @@ function DashGuiComboRow (combo, option) {
             "white-space": "nowrap",
             "color": this.color_set.Text.Base,
             "font-size": this.combo.row_font_size || this.combo.font_size
-        });
+        };
 
-        this.html.append(this.highlight);
+        if (this.option["label_css"]) {
+            label_css = {
+                ...label_css,
+                ...this.option["label_css"]
+            };
+        }
+
+        this.label.css(label_css);
+
         this.html.append(this.label);
 
         this.add_user_icon();

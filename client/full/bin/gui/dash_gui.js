@@ -5,6 +5,7 @@ function DashGui () {
     this.ButtonBar                 = DashGuiButtonBar;
     this.ChatBox                   = DashGuiChatBox;
     this.Checkbox                  = DashGuiCheckbox;
+    this.ColorPicker               = DashGuiColorPicker;
     this.Combo                     = DashGuiCombo;
     this.Confirm                   = DashGuiConfirm;
     this.Context2D                 = DashGuiContext2D;
@@ -218,139 +219,6 @@ function DashGui () {
         return html;
     };
 
-    // TODO: This needs to be its own class/element
-    this.GetColorPicker = function (
-        binder=null, callback=null, label_text="Color Picker", dash_color=null,
-        default_picker_hex_color="", include_clear_button=false, clear_button_cb=null, height=null
-    ) {
-        if (!default_picker_hex_color) {
-            default_picker_hex_color = Dash.Color.PickerDefault;  // Using it as a default above doesn't cut it
-        }
-
-        if (!dash_color) {
-            dash_color = binder?.color || Dash.Color.Light;
-        }
-
-        height = height || Dash.Size.ButtonHeight;
-
-        var include_label = label_text && label_text.replace(":", "") !== "none";
-
-        var id = "colorpicker_" + Dash.Math.Random();
-
-        var color_picker = {
-            "height": height,
-            "html": $("<div></div>"),
-            "input": $(
-                "<input>",
-                {
-                    "type": "color",
-                    "id": id,
-                    "value": default_picker_hex_color
-                }
-            ),
-            "default_hex_color": default_picker_hex_color
-        };
-
-        if (include_label) {
-            color_picker["label"] = $("<label for='" + id + "'>" + label_text + "</label>");
-
-            var line_break = label_text.includes("\n");
-
-            var label_css = {
-                "font-family": "sans_serif_bold",
-                "font-size": "80%",
-                "color": dash_color.Text || "black",
-                "top": line_break ? 0 : (Dash.Size.Padding * (include_clear_button ? 0.5 : -0.5))
-            };
-
-            if (line_break) {
-                label_css = {
-                    ...label_css,
-                    "white-space": "pre",
-                    "height": height,
-                    "display": "block",
-                    "float": "left",
-                    "text-align": "right",
-                    "line-height": (height * 0.5) + "px"
-                };
-            }
-
-            color_picker.label.css(label_css);
-        }
-
-        color_picker.input.css({
-            "height": height,
-            "margin-left": Dash.Size.Padding * 0.5,
-            "background": "none",
-            "cursor": "pointer",
-            "border": "1px solid " + dash_color.StrokeLight,
-            "border-radius": Dash.Size.Padding * 0.3
-        });
-
-        if (include_label) {
-            color_picker.html.append(color_picker.label);
-        }
-
-        color_picker.html.append(color_picker.input);
-
-        if (include_clear_button) {
-            var small = height < Dash.Size.RowHeight;
-
-            color_picker.html.css({
-                "display": "flex"
-            });
-
-            if (clear_button_cb && binder) {
-                clear_button_cb = clear_button_cb.bind(binder);
-            }
-
-            color_picker["clear_button"] = new Dash.Gui.IconButton(
-                "close_square",
-                function () {
-                    color_picker.input.val(default_picker_hex_color);
-
-                    if (clear_button_cb) {
-                        clear_button_cb();
-                    }
-                },
-                this,
-                dash_color,
-                {
-                    "container_size": height,
-                    "size_mult": small ? 0.75 : 0.5
-                }
-            );
-
-            color_picker["clear_button"].SetIconColor(dash_color.AccentBad);
-
-            if (small) {
-                color_picker["clear_button"].html.css({
-                    "margin-left": Dash.Size.Padding * 0.1
-                });
-            }
-
-            else {
-                color_picker["clear_button"].html.css({
-                    "padding-top": Dash.Size.Padding * 0.1
-                });
-            }
-
-            color_picker.html.append(color_picker.clear_button.html);
-        }
-
-        if (callback) {
-            if (binder) {
-                callback = callback.bind(binder);
-            }
-
-            color_picker.input.on("change", function () {
-                callback(color_picker.input.val());
-            });
-        }
-
-        return color_picker;
-    };
-
     // This function is old and not written well
     this.GetTopRightIconButton = function (
         binder, callback, icon_id="trash", data_key=null, additional_data=null, existing_top_right_label=null
@@ -452,35 +320,97 @@ function DashGui () {
         );
     };
 
-    // This is rather quick/dirty and should probably become its own style at some point (will require it to first be visually improved)
-    // This can also be taken even further by appending html to the tooltip div after it's returned, rather than supplying text
-    this.AddTooltip = function (html, static_text=null, monospaced=true, additional_css={}, delay_ms=1000, override_element=null, text_getter=null) {
-        var tooltip = $("<div></div>");
+    this.AddTooltip = function (
+        html, text="", delay_ms=750, fade_in_ms=200, fade_out_ms=400,
+        additional_css={}, text_getter=null, offset_px=10, color=null
+    ) {
+        var existing_title = html.attr("title");
 
-        html.append(tooltip);
-
-        this.set_tooltip_css(tooltip, additional_css, monospaced);
-
-        if (static_text) {
-            tooltip.text(static_text);
+        if (existing_title) {
+            html.data("title", existing_title);
+            html.removeAttr("title");
         }
 
-        tooltip.hide();
+        html.off("mouseenter.dash_gui_tooltip");
+        html.off("mouseleave.dash_gui_tooltip");
+        html.off("mousemove.dash_gui_tooltip");
 
-        (function (self, html, additional_css, override_element, delay_ms, tooltip, text_getter) {
-            var timer;
+        if (!text && !text_getter) {
+            return;
+        }
 
-            html.hover(
-                function () {
-                    timer = self.tooltip_on_hover_in(html, tooltip, override_element, additional_css, delay_ms, text_getter);
-                },
-                function () {
-                    self.tooltip_on_hover_out(tooltip, override_element, timer);
+        if (!color) {
+            color = Dash.Color.Dark;
+        }
+
+        var _timer;
+        var css = null;
+        var tooltip = null;
+
+        html.on("mouseenter.dash_gui_tooltip", (e) => {
+            if (_timer) {
+                clearTimeout(_timer);
+            }
+
+            if (tooltip) {
+                if (text_getter) {
+                    tooltip.text(text_getter());
                 }
-            );
-        })(this, html, additional_css, override_element, delay_ms, tooltip, text_getter);
+            }
 
-        return tooltip;
+            else {
+                tooltip = $(
+                    "<div>",
+                    {
+                        "class": "dash_gui_tooltip",
+                        "text": text_getter ? text_getter() : text
+                    }
+                );
+
+                tooltip.hide();
+
+                css = {
+                    "position": "absolute",
+                    "padding": Dash.Size.Padding * 0.3,
+                    "border": "1px solid " + color.Pinstripe,
+                    "background": color.BackgroundRaised,
+                    "color": color.Text,
+                    "border-radius": Dash.Size.BorderRadius * 0.5,
+                    "box-shadow": "0 0 4px rgba(0, 0, 0, 0.3)",
+                    "font-size": "90%",
+                    "z-index": 100000,
+                    "white-space": "pre-wrap",
+                    ...additional_css
+                };
+            }
+
+            _timer = setTimeout(
+                () => {
+                    $("body").append(tooltip);
+
+                    css["top"] = e.pageY + offset_px + "px";
+                    css["left"] = e.pageX + offset_px + "px";
+
+                    tooltip.css(css).stop().fadeIn(fade_in_ms);
+                },
+                delay_ms
+            );
+        });
+
+        html.on("mouseleave.dash_gui_tooltip", () => {
+            if (_timer) {
+                clearTimeout(_timer);
+            }
+
+            if (tooltip) {
+                tooltip.stop().fadeOut(
+                    fade_out_ms,
+                    () => {
+                        tooltip.remove();
+                    }
+                );
+            }
+        });
     };
 
     this.GetImageContainer = function (url, height=100, centered=false, minimizable=false, start_minimized=false) {
@@ -796,6 +726,8 @@ function DashGui () {
         );
     };
 
+
+
     this.add_corner_button_to_image_container = function (image_container, container_height, minimize=true) {
         var opacity = 0.75;
         var color = Dash.Color.Light;
@@ -866,44 +798,6 @@ function DashGui () {
         })(this);
 
         image_container.append(button.html);
-    };
-
-    this.set_tooltip_css = function (tooltip, additional_css, monospaced) {
-        var color = Dash.Color.Dark;
-        var padding = Dash.Size.Padding * 0.5;
-
-        tooltip.css({
-            "padding": padding,
-            "color": color.Text,
-            "background": color.Background,
-            "border": "2px solid " + color.BackgroundRaised,
-            "border-radius": padding,
-            "box-shadow": "0px 0px 10px 1px rgba(0, 0, 0, 0.5)",
-            "position": "fixed",
-            "z-index": 100000,
-            "white-space": "pre-wrap",
-            "opacity": 0.95,
-            "cursor": "auto",
-            "width": Dash.Size.ColumnWidth * 3,
-            "pointer-events": "none",
-            ...additional_css
-        });
-
-        if (monospaced) {
-            tooltip.css({
-                "font-family": "Andale Mono, Monaco, monospace",
-                "font-size": "85%"
-            });
-        }
-
-        else {
-            tooltip.css({
-                "font-family": "sans_serif_normal",
-                "font-size": "90%"
-            });
-        }
-
-        return tooltip;
     };
 
     this.tooltip_on_hover_in = function (html, tooltip, override_element, additional_css, delay_ms, text_getter=null) {

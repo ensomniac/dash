@@ -656,7 +656,7 @@ function DashGuiCombo (
         var start_height = this.rows.height();
 
         this.rows.css({
-            "height": "auto",
+            "height": "auto"
         });
 
         this.last_rows_height = this.rows.height();
@@ -683,14 +683,12 @@ function DashGuiCombo (
         }
 
         if (!this.is_searchable) {
-            (function (self) {
-                $(window).on(
-                    "keydown." + self.random_id,
-                    function (event) {
-                        self.handle_arrow_input(self, event);
-                    }
-                );
-            })(this);
+            $(window).on(
+                "keydown." + this.random_id,
+                (event) => {
+                    this.handle_arrow_input(this, event);
+                }
+            );
         }
     };
 
@@ -736,14 +734,12 @@ function DashGuiCombo (
         this.hide_highlight();
 
         if (this.on_collapse_cb) {
-            (function (self) {
-                setTimeout(
-                    function () {
-                        self.on_collapse_cb();
-                    },
-                    delay_ms
-                );
-            })(this);
+            setTimeout(
+                () => {
+                    this.on_collapse_cb();
+                },
+                delay_ms
+            );
         }
     };
 

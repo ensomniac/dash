@@ -763,7 +763,7 @@ function DashGuiPropertyBoxInterface () {
 
     this.AddColorPicker = function (
         data_key, label_text="Color", can_edit=false, include_clear_button=true,
-        end_tag_text="", default_picker_hex_color=""
+        end_tag_text="", initial_hex_color="", default_hex_color=""
     ) {
         this.data = this.get_data_cb ? this.get_data_cb() : {};
 
@@ -775,19 +775,19 @@ function DashGuiPropertyBoxInterface () {
 
         var pad = Dash.Size.Padding * 0.2;
 
-        this.color_pickers[data_key] = Dash.Gui.GetColorPicker(
+        this.color_pickers[data_key] = new Dash.Gui.ColorPicker(
             this.binder,
             (value) => {
                 (this.set_data_cb || this.set_property)(data_key, value);
             },
             label_text,
-            this.color,
-            default_picker_hex_color,
+            initial_hex_color,
             include_clear_button,
             () => {
                 (this.set_data_cb || this.set_property)(data_key, "");
             },
-            Dash.Size.RowHeight - (pad * 2)
+            Dash.Size.RowHeight - (pad * 2),
+            default_hex_color
         );
 
         this.color_pickers[data_key].html.css({
@@ -810,7 +810,7 @@ function DashGuiPropertyBoxInterface () {
 
             this.color_pickers[data_key].html.append(spacer);
 
-            this.color_pickers[data_key]["end_tag_spacer"] = spacer;
+            this.color_pickers[data_key].end_tag_spacer = spacer;
 
             var tag = $("<div>" + end_tag_text + "</div>");
 
@@ -827,11 +827,11 @@ function DashGuiPropertyBoxInterface () {
 
             this.color_pickers[data_key].html.append(tag);
 
-            this.color_pickers[data_key]["end_tag"] = tag;
+            this.color_pickers[data_key].end_tag = tag;
         }
 
         if (!can_edit) {
-            this.color_pickers[data_key]["input"].attr("disabled", true);
+            this.color_pickers[data_key].Lock();
         }
 
         this.html.append(this.color_pickers[data_key].html);
