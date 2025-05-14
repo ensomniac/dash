@@ -726,9 +726,11 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             "display": "flex"
         });
 
-        stroke_color_picker.label.css({
-            "margin-left": Dash.Size.Padding
-        });
+        if (stroke_color_picker.label) {
+            stroke_color_picker.label.css({
+                "margin-left": Dash.Size.Padding
+            });
+        }
 
         container.append(font_color_picker.html);
         container.append(stroke_color_picker.html);

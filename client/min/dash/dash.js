@@ -38534,9 +38534,11 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
         container.css({
             "display": "flex"
         });
-        stroke_color_picker.label.css({
-            "margin-left": Dash.Size.Padding
-        });
+        if (stroke_color_picker.label) {
+            stroke_color_picker.label.css({
+                "margin-left": Dash.Size.Padding
+            });
+        }
         container.append(font_color_picker.html);
         container.append(stroke_color_picker.html);
         var checkbox = this.get_checkbox(context_key, "text_caps", "ALL-CAPS:");
@@ -47952,7 +47954,7 @@ function DashGuiPropertyBoxInterface () {
     ) {
         this.data = this.get_data_cb ? this.get_data_cb() : {};
         // var value = this.get_formatted_data_cb ? this.get_formatted_data_cb(data_key) : this.data[data_key];
-        if (!(label_text.endsWith(":"))) {
+        if (label_text && !(label_text.endsWith(":"))) {
             label_text += ":";
         }
         var pad = Dash.Size.Padding * 0.2;
@@ -47976,9 +47978,11 @@ function DashGuiPropertyBoxInterface () {
             "padding-top": pad,
             "padding-bottom": pad
         });
-        this.color_pickers[data_key].label.css({
-            "top": 1
-        });
+        if (this.color_pickers[data_key].label) {
+            this.color_pickers[data_key].label.css({
+                "top": 1
+            });
+        }
         if (end_tag_text) {
             this.color_pickers[data_key].html.css({
                 "display": "flex"

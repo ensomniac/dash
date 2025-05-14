@@ -769,7 +769,7 @@ function DashGuiPropertyBoxInterface () {
 
         // var value = this.get_formatted_data_cb ? this.get_formatted_data_cb(data_key) : this.data[data_key];
 
-        if (!(label_text.endsWith(":"))) {
+        if (label_text && !(label_text.endsWith(":"))) {
             label_text += ":";
         }
 
@@ -797,9 +797,11 @@ function DashGuiPropertyBoxInterface () {
             "padding-bottom": pad
         });
 
-        this.color_pickers[data_key].label.css({
-            "top": 1
-        });
+        if (this.color_pickers[data_key].label) {
+            this.color_pickers[data_key].label.css({
+                "top": 1
+            });
+        }
 
         if (end_tag_text) {
             this.color_pickers[data_key].html.css({
