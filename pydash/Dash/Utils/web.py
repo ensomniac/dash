@@ -26,7 +26,7 @@ class WebCrawler:
         self.headless = headless
         self.wait_timeout_sec = wait_timeout_sec
         self.profile_root = profile_root  # Default to NO profile, otherwise, must explicitly provide one
-        self.extra_stealth = extra_stealth  # Defaults to False because it may be over-kill for some sites
+        self.extra_stealth = extra_stealth  # Defaults to False because it may be overkill for some sites
 
         # For when the server's IP is blocked/restricted by certain
         # sites (only use legit providers, such as BrightData)
@@ -34,7 +34,7 @@ class WebCrawler:
 
         self.file_storage_root = file_storage_root
 
-        from Dash.Utils import OapiRoot  # Leave this here, can't be top-level import
+        from Dash.Utils import OapiRoot  # Leave this here, can't be a top-level import
 
         self.logs = []
         self.waits = {}
@@ -64,7 +64,7 @@ class WebCrawler:
             #         - [TERMINAL 2]
             #             - Run the server script that uses this class
             #             - Any graphics will be automatically routed to the VNC client
-            #             - If you need to use Chrome, simply run `google-chrome-stable`
+            #             - If you need to use Chrome, simply run `google-chrome-stable --no-sandbox`
             #         - [TERMINAL 1]
             #             - (If no one else is using Xvfb)
             #               Cleanup session via `killall Xvfb`
