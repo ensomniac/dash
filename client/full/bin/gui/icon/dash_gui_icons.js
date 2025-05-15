@@ -328,6 +328,7 @@ DashGuiIconMap = {
     "sliders_horizontal":        ["Sliders (Horizontal)", DashGuiIconWeights["regular"],"sliders-h"],
     "soccer_ball":               ["Soccer Ball", DashGuiIconWeights["regular"], "futbol"],
     "sort":                      ["Sort", DashGuiIconWeights["regular"], "sort"],
+    "sort_amount_down":          ["Sort (Amount - Down)", DashGuiIconWeights["regular"], "sort-amount-down"],
     "sort_numeric_down":         ["Sort (Numeric - Down)", DashGuiIconWeights["regular"], "sort-numeric-down"],
     "spinner":                   ["Spinner", DashGuiIconWeights["regular"],"spinner"],
     "stars":                     ["Stars", DashGuiIconWeights["regular"], "stars"],

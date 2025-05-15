@@ -51,11 +51,15 @@ function DashGuiSelectorItem (tray, details) {
         this.hover.css({
             "background":  this.menu.bg_color,
             "opacity": 0,
+            "border-radius": Dash.Size.BorderRadius,
             "pointer-events": "none",
             "user-select":    "none",
         });
 
         this.label.css({
+            "white-space": "nowrap",
+            "overflow": "hidden",
+            "text-overflow": "ellipsis",
             "position": "absolute",
             "left": this.icon_size + Dash.Size.Padding,
             "top": 0,

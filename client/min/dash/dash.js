@@ -29311,10 +29311,14 @@ function DashGuiSelectorItem (tray, details) {
         this.hover.css({
             "background":  this.menu.bg_color,
             "opacity": 0,
+            "border-radius": Dash.Size.BorderRadius,
             "pointer-events": "none",
             "user-select":    "none",
         });
         this.label.css({
+            "white-space": "nowrap",
+            "overflow": "hidden",
+            "text-overflow": "ellipsis",
             "position": "absolute",
             "left": this.icon_size + Dash.Size.Padding,
             "top": 0,
@@ -45072,6 +45076,7 @@ DashGuiIconMap = {
     "sliders_horizontal":        ["Sliders (Horizontal)", DashGuiIconWeights["regular"],"sliders-h"],
     "soccer_ball":               ["Soccer Ball", DashGuiIconWeights["regular"], "futbol"],
     "sort":                      ["Sort", DashGuiIconWeights["regular"], "sort"],
+    "sort_amount_down":          ["Sort (Amount - Down)", DashGuiIconWeights["regular"], "sort-amount-down"],
     "sort_numeric_down":         ["Sort (Numeric - Down)", DashGuiIconWeights["regular"], "sort-numeric-down"],
     "spinner":                   ["Spinner", DashGuiIconWeights["regular"],"spinner"],
     "stars":                     ["Stars", DashGuiIconWeights["regular"], "stars"],
