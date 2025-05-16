@@ -48269,7 +48269,7 @@ function DashGuiVDB3D (
             this.add_textures();
             this.redraw_model_box();
         }
-        this.redraw_asset_bundle_box();
+        // this.redraw_asset_bundle_box();
     };
     this.UpdateAssetBundle = function (data=null) {
         if (Dash.Validate.Object(data)) {
@@ -48286,9 +48286,9 @@ function DashGuiVDB3D (
         else {
             this.asset_bundle_download_button.Disable();
         }
-        if (url !== this.last_asset_bundle_url) {
-            this.redraw_asset_bundle_box();
-        }
+        // if (url !== this.last_asset_bundle_url) {
+        //     this.redraw_asset_bundle_box();
+        // }
     };
     this.OnGeneratingNewAssetBundle = function () {
         if (!this.asset_bundle_download_button) {
@@ -48560,13 +48560,13 @@ function DashGuiVDB3D (
         }
         if (asset_type === "model") {
             this.redraw_model_box();
-            this.redraw_asset_bundle_box();
+            // this.redraw_asset_bundle_box();
         }
         else {
             if (response["updated_glb_url"]) {
                 this.data["model"]["glb_url"] = response["updated_glb_url"];
                 this.redraw_model_box();
-                this.redraw_asset_bundle_box();
+                // this.redraw_asset_bundle_box();
             }
             this.images[asset_type][texture_key].css({
                 "background-image": "url('" + url + "')"

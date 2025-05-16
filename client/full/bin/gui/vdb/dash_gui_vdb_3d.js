@@ -84,7 +84,7 @@ function DashGuiVDB3D (
             this.redraw_model_box();
         }
 
-        this.redraw_asset_bundle_box();
+        // this.redraw_asset_bundle_box();
     };
 
     this.UpdateAssetBundle = function (data=null) {
@@ -108,9 +108,9 @@ function DashGuiVDB3D (
             this.asset_bundle_download_button.Disable();
         }
 
-        if (url !== this.last_asset_bundle_url) {
-            this.redraw_asset_bundle_box();
-        }
+        // if (url !== this.last_asset_bundle_url) {
+        //     this.redraw_asset_bundle_box();
+        // }
     };
 
     this.OnGeneratingNewAssetBundle = function () {
@@ -456,7 +456,7 @@ function DashGuiVDB3D (
 
         if (asset_type === "model") {
             this.redraw_model_box();
-            this.redraw_asset_bundle_box();
+            // this.redraw_asset_bundle_box();
         }
 
         else {
@@ -464,7 +464,7 @@ function DashGuiVDB3D (
                 this.data["model"]["glb_url"] = response["updated_glb_url"];
 
                 this.redraw_model_box();
-                this.redraw_asset_bundle_box();
+                // this.redraw_asset_bundle_box();
             }
 
             this.images[asset_type][texture_key].css({
