@@ -138,6 +138,14 @@ function DashGuiContext2DEditorPanelContentPreComps (content) {
             0.65
         );
 
+        if (!this.can_edit) {
+            row["input"].Disable();
+
+            row["color_picker"].Disable();
+
+            row["download_button"].Disable();
+        }
+
         this.rows.push(row);
 
         this.html.append(row["container"]);

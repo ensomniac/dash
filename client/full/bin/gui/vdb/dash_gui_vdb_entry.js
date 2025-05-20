@@ -19,8 +19,12 @@ function DashGuiVDBEntry (
     this.display_name_input = null;
     this.vdb_type = this.list_view.vdb_type;
     this.color = this.list_view.color || Dash.Color.Light;
-    this.read_only = Dash.User.Init["access"]?.["restricted"];
     this.refresh_full_data_request_failure_id = "dash_gui_vdb_entry_on_data";
+
+    this.read_only = (
+           Dash.User.Init["access"]?.["restricted"]
+        && !((Dash.User.Init["access"]?.["allowed"]?.["edit_ids"] || []).includes(obj_id))
+    );
 
     this.setup_loader = function (validated=false) {
         if (!validated && !(this instanceof DashGuiVDBEntry)) {
@@ -186,7 +190,7 @@ function DashGuiVDBEntry (
         }
 
         if (this.include_display_name_key) {
-            this.display_name_input = property_box.AddInput("display_name", "Display Name", "", null, true);
+            this.display_name_input = property_box.AddInput("display_name", "Display Name", "", null, !this.read_only);
         }
     };
 

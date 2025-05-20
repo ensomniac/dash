@@ -333,10 +333,10 @@ class Utils:
             display_name = obj_data.get("display_name") or ""
 
         if obj_data.get("nickname"):
-            if display_name:
-                display_name += f" ({obj_data['nickname']})"
+            if display_name and obj_data["nickname"].lower().strip() != display_name.lower().strip():
+                display_name += f" ({obj_data['nickname'].strip()})"
             else:
-                display_name = obj_data["nickname"]
+                display_name = obj_data["nickname"].strip()
 
         obj_id = obj_data["id"]
 

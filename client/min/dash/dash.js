@@ -26248,21 +26248,27 @@ class DashGuiColorPicker {
     }
     Disable (opacity=0.5) {
         this.Lock();
-        this.html.css({
+        this.input.css({
             "opacity": opacity
         });
     };
     Enable () {
         this.Unlock();
-        this.html.css({
+        this.input.css({
             "opacity": 1
         });
     };
     Lock () {
         this.input.attr("disabled", true);
+        if (this.clear_button) {
+            this.clear_button.Disable();
+        }
     }
     Unlock () {
         this.input.attr("disabled", false);
+        if (this.clear_button) {
+            this.clear_button.Enable();
+        }
     }
     add_label () {
         this.label = $(
@@ -38058,7 +38064,7 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             requestAnimationFrame(function () {
                 self.content.FloatCombos(self);
             });
-            var disabled = layer_data["hidden"] || layer_data["locked"];
+            var disabled = layer_data["hidden"] || layer_data["locked"] || !self.can_edit;
             for (var key in self.contexts) {
                 var context = self.contexts[key];
                 if (!context["visible"]) {
@@ -38987,15 +38993,12 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             }
             this.contexts[context_key]["all_elements"].push(color_picker.label);
         }
-        if (!this.can_edit) {
-            color_picker.html.css({
-                "user-select": "none",
-                "pointer-events": "none"
-            });
-        }
         this.contexts[context_key]["all_elements"].push(color_picker.input);
         if (include_clear_button) {
             this.contexts[context_key]["all_elements"].push(color_picker.clear_button);
+        }
+        if (!this.can_edit) {
+            color_picker.Disable();
         }
         return color_picker;
     };
@@ -39197,6 +39200,11 @@ function DashGuiContext2DEditorPanelContentPreComps (content) {
             Dash.Size.ButtonHeight,
             0.65
         );
+        if (!this.can_edit) {
+            row["input"].Disable();
+            row["color_picker"].Disable();
+            row["download_button"].Disable();
+        }
         this.rows.push(row);
         this.html.append(row["container"]);
     };
@@ -48739,8 +48747,11 @@ function DashGuiVDBEntry (
     this.display_name_input = null;
     this.vdb_type = this.list_view.vdb_type;
     this.color = this.list_view.color || Dash.Color.Light;
-    this.read_only = Dash.User.Init["access"]?.["restricted"];
     this.refresh_full_data_request_failure_id = "dash_gui_vdb_entry_on_data";
+    this.read_only = (
+           Dash.User.Init["access"]?.["restricted"]
+        && !((Dash.User.Init["access"]?.["allowed"]?.["edit_ids"] || []).includes(obj_id))
+    );
     this.setup_loader = function (validated=false) {
         if (!validated && !(this instanceof DashGuiVDBEntry)) {
             setTimeout(
@@ -48869,7 +48880,7 @@ function DashGuiVDBEntry (
             this.add_primary_header(property_box);
         }
         if (this.include_display_name_key) {
-            this.display_name_input = property_box.AddInput("display_name", "Display Name", "", null, true);
+            this.display_name_input = property_box.AddInput("display_name", "Display Name", "", null, !this.read_only);
         }
     };
     this.add_primary_header = function (property_box) {

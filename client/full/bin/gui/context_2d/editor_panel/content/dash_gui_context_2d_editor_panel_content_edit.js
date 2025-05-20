@@ -93,7 +93,7 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
                 self.content.FloatCombos(self);
             });
 
-            var disabled = layer_data["hidden"] || layer_data["locked"];
+            var disabled = layer_data["hidden"] || layer_data["locked"] || !self.can_edit;
 
             for (var key in self.contexts) {
                 var context = self.contexts[key];
@@ -1259,17 +1259,14 @@ function DashGuiContext2DEditorPanelContentEdit (content) {
             this.contexts[context_key]["all_elements"].push(color_picker.label);
         }
 
-        if (!this.can_edit) {
-            color_picker.html.css({
-                "user-select": "none",
-                "pointer-events": "none"
-            });
-        }
-
         this.contexts[context_key]["all_elements"].push(color_picker.input);
 
         if (include_clear_button) {
             this.contexts[context_key]["all_elements"].push(color_picker.clear_button);
+        }
+
+        if (!this.can_edit) {
+            color_picker.Disable();
         }
 
         return color_picker;

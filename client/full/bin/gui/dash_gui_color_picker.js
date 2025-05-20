@@ -83,7 +83,7 @@ class DashGuiColorPicker {
     Disable (opacity=0.5) {
         this.Lock();
 
-        this.html.css({
+        this.input.css({
             "opacity": opacity
         });
     };
@@ -91,17 +91,25 @@ class DashGuiColorPicker {
     Enable () {
         this.Unlock();
 
-        this.html.css({
+        this.input.css({
             "opacity": 1
         });
     };
 
     Lock () {
         this.input.attr("disabled", true);
+
+        if (this.clear_button) {
+            this.clear_button.Disable();
+        }
     }
 
     Unlock () {
         this.input.attr("disabled", false);
+
+        if (this.clear_button) {
+            this.clear_button.Enable();
+        }
     }
 
     add_label () {
