@@ -207,6 +207,7 @@ function DashMobileTextBox (
         });
     };
 
+    // This is mirrored in DashGuiInput
     this.SetInputMode = function (mode) {
         this.textarea.attr("inputmode", mode);
 

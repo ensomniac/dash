@@ -45231,6 +45231,22 @@ function DashGuiInput (placeholder_text="", color=null) {
         this.parse_input_type();
         this.setup_connections();
     };
+    // This is mirrored in DashMobileTextBox
+    this.SetInputMode = function (mode) {
+        this.input.attr("inputmode", mode);
+        if (mode === "email") {
+            // This is supposed to happen when the mode is set to "email", but isn't happening automatically
+            this.input.attr("autocapitalize", "off");
+        }
+        else if (mode === "numeric") {
+            this.input.attr({
+                "type": "number",
+                "pattern": "[0-9]*",
+                "step": "1",
+                "min": "0"
+            });
+        }
+    };
     this.SetPlaceholder = function (placeholder_text) {
         this.input.attr("placeholder", placeholder_text);
     };
@@ -56688,6 +56704,7 @@ function DashMobileTextBox (
             "resize": "none"
         });
     };
+    // This is mirrored in DashGuiInput
     this.SetInputMode = function (mode) {
         this.textarea.attr("inputmode", mode);
         if (mode === "email") {
