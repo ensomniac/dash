@@ -64,7 +64,8 @@ class WebCrawler:
             #         - [TERMINAL 2]
             #             - Run the server script that uses this class
             #             - Any graphics will be automatically routed to the VNC client
-            #             - If you need to use Chrome, simply run `google-chrome-stable --no-sandbox`
+            #             - If you need to use Chrome, simply run:
+            #               `google-chrome-stable --no-sandbox --window-size=1920,1080`
             #         - [TERMINAL 1]
             #             - (If no one else is using Xvfb)
             #               Cleanup session via `killall Xvfb`

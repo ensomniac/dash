@@ -35,20 +35,13 @@ function _Dash () {
     this.IsSafari = /Safari/i.test(navigator.userAgent) && !(/Chrome|Firefox|OP/i.test(navigator.userAgent));
 
     this.IsChrome = navigator.userAgent.toLowerCase().indexOf("chrome") > -1;  // !this.IsSafari && /Chrome/i.test(navigator.userAgent);
+    this.InChromeExtension = false;
 
     // Web-app saved to home screen
     this.IsMobileFromHomeScreen = (
            window.navigator.standalone === true  // iOS
         || window.matchMedia("(display-mode: standalone)").matches  // Android
     );
-
-    try {
-        this.InChromeExtension = this.IsMobile ? false : Boolean(chrome?.runtime?.sendMessage);
-    }
-
-    catch {
-        this.InChromeExtension = false;
-    }
 
     this.Local = new DashLocal(this.Context);
     this.DarkModeActive = ["true", true].includes(this.Local.Get("dark_mode_active"));
@@ -132,6 +125,7 @@ function _Dash () {
     };
 
     this.setup_styles = function () {
+        this.check_if_in_chrome_extension();
         this.check_for_global_storage();
 
         $("body").css({
@@ -159,6 +153,23 @@ function _Dash () {
                 self.draw();
             });
         })(this);
+    };
+
+    this.check_if_in_chrome_extension = function () {
+        if (this.IsMobile) {
+            this.InChromeExtension = false;
+
+            return;
+        }
+
+        var r = window.chrome?.runtime;
+
+        this.InChromeExtension = Boolean(
+               r
+            && typeof r.id === "string"
+            && typeof r.getURL === "function"
+            && typeof r.getManifest === "function"
+        );
     };
 
     this.UpdateDashContext = function (new_context={}, full_replace=false) {
