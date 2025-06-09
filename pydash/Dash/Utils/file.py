@@ -239,7 +239,7 @@ def EnsureUniqueFilename(file_data, file_root, nested, is_image):
         key = "filename"
 
     matches = []
-    filename = get_tagless_filename(file_data[key])
+    filename, file_tag_num = get_tagless_filename(file_data[key], return_tag_num=True)
     parent_folders = file_data["parent_folders"]
 
     if nested:
@@ -271,9 +271,14 @@ def EnsureUniqueFilename(file_data, file_root, nested, is_image):
             if tag_number is not None:
                 matches.append(tag_number)
 
-    if 0 in matches:
-        # We confirmed that the original filename exists, so we must add a numerical tag
-        file_data[key] = update_filename_based_on_matches(filename, matches)
+    if (
+        # Original filename exists, so we must add a numerical tag
+        (not file_tag_num and 0 in matches)
+
+        # Incoming file already has a tag and it already exists, so increment it
+        or (file_tag_num and file_tag_num in matches)
+    ):
+        file_data[key] = update_filename_based_on_matches(filename, matches, file_tag_num)
 
     return file_data
 
@@ -420,19 +425,29 @@ def GetVideoDetails(path):
     }
 
 
-def get_tagless_filename(filename):
+def get_tagless_filename(filename, return_tag_num=False):
     if ")." not in filename:
+        if return_tag_num:
+            return filename, 0
+
         return filename
 
     split = filename.split(").")
     sub_split = split[0].split("(")
 
     if not sub_split[-1].isdigit():
+        if return_tag_num:
+            return filename, 0
+
         return filename
 
-    sub_split.pop()
+    tag_num = int(sub_split.pop())
+    cleaned = get_tagless_filename(f"{'('.join(sub_split).strip()}.{split[-1]}")
 
-    return get_tagless_filename(f"{'('.join(sub_split).strip()}.{split[-1]}")
+    if return_tag_num:
+        return cleaned, tag_num
+
+    return cleaned
 
 
 def replace_extra_periods_in_filename(filename, extension):
@@ -750,7 +765,7 @@ def update_data_with_saved_file(file_data, file_root, file_ext, file_bytes_or_ex
     return file_data
 
 
-def update_filename_based_on_matches(filename, matches=[]):
+def update_filename_based_on_matches(filename, matches=[], minimum=1, maximum=10000):
     if not matches:
         return filename
 
@@ -758,14 +773,14 @@ def update_filename_based_on_matches(filename, matches=[]):
 
     num = None
 
-    for n in range(1, 10000):
+    for n in range(max(minimum, 1), maximum):
         if n not in matches:
             num = n
 
             break
 
     if num is None:
-        num = len(matches)
+        num = matches[-1] + 1
 
     tag = f"({num})"
 
