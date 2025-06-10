@@ -1140,14 +1140,19 @@ class _YouTubeUtils:
         if visibility not in ["public", "private", "unlisted"]:
             raise ValueError(f"Invalid visibility '{visibility}', expected 'public', 'private', or 'unlisted'")
 
-        if category_num and category_num not in self.video_categories:
-            raise KeyError(f"Invalid video category number (see self.video_categories): {category_num}")
-
         if "<" in title or ">" in title:
             raise ValueError("Title can't contain '<' or '>'")
 
         if len(title) > 100:
             raise ValueError("Title can't be longer than 100 characters")
+
+        snippet = {"title": title}
+
+        if category_num:
+            if category_num not in self.video_categories:
+                raise KeyError(f"Invalid video category number (see self.video_categories): {category_num}")
+
+            snippet["categoryId"] = str(category_num)
 
         if description:
             if "<" in description or ">" in description:
@@ -1162,6 +1167,8 @@ class _YouTubeUtils:
                     "special characters, as well as emojis, can range from 2-4 bytes each."
                 )
 
+            snippet["description"] = description
+
         if tags:
             char_count = 0
 
@@ -1175,6 +1182,8 @@ class _YouTubeUtils:
 
                 if char_count > 500:
                     raise ValueError("Combined tags can't exceed 500 characters - see comments for more info")
+
+            snippet["tags"] = tags
 
         from googleapiclient.http import MediaFileUpload
 
@@ -1198,10 +1207,7 @@ class _YouTubeUtils:
                 # "topicDetails"
             ]),
             "body": {
-                "snippet": {
-                    "title": title,
-                    "description": description
-                },
+                "snippet": snippet,
                 "status": {
                     "embeddable": True,
                     "privacyStatus": visibility
@@ -1209,9 +1215,6 @@ class _YouTubeUtils:
             },
             "media_body": MediaFileUpload(video_path)
         }
-
-        if category_num:
-            params["body"]["snippet"]["categoryId"] = str(category_num)
 
         if future_iso:
             from datetime import datetime
