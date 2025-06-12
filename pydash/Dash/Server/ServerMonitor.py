@@ -142,7 +142,15 @@ class ServerMonitor:
         prefix = ""
         send_email = False
 
-        if used >= 97:
+        if used >= 99:
+            prefix = f"🚨🚨 EMERGENCY 🚨🚨"
+            send_email = self.now.minute % 10 == 0  # Every ten minutes
+
+        elif used >= 98:
+            prefix = f"🚨 CRITICAL 🚨"
+            send_email = self.now.minute == 0  # Every hour
+
+        elif used >= 97:
             prefix = f"🚨 CRITICAL"
             send_email = self.now.hour % 4 == 0 and self.now.minute == 0  # Every four hours
 
@@ -168,6 +176,8 @@ class ServerMonitor:
             subject=f"{prefix} WARNING: {used}% Disk Usage",
             msg=f"{prefix} WARNING: Server disk usage is at {used}%"
         )
+
+        return used
 
     def Monitor(self):
         current_state = self.get_current_state()
