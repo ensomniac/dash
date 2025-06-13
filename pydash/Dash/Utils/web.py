@@ -18,15 +18,23 @@ class WebCrawler:
     _actions: callable
     _auto_gui: callable
     _dash_context: dict
+    _fake_display: callable
 
     def __init__(
         self, headless=True, wait_timeout_sec=15, profile_root="",
-        extra_stealth=False, proxy_url="", file_storage_root=""
+        extra_stealth=False, proxy_url="", file_storage_root="", use_fake_display=False
     ):
         self.headless = headless
         self.wait_timeout_sec = wait_timeout_sec
         self.profile_root = profile_root  # Default to NO profile, otherwise, must explicitly provide one
-        self.extra_stealth = extra_stealth  # Defaults to False because it may be overkill for some sites
+        self.extra_stealth = extra_stealth  # Defaults to False because it's overkill for most cases
+
+        # This essentially mimics the Xvfb flow outlined below, but is NOT for actually viewing the graphics
+        # via routing/tunneling to a VNC. This should only be used to replace an automated HEADLESS flow when
+        # absolutely necessary. For example, if there is a captcha challenge that is only being presented in
+        # a headless flow and cannot be resolved (ex: DistroKid), this can make the headless mode work more
+        # like headed mode and potentially get around those types of issues.
+        self.use_fake_display = use_fake_display
 
         # For when the server's IP is blocked/restricted by certain
         # sites (only use legit providers, such as BrightData)
@@ -40,59 +48,79 @@ class WebCrawler:
         self.waits = {}
         self.screenshots = []
         self.repositioned_window = False
+        self.using_virtual_display = False
+        self.virtual_display_size_w = 1920
+        self.virtual_display_size_h = 1080
         self._on_server = os.path.exists(OapiRoot)
 
-        if self._on_server and not self.headless:
-            # Ex:
-            #     Xvfb (recommended):
-            #         - Requires a VNC client on local machine
-            #             - TigerVNC works great for this, Apple's built-in Screen Sharing app doesn't
-            #         - Make sure no one else is using Xvfb
-            #           (use different display numbers if simultaneous work is required)
-            #         - [TERMINAL 1]
-            #             - Access the server as normal via `ssh user@ipaddress`
-            #             - (If no one else is using Xvfb)
-            #               Make sure there are no active sessions via `killall Xvfb`
-            #               (also run `rm /tmp/.X99-lock` for good measure)
-            #             - Start virtual display session via `Xvfb :99 -screen 0 1920x1080x24 &`
-            #             - Set DISPLAY via `export DISPLAY=:99`
-            #             - Start VNC session via `x11vnc -display :99 -nopw -listen localhost -xkb &`
-            #         - [TERMINAL 2]
-            #             - Access the server via `ssh -L 5900:localhost:5900 user@ipaddress`
-            #             - Set DISPLAY via `export DISPLAY=:99`
-            #         - Connect VNC client to `localhost:5900`
-            #         - [TERMINAL 2]
-            #             - Run the server script that uses this class
-            #             - Any graphics will be automatically routed to the VNC client
-            #             - If you need to use Chrome, simply run:
-            #               `google-chrome-stable --no-sandbox --window-size=1920,1080`
-            #         - [TERMINAL 1]
-            #             - (If no one else is using Xvfb)
-            #               Cleanup session via `killall Xvfb`
-            #
-            #     X11 (not fully worked out):
-            #         - Requires XQuartz on local machine
-            #         - Access the server via `ssh -Y user@ipaddress`
-            #         - DISPLAY will already be populated
-            #         - Run the server script that uses this class
-            #         - X11 will automatically open a window on local machine to route graphics
-            #             - There are unresolved errors with this approach that cause it to not
-            #               work reliably with selenium, and I dropped it after two hours wasted.
-            #               This is the simplest approach for non-selenium graphics routing, though.
-            if not os.environ.get("DISPLAY"):
-                raise EnvironmentError("Headed mode requires DISPLAY env var to be set, either via X11 or Xvfb")
+        if self.use_fake_display:
+            if self.headless:  # Make sure this is deliberate, intentional, and informed
+                raise ValueError("Headless must be False when using a fake display")
 
-            if not os.environ.get("XAUTHORITY"):  # Required for X11
-                os.environ["XAUTHORITY"] = os.path.expanduser("~/.Xauthority")
+            if not self._on_server:
+                raise EnvironmentError(
+                    "Running a fake display is intended for the server only. Headed mode on your "
+                    "local machine can be run normally through your browser, without a fake display."
+                )
 
-            self.virtual_display = True
-        else:
-            self.virtual_display = False
+        if not self.headless:
+            if self.use_fake_display:
+                self.using_virtual_display = True
+
+            elif self._on_server:
+                # Ex:
+                #     Xvfb (recommended):
+                #         - Requires a VNC client on local machine
+                #             - TigerVNC works great for this, Apple's built-in Screen Sharing app doesn't
+                #         - Make sure no one else is using Xvfb
+                #           (use different display numbers if simultaneous work is required)
+                #         - [TERMINAL 1]
+                #             - Access the server as normal via `ssh user@ipaddress`
+                #             - (If no one else is using Xvfb)
+                #               Make sure there are no active sessions via `killall Xvfb`
+                #               (also run `rm /tmp/.X99-lock` for good measure)
+                #             - Start virtual display session via `Xvfb :99 -screen 0 1920x1080x24 &`
+                #             - Set DISPLAY via `export DISPLAY=:99`
+                #             - Start VNC session via `x11vnc -display :99 -nopw -listen localhost -xkb &`
+                #         - [TERMINAL 2]
+                #             - Access the server via `ssh -L 5900:localhost:5900 user@ipaddress`
+                #             - Set DISPLAY via `export DISPLAY=:99`
+                #         - Connect VNC client to `localhost:5900`
+                #         - [TERMINAL 2]
+                #             - Run the server script that uses this class
+                #             - Any graphics will be automatically routed to the VNC client
+                #             - If you need to use Chrome, simply run:
+                #               `google-chrome-stable --no-sandbox --window-size=1920,1080`
+                #         - [TERMINAL 1]
+                #             - (If no one else is using Xvfb)
+                #               Cleanup session via `killall Xvfb`
+                #
+                #     X11 (not fully worked out):
+                #         - Requires XQuartz on local machine
+                #         - Access the server via `ssh -Y user@ipaddress`
+                #         - DISPLAY will already be populated
+                #         - Run the server script that uses this class
+                #         - X11 will automatically open a window on local machine to route graphics
+                #             - There are unresolved errors with this approach that cause it to not
+                #               work reliably with selenium, and I dropped it after two hours wasted.
+                #               This is the simplest approach for non-selenium graphics routing, though.
+                if not os.environ.get("DISPLAY"):
+                    raise EnvironmentError("Headed mode requires DISPLAY env var to be set, either via X11 or Xvfb")
+
+                if not os.environ.get("XAUTHORITY"):  # Required for X11
+                    os.environ["XAUTHORITY"] = os.path.expanduser("~/.Xauthority")
+
+                self.using_virtual_display = True
 
     @property
     def driver(self):
         if not hasattr(self, "_driver"):
             from selenium_stealth import stealth
+
+            if self.use_fake_display:
+                self.fake_display.start()
+
+                sleep(3)  # Arbitrary buffer, might be unnecessary
 
             if self.proxy_url:
                 from seleniumwire.undetected_chromedriver import Chrome, ChromeOptions
@@ -121,7 +149,7 @@ class WebCrawler:
                 options.add_argument(f"--user-data-dir={root}")
                 options.add_argument(f"--profile-directory={profile}")
 
-                if self.virtual_display:
+                if self.using_virtual_display:
                     self.clear_profile_lock_files(self.profile_root)
 
             if self.extra_stealth:
@@ -129,7 +157,7 @@ class WebCrawler:
                     options = ChromeOptions()
 
                 if self.headless:
-                    options.add_argument("--window-size=1920,1080")
+                    options.add_argument(f"--window-size={self.virtual_display_size_w},{self.virtual_display_size_h}")
 
                 if mac:
                     options.add_argument("--dns-prefetch-disable")
@@ -154,7 +182,7 @@ class WebCrawler:
                     "disable_capture": True
                 }
 
-            if not self.virtual_display:
+            if not self.using_virtual_display:
                 args["headless"] = self.headless
 
             if options:  # Keep this last
@@ -170,6 +198,15 @@ class WebCrawler:
             )
 
         return self._driver
+
+    @property
+    def fake_display(self):
+        if not hasattr(self, "_fake_display"):
+            from pyvirtualdisplay import Display
+
+            self._fake_display = Display(size=(self.virtual_display_size_w, self.virtual_display_size_h))
+
+        return self._fake_display
 
     @property
     def by(self):
@@ -244,6 +281,11 @@ class WebCrawler:
             self.driver.quit()
 
             delattr(self, "_driver")
+
+        if hasattr(self, "_fake_display"):
+            self.fake_display.stop()
+
+            delattr(self, "_fake_display")
 
         self.waits = {}
         self.repositioned_window = False
@@ -705,7 +747,7 @@ class WebCrawler:
                 or list[selenium.webdriver.remote.webelement.WebElement]
         """
 
-        from selenium.common.exceptions import TimeoutException, StaleElementReferenceException
+        from selenium.common.exceptions import TimeoutException, StaleElementReferenceException, NoSuchElementException
 
         if for_click and for_multiple:
             raise ValueError("Can't use `for_click` and `for_multiple` together")
@@ -715,17 +757,28 @@ class WebCrawler:
 
         try:
             if to_be_removed:
-                from selenium.common.exceptions import NoSuchElementException
+                try:
+                    element = self.driver.find_element(*locator)
+
+                except NoSuchElementException:
+                    return True
+
+                if not element:
+                    return True
 
                 try:
-                    return wait.until(self.ec.invisibility_of_element_located(locator))
+                    wait.until(self.ec.invisibility_of_element_located(locator))
+
+                    return True
 
                 except NoSuchElementException:
                     return True
 
                 except:
                     try:
-                        return wait.until(self.ec.staleness_of(locator))
+                        wait.until(self.ec.staleness_of(element))
+
+                        return True
 
                     except NoSuchElementException:
                         return True
@@ -771,7 +824,16 @@ class WebCrawler:
 
         except TimeoutException as e:
             if to_be_removed:
-                return False
+                try:
+                    element = self.driver.find_element(*locator)
+
+                except NoSuchElementException:
+                    return True
+
+                except:
+                    return False
+
+                return not element
 
             if not must_exist:
                 return None
@@ -1008,7 +1070,7 @@ class WebCrawler:
 
     def log(self, text):
         # if self._on_server:  # Use this instead when debugging on the server, but can't use this for requests
-        if self.virtual_display:
+        if self.using_virtual_display and not self.use_fake_display:
             print(text)
 
         self.logs.append(text)
