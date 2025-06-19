@@ -300,4 +300,18 @@ class SyncThread:
             if not self.needs_git_push:
                 self.needs_git_push = True
         else:
-            print(f"\n\n== SERVER ERROR ==\n\n{response}\n\n", "== SERVER ERROR ==\n\n")
+
+            print("\n\n" + "="*50)
+            print("== SERVER ERROR ==")
+
+            print(json.dumps(response, indent=4))
+
+            print("== SERVER ERROR ==")
+            print("="*50, "\n\n")
+
+            # print(f"\n\n== SERVER ERROR ==\n\n{response}\n\n", "== SERVER ERROR ==\n\n")
+
+
+
+
+
