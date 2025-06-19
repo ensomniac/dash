@@ -300,4 +300,4 @@ class SyncThread:
             if not self.needs_git_push:
                 self.needs_git_push = True
         else:
-            print(f"== SERVER ERROR ==\n{response}")
+            print(f"\n\n== SERVER ERROR ==\n\n{response}\n\n", "== SERVER ERROR ==\n\n")
