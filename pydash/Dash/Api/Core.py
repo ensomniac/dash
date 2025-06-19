@@ -163,7 +163,7 @@ class ApiCore:
                     if analog_index.get("analog_context"):
                         self._analog_context = analog_index["analog_context"]
 
-                except KeyError:
+                except (KeyError, FileNotFoundError):
                     pass
 
             # Expose access for older code without requiring adding support for this new context

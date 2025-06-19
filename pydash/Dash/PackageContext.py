@@ -230,10 +230,15 @@ def GetAnalogIndex(domain=""):
                 f"os.environ:\n{dict(os.environ)}\n\nsys.path:\n{sys.path}"
             )
 
+    path = os.path.join(OapiRoot, "analog", "local", "index.json")
+
+    if not os.path.exists(path):
+        raise FileNotFoundError(f"The Analog index file does not exist: {path}")
+
     from Dash.LocalStorage import Read
 
     data = {}
-    index_data = Read(os.path.join(OapiRoot, "analog", "local", "index.json"))
+    index_data = Read(path)
 
     if domain:
         data = index_data.get(domain)
