@@ -410,11 +410,11 @@ class GUtils:
         return self._youtube_utils_
 
     def PostVideoToYouTube(
-        self, video_path, title, description="",
-        tags=[], visibility="public", category_num=0, future_iso=""
+        self, video_path, title, description="", tags=[],
+        visibility="public", category_num=0, future_iso="", thumb_path=""
     ):
         return self._youtube_utils.PostVideo(
-            video_path, title, description, tags, visibility, category_num, future_iso
+            video_path, title, description, tags, visibility, category_num, future_iso, thumb_path
         )
 
     def PostSocialToYouTube(self, text):
@@ -1134,8 +1134,8 @@ class _YouTubeUtils:
 
     # For category_num, see self.video_categories
     def PostVideo(
-        self, video_path, title, description="",
-        tags=[], visibility="public", category_num=0, future_iso=""
+        self, video_path, title, description="", tags=[],
+        visibility="public", category_num=0, future_iso="", thumb_path=""
     ):
         if visibility not in ["public", "private", "unlisted"]:
             raise ValueError(f"Invalid visibility '{visibility}', expected 'public', 'private', or 'unlisted'")
@@ -1232,6 +1232,11 @@ class _YouTubeUtils:
             params["media_body"] = "(MediaFileUpload object) truncated..."
 
             return ParseHTTPError(http_error, params)
+
+        response["custom_thumbnail_url"] = self.upload_video_thumbnail(
+            video_response=response,
+            thumb_path=thumb_path
+        ) if thumb_path else ""
 
         # Response does not have what we need, so we have to check the video
         response["shorts"] = self.video_is_a_short(video_path=video_path)
@@ -1631,6 +1636,66 @@ class _YouTubeUtils:
             return ParseHTTPError(http_error, params)
 
         return self.parse_videos(videos)
+
+    # API ref: https://developers.google.com/youtube/v3/docs/thumbnails/set
+    # Specs ref: https://support.google.com/youtube/answer/72431?sjid=18278064942235778801-NC#zippy=%2Cimage-size-and-resolution
+    def upload_video_thumbnail(self, video_response, thumb_path, return_response=False):
+        from googleapiclient.http import MediaFileUpload
+
+        url = ""
+        error = ""
+        thumb_response = None
+
+        thumb_params = {
+            "videoId": video_response["id"],
+            "media_body": MediaFileUpload(thumb_path)
+        }
+
+        try:
+            thumb_response = self.Client.thumbnails().set(**thumb_params).execute()
+
+        except HttpError as http_error:
+            thumb_params["media_body"] = "(MediaFileUpload object) truncated..."
+
+            try:
+                error = ParseHTTPError(http_error, thumb_params)
+
+            except Exception as e:
+                error = str(e)
+
+        except Exception as e:
+            error = str(e)
+
+        if not error and thumb_response:
+            try:
+                url = self.parse_video_thumbnail(
+                    {"snippet": {"thumbnails": thumb_response["items"][-1]}}
+                )["url"]
+
+            except Exception as e:
+                from Dash.Utils import JSON2HTML
+
+                error = f"{e}\n\nThumbnail response:\n{JSON2HTML(thumb_response)}"
+
+        # Don't allow this non-critical failure to affect any steps following the successful video upload
+        if error:
+            from Dash.Utils import SendEmail, JSON2HTML
+
+            SendEmail(
+                subject="Failed to set cover image for YouTube video",
+                msg=(
+                    "The video posted successfully, but the cover image failed to be set for the video."
+                    "\n\nIf you're sure you're using the right credentials with the right scopes, the\n\n"
+                    "issue is likely that the custom thumbnails feature is still locked for this account. "
+                    "Go to `YouTube Studio → Settings → Channel → Feature eligibility` to confirm.\n\n"
+                    f"Cover path:\n{thumb_path}\n\nVideo response:\n{JSON2HTML(video_response)}\n\nError:\n{error}"
+                )
+            )
+
+        if return_response:
+            return thumb_response
+
+        return url
 
     def parse_videos(self, videos):
         url_base = "https://www.youtube.com/"
