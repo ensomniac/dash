@@ -33,7 +33,7 @@ class Service:
         self.token_refresh_endpoint = token_refresh_endpoint
         self.token_valid_url = token_valid_url
 
-        self.redirect_uri = "https://authorize.oapi.co/r"
+        self.redirect_uri = f"https://{os.environ.get('HTTP_HOST')}/r"  # Don't hard-code the host!
         self.__priv_data = GetPrivKey(f"{'youtube' if 'youtube' in self.name else self.name}.json")
         self._client_id = self.__priv_data["client_id"]
         self._client_secret = self.__priv_data["client_secret"]
@@ -72,7 +72,7 @@ class __Services:
             f"{self.google_api_scope_prefix}/youtubepartner-channel-audit"
         ]
 
-        # This is important so we know whose credentials we're getting
+        # This is important, so we know whose credentials we're getting
         self.google_user_email_scope = f"{self.google_api_scope_prefix}/userinfo.email"
 
     @property

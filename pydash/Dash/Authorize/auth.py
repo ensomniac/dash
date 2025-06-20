@@ -32,7 +32,7 @@ class Auth:
 
         self._service_data = None
         self.flow = self.get_flow()
-        self.service_url = f"http://authorize.oapi.co/{self.service.name}"
+        self.service_url = f"http://{os.environ.get('HTTP_HOST')}/{self.service.name}"  # Don't hard-code the host!
 
     @property
     def service_data(self):  # The data is stored on oapi - get it
