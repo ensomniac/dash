@@ -42413,7 +42413,7 @@ class DashGuiFlowStep {
             return;
         }
         this.continue_button_visible = false;
-        this.continue_button.html.animate(
+        this.continue_button.html.stop().animate(
             {"opacity": 0},
             {
                 "duration": 400,
@@ -42456,7 +42456,7 @@ class DashGuiFlowStep {
         this.continue_button.html.css({
             "visibility": "visible"
         });
-        this.continue_button.html.animate(
+        this.continue_button.html.stop().animate(
             {"opacity": 1},
             400
         );
@@ -43201,7 +43201,7 @@ class DashGuiFlowTipText {
                     this.more_label.css({
                         "height": 0
                     });
-                    this.more_label.animate(
+                    this.more_label.stop().animate(
                         {
                             "opacity": 1,
                             "height": height
@@ -43211,7 +43211,7 @@ class DashGuiFlowTipText {
                     this.show_more_toggle.label.SetText("Show less");
                 }
                 else {
-                    this.more_label.animate(
+                    this.more_label.stop().animate(
                         {
                             "opacity": 0,
                             "height": 0

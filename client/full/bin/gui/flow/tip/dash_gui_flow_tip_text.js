@@ -222,7 +222,7 @@ class DashGuiFlowTipText {
                         "height": 0
                     });
 
-                    this.more_label.animate(
+                    this.more_label.stop().animate(
                         {
                             "opacity": 1,
                             "height": height
@@ -234,7 +234,7 @@ class DashGuiFlowTipText {
                 }
 
                 else {
-                    this.more_label.animate(
+                    this.more_label.stop().animate(
                         {
                             "opacity": 0,
                             "height": 0

@@ -366,7 +366,7 @@ class DashGuiFlowStep {
 
         this.continue_button_visible = false;
 
-        this.continue_button.html.animate(
+        this.continue_button.html.stop().animate(
             {"opacity": 0},
             {
                 "duration": 400,
@@ -418,7 +418,7 @@ class DashGuiFlowStep {
             "visibility": "visible"
         });
 
-        this.continue_button.html.animate(
+        this.continue_button.html.stop().animate(
             {"opacity": 1},
             400
         );
