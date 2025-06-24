@@ -317,14 +317,12 @@ class ApiCore:
 
         elif self._params.get("f") in self._private:
             if self.User:
-                # This needs to be set again in order to capture the logged-in user's data
-                self.set_dash_globals()
+                self.set_dash_globals()  # This needs to be set again in order to capture the logged-in user's data
                 self.run(self._private[self._params.get("f")])
-        elif self._params.get("f") == "excalidraw":
 
+        elif self._params.get("f") == "excalidraw":
             if self.User:
-                # This needs to be set again in order to capture the logged-in user's data
-                self.set_dash_globals()
+                self.set_dash_globals()  # This needs to be set again in order to capture the logged-in user's data
 
             self.run(self.dash_excalidraw)
 
@@ -332,11 +330,6 @@ class ApiCore:
             self.SetResponse({"error": "Unknown Function x4543"})
 
         self.ReturnResponse()
-
-    def dash_excalidraw(self):
-        from . Excalidraw import Excalidraw
-        instance = Excalidraw(self.Params, self.DashContext, self.User)
-        return self.SetResponse(instance.Run())
 
     def ReturnResponse(self):
         if self._render_html:
@@ -571,6 +564,11 @@ class ApiCore:
         sender_name, strict_notify, notify_email_list = self.get_misc_for_email(strict_notify, notify_email_list)
 
         return self._send_email(subject, notify_email_list, msg, error, strict_notify, sender_name)
+
+    def dash_excalidraw(self):
+        from .Excalidraw import Excalidraw
+
+        return self.SetResponse(Excalidraw(self.Params, self.DashContext, self.User).Run())
 
     def process_raw_body_content(self):
         # This was an attempt at resolving this issue, but it still
