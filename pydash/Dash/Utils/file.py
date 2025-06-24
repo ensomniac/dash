@@ -173,11 +173,12 @@ def ValidateVideoAspectRatio(video_bytes_or_existing_path, target_aspect_ratio, 
 
         path = video_bytes_or_existing_path
     else:
+        from . import OapiRoot
         from .number import GetRandomID
         from Dash.LocalStorage import Write
 
         temp = True
-        path = os.path.join("/var", "tmp", f"dash_video_aspect_validation_{GetRandomID()}")
+        path = os.path.join(OapiRoot, "dash", "local", "tmp", f"dash_video_aspect_validation_{GetRandomID()}")
 
         Write(path, video_bytes_or_existing_path)
 

@@ -24,19 +24,16 @@ ModelExtensions = ["fbx", "obj"]
 # ***************************************************************************************
 
 
+# Documentation: https://github.com/CesiumGS/obj2gltf#readme
+# This CLI also supports textures, but we won't use that in this context
 def ConvertOBJToGLB(existing_obj_path, output_glb_path):
-    # Documentation: https://github.com/CesiumGS/obj2gltf#readme
-    # This CLI also supports textures, but we won't use that in this context
-
     check_output("/usr/local/bin/obj2gltf -i " + existing_obj_path + " -o " + output_glb_path + " --binary", shell=True)
 
     return output_glb_path
 
 
 def ConvertFBXToGLB(existing_fbx_path, output_glb_path, txt_path=None, compress_txt=False):
-    if is_python3:
-        # As of July 2020, Autodesk's FBX's python bindings only exist for python2
-
+    if is_python3:  # As of July 2020, Autodesk's FBX's python bindings only exist for python2
         from json import loads
         from . import OapiRoot
 
@@ -51,8 +48,8 @@ def ConvertFBXToGLB(existing_fbx_path, output_glb_path, txt_path=None, compress_
             args.append(str(compress_txt))
 
         return loads(check_output(" ".join(args), shell=True).decode().strip())
-    else:
-        return _FBXConverter(existing_fbx_path, output_glb_path, txt_path, compress_txt).ToGLB()
+
+    return _FBXConverter(existing_fbx_path, output_glb_path, txt_path, compress_txt).ToGLB()
 
 
 class _FBXConverter:
@@ -79,7 +76,7 @@ class _FBXConverter:
         self.scene = None
         self.manager = fbx.FbxManager.Create()
         self.output_log_path = self.output_glb_path.replace(".glb", ".glblog")
-        self.conversion_path = os.path.join("/var", "tmp", str(randint(10000, 99999)), "_fbx_validator")
+        self.conversion_path = os.path.join(os.path.dirname(self.fbx_path), str(randint(10000, 99999)), "_fbx_validator")
         self.local_fbx_path = os.path.join(self.conversion_path, self.fbx_path.split("/")[-1].strip())
         self.local_fbx_converted_path = self.local_fbx_path.replace(".fbx", "_converted.fbx")
 
@@ -121,6 +118,10 @@ class _FBXConverter:
             from traceback import format_exc
 
             error = format_exc()
+        finally:
+            from shutil import rmtree
+
+            rmtree(self.conversion_path, ignore_errors=True)
 
         return self.write_log(error)
 

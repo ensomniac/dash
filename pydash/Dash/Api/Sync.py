@@ -17,7 +17,8 @@ class ApiSync(ApiCore):
         self.Add(self.github_webhook, requires_authentication=False)
 
     def dashsync_live(self):
-        self.ValidateParams(["remote_path", "fmod"])
+        self.ValidateParams(["remote_path"])
+        self.ValidateParams(["fmod"], falsy=True)
 
         from gzip import decompress
 

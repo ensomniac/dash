@@ -10,11 +10,13 @@ Utility for reading, writing and maintaining common data.
 import os
 import sys
 
-from datetime import datetime
-from Dash.Utils import Memory, GetRandomID
-
 
 class DashLocalStorage:
+    _user: dict
+    _now: callable
+    _memory: callable
+    _request_data: dict
+
     def __init__(self, dash_context=None, store_path="", nested=False, sort_by_key="", filter_out_keys=[]):
         """
         Utility for reading, writing and maintaining common data.
@@ -28,15 +30,54 @@ class DashLocalStorage:
         :param list filter_out_keys: dict keys to filter out of each final data object (default=[])
         """
 
-        self.nested = nested
+        self._dash_context = dash_context
 
         # This attr name is confusing, and should be named local_folder_name, or something
         # like that, but leaving it alone to not break anything in other code bases
         self.store_path = store_path
 
+        self.nested = nested
         self.sort_by_key = sort_by_key
         self.filter_out_keys = filter_out_keys
-        self.dash_context = dash_context
+        
+    @property
+    def RequestData(self):
+        if not hasattr(self, "_request_data"):
+            self._request_data = self.memory.RequestData
+            
+        return self._request_data
+
+    @property
+    def User(self):
+        if not hasattr(self, "_user"):
+            self._user = self.memory.User
+
+        return self._user
+
+    @property
+    def DashContext(self):
+        if not self._dash_context:
+            self._dash_context = self.memory.DashContext
+
+        return self._dash_context
+
+    @property
+    def now(self):
+        if not hasattr(self, "_now"):
+            from datetime import datetime
+
+            self._now = datetime.now()
+
+        return self._now
+
+    @property
+    def memory(self):
+        if not hasattr(self, "_memory"):
+            from Dash.Utils import Memory
+
+            self._memory = Memory
+
+        return self._memory
 
     def CreateOrUpdate(self, additional_data, obj_id):
         record_path = self.GetRecordPath(obj_id)
@@ -54,8 +95,8 @@ class DashLocalStorage:
         except Exception as e:
             raise Exception(f"-->{type(data)}<--") from e
 
-        data["modified_by"] = Memory.Global.RequestUser["email"]
-        data["modified_on"] = datetime.now().isoformat()
+        data["modified_by"] = self.User["email"]
+        data["modified_on"] = self.now.isoformat()
 
         self.WriteData(obj_id, data)
 
@@ -66,7 +107,13 @@ class DashLocalStorage:
         Creates and saves a standard user record.
         """
 
-        record_id = obj_id or GetRandomID()
+        if obj_id:
+            record_id = obj_id
+        else:
+            from Dash.Utils import GetRandomID
+
+            record_id = GetRandomID()
+
         data = self.get_default_data(record_id)
 
         if additional_data:
@@ -92,6 +139,7 @@ class DashLocalStorage:
     def Duplicate(self, id_to_duplicate, include_display_name=True, display_name_tag="Copy"):
         if self.nested:
             from shutil import copytree
+            from Dash.Utils import GetRandomID
 
             new_id = GetRandomID()
 
@@ -262,7 +310,7 @@ class DashLocalStorage:
 
             raise FileNotFoundError(
                 f"Expected record does not exist x9483. Expected: {record_path} "
-                f"(obj_id: {obj_id})\n\nParams:\n{Memory.Global.RequestData or {}}"
+                f"(obj_id: {obj_id})\n\nParams:\n{self.RequestData or {}}"
             )
 
         data = self.Read(record_path)
@@ -270,14 +318,14 @@ class DashLocalStorage:
         return self.filter_data_entry(data)
 
     def SetProperties(self, obj_id, properties, create=False):
-        obj_id = obj_id or Memory.Global.RequestData["obj_id"]
+        obj_id = obj_id or self.RequestData["obj_id"]
 
         if not obj_id:
             raise Exception("Missing 'obj_id' error x8932")
 
         data = self.GetData(obj_id, create=create)
-        data["modified_by"] = Memory.Global.RequestUser["email"]
-        data["modified_on"] = datetime.now().isoformat()
+        data["modified_by"] = self.User["email"]
+        data["modified_on"] = self.now.isoformat()
 
         for key in properties:
             data[key] = properties[key]
@@ -287,16 +335,16 @@ class DashLocalStorage:
         return data
 
     def SetProperty(self, obj_id, key=None, value=None, create=False):
-        obj_id = obj_id or Memory.Global.RequestData["obj_id"]
+        obj_id = obj_id or self.RequestData["obj_id"]
 
         if not obj_id:
             raise Exception("Missing 'obj_id' error x8932")
 
-        key = key or Memory.Global.RequestData["key"]
-        # value = value or Memory.Global.RequestData.get("value")  # This was breaking certain cases
+        key = key or self.RequestData["key"]
+        # value = value or self.RequestData.get("value")  # This was breaking certain cases
 
-        if value is None and "value" in Memory.Global.RequestData:
-            value = Memory.Global.RequestData["value"]
+        if value is None and "value" in self.RequestData:
+            value = self.RequestData["value"]
 
         data = self.GetData(obj_id, create=create)
 
@@ -310,8 +358,8 @@ class DashLocalStorage:
 
         data.update({
             key: value,
-            "modified_by": Memory.Global.RequestUser["email"],
-            "modified_on": datetime.now().isoformat()
+            "modified_by": self.User["email"],
+            "modified_on": self.now.isoformat()
         })
 
         self.WriteData(obj_id, data)
@@ -354,27 +402,23 @@ class DashLocalStorage:
                 "file": CreateMonogramImage(
                     first_initial=first_initial,
                     last_initial=last_initial,
-                    output_path=os.path.join("/var", "tmp", filename)
+                    output_path=os.path.join(self.DashContext["srv_path_local"], "tmp", filename)
                 )
             },
-            dash_context=self.dash_context
+            dash_context=self.DashContext
         )
 
     def Delete(self, obj_id, archive_path=""):
         from time import sleep
 
-        if self.nested:
-            record_path = self.get_data_root(obj_id)
-        else:
-            record_path = self.GetRecordPath(obj_id)
+        error = None
+        attempts = 0
+        record_path = self.get_data_root(obj_id) if self.nested else self.GetRecordPath(obj_id)
 
         result = {
             "existed": os.path.exists(record_path),
             "record_path": record_path
         }
-
-        error = None
-        attempts = 0
 
         while attempts < 5:
             attempts += 1
@@ -462,7 +506,7 @@ class DashLocalStorage:
             attempts += 1
 
             try:
-                data = open(full_path, "r").read()
+                data = open(full_path).read()
 
                 if is_json:
                     data = loads(data)
@@ -565,22 +609,20 @@ class DashLocalStorage:
 
         if self.store_path == "users" and not from_get_all:
             if not obj_id:
-                from Dash.Utils import Memory
-
-                params = Memory.Global.RequestData
+                params = self.RequestData
                 obj_id = params.get("email")
 
             if not obj_id:
                 raise Exception("An email address is required. Error x8392")
 
             return os.path.join(
-                self.dash_context["srv_path_local"],
+                self.DashContext["srv_path_local"],
                 self.store_path,
                 obj_id + "/"  # Email address
             )
 
         return os.path.join(
-            self.dash_context["srv_path_local"],
+            self.DashContext["srv_path_local"],
             self.store_path + "/"
         )
 
@@ -817,13 +859,15 @@ class DashLocalStorage:
         return data
 
     def get_default_data(self, record_id):
+        iso = self.now.isoformat()
+        
         return {
             "id": record_id,
             "display_name": record_id,
-            "created_by": Memory.Global.RequestUser["email"],
-            "created_on": datetime.now().isoformat(),
-            "modified_by": Memory.Global.RequestUser["email"],
-            "modified_on": datetime.now().isoformat()
+            "created_by": self.User["email"],
+            "created_on": iso,
+            "modified_by": self.User["email"],
+            "modified_on": iso
         }
 
     # This is not exclusive to IDs, can be used for any string values
@@ -916,7 +960,7 @@ class DashLocalStorage:
 
     def recursively_replace_id_in_dict(self, data, old_id, new_id, verbose, indent_char, _log=[], _modified=False):
         modified = False
-        log = _log or []  # Have to do this, otherwise the logs persist and we get duplicates
+        log = _log or []  # Have to do this, otherwise the logs persist, and we get duplicates
 
         if verbose:
             log.append(f"{indent_char * 2}dict:")
@@ -1015,7 +1059,7 @@ class DashLocalStorage:
 
     def recursively_replace_id_in_list(self, data, old_id, new_id, verbose, indent_char, _log=[], _modified=False):
         modified = False
-        log = _log or []  # Have to do this, otherwise the logs persist and we get duplicates
+        log = _log or []  # Have to do this, otherwise the logs persist, and we get duplicates
 
         if verbose:
             log.append(f"{indent_char * 3}list:")

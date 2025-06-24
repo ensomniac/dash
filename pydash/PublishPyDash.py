@@ -10,29 +10,28 @@ pip install https://ensomniac.io/src/pydash.tar.gz
 import os
 import sys
 
-from requests import post
-from datetime import datetime
 from Dash.Utils import OapiRoot
-from shutil import rmtree, copytree
 
 
 class PublishDash:
-    _timestamp: str
     _year: str
+    _now: callable
+    _timestamp: str
 
     def __init__(self):
-
         self.source_path = os.path.join(OapiRoot, "dash", "github", "dash", "pydash")
 
         if not os.path.exists(self.source_path):
-            raise Exception("Path doesn exist. Expected: " + self.source_path)
+            raise FileNotFoundError(f"Path doesn't exist. Expected:\n{self.source_path}")
 
-        self.tmp_path = os.path.join("/var", "tmp", "PublishDash")
+        self.tmp_path = os.path.join(OapiRoot, "dash", "local", "tmp", "PublishDash")
         self.dest_tar = os.path.join(self.tmp_path, "pydash.tar.gz")
         self.dest_src = os.path.join(self.tmp_path, "src")
         self.version = self.get_version()
 
         if os.path.exists(self.tmp_path):
+            from shutil import rmtree
+
             rmtree(self.tmp_path)
 
         self.modify_version_info()
@@ -41,29 +40,38 @@ class PublishDash:
         # self.cleanup()
 
     @property
+    def now(self):
+        if not hasattr(self, "_now"):
+            from datetime import datetime
+
+            self._now = datetime.now()
+
+        return self._now
+
+    @property
     def year(self):
         if not hasattr(self, "_year"):
-            self._year = str(datetime.now().year)
+            self._year = str(self.now.year)
 
         return self._year
 
     @property
     def timestamp(self):
         if not hasattr(self, "_timestamp"):
-            now = datetime.now()
-            self._timestamp = "/".join([str(now.month), str(now.day), str(now.year)])
+            self._timestamp = "/".join([str(self.now.month), str(self.now.day), str(self.year)])
 
         return self._timestamp
 
     def get_version(self):
-        init_path = os.path.join(self.source_path, "Dash", "__init__.py")
         version = None
+        init_path = os.path.join(self.source_path, "Dash", "__init__.py")
 
-        for line in open(init_path, "r").read().split("\n"):
+        for line in open(init_path).read().split("\n"):
             if line.startswith("__version__"):
                 version = float(
                     line.split("=")[-1].replace('"', "").replace("'", '"').strip()
                 )
+
                 break
 
         if not version:
@@ -72,6 +80,8 @@ class PublishDash:
         return round(version + 0.01, 3)
 
     def copy_source(self):
+        from shutil import copytree
+
         os.makedirs(self.tmp_path)
 
         copytree(self.source_path, self.dest_src)
@@ -79,7 +89,7 @@ class PublishDash:
         os.system(f"cd {self.dest_src};tar -czf {self.dest_tar} .")
 
         if not os.path.exists(self.dest_tar):
-            sys.exit("Failed to publish!")
+            sys.exit(f"Failed to publish! Dest TAR doesn't exist. Expected:\n{self.dest_tar}")
 
     # def cleanup(self):
     #     print("cleanup (empty function)")
@@ -91,10 +101,10 @@ class PublishDash:
         # self.modify_readme()
 
     def modify_init(self):
-        init_path = os.path.join(self.source_path, "Dash", "__init__.py")
         init_content = []
+        init_path = os.path.join(self.source_path, "Dash", "__init__.py")
 
-        for line in open(init_path, "r").read().split("\n"):
+        for line in open(init_path).read().split("\n"):
             if "Ensomniac" in line and "Ryan Martin" in line:
                 line = f"# {self.year} Ensomniac, Ryan Martin ryan@ensomniac.com"
 
@@ -109,10 +119,10 @@ class PublishDash:
         open(init_path, "w").write("\n".join(init_content))
 
     def modify_pkg(self):
-        path = os.path.join(self.source_path, "PKG-INFO")
         content = []
+        path = os.path.join(self.source_path, "PKG-INFO")
 
-        for line in open(path, "r").read().split("\n"):
+        for line in open(path).read().split("\n"):
             if line.startswith("Version"):
                 line = f"Version: {str(self.version)}"
 
@@ -124,10 +134,10 @@ class PublishDash:
         open(path, "w").write("\n".join(content))
 
     def modify_setup(self):
-        path = os.path.join(self.source_path, "setup.py")
         content = []
+        path = os.path.join(self.source_path, "setup.py")
 
-        for line in open(path, "r").read().split("\n"):
+        for line in open(path).read().split("\n"):
             if "version=" in line:
                 line = f'{line.split("=")[0]}="{str(self.version)}",'
 
@@ -136,10 +146,10 @@ class PublishDash:
         open(path, "w").write("\n".join(content))
 
     def modify_readme(self):
-        path = os.path.join(self.source_path, "README.md")
         content = []
+        path = os.path.join(self.source_path, "README.md")
 
-        for line in open(path, "r").read().split("\n"):
+        for line in open(path).read().split("\n"):
             if line.startswith("## Dash "):
                 line = f"## Dash - Version {str(self.version)} - {self.timestamp}"
 
@@ -148,28 +158,30 @@ class PublishDash:
         open(path, "w").write("\n".join(content))
 
     def upload(self):
-        print("Uploading...")
+        from requests import post
 
-        post_data = {"f": "publish", "version": self.version}
+        print("Uploading...")
 
         response = post(
             "https://ensomniac.io/PyDash",
             files={"tar": open(self.dest_tar, "rb")},
-            data=post_data,
+            data={
+                "f": "publish",
+                "version": self.version
+            }
         )
 
         try:
             r = response.json()
 
             if r.get("accepted"):
-                print(f"\tSuccessfully published v{str(r.get('version'))}!")
-                print(f"\tpip install {r.get('url')}")
+                print(f"\tSuccessfully published v{str(r.get('version'))}!\n\tpip install {r.get('url')}")
 
                 return
         except:
             pass
 
-        sys.exit(f"Error Uploading to Server!!\n{response.text}")
+        sys.exit(f"Error Uploading to Server! Response:\n{response.text}")
 
 
 if __name__ == "__main__":

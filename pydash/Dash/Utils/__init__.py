@@ -546,6 +546,10 @@ class _Memory:
         return self.Global.AnalogContext
 
     @property
+    def RequestData(self):  # Wrapper
+        return self.Global.RequestData
+
+    @property
     def UserToken(self):
         if not hasattr(self, "_usr_token"):
             try:
