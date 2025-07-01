@@ -955,6 +955,9 @@ class Users:
             if user_data.get("last_name"):
                 user_data["display_name"] += f" {user_data['last_name']}"
 
+        elif user_data.get("last_name"):
+            user_data["display_name"] = user_data["last_name"]
+
         elif user_data.get("email"):
             user_data["display_name"] = user_data["email"]
 

@@ -348,6 +348,10 @@ class DashLocalStorage:
 
         data = self.GetData(obj_id, create=create)
 
+        if self.store_path == "users" and value:
+            if key in ["first_name", "last_name"]:
+                value = value.strip()
+
         response = {
             "key": key,
             "value": value,

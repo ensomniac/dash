@@ -239,10 +239,22 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
     };
 
     this.get_header_label_text = function () {
-        var label = "User";
+        var label = "";
 
         if (this.view_mode === "settings") {
-            label = (this.user_data["first_name"] ? this.user_data["first_name"] + "'s " : "") + "User Settings";
+            if (this.user_data["first_name"]) {
+                label = this.user_data["first_name"] + "'";
+
+                if (!this.user_data["first_name"].endsWith("s")) {
+                    label += "s";
+                }
+            }
+
+            if (label) {
+                label += " ";
+            }
+
+            label += "User Settings";
         }
 
         else if (this.view_mode === "preview") {
@@ -264,7 +276,7 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
             }
         }
 
-        return label;
+        return label || "User";
     };
 
     this.add_header = function () {
