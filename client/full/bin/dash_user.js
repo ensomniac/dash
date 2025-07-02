@@ -4,6 +4,7 @@ function DashUser () {
 
     this.Data = null;
     this.Init = null;
+    this.loading_label = null;
 
     this.GetDisplayNameByEmail = function (user_email) {
         return this.GetDisplayName(this.GetByEmail(user_email));
@@ -54,6 +55,10 @@ function DashUser () {
         var user_json = Dash.Local.Get("user_json");
 
         if (token && email && user_json) {
+            this.loading_label = new Dash.Gui.LoadingLabel(this);
+
+            $("body").append(this.loading_label.html);
+
             var params = {
                 "f": "validate",
                 "token": token,
@@ -145,6 +150,12 @@ function DashUser () {
 
             this.SetUserAuthentication();
             this.__auth_not_authenticated_cb();
+        }
+
+        if (this.loading_label) {
+            this.loading_label.Clear();
+
+            this.loading_label = null;
         }
     };
 
