@@ -264,16 +264,33 @@ class DashLocalStorage:
             from Dash.Utils import SendEmail
             from traceback import format_stack
 
-            SendEmail(
-                subject="Dash.LocalStorage.GetAll",
-                msg=(
-                    "Warning:\nFolder(s) were identified as missing a data.json file. This typically happens if an "
-                    "object failed to be fully deleted, and therefore, this folder likely needs to be removed.\n"
-                    "Alternatively, a request to get the data may have happened at the same moment it was deleted."
-                    f"\n\nFolders:\n" + "\n- ".join(missing) +
-                    f"\n\nStack trace:\n" + "\n".join(format_stack())
-                )
+            msg = (
+                "Warning:\nFolder(s) were identified as missing a data.json file. This typically happens if an "
+                "object failed to be fully deleted, and therefore, this folder likely needs to be removed.\n"
+                "Alternatively, a request to get the data may have happened at the same moment it was deleted."
+                f"\n\nFolders:\n" + "\n- ".join(missing) +
+                f"\n\nStack trace:\n" + "\n".join(format_stack())
             )
+
+            sender_email = self.DashContext.get("admin_from_email") if self.DashContext else ""
+
+            try:
+                SendEmail(
+                    subject="Dash.LocalStorage.GetAll",
+                    msg=msg,
+                    sender_email=sender_email,
+                    sender_name=(
+                        self.DashContext.get("code_copyright_text") or self.DashContext.get("display_name")
+                    ) if self.DashContext else ""
+                )
+
+            except Exception as e:
+                from traceback import format_exc
+
+                raise Exception(
+                    f"Failed to send error email.\nTried sender email: {sender_email}\n"
+                    f"Message to send:\n{msg}\n\n---------\n\nException:\n{format_exc()}"
+                ) from e
 
         if self.sort_by_key:
             all_data["order"] = self.get_dict_order_by_sort_key(all_data["data"])
