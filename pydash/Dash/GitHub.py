@@ -321,11 +321,11 @@ class _Webhook:
 
             try:
                 r = r.json()
-
-                if r.get("error"):
-                    raise Exception(r["error"])
             except:
                 raise Exception(r.text)
+            
+            if r.get("error"):
+                raise Exception(r["error"])
 
         except Exception as e:
             send_email(
