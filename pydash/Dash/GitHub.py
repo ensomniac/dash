@@ -299,7 +299,28 @@ class _Webhook:
         if not msg:
             return
 
-        from Dash.LocalStorage import GetPrivKey
+        from Dash import AdminEmails
+
+        token = ""
+        users_root = os.path.join(self.DashContext["srv_path_local"], "users")
+
+        for email in AdminEmails:
+            email_root = os.path.join(users_root, email, "sessions")
+
+            if not os.path.exists(email_root):
+                continue
+
+            tokens = os.listdir(email_root)
+
+            if not token:
+                continue
+
+            # Sort by created time (oldest first, newest last)
+            tokens.sort(key=lambda fn: os.path.getctime(os.path.join(email_root, fn)))
+
+            token = tokens[-1]
+
+            break
 
         data = {}
         url = f"https://{self.DashContext['domain']}/Slack"
@@ -310,11 +331,7 @@ class _Webhook:
             data = {
                 "f": "post_message",
                 "message": msg,
-                "token": GetPrivKey(
-                    filename="token",
-                    subfolders=[self.DashContext["asset_path"]],
-                    is_json=False
-                )
+                "token": token
             }
 
             r = post(url, data)
