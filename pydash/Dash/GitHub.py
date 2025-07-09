@@ -15,6 +15,7 @@
 
 import os
 import sys
+from copy import deepcopy
 
 
 class PathSet:
@@ -50,18 +51,16 @@ class GitHub:
 
             return return_data
 
-        return_data["payload"]        = loads(return_data["payload"])
-        return_data["repository"]     = return_data["payload"]["repository"]["name"]
+        return_data["payload"] = loads(return_data["payload"])
+        return_data["repository"] = return_data["payload"]["repository"]["name"]
         return_data["sender_details"] = return_data["payload"]["sender"]
-        return_data["sender"]         = return_data["sender_details"]["login"]
-        return_data["hook_type"]      = "Unknown hook type"
-
-        commits = []
+        return_data["sender"] = return_data["sender_details"]["login"]
+        return_data["hook_type"] = "Unknown hook type"
 
         try:
             commits = return_data["payload"]["commits"]
         except:
-            pass
+            commits = []
 
         if not commits:
             return_data["msg"] = "Ignoring - no commits"
@@ -69,7 +68,7 @@ class GitHub:
             return return_data
 
         from Dash import PersonalContexts
-        from Dash.Utils import SendEmail, JSON2HTML
+        from Dash.Utils import JSON2HTML, SendEmail
 
         subject = f"GitHub -> {return_data['repository']} -> {return_data['sender']}"
         msg = "<b>Git Webhook Response</b><br><br>"
@@ -102,10 +101,12 @@ class GitHub:
 
                 break
 
+        # TODO: this needs to use the outer scope's `send_email` func
+        #  but we need to first introduce dash context at this level
         SendEmail(
             subject=subject,
-            notify_email_list=email_list,
             msg=msg,
+            notify_email_list=email_list,
             strict_notify=True
         )
 
@@ -133,8 +134,7 @@ class GitHub:
         ]
 
         if local_git_root == dest_path:
-            # Just update git, nothing else
-            pass
+            pass  # Just update git, nothing else
         else:
             cmds.append(f"rm -rf {dest_path}*")
             cmds.append(f"cp -r {local_git_path}* {dest_path}")
@@ -187,6 +187,9 @@ class _Webhook:
         if payload:
             self.email_git_payload_response(payload, email_list, git_result)
 
+            if not git_result.get("error") and self.DashContext["asset_path"] == "candy":
+                self.post_to_slack(payload)
+
         if (
             "/shop_io" in self.DashContext.get("git_repo", "")
             or "/shop_io" in self.DashContext.get("srv_path_git_oapi", "")
@@ -223,8 +226,6 @@ class _Webhook:
                 run(non_critical_command["args"], check=True)
 
             except Exception as e:
-                from Dash.Utils import SendEmail
-
                 if not non_critical_command.get("error"):
                     non_critical_command["error"] = (
                         "Failed to run non-critical command after processing "
@@ -233,7 +234,8 @@ class _Webhook:
 
                 args = "\n - ".join(non_critical_command["args"])
 
-                SendEmail(
+                send_email(
+                    dash_context=self.DashContext,
                     subject=f"DashGuide GitHub Webhook Non-Critical Error: {self.DashContext['asset_path']}",
                     msg=f"{non_critical_command['error']}\n\nArgs:\n{args}\n\nError:\n{e}"
                 )
@@ -262,25 +264,20 @@ class _Webhook:
         )
 
     def email_git_payload_response(self, payload, email_list, git_result):
-        from Dash.Utils import JSON2HTML, SendEmail
-
-        if payload["repository"]["name"] == "shop_io":
-            repo_tag = f" ({self.DashContext['asset_path']})"
-        else:
-            repo_tag = ""
+        from Dash.Utils import JSON2HTML
 
         subject = " -> ".join([
             "GitHub",
-            f"{payload['repository']['name']}{repo_tag}",
+            self.get_repo_name(payload),
             payload["sender"]["login"]
         ])
 
         if git_result.get("error"):
             subject = f"[ERROR] {subject}"
 
-        SendEmail(
+        send_email(
+            dash_context=self.DashContext,
             subject=subject,
-            notify_email_list=email_list,
             msg=(
                 "\n".join([
                     "<b>GIT WEBHOOK RESPONSE</b>",
@@ -293,8 +290,56 @@ class _Webhook:
                     JSON2HTML(payload)
                 ])
             ),
+            notify_email_list=email_list,
             strict_notify=True
         )
+
+    def post_to_slack(self, payload):
+        msg = self.get_commit_slack_highlight(payload)
+
+        if not msg:
+            return
+
+        from Dash.LocalStorage import GetPrivKey
+
+        try:
+            from requests import post
+
+            r = post(
+                f"https://{self.DashContext['domain']}/Slack",
+                {
+                    "f": "post_message",
+                    "message": msg,
+                    "token": GetPrivKey(
+                        filename="token",
+                        subfolders=[self.DashContext["asset_path"]],
+                        is_json=False
+                    )
+                }
+            )
+
+            try:
+                r = r.json()
+
+                if r.get("error"):
+                    raise Exception(r["error"])
+            except:
+                raise Exception(r.text)
+
+        except Exception as e:
+            send_email(
+                dash_context=self.DashContext,
+                subject=f"DashGuide GitHub Webhook Non-Critical Error: {self.DashContext['asset_path']}",
+                msg=f"Failed to post to Slack\n\nError:\n{e}"
+            )
+
+    def get_repo_name(self, github_payload):
+        repo_name = github_payload["repository"]["name"]
+
+        if github_payload["repository"]["name"] == "shop_io":
+            repo_name += f" ({self.DashContext['asset_path']})"
+
+        return repo_name
 
     def get_commit_email_highlight(self, github_payload):
         commit_lines = []
@@ -307,9 +352,18 @@ class _Webhook:
         #         'message': 'Webhook testing',
         #         'timestamp': '2023-02-22T10:18:15-05:00',
         #         'url': 'https://github.com/ensomniac/smartsioux/commit/442dbbcd446fecb596c62d146f25f3b3f9b13b99',
-        #         'author': {'name': 'Ryan Martin', 'email': 'ryan@ensomniac.com', 'username': 'ensomniac'},
-        #         'committer': {'name': 'Ryan Martin', 'email': 'ryan@ensomniac.com', 'username': 'ensomniac'},
-        #         'added': [], 'removed': [],
+        #         'author': {
+        #             'name': 'Ryan Martin',
+        #             'email': 'ryan@ensomniac.com',
+        #             'username': 'ensomniac'
+        #         },
+        #         'committer': {
+        #             'name': 'Ryan Martin',
+        #             'email': 'ryan@ensomniac.com',
+        #             'username': 'ensomniac'
+        #         },
+        #         'added': [],
+        #         'removed': [],
         #         'modified': ['README.md']
         #     }
         # ]
@@ -321,7 +375,7 @@ class _Webhook:
             commit_lines.append(f"<b>{len(commits)} GitHub Commits:</b>")
 
         for commit in commits:
-            author = commit["committer"]
+            author = commit.get("committer") or commit["author"]
 
             commit_lines.append(
                 f"&emsp;>> <b><i>'{commit['message']}'</i></b> - {author['name']} ({author['email']})"
@@ -337,6 +391,77 @@ class _Webhook:
                 commit_lines = self.add_commit_files(commit_lines, "Removed", commit["removed"])
 
         return f"<span style='font-size:130%;'>{'<br>'.join(commit_lines)}<br></span>"
+
+    def get_commit_slack_highlight(self, github_payload):
+        commits = []
+        authors = {}
+        skip = ["dash update"]
+
+        for commit in github_payload.get("commits"):
+            msg = commit.get("message", "")
+
+            if msg in skip or msg.lower().strip() in skip:
+                continue
+
+            author = commit.get("committer") or commit["author"]
+            username = author["username"]
+
+            if username not in authors:
+                authors[username] = author
+
+            commits.append(commit)
+
+        if not commits:
+            return ""
+
+        commit_lines = []
+        author_keys = list(authors.keys())
+        single_author = authors[author_keys[0]] if len(author_keys) == 1 else None
+        repo_name = self.get_repo_name(github_payload)
+        header_text = ">*"
+
+        header_text += ("New git commit to" if len(commits) == 1 else f"{len(commits)} new git commits to")
+        header_text += f" `{repo_name}`*"
+
+        if single_author:
+            header_text += f" _by {single_author['name']} (`{single_author['username']}`)_"
+
+        header_text += " :github-logo:"
+
+        commit_lines.append(header_text)
+
+        for commit in commits:
+            msg = commit["message"]
+
+            if not msg[0].isupper():
+                msg = f"{msg[0].upper()}{msg[1:]}"
+
+            commit_lines.append(f"  ● _{msg}_")
+
+            if not single_author:
+                author = commit.get("committer") or commit["author"]
+
+                commit_lines.append(
+                    f"         ○ Author: {author['name']} (`{author['username']}`)"
+                )
+
+            tally_text = []
+
+            if commit.get("modified"):
+                tally_text.append(f"{len(commit['modified'])} modified")
+
+            if commit.get("added"):
+                tally_text.append(f"{len(commit['added'])} added")
+
+            if commit.get("removed"):
+                tally_text.append(f"{len(commit['removed'])} removed")
+
+            if tally_text:
+                commit_lines.append(
+                    f"         ○ Files: {', '.join(tally_text)}"
+                )
+
+        return "\n".join(commit_lines)
 
     def add_commit_files(self, lines, label, file_list):
         for filename in file_list:
@@ -427,5 +552,30 @@ def UpdateAndNotify(params, path_set, email_list):
     return result
 
 
-def WebhookForAssetPath(dash_context, payload={}):
-    return _Webhook(dash_context).ForAssetPath(payload)
+def WebhookForAssetPath(dash_context_or_asset_path, payload={}):
+    return _Webhook(dash_context_or_asset_path).ForAssetPath(payload)
+
+
+# Wrapper for the classes in this script, not intended to be used outside of this script
+def send_email(dash_context, subject, msg, notify_email_list=[], strict_notify=False):
+    from Dash.Utils import SendEmail
+
+    try:
+        SendEmail(
+            subject=subject,
+            notify_email_list=notify_email_list,
+            msg=msg,
+            strict_notify=strict_notify
+        )
+
+    except:
+        if not dash_context.get("admin_from_email"):
+            raise
+
+        SendEmail(
+            subject=subject,
+            notify_email_list=notify_email_list,
+            msg=msg,
+            strict_notify=strict_notify,
+            sender_email=dash_context["admin_from_email"]
+        )

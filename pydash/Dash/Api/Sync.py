@@ -48,6 +48,6 @@ class ApiSync(ApiCore):
         from Dash.GitHub import WebhookForAssetPath
 
         return self.SetResponse(WebhookForAssetPath(
-            dash_context=self.DashContext,
+            dash_context_or_asset_path=self.DashContext,
             payload=self.ParseParam("payload", dict, {})
         ))
