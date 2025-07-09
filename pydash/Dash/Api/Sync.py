@@ -9,7 +9,7 @@ import sys
 from Dash.Api.Core import ApiCore
 
 
-class ApiSync(ApiCore):  # TODO: TEST
+class ApiSync(ApiCore):
     def __init__(self, asset_path="", as_module=False):
         ApiCore.__init__(self, execute_as_module=as_module, asset_path=asset_path)
 

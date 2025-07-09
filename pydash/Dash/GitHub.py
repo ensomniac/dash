@@ -205,6 +205,11 @@ class _Webhook:
             ]
 
         elif self.DashContext["asset_path"] == "pydash":
+            root = self.DashContext["srv_path_http_root"]
+
+            if not root.endswith("/"):
+                root += "/"  # Important for the command to work properly
+
             non_critical_command["args"] = [
                 "rsync",
                 "-azP",
@@ -212,20 +217,16 @@ class _Webhook:
                 "-e",
                 "ssh",
                 "--rsync-path=sudo rsync",
-                self.DashContext["srv_path_http_root"],
-                f"rmartin@72.167.225.180:{self.DashContext['srv_path_http_root']}"
+                root,
+                f"rmartin@72.167.225.180:{root}"
             ]
 
         if non_critical_command:
-            from subprocess import run
+            from Dash.RunAsRoot import Queue
 
-            if non_critical_command["args"][0] != "sudo":
-                non_critical_command["args"].insert(0, "sudo")
+            result = Queue(non_critical_command["args"])
 
-            try:
-                run(non_critical_command["args"], check=True)
-
-            except Exception as e:
+            if result.get("error"):
                 if not non_critical_command.get("error"):
                     non_critical_command["error"] = (
                         "Failed to run non-critical command after processing "
@@ -237,7 +238,7 @@ class _Webhook:
                 send_email(
                     dash_context=self.DashContext,
                     subject=f"DashGuide GitHub Webhook Non-Critical Error: {self.DashContext['asset_path']}",
-                    msg=f"{non_critical_command['error']}\n\nArgs:\n{args}\n\nError:\n{e}"
+                    msg=f"{non_critical_command['error']}\n\nArgs:\n{args}\n\nError:\n{result['error']}"
                 )
 
         return {
