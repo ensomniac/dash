@@ -237,8 +237,16 @@ class _Webhook:
 
                 send_email(
                     dash_context=self.DashContext,
-                    subject=f"DashGuide GitHub Webhook Non-Critical Error: {self.DashContext['asset_path']}",
+                    subject=f"Dash GitHub Webhook Non-Critical Error: {self.DashContext['asset_path']}",
                     msg=f"{non_critical_command['error']}\n\nArgs:\n{args}\n\nError:\n{result['error']}"
+                )
+            else:
+                from Dash.Utils import JSON2HTML
+
+                send_email(
+                    dash_context=self.DashContext,
+                    subject="Non-Critical Command Success Debug",
+                    msg=JSON2HTML(result)
                 )
 
         return {
@@ -330,7 +338,7 @@ class _Webhook:
         except Exception as e:
             send_email(
                 dash_context=self.DashContext,
-                subject=f"DashGuide GitHub Webhook Non-Critical Error: {self.DashContext['asset_path']}",
+                subject=f"Dash GitHub Webhook Non-Critical Error: {self.DashContext['asset_path']}",
                 msg=f"Failed to post to Slack\n\nError:\n{e}"
             )
 
