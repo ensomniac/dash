@@ -199,10 +199,9 @@ class _Webhook:
         non_critical_command = {}
 
         if self.DashContext["asset_path"] == "analog":
-            non_critical_command["args"] = [
-                "python",
-                os.path.join(self.DashContext["srv_path_git_oapi"], "python", "MinFrontendVDB.py")
-            ]
+            path = os.path.join(self.DashContext["srv_path_git_oapi"], "python", "MinFrontendVDB.py")
+
+            non_critical_command["args"] = f"python {path}"
 
         elif self.DashContext["asset_path"] == "pydash":
             root = self.DashContext["srv_path_http_root"]
@@ -210,21 +209,13 @@ class _Webhook:
             if not root.endswith("/"):
                 root += "/"  # Important for the command to work properly
 
-            non_critical_command["args"] = [
-                "rsync",
-                "-azP",
-                "--delete",
-                "-e",
-                "ssh",
-                "--rsync-path=sudo rsync",
-                root,
-                f"rmartin@72.167.225.180:{root}"
-            ]
+            non_critical_command["command"] = f'rsync -azP --delete -e "ssh" --rsync-path="sudo rsync" {root} rmartin@72.167.225.180:{root}'
 
         if non_critical_command:
             from Dash.RunAsRoot import Queue
 
-            result = Queue(non_critical_command["args"])
+            cmd = non_critical_command["command"]
+            result = Queue(cmd)
 
             if result.get("error"):
                 if not non_critical_command.get("error"):
@@ -233,12 +224,10 @@ class _Webhook:
                         f"GitHub webhook for {self.DashContext['asset_path']}"
                     )
 
-                args = "\n - ".join(non_critical_command["args"])
-
                 send_email(
                     dash_context=self.DashContext,
                     subject=f"Dash GitHub Webhook Non-Critical Error: {self.DashContext['asset_path']}",
-                    msg=f"{non_critical_command['error']}\n\nArgs:\n{args}\n\nError:\n{result['error']}"
+                    msg=f"{non_critical_command['error']}\n\nCommand:\n{cmd}\n\nError:\n{result['error']}"
                 )
             else:
                 from Dash.Utils import JSON2HTML
@@ -246,7 +235,7 @@ class _Webhook:
                 send_email(
                     dash_context=self.DashContext,
                     subject="Non-Critical Command Success Debug",
-                    msg=JSON2HTML(result)
+                    msg=f"Command:\n{cmd}\n\nResult:\n{JSON2HTML(result)}"
                 )
 
         return {
