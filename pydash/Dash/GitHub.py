@@ -229,14 +229,16 @@ class _Webhook:
                     subject=f"Dash GitHub Webhook Non-Critical Error: {self.DashContext['asset_path']}",
                     msg=f"{non_critical_command['error']}\n\nCommand:\n{cmd}\n\nError:\n{result['error']}"
                 )
-            else:
-                from Dash.Utils import JSON2HTML
 
-                send_email(
-                    dash_context=self.DashContext,
-                    subject="Non-Critical Command Success Debug",
-                    msg=f"Command:\n{cmd}\n\nResult:\n{JSON2HTML(result)}"
-                )
+            # Uncomment for debugging
+            # else:
+            #     from Dash.Utils import JSON2HTML
+            #
+            #     send_email(
+            #         dash_context=self.DashContext,
+            #         subject="Non-Critical Command Success DEBUG",
+            #         msg=f"Command:\n{cmd}\n\nResult:\n{JSON2HTML(result)}"
+            #     )
 
         return {
             "email_list": email_list,
