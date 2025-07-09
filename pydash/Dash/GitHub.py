@@ -15,7 +15,6 @@
 
 import os
 import sys
-from copy import deepcopy
 
 
 class PathSet:
@@ -302,21 +301,23 @@ class _Webhook:
 
         from Dash.LocalStorage import GetPrivKey
 
+        data = {}
+        url = f"https://{self.DashContext['domain']}/Slack"
+
         try:
             from requests import post
 
-            r = post(
-                f"https://{self.DashContext['domain']}/Slack",
-                {
-                    "f": "post_message",
-                    "message": msg,
-                    "token": GetPrivKey(
-                        filename="token",
-                        subfolders=[self.DashContext["asset_path"]],
-                        is_json=False
-                    )
-                }
-            )
+            data = {
+                "f": "post_message",
+                "message": msg,
+                "token": GetPrivKey(
+                    filename="token",
+                    subfolders=[self.DashContext["asset_path"]],
+                    is_json=False
+                )
+            }
+
+            r = post(url, data)
 
             try:
                 r = r.json()
@@ -327,10 +328,12 @@ class _Webhook:
                 raise Exception(r["error"])
 
         except Exception as e:
+            from Dash.Utils import JSON2HTML
+
             send_email(
                 dash_context=self.DashContext,
                 subject=f"Dash GitHub Webhook Non-Critical Error: {self.DashContext['asset_path']}",
-                msg=f"Failed to post to Slack\n\nError:\n{e}"
+                msg=f"Failed to post to Slack.\n\nURL: {url}\n\nPayload:\n{JSON2HTML(data)}\n\nError:\n{e}"
             )
 
     def get_repo_name(self, github_payload):
