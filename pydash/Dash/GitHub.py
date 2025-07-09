@@ -312,7 +312,7 @@ class _Webhook:
 
             tokens = os.listdir(email_root)
 
-            if not token:
+            if not tokens:
                 continue
 
             # Sort by created time (oldest first, newest last)
