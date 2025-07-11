@@ -347,7 +347,7 @@ function DashGuiComboInterface () {
     this.SetStaticLabelText = function (value) {
         this.static_label_text = value;
 
-        this.label.text(this.static_label_text);
+        this.set_label_text(this.static_label_text);
     };
 
     this.SetOnRowsDrawnCallback = function (callback) {
@@ -448,7 +448,7 @@ function DashGuiComboInterface () {
     };
 
     this.SetLabel = function (content) {
-        this.label.text(content["label"]);
+        this.set_label_text(content["label"]);
     };
 
     this.SetWidth = function (width) {

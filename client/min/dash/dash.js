@@ -30890,7 +30890,7 @@ function DashGuiCombo (
         }
         else {
             // It appears that, in this case, this.initialized doesn't get set to true - is that deliberate?
-            this.label.text("No Options");
+            this.set_label_text("No Options");
         }
     };
     this.setup_load_dots = function (align_right=false) {
@@ -30988,11 +30988,11 @@ function DashGuiCombo (
     this._on_selection = function (selected_option, ignore_callback=false, search_text=null) {
         var label_text = this.static_label_text || selected_option["label_text"] || selected_option["display_name"];
         if (!label_text) {
-            this.label.text("ERROR");
+            this.set_label_text("ERROR");
             return;
         }
         this.hide();
-        this.label.text(label_text);
+        this.set_label_text(label_text);
         this.previous_selected_option = this.selected_option;
         this.selected_option = selected_option;
         this.selected_option_id = selected_option["id"];
@@ -31003,11 +31003,19 @@ function DashGuiCombo (
             }
         }
     };
+    this.set_label_text = function (text) {
+        if (text && text.includes("</i>")) {
+            this.label.html(text);
+        }
+        else {
+            this.label.text(text);
+        }
+    };
     this.update_label_for_multi_select = function (ids_for_override=null) {
         if (!this.multi_select) {
             return;
         }
-        this.label.text(this.get_multi_select_label(ids_for_override));
+        this.set_label_text(this.get_multi_select_label(ids_for_override));
     };
     this.get_multi_select_label = function (ids_for_override=null) {
         if (!this.multi_select) {
@@ -32215,7 +32223,7 @@ function DashGuiComboInterface () {
     };
     this.SetStaticLabelText = function (value) {
         this.static_label_text = value;
-        this.label.text(this.static_label_text);
+        this.set_label_text(this.static_label_text);
     };
     this.SetOnRowsDrawnCallback = function (callback) {
         this.on_rows_drawn_cb = this.binder ? callback.bind(this.binder) : callback;
@@ -32290,7 +32298,7 @@ function DashGuiComboInterface () {
         return this.label.text();
     };
     this.SetLabel = function (content) {
-        this.label.text(content["label"]);
+        this.set_label_text(content["label"]);
     };
     this.SetWidth = function (width) {
         this.html.css({"width": width});
@@ -32518,7 +32526,7 @@ function DashGuiComboStyleDefault () {
         this.inner_html.append(this.click);
         this.inner_html.append(this.label_container);
         this.inner_html.append(this.rows);
-        this.label.text(this.label_text);
+        this.set_label_text(this.label_text);
         this.label_container.css({
             "display": "flex"
         });
@@ -48953,18 +48961,18 @@ function DashGuiVDBEntry (
     this.get_data = function () {
         return this.full_data || {};
     };
-    this.add_color_box = function (label_text="", key_prefix="", num_colors=3, header=true) {
-        if (header) {
-            this.property_box.AddHeader("Colors").ReplaceBorderWithIcon("color_palette");
+    this.add_color_box = function (num_colors=3, key_prefix="", label_text="", header_text="") {
+        if (header_text) {
+            this.property_box.AddHeader(header_text).ReplaceBorderWithIcon("color_palette");
         }
-        var colors_box = $("<div></div>");
+        var colors_box = $("<div>");
         colors_box.css({
             "display": "flex",
             "margin-left": Dash.Size.Padding * 1.25,
             "margin-top": Dash.Size.Padding * (label_text ? 2.5 : 1)
         });
         if (label_text) {
-            var label = $("<div>" + label_text + "</div>");
+            var label = $("<div>", {"text": label_text});
             label.css({
                 "position": "absolute",
                 "top": -Dash.Size.Padding * 1.5,

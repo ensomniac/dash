@@ -35,7 +35,7 @@ function DashGuiComboStyleDefault () {
         this.inner_html.append(this.label_container);
         this.inner_html.append(this.rows);
 
-        this.label.text(this.label_text);
+        this.set_label_text(this.label_text);
 
         this.label_container.css({
             "display": "flex"

@@ -218,12 +218,12 @@ function DashGuiVDBEntry (
         return this.full_data || {};
     };
 
-    this.add_color_box = function (label_text="", key_prefix="", num_colors=3, header=true) {
-        if (header) {
-            this.property_box.AddHeader("Colors").ReplaceBorderWithIcon("color_palette");
+    this.add_color_box = function (num_colors=3, key_prefix="", label_text="", header_text="") {
+        if (header_text) {
+            this.property_box.AddHeader(header_text).ReplaceBorderWithIcon("color_palette");
         }
 
-        var colors_box = $("<div></div>");
+        var colors_box = $("<div>");
 
         colors_box.css({
             "display": "flex",
@@ -232,7 +232,7 @@ function DashGuiVDBEntry (
         });
 
         if (label_text) {
-            var label = $("<div>" + label_text + "</div>");
+            var label = $("<div>", {"text": label_text});
 
             label.css({
                 "position": "absolute",

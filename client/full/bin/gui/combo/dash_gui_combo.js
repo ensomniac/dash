@@ -286,7 +286,7 @@ function DashGuiCombo (
 
         else {
             // It appears that, in this case, this.initialized doesn't get set to true - is that deliberate?
-            this.label.text("No Options");
+            this.set_label_text("No Options");
         }
     };
 
@@ -415,14 +415,13 @@ function DashGuiCombo (
         var label_text = this.static_label_text || selected_option["label_text"] || selected_option["display_name"];
 
         if (!label_text) {
-            this.label.text("ERROR");
+            this.set_label_text("ERROR");
 
             return;
         }
 
         this.hide();
-
-        this.label.text(label_text);
+        this.set_label_text(label_text);
 
         this.previous_selected_option = this.selected_option;
         this.selected_option = selected_option;
@@ -437,12 +436,22 @@ function DashGuiCombo (
         }
     };
 
+    this.set_label_text = function (text) {
+        if (text && text.includes("</i>")) {
+            this.label.html(text);
+        }
+
+        else {
+            this.label.text(text);
+        }
+    };
+
     this.update_label_for_multi_select = function (ids_for_override=null) {
         if (!this.multi_select) {
             return;
         }
 
-        this.label.text(this.get_multi_select_label(ids_for_override));
+        this.set_label_text(this.get_multi_select_label(ids_for_override));
     };
 
     this.get_multi_select_label = function (ids_for_override=null) {
