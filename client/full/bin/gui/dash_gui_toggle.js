@@ -1,13 +1,16 @@
-class DashGuiFlowToggle {
+class DashGuiToggle {
     constructor (
-        view, starting_state=true, bound_cb=null, true_label_text="", false_label_text="",
-        true_icon_name="toggle_on", false_icon_name="toggle_off", icon_size_mod=0, text_size_mod=0
+        color=null, height=0, starting_state=true, bound_cb=null, true_label_text="", false_label_text="",
+        base_size_percent_num=100, true_icon_name="toggle_on", false_icon_name="toggle_off",
+        icon_size_mod=50, text_size_mod=0
     ) {
-        this.view = view;
+        this.color = color || Dash.Color.Light;
+        this.height = height === null ? 0 : (height || Dash.Size.ButtonHeight);
         this.starting_state = starting_state;
         this.bound_cb = bound_cb;
         this.true_label_text = true_label_text;
         this.false_label_text = false_label_text;
+        this.base_size_percent_num = base_size_percent_num;
         this.true_icon_name = true_icon_name;
         this.false_icon_name = false_icon_name;
         this.icon_size_mod = icon_size_mod;
@@ -16,28 +19,11 @@ class DashGuiFlowToggle {
         this.toggle = null;
         this.true_label = null;
         this.false_label = null;
-        this.color = this.view.color;
-        this.html = $("<div></div>");
+        this.html = $("<div>");
         this.label_bg_color = this.color.PinstripeDark;
-        this.icon_font_size = this.view.core_gui_font_size + this.icon_size_mod;
-        this.text_font_size = this.view.core_gui_font_size + this.text_size_mod;
+        this.icon_font_size = this.base_size_percent_num + this.icon_size_mod;
+        this.text_font_size = this.base_size_percent_num + this.text_size_mod;
         this.active_toggle_bg_color = Dash.Color.GetTransparent(this.color.AccentGood, 0.75);
-
-        this.label_css = {
-            "font-size": this.icon_font_size + "%",  // Starting value only, for initial icon scaling
-            "margin": 0,
-            "padding": Dash.Size.Padding,
-            "background": this.label_bg_color,
-            "border-radius": Dash.Size.BorderRadius,
-            "cursor": "pointer"
-        };
-
-        this.label_container_css = {
-            "display": "flex",
-            "flex-basis": 0,
-            "flex-grow": 3,
-            "flex-shrink": 3
-        };
 
         this.setup_styles();
     }
@@ -60,7 +46,7 @@ class DashGuiFlowToggle {
         this.style_on_toggle(this.starting_state);
 
         requestAnimationFrame(() => {
-            this.toggle.SetIconSize(this.icon_font_size, this.html.outerHeight());
+            this.toggle.SetIconSize(this.icon_font_size, this.height || this.html.outerHeight());
 
             if (this.true_label) {
                 this.true_label.css({
@@ -109,9 +95,35 @@ class DashGuiFlowToggle {
     }
 
     setup_label = function (label_text) {
-        var label = this.view.GetLabel(label_text);
+        var label = $("<div>", {"text": label_text});
 
-        label.css(this.label_css);
+        var css = {
+            "user-select": "none",
+            "color": this.color.StrokeDark,
+            "font-family": "sans_serif_normal",
+            "text-align": "center",
+            "white-space": "pre-wrap",
+            "text-wrap": "nowrap",
+            "width": "fit-content",
+            "font-size": this.icon_font_size + "%",  // Starting value only, for initial icon scaling
+            "margin": 0,
+            "background": this.label_bg_color,
+            "border-radius": Dash.Size.BorderRadius,
+            "cursor": "pointer"
+        };
+
+        if (this.height) {
+            css["height"] = this.height;
+            css["line-height"] = this.height + "px" ;
+            css["padding-left"] = Dash.Size.Padding;
+            css["padding-right"] = Dash.Size.Padding;
+        }
+
+        else {
+            css["padding"] = Dash.Size.Padding;
+        }
+
+        label.css(css);
 
         label.on("click", () => {
             var active = this.toggle.IsChecked();
@@ -143,9 +155,14 @@ class DashGuiFlowToggle {
             });
         });
 
-        var container = $("<div></div>");
+        var container = $("<div>");
 
-        container.css(this.label_container_css);
+        container.css({
+            "display": "flex",
+            "flex-basis": 0,
+            "flex-grow": 3,
+            "flex-shrink": 3
+        });
 
         container.append(label);
 
@@ -160,11 +177,11 @@ class DashGuiFlowToggle {
         }
 
         this.toggle = new Dash.Gui.Checkbox(
-            "",
+            undefined,
             this.starting_state,
             this.color,
             "none",
-            null,
+            undefined,
             (toggle) => {
                 var active = toggle.IsChecked();
 
@@ -198,7 +215,7 @@ class DashGuiFlowToggle {
         active_label.css({
             "border": "1px solid rgba(0, 0, 0, 0)",
             "font-family": "sans_serif_bold",
-            "font-size": (this.text_font_size - 10) + "%",
+            "font-size": (this.text_font_size - (this.height ? 5 : 10)) + "%",
             "background": this.active_toggle_bg_color
         });
 

@@ -45,7 +45,7 @@ class DashGuiFlowRow {
                 }
             }
 
-            else if (element instanceof DashGuiFlowToggle) {
+            else if (element instanceof DashGuiToggle) {
                 var active = element.IsActive();
 
                 if (active === element.starting_state) {
@@ -180,12 +180,14 @@ class DashGuiFlowRow {
         starting_state=true, bound_cb=null, true_label_text="",
         false_label_text="", true_icon_name="toggle_on", false_icon_name="toggle_off"
     ) {
-        var toggle = new DashGuiFlowToggle(
-            this.view,
+        var toggle = new Dash.Gui.Toggle(
+            this.view.color,
+            null,
             starting_state,
             bound_cb,
             true_label_text,
             false_label_text,
+            this.view.core_gui_font_size,
             true_icon_name,
             false_icon_name,
             0,

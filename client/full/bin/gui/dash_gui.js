@@ -34,6 +34,7 @@ function DashGui () {
     this.Slider                    = DashGuiSlider;
     this.TextArea                  = DashGuiTextArea;
     this.TimePicker                = DashGuiTimePicker;
+    this.Toggle                    = DashGuiToggle;
     this.ToolRow                   = DashGuiToolRow;
     this.VDB                       = DashGuiVDB;
     this.VDBEntry                  = DashGuiVDBEntry;

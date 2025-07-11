@@ -260,7 +260,7 @@ class DashGuiFlow {
     }
 
     GetLabel (text, header=false, button=false) {
-        var label = $("<div>" + text + "</div>");
+        var label = $("<div>", {"text": text});
 
         var css = {
             "user-select": "none",
