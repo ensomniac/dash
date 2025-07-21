@@ -128,16 +128,22 @@ function DashGuiChatBox (
             }
 
             if (tab_key !== this.active_tab_key) {
-                if (!this.held_messages[tab_key]) {
-                    this.held_messages[tab_key] = [];
+                if (fire_callback) {
+                    this.on_tab_change(tab_key);
                 }
 
-                this.held_messages[tab_key].push([
-                    text, user_email, iso_ts, align_right,
-                    fire_callback, delete_button, id, track_mentions, tab_key
-                ]);
+                else {
+                    if (!this.held_messages[tab_key]) {
+                        this.held_messages[tab_key] = [];
+                    }
 
-                return null;  // TODO?
+                    this.held_messages[tab_key].push([
+                        text, user_email, iso_ts, align_right,
+                        fire_callback, delete_button, id, track_mentions, tab_key
+                    ]);
+
+                    return null;  // TODO?
+                }
             }
 
             if (!this.messages[tab_key]) {
