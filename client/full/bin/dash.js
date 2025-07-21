@@ -10,10 +10,19 @@ function _Dash () {
     this.LocalDev = window.location.protocol === "file:";
     this.AdminEmails = ["ryan@ensomniac.com", "stetandrew@gmail.com"];
 
-    // TODO: Mozilla officially/explicitly recommends against userAgent sniffing, we should probably update this...
-    //  https://developer.mozilla.org/en-US/docs/Web/HTTP/Browser_detection_using_the_user_agent#mobile_device_detection
-    this.IsMobileiOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-    this.IsMobile = this.IsMobileiOS || /Mobi|Android|webOS|BlackBerry|IEMobile|CriOS|OPiOS|Opera Mini/i.test(navigator.userAgent);
+    this.IsiPadOS = (
+           /iPad/i.test(navigator.userAgent)  // Legacy
+        || (/Macintosh/i.test(navigator.userAgent) && navigator.maxTouchPoints > 1)  // iPadOS 13+
+    );
+
+    // Including iPad in here isn't exactly right, according to the name, but it was
+    // always included in the test expression before it was separated to this.IsiPadOS
+    this.IsMobileiOS = /iPhone|iPod/i.test(navigator.userAgent) || this.IsiPadOS;
+
+    this.IsMobile = (
+           this.IsMobileiOS
+        || /Mobi|Android|webOS|BlackBerry|IEMobile|CriOS|OPiOS|Opera Mini/i.test(navigator.userAgent)
+    );
 
     if (this.IsMobileiOS) {
         try {
@@ -29,6 +38,12 @@ function _Dash () {
         this.MobileiOSVersion = "";
     }
 
+    // Web-app saved to home screen
+    this.IsMobileFromHomeScreen = (
+           window.navigator.standalone === true  // iOS
+        || window.matchMedia("(display-mode: standalone)").matches  // Android
+    );
+
     // Not exclusive to mobile, unless you also check for this.IsMobileiOS.
     // Safari will be present in the userAgent on Apple devices even when using other browsers,
     // so we have to make sure those other browser names aren't present in the userAgent.
@@ -37,12 +52,7 @@ function _Dash () {
     this.IsChrome = navigator.userAgent.toLowerCase().indexOf("chrome") > -1;  // !this.IsSafari && /Chrome/i.test(navigator.userAgent);
     this.InChromeExtension = false;
 
-    // Web-app saved to home screen
-    this.IsMobileFromHomeScreen = (
-           window.navigator.standalone === true  // iOS
-        || window.matchMedia("(display-mode: standalone)").matches  // Android
-    );
-
+    // Don't change the placement/order of these
     this.Local = new DashLocal(this.Context);
     this.DarkModeActive = ["true", true].includes(this.Local.Get("dark_mode_active"));
     this.Color = new DashColor(this.DarkModeActive);
@@ -789,7 +799,7 @@ $(document).on("ready", function () {
     });
 
     if (window.location.href.includes("https://www.") && !window.location.href.includes("file://")) {
-        Dash.Log.Warn("Warning: URL Loaded with www -> Redirecting");
+        console.warn("Warning: URL Loaded with www -> Redirecting");  // Can't use Dash.Log.Warn here
 
         window.location.href = window.location.href.replace("https://www.", "https://");
     }
