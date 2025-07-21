@@ -7,22 +7,47 @@ function _Dash () {
     this.Context = {...DASH_CONTEXT};
     this.GlobalStorageEnabled = false;
     this.Daypart = "Morning/Afternoon/Evening"; // Managed by Dash.Utils -> 5-minute background update interval
-    this.LocalDev = window.location.protocol === "file:";
     this.AdminEmails = ["ryan@ensomniac.com", "stetandrew@gmail.com"];
 
-    this.IsiPadOS = (
-           /iPad/i.test(navigator.userAgent)  // Legacy
-        || (/Macintosh/i.test(navigator.userAgent) && navigator.maxTouchPoints > 1)  // iPadOS 13+
-    );
+    // TODO: Since these are growing and getting out of hand, split all
+    //  this out to a new DashEnv file, calling Dash.Env.IsMobile instead
+
+    this.LocalDev = window.location.protocol === "file:";
+    this.IsiPad = /iPad/i.test(navigator.userAgent);
+    this.IsiPhone = /iPhone/i.test(navigator.userAgent);
 
     // Including iPad in here isn't exactly right, according to the name, but it was
-    // always included in the test expression before it was separated to this.IsiPadOS
-    this.IsMobileiOS = /iPhone|iPod/i.test(navigator.userAgent) || this.IsiPadOS;
+    // always included in the test expression before it was separated to this.IsiPad
+    this.IsMobileiOS = this.IsiPhone || this.IsiPad || /iPod/i.test(navigator.userAgent);
 
     this.IsMobile = (
            this.IsMobileiOS
         || /Mobi|Android|webOS|BlackBerry|IEMobile|CriOS|OPiOS|Opera Mini/i.test(navigator.userAgent)
     );
+
+    this.IsMac = false;
+    this.IsiPadDesktopMode = false;
+    this.IsiPhoneDesktopMode = false;
+
+    if (/Macintosh/i.test(navigator.userAgent)) {
+        if (navigator.maxTouchPoints > 1) {
+            if (this.IsiPhone) {
+                this.IsiPhoneDesktopMode = true;
+            }
+
+            else {
+                this.IsiPad = true;
+                this.IsiPadDesktopMode = true;
+            }
+
+            this.IsMobileiOS = false;
+            this.IsMobile = false;
+        }
+
+        else {
+            this.IsMac = true;
+        }
+    }
 
     if (this.IsMobileiOS) {
         try {
