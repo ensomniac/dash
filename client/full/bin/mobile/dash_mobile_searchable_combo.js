@@ -201,6 +201,8 @@ class DashMobileSearchableCombo {
             return;
         }
 
+        this.input.prop("disabled", false);
+
         this.disabled = false;
 
         this.html.css({
@@ -213,18 +215,22 @@ class DashMobileSearchableCombo {
     // There might be a better way to do this for a datalist element, but
     // this is a quick thing for now since I have limited time
     // - maybe update later, maybe not a big deal
-    Disable(opacity=0.5) {
+    Disable(opacity=0.5, restyle=true) {
         if (this.disabled) {
             return;
         }
 
+        this.input.prop("disabled", true);
+
         this.disabled = true;
 
-        this.html.css({
-            "opacity": opacity,
-            "pointer-events": "none",
-            "user-select": "none"
-        });
+        if (restyle) {
+            this.html.css({
+                "opacity": opacity,
+                "pointer-events": "none",
+                "user-select": "none"
+            });
+        }
     }
 
     GetID(allow_none=true) {

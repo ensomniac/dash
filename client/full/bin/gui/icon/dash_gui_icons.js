@@ -302,6 +302,7 @@ DashGuiIconMap = {
     "python_logo":               ["Python Logo", DashGuiIconWeights["brand"], "python"],
     "random":                    ["Random", DashGuiIconWeights["solid"], "random"],
     "read":                      ["Read", DashGuiIconWeights["regular"], "book-reader"],
+    "receipt":                   ["Receipt", DashGuiIconWeights["regular"], "receipt"],
     "refresh":                   ["Refresh", DashGuiIconWeights["regular"], "redo"],
     "remove_person":             ["Remove Person", DashGuiIconWeights["regular"], "user-slash"],
     "remove_notification":       ["Remove Notification", DashGuiIconWeights["regular"], "bell-slash"],

@@ -19,11 +19,9 @@ function DashGuiChatBox (
 
     this.html = null;
     this.header = null;
-    this.held_messages = {};  // When using tabs, messages that are added when its respective tab isn't active
     this.header_area = null;
     this.message_area = null;
     this.active_tab_key = "";
-    this.tabs_scroll_pos = {};  // When using tabs, remember the scroll position when switching tabs
     this.message_input = null;
     this.valid_mentions = null;
     this.callback_mentions = [];
@@ -33,6 +31,8 @@ function DashGuiChatBox (
     this.messages = this.tabs ? {} : [];
     this.toggle_local_storage_key = null;
     this.tabs_messages_key = "conversation";
+    this.held_messages = this.tabs ? {} : null;  // Messages that are added when its respective tab isn't active
+    this.tabs_scroll_pos = this.tabs ? {} : null;  // Remember the scroll position when switching tabs
     this.tab_color_active = this.color.AccentGood;
     this.dark_mode = Dash.Color.IsDark(this.color);
     this.tab_color_inactive = this.color.BackgroundRaised;
@@ -116,6 +116,7 @@ function DashGuiChatBox (
         return this;
     };
 
+    // TODO: break this up
     this.AddMessage = function (
         text, user_email=null, iso_ts=null, align_right=false, fire_callback=false,
         delete_button=false, id=null, track_mentions=false, tab_key="", _held=false
@@ -133,16 +134,28 @@ function DashGuiChatBox (
                 }
 
                 else {
+                    var already_held = false;
+
+                    var args = [
+                        text, user_email, iso_ts, align_right,
+                        fire_callback, delete_button, id, track_mentions, tab_key
+                    ];
+
                     if (!this.held_messages[tab_key]) {
                         this.held_messages[tab_key] = [];
                     }
 
-                    this.held_messages[tab_key].push([
-                        text, user_email, iso_ts, align_right,
-                        fire_callback, delete_button, id, track_mentions, tab_key
-                    ]);
+                    else if (this.held_messages[tab_key].length) {
+                        already_held = this.held_messages[tab_key].some(
+                            child => child.every((v, i) => v === args[i])
+                        );
+                    }
 
-                    return null;  // TODO?
+                    if (!already_held) {
+                        this.held_messages[tab_key].push(args);
+                    }
+
+                    return null;
                 }
             }
 
@@ -238,6 +251,11 @@ function DashGuiChatBox (
 
     this.ClearMessages = function () {
         this.message_area.empty();
+
+        // Something like this might be needed, but it's unconfirmed and this breaks things
+        // if (this.held_messages) {
+        //     this.held_messages = {};
+        // }
 
         return this;
     };

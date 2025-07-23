@@ -29618,11 +29618,9 @@ function DashGuiChatBox (
     this.tabs = Dash.Validate.Object(this.tab_config) ? {} : null;
     this.html = null;
     this.header = null;
-    this.held_messages = {};  // When using tabs, messages that are added when its respective tab isn't active
     this.header_area = null;
     this.message_area = null;
     this.active_tab_key = "";
-    this.tabs_scroll_pos = {};  // When using tabs, remember the scroll position when switching tabs
     this.message_input = null;
     this.valid_mentions = null;
     this.callback_mentions = [];
@@ -29632,6 +29630,8 @@ function DashGuiChatBox (
     this.messages = this.tabs ? {} : [];
     this.toggle_local_storage_key = null;
     this.tabs_messages_key = "conversation";
+    this.held_messages = this.tabs ? {} : null;  // Messages that are added when its respective tab isn't active
+    this.tabs_scroll_pos = this.tabs ? {} : null;  // Remember the scroll position when switching tabs
     this.tab_color_active = this.color.AccentGood;
     this.dark_mode = Dash.Color.IsDark(this.color);
     this.tab_color_inactive = this.color.BackgroundRaised;
@@ -29695,6 +29695,7 @@ function DashGuiChatBox (
         this.header.ReplaceBorderWithIcon(icon_name);
         return this;
     };
+    // TODO: break this up
     this.AddMessage = function (
         text, user_email=null, iso_ts=null, align_right=false, fire_callback=false,
         delete_button=false, id=null, track_mentions=false, tab_key="", _held=false
@@ -29709,14 +29710,23 @@ function DashGuiChatBox (
                     this.on_tab_change(tab_key);
                 }
                 else {
+                    var already_held = false;
+                    var args = [
+                        text, user_email, iso_ts, align_right,
+                        fire_callback, delete_button, id, track_mentions, tab_key
+                    ];
                     if (!this.held_messages[tab_key]) {
                         this.held_messages[tab_key] = [];
                     }
-                    this.held_messages[tab_key].push([
-                        text, user_email, iso_ts, align_right,
-                        fire_callback, delete_button, id, track_mentions, tab_key
-                    ]);
-                    return null;  // TODO?
+                    else if (this.held_messages[tab_key].length) {
+                        already_held = this.held_messages[tab_key].some(
+                            child => child.every((v, i) => v === args[i])
+                        );
+                    }
+                    if (!already_held) {
+                        this.held_messages[tab_key].push(args);
+                    }
+                    return null;
                 }
             }
             if (!this.messages[tab_key]) {
@@ -29790,6 +29800,10 @@ function DashGuiChatBox (
     };
     this.ClearMessages = function () {
         this.message_area.empty();
+        // Something like this might be needed, but it's unconfirmed and this breaks things
+        // if (this.held_messages) {
+        //     this.held_messages = {};
+        // }
         return this;
     };
     this.AddToggleHideButton = function (
@@ -45134,6 +45148,7 @@ DashGuiIconMap = {
     "python_logo":               ["Python Logo", DashGuiIconWeights["brand"], "python"],
     "random":                    ["Random", DashGuiIconWeights["solid"], "random"],
     "read":                      ["Read", DashGuiIconWeights["regular"], "book-reader"],
+    "receipt":                   ["Receipt", DashGuiIconWeights["regular"], "receipt"],
     "refresh":                   ["Refresh", DashGuiIconWeights["regular"], "redo"],
     "remove_person":             ["Remove Person", DashGuiIconWeights["regular"], "user-slash"],
     "remove_notification":       ["Remove Notification", DashGuiIconWeights["regular"], "bell-slash"],
@@ -56591,7 +56606,7 @@ function DashMobileCombo (color=null, options={}, binder=null, on_change_cb=null
         if (this.label) {
             return this.label;
         }
-        this.label = $("<div>" + text + "</div>");
+        this.label = $("<div>", {"text": text});
         this.label.css({
             "position": "absolute",
             "font-family": "sans_serif_bold",
@@ -56609,16 +56624,14 @@ function DashMobileCombo (color=null, options={}, binder=null, on_change_cb=null
         }
     };
     this.setup_connections = function () {
-        (function (self) {
-            // The 'change' event only triggers when a selection is
-            // made, whether that's by clicking an option or typing an
-            // option and selecting it using the arrow keys and enter key
-            self.select.on("change", function () {
-                if (self.on_change_cb) {
-                    self.on_change_cb(self.GetID());
-                }
-            });
-        })(this);
+        // The 'change' event only triggers when a selection is
+        // made, whether that's by clicking an option or typing an
+        // option and selecting it using the arrow keys and enter key
+        this.select.on("change", () => {
+            if (this.on_change_cb) {
+                this.on_change_cb(this.GetID());
+            }
+        });
     };
     this.setup_styles();
 }
@@ -57822,6 +57835,7 @@ class DashMobileSearchableCombo {
         if (!this.disabled) {
             return;
         }
+        this.input.prop("disabled", false);
         this.disabled = false;
         this.html.css({
             "opacity": 1,
@@ -57832,16 +57846,19 @@ class DashMobileSearchableCombo {
     // There might be a better way to do this for a datalist element, but
     // this is a quick thing for now since I have limited time
     // - maybe update later, maybe not a big deal
-    Disable(opacity=0.5) {
+    Disable(opacity=0.5, restyle=true) {
         if (this.disabled) {
             return;
         }
+        this.input.prop("disabled", true);
         this.disabled = true;
-        this.html.css({
-            "opacity": opacity,
-            "pointer-events": "none",
-            "user-select": "none"
-        });
+        if (restyle) {
+            this.html.css({
+                "opacity": opacity,
+                "pointer-events": "none",
+                "user-select": "none"
+            });
+        }
     }
     GetID(allow_none=true) {
         var label = this.GetLabel();

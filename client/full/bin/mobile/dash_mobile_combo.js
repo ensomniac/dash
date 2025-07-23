@@ -134,7 +134,7 @@ function DashMobileCombo (color=null, options={}, binder=null, on_change_cb=null
             return this.label;
         }
 
-        this.label = $("<div>" + text + "</div>");
+        this.label = $("<div>", {"text": text});
 
         this.label.css({
             "position": "absolute",
@@ -157,16 +157,14 @@ function DashMobileCombo (color=null, options={}, binder=null, on_change_cb=null
     };
 
     this.setup_connections = function () {
-        (function (self) {
-            // The 'change' event only triggers when a selection is
-            // made, whether that's by clicking an option or typing an
-            // option and selecting it using the arrow keys and enter key
-            self.select.on("change", function () {
-                if (self.on_change_cb) {
-                    self.on_change_cb(self.GetID());
-                }
-            });
-        })(this);
+        // The 'change' event only triggers when a selection is
+        // made, whether that's by clicking an option or typing an
+        // option and selecting it using the arrow keys and enter key
+        this.select.on("change", () => {
+            if (this.on_change_cb) {
+                this.on_change_cb(this.GetID());
+            }
+        });
     };
 
     this.setup_styles();
