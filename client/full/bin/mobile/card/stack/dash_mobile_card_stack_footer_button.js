@@ -8,6 +8,8 @@ function DashMobileCardStackFooterButton (stack, icon_name, label_text="", callb
 
     this.icon = null;
     this.label = null;
+    this.disabled = false;
+    this.load_dots = null;
     this.icon_size = null;
     this.click_active = false;
     this.color = this.stack.color;
@@ -65,6 +67,109 @@ function DashMobileCardStackFooterButton (stack, icon_name, label_text="", callb
                 "color": this.color.Text
             });
         }
+    };
+
+    // Copied from DashGuiButtonInterface
+    this.SetLoading = function (is_loading, size_mult=1, vertical=true, color=null, css={}) {
+        if (is_loading && this.load_dots) {
+            return;
+        }
+
+        if (!is_loading && !this.load_dots) {
+            return;
+        }
+
+        if (!is_loading && this.load_dots) {
+            this.load_dots.Stop();
+
+            this.load_dots = null;
+
+            return;
+        }
+
+        css = {
+            "position": "absolute",
+            ...css
+        };
+
+        if (this.icon_only) {
+            if (size_mult === 1) {
+                size_mult = 0.9;
+            }
+
+            vertical = false;
+
+            css["bottom"] = 0;
+            css["left"] = Dash.Size.Padding * 0.6;
+        }
+
+        else {
+            css["top"] = Dash.Size.Padding * 0.6;
+            css["right"] = 0;
+        }
+
+        this.load_dots = new Dash.Gui.LoadDots(
+            (this.html.outerHeight() - Dash.Size.Padding) * size_mult,
+            color || this.color
+        );
+
+        if (vertical) {
+            this.load_dots.SetOrientation("vertical");
+        }
+
+        if (!color) {
+            // (Only if 'color' is not already provided, since that's likely
+            // the opposite Dash color instance to combat this issue)
+            // It seemed like virtually every time I added loading dots to a button with this function,
+            // I was having to restyle it this way, so I'm finally adding it here. It seems sensible,
+            // since the text color will obviously be something that's visible against the button
+            // background, but there's of course a chance that this will break the visuals somewhere.
+            this.load_dots.SetColor(this.icon ? this.color.Text : this.color.Button.Text.Base);
+        }
+
+        this.load_dots.html.css(css);
+
+        this.html.append(this.load_dots.html);
+
+        this.load_dots.Start();
+    };
+
+    // Copied from DashGuiButtonInterface
+    this.Disable = function (opacity=0.5) {
+        if (this.disabled) {
+            return;
+        }
+
+        this.disabled = true;
+
+        this.html.css({
+            "pointer-events": "none",
+            "user-select": "none"
+        });
+
+        this.html.stop().animate(
+            {"opacity": opacity},
+            300
+        );
+    };
+
+    // Copied from DashGuiButtonInterface
+    this.Enable = function () {
+        if (!this.disabled) {
+            return;
+        }
+
+        this.disabled = false;
+
+        this.html.css({
+            "pointer-events": "auto",
+            "user-select": "auto"
+        });
+
+        this.html.stop().animate(
+            {"opacity": 1},
+            300
+        );
     };
 
     this.add_icon = function () {

@@ -68,6 +68,18 @@ function DashGuiInput (placeholder_text="", color=null) {
                 "min": "0"
             });
         }
+
+        else if (mode.startsWith("decimal_")) {
+            var decimal_places = parseInt(mode.replace("decimal_", ""));
+
+            this.input.attr({
+                "type": "number",
+                "pattern": "\d+(\.\d{" + decimal_places + "})?",
+                "step": Math.pow(10, -decimal_places).toString(),
+                "min": "0",
+                "inputmode": "decimal"
+            });
+        }
     };
 
     this.SetPlaceholder = function (placeholder_text) {

@@ -116,12 +116,15 @@ function DashGui () {
         html[0].scrollTop = html[0].scrollHeight;
     };
 
-    this.ScrollToElement = function (container_html, element_html) {
-        if (this.InScrollView(container_html, element_html)) {
+    // Instant makes sense in programmatic cases, like populating a long list and scrolling
+    // to the last item the user was viewing by default. Non-instant cases are when the user
+    // does an action that triggers the scrolling, which should scroll smoothly for better UX.
+    this.ScrollToElement = function (container_html, element_html, instant=true, force=false) {
+        if (!force && this.InScrollView(container_html, element_html)) {
             return;
         }
 
-        element_html[0].scrollIntoView();
+        element_html[0].scrollIntoView({"behavior": instant ? "instant" : "smooth"});
     };
 
     this.InScrollView = function (container_html, element_html) {

@@ -144,10 +144,10 @@ function DashGuiButtonInterface () {
             "user-select": "none"
         });
 
-        this.html.stop().animate({
-            "opacity": opacity,
-        }, 300);
-
+        this.html.stop().animate(
+            {"opacity": opacity},
+            300
+        );
     };
 
     this.Enable = function () {
@@ -162,10 +162,10 @@ function DashGuiButtonInterface () {
             "user-select": "auto"
         });
 
-        this.html.stop().animate({
-            "opacity": 1,
-        }, 300);
-
+        this.html.stop().animate(
+            {"opacity": 1},
+            300
+        );
     };
 
     this.SetBorderRadius = function (border_radius, key="border-radius") {

@@ -224,6 +224,18 @@ function DashMobileTextBox (
                 "min": "0"
             });
         }
+
+        else if (mode.startsWith("decimal_")) {
+            var decimal_places = parseInt(mode.replace("decimal_", ""));
+
+            this.textarea.attr({
+                "type": "number",
+                "pattern": "\d+(\.\d{" + decimal_places + "})?",
+                "step": Math.pow(10, -decimal_places).toString(),
+                "min": "0",
+                "inputmode": "decimal"
+            });
+        }
     };
 
     this.StyleAsPIN = function (length=4, disable_auto_submit=false) {
