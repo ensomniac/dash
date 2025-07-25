@@ -6,7 +6,7 @@
 // conditioned by `this.limit_for_webkit`. If at any point these limitations cease
 // to get around the bugs, we'll need to modify and leverage the desktop combo instead.
 class DashMobileSearchableCombo {
-    constructor(
+    constructor (
         color=null, options={}, placeholder_text="", binder=null, on_submit_cb=null, on_change_cb=null
     ) {
         this.color = color || (binder && binder.color ? binder.color : Dash.Color.Light);
@@ -88,11 +88,11 @@ class DashMobileSearchableCombo {
         this.setup_connections();
     }
 
-    SetOnChangeDelayMs(ms) {
+    SetOnChangeDelayMs (ms) {
         this.on_change_delay_ms = parseInt(ms);
     }
 
-    AddOption(id, label, _check=true, _from_filter=false) {
+    AddOption (id, label, _check=true, _from_filter=false) {
         if (!_from_filter) {
             if (_check && this.options[id]) {
                 return;
@@ -119,7 +119,7 @@ class DashMobileSearchableCombo {
         return option_row;
     }
 
-    SetOptions(options={}) {
+    SetOptions (options={}) {
         this.datalist.empty();
 
         this.options = options;
@@ -131,7 +131,7 @@ class DashMobileSearchableCombo {
         return this.options;
     }
 
-    SetLabelByID(id) {
+    SetLabelByID (id) {
         if (!(id in this.options)) {
             Dash.Log.Warn("ID not in options:", id);
 
@@ -141,7 +141,7 @@ class DashMobileSearchableCombo {
         this.SetLabel(this.options[id]);
     }
 
-    AddLabel(text) {
+    AddLabel (text) {
         if (this.label) {
             return this.label;
         }
@@ -173,7 +173,7 @@ class DashMobileSearchableCombo {
     // Sometimes, setting the value like this causes the dropdown icon to disappear,
     // so attempting a delayed value set, then a delayed focus and delayed blur
     // to attempt to refresh the state of the input after value is set
-    SetLabel(text) {
+    SetLabel (text) {
         setTimeout(
             () => {
                 this.input.val(text);
@@ -215,7 +215,7 @@ class DashMobileSearchableCombo {
     // There might be a better way to do this for a datalist element, but
     // this is a quick thing for now since I have limited time
     // - maybe update later, maybe not a big deal
-    Disable(opacity=0.5, restyle=true) {
+    Disable (opacity=0.5, restyle=true) {
         if (this.disabled) {
             return;
         }
@@ -233,7 +233,7 @@ class DashMobileSearchableCombo {
         }
     }
 
-    GetID(allow_none=true) {
+    GetID (allow_none=true) {
         var label = this.GetLabel();
 
         for (var id in this.options) {
@@ -380,7 +380,7 @@ class DashMobileSearchableCombo {
         );
     }
 
-    set_width(width, set_input=false, min_width=null, max_width=null) {
+    set_width (width, set_input=false, min_width=null, max_width=null) {
         var css = {
             "width": width,
             "min-width": min_width || width,
@@ -403,7 +403,7 @@ class DashMobileSearchableCombo {
         });
     }
 
-    add_options(_from_filter=false) {
+    add_options (_from_filter=false) {
         var added_ids = [];
 
         for (var id in this.options) {
