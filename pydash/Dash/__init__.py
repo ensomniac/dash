@@ -23,14 +23,16 @@ PersonalContexts = {
             "rycam",
             "ensomniac_io",
             "ensomniac_ai",
-            "freshpath"
+            "freshpath",
+            "fantom"
         ],
         "repo_names": [
             "smartsioux",
             "rycam",
             "ensomniac_io",
             "ensomniac_ai",
-            "freshpath"
+            "freshpath",
+            "fantom"
         ]
     },
     "stetandrew@gmail.com": {

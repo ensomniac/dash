@@ -20,40 +20,48 @@ def ParseHTTPError(http_error, params={}):
     if not isinstance(http_error, HttpError):
         raise TypeError(f"Expected HttpError, got {type(http_error).__name__}: {http_error}")
 
-    from json import loads
-
-    errors = []
+    from json import loads, dumps
 
     try:
-        msg = str(loads(http_error.content).get("error", {}).get("message", ""))
+        raw_json = loads(http_error.content)
+
+    except Exception:
+        raw_json = None
+
+    parser_errors = []
+    error_data = raw_json.get("error", {}) if raw_json else {}
+
+    try:
+        msg = str(error_data.get("message", ""))
 
     except Exception as e:
         msg = ""
 
-        errors.append(f"Error parsing message from HttpError content: {e}")
+        parser_errors.append(f"Error parsing message from HttpError content: {e}")
 
     error = str(http_error).strip().strip("\n").strip()
 
     try:
         message = (
-            f'<HttpError {http_error.resp.status} when requesting {http_error.uri} '
-            f'returned "{http_error._get_reason()}". Details: "{http_error.error_details}">'  # noqa
+            f'HttpError {http_error.resp.status} when requesting {http_error.uri}, '
+            f'returned "{http_error._get_reason()}".\nDetails: "{http_error.error_details}"'  # noqa
         )
 
     except Exception as e:
-        errors.append(f"Error constructing HttpError details: {e}")
+        parser_errors.append(f"Error constructing HttpError details:\n{e}")
 
         try:
             message = (
-                f'<HttpError {http_error.resp.status} when requesting '
-                f'{http_error.uri}. Details: "{http_error.error_details}">'
+                f'HttpError {http_error.resp.status} when requesting '
+                f'{http_error.uri}. Details: "{http_error.error_details}"'
             )
 
         except Exception as e:
-            errors.append(f"Error constructing fallback HttpError details: {e}")
+            parser_errors.append(f"Error constructing fallback HttpError details:\n{e}")
 
             if len(error) and error != "Exception:":
                 message = error
+                error = ""
             else:
                 message = (
                     "The Google API returned an error that was either empty, had no information, "
@@ -68,17 +76,36 @@ def ParseHTTPError(http_error, params={}):
     if msg:
         message += f"\n(Message): {msg}"
 
-    message += f"\n{error}"
+    errors = []
+
+    if error:
+        errors.append(error)
+
+    if "errors" in error_data:
+        for e in error_data["errors"]:
+            errors.append(f"{e.get('domain')}: {e.get('reason')} — {e.get('message')}")
 
     if errors:
-        errors = "\n>>".join(errors)
+        errors = "\n - ".join(errors)
 
-        message += f"\n\n***Parser Errors***:\n{errors}"
+        message += f"\n\n***Errors***:\n{errors}"
+
+    if parser_errors:
+        parser_errors = "\n - ".join(parser_errors)
+
+        message += f"\n\n***Parser Errors***:\n{parser_errors}"
 
     if params:
         from json import dumps
 
         message += f"\n\n***Params***:\n{dumps(params, indent=4, sort_keys=True)}"
+
+    message += f"\n\n***Response Headers***:\n{http_error.resp}\n"
+
+    if raw_json:
+        message += f"\n\n***Full Google JSON***:\n{dumps(raw_json, indent=4)}"
+    else:
+        message += f"\n\n***Raw Content***:\n{http_error.content!r}"
 
     raise Exception(message) from http_error
 
