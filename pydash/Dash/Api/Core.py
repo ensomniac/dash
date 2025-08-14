@@ -891,5 +891,11 @@ def print_json(response, status=None):
     if status is None:
         status = get_response_status(response)
 
-    print(f"{status}Content-type: application/json\n")
-    print(str(json.dumps(response)))
+    body = json.dumps(response).strip() # build once so we know its size
+    size = len(body.encode("utf-8"))
+
+    print(status.strip() + "\r")
+    print("Content-Type: application/json\r")
+    print(f"Content-Length: {size}\r") # Ignored without 'SetEnv ap_trust_cgilike_cl 1' apache setting
+    print("\r")
+    print(body, end="")
