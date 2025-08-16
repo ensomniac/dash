@@ -53,8 +53,14 @@ def ParseHTTPError(http_error, params={}):
         try:
             message = (
                 f'HttpError {http_error.resp.status} when requesting '
-                f'{http_error.uri}. Details: "{http_error.error_details}"'
+                f'{http_error.uri}. Details:\n"{http_error.error_details}"'
             )
+
+            if str(http_error.resp.status).startswith("5"):
+                message += (
+                    "\n\n*** If this has to do with a shared drive, make sure "
+                    "it's not full before debugging anything else ***"
+                )
 
         except Exception as e:
             parser_errors.append(f"Error constructing fallback HttpError details:\n{e}")
@@ -327,8 +333,8 @@ class GUtils:
 
         return self._drive_utils_
 
-    def CreateDriveFile(self, params, file_path=None, in_shared_drive=False, fields="", file_url=""):
-        return self._drive_utils.CreateFile(params, file_path, in_shared_drive, fields, file_url)
+    def CreateDriveFile(self, params, file_path=None, in_shared_drive=False, fields="", file_url="", resumable=False):
+        return self._drive_utils.CreateFile(params, file_path, in_shared_drive, fields, file_url, resumable)
 
     def CreateDriveFolder(self, name, parent_id="", in_shared_drive=False, fields=""):
         return self._drive_utils.CreateFolder(name, parent_id, in_shared_drive, fields)
@@ -552,9 +558,10 @@ class _DriveUtils:
 
         return self._drafting_file_exts
 
-    def CreateFile(self, params, file_path=None, in_shared_drive=False, fields="", file_url=""):
+    # TODO: break `params` out into individual args
+    def CreateFile(self, params, file_path=None, in_shared_drive=False, fields="", file_url="", resumable=False):
         """
-        | Update file data or metadata, such as file/folder description.
+        | Upload new file, or create a folder, depending on params.
         |
         | Params ref: https://developers.google.com/drive/api/v3/reference/files/create#request-body
 
@@ -563,6 +570,7 @@ class _DriveUtils:
         :param bool in_shared_drive: File lives in a shared drive (default=False)
         :param str fields: Requested fields, if different than self.fields (default="")
         :param str file_url: URL, instead of path, for optional file to upload (default="")
+        :param bool resumable: Upload file using resumable protocol (default=False)
 
         :return: New file/folder data
         :rtype: dict
@@ -580,7 +588,10 @@ class _DriveUtils:
         if file_path:
             from googleapiclient.http import MediaFileUpload
 
-            file = MediaFileUpload(file_path)
+            file = MediaFileUpload(
+                filename=file_path,
+                resumable=resumable
+            )
 
         elif file_url:
             from mimetypes import guess_type
@@ -605,8 +616,9 @@ class _DriveUtils:
             from googleapiclient.http import MediaIoBaseUpload
 
             file = MediaIoBaseUpload(
-                BytesIO(response.content),
-                mimetype=mime_type
+                fd=BytesIO(response.content),
+                mimetype=mime_type,
+                resumable=resumable
             )
 
         _params = {
@@ -617,10 +629,20 @@ class _DriveUtils:
         }
 
         try:
-            return self.Client.files().create(**_params).execute()
+            request = self.Client.files().create(**_params)
+
+            if not resumable:
+                return request.execute()
+
+            response = None
+
+            while response is None:
+                status, response = request.next_chunk()
+
+            return response
 
         except HttpError as http_error:
-            _params["media_body"] = "(MediaFileUpload object) truncated..."
+            _params["media_body"] = "(Media object) truncated..."
 
             return ParseHTTPError(http_error, _params)
 

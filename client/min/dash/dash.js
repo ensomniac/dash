@@ -51039,6 +51039,7 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
             if (!property_details["key"]) {
                 continue;
             }
+            var element;
             var can_edit = (this.modal_of || property_details["editable"] === false) ? false : this.has_privileges;
             if (property_details["func"] && property_details["params"]) {
                 // This is hacky, but not sure how else to handle this right now...
@@ -51047,7 +51048,7 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
                 if (property_details["params"].includes("can_edit")) {
                     property_details["params"][property_details["params"].indexOf("can_edit")] = can_edit;
                 }
-                // This isn't great either, but doing to best I can with
+                // This isn't great either, but doing the best I can with
                 // this class' pre-existing, non-ideal property box data handling
                 if (property_details["params"].includes("callback")) {
                     (function (self, property_details) {
@@ -51059,10 +51060,10 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
                         };
                     })(this, property_details);
                 }
-                this.property_box[property_details["func"]](...property_details["params"]);
+                element = this.property_box[property_details["func"]](...property_details["params"]);
             }
             else {
-                this.property_box.AddInput(
+                element = this.property_box.AddInput(
                     property_details["key"],
                     property_details["label_text"] || property_details["display_name"],
                     "",
@@ -51070,6 +51071,9 @@ function DashLayoutUserProfile (user_data=null, options={}, view_mode="settings"
                     can_edit,
                     property_details["options"] || {}
                 );
+            }
+            if (property_details["end_tag"]) {
+                element.AddEndTag(property_details["end_tag"]);
             }
             // Extra callback if something else needs to happen
             // in addition to the standard/basic set_data behavior
