@@ -187,7 +187,7 @@ class _Webhook:
             self.email_git_payload_response(payload, email_list, git_result)
 
             if not git_result.get("error") and self.DashContext["asset_path"] == "candy":
-                self.post_to_slack(payload)
+                self.PostToSlack(payload)
 
         if (
             "/shop_io" in self.DashContext.get("git_repo", "")
@@ -244,6 +244,70 @@ class _Webhook:
             "git_result": git_result
         }
 
+    def PostToSlack(self, payload={}):
+        msg = self.get_commit_slack_highlight(payload)
+
+        if not msg:
+            return {}
+
+        from Dash import AdminEmails
+
+        token = ""
+        users_root = os.path.join(self.DashContext["srv_path_local"], "users")
+
+        for email in AdminEmails:
+            email_root = os.path.join(users_root, email, "sessions")
+
+            if not os.path.exists(email_root):
+                continue
+
+            tokens = os.listdir(email_root)
+
+            if not tokens:
+                continue
+
+            # Sort by created time (oldest first, newest last)
+            tokens.sort(key=lambda fn: os.path.getctime(os.path.join(email_root, fn)))
+
+            token = tokens[-1]
+
+            break
+
+        data = {}
+        url = f"https://{self.DashContext['domain']}/Slack"
+
+        try:
+            from requests import post
+
+            data = {
+                "f": "post_message",
+                "message": msg,
+                "token": token
+            }
+
+            r = post(url, data)
+
+            try:
+                r = r.json()
+            except:
+                raise Exception(r.text)
+
+            if r.get("error"):
+                raise Exception(r["error"])
+
+            return r
+
+        except Exception as e:
+            from Dash.Utils import JSON2HTML
+
+            send_email(
+                dash_context=self.DashContext,
+                subject=f"Dash GitHub Webhook Non-Critical Error: {self.DashContext['asset_path']}",
+                msg=f"Failed to post to Slack.\n\nURL: {url}\n\nPayload:\n{JSON2HTML(data)}\n\nError:\n{e}"
+            )
+
+            return {}
+
     def git_pull_clean(self):
         from Dash.RunAsRoot import Queue
 
@@ -292,66 +356,6 @@ class _Webhook:
             notify_email_list=email_list,
             strict_notify=True
         )
-
-    def post_to_slack(self, payload):
-        msg = self.get_commit_slack_highlight(payload)
-
-        if not msg:
-            return
-
-        from Dash import AdminEmails
-
-        token = ""
-        users_root = os.path.join(self.DashContext["srv_path_local"], "users")
-
-        for email in AdminEmails:
-            email_root = os.path.join(users_root, email, "sessions")
-
-            if not os.path.exists(email_root):
-                continue
-
-            tokens = os.listdir(email_root)
-
-            if not tokens:
-                continue
-
-            # Sort by created time (oldest first, newest last)
-            tokens.sort(key=lambda fn: os.path.getctime(os.path.join(email_root, fn)))
-
-            token = tokens[-1]
-
-            break
-
-        data = {}
-        url = f"https://{self.DashContext['domain']}/Slack"
-
-        try:
-            from requests import post
-
-            data = {
-                "f": "post_message",
-                "message": msg,
-                "token": token
-            }
-
-            r = post(url, data)
-
-            try:
-                r = r.json()
-            except:
-                raise Exception(r.text)
-            
-            if r.get("error"):
-                raise Exception(r["error"])
-
-        except Exception as e:
-            from Dash.Utils import JSON2HTML
-
-            send_email(
-                dash_context=self.DashContext,
-                subject=f"Dash GitHub Webhook Non-Critical Error: {self.DashContext['asset_path']}",
-                msg=f"Failed to post to Slack.\n\nURL: {url}\n\nPayload:\n{JSON2HTML(data)}\n\nError:\n{e}"
-            )
 
     def get_repo_name(self, github_payload):
         repo_name = github_payload["repository"]["name"]
@@ -416,6 +420,7 @@ class _Webhook:
         commits = []
         authors = {}
         skip = ["dash update"]
+        bots = ["arthurslugworth"]
 
         for commit in github_payload.get("commits"):
             msg = commit.get("message", "")
@@ -425,6 +430,9 @@ class _Webhook:
 
             author = commit.get("committer") or commit["author"]
             username = author["username"]
+
+            if username in bots:
+                continue
 
             if username not in authors:
                 authors[username] = author
@@ -574,6 +582,10 @@ def UpdateAndNotify(params, path_set, email_list):
 
 def WebhookForAssetPath(dash_context_or_asset_path, payload={}):
     return _Webhook(dash_context_or_asset_path).ForAssetPath(payload)
+
+
+def PostToSlack(dash_context_or_asset_path, payload={}):
+    return _Webhook(dash_context_or_asset_path).PostToSlack(payload)
 
 
 # Wrapper for the classes in this script, not intended to be used outside of this script
