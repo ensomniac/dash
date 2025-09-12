@@ -391,7 +391,7 @@ class _Webhook:
         #         'modified': ['README.md']
         #     }
         # ]
-        commits = github_payload.get("commits")
+        commits = github_payload.get("commits", [])
 
         if len(commits) == 1:
             commit_lines.append("<b>GitHub Commit:</b>")
@@ -422,7 +422,7 @@ class _Webhook:
         skip = ["dash update"]
         bots = ["arthurslugworth"]
 
-        for commit in github_payload.get("commits"):
+        for commit in github_payload.get("commits", []):
             msg = commit.get("message", "")
 
             if msg in skip or msg.lower().strip() in skip:
