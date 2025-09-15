@@ -420,7 +420,7 @@ class _Webhook:
         commits = []
         authors = {}
         skip = ["dash update"]
-        bots = ["arthurslugworth"]
+        bots = ["arthurslugworth", "web-flow"]
 
         for commit in github_payload.get("commits", []):
             msg = commit.get("message", "")
