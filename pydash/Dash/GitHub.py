@@ -327,6 +327,9 @@ class _Webhook:
         )
 
     def email_git_payload_response(self, payload, email_list, git_result):
+        if not payload.get("commits"):
+            return
+
         from Dash.Utils import JSON2HTML
 
         subject = " -> ".join([
