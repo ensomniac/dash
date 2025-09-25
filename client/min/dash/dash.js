@@ -17914,15 +17914,16 @@ function _Dash () {
                 "Pop": {
                     "value": function (index=null, return_item=true) {
                         try {
+                            var removed = null;
                             if (index === null) {
                                 index = this.length - 1;  // Last index
                             }
                             index = parseInt(index);
                             if (index > -1) { // -1 means it's not in the array
-                                var removed = this.splice(index, 1);
+                                removed = this.splice(index, 1);
                             }
                             if (return_item) {
-                                return removed.length ? removed[0] : null;  // Splice returns an array
+                                return removed?.length ? removed[0] : null;  // Splice returns an array
                             }
                             return this;
                         }
