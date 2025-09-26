@@ -186,8 +186,9 @@ class _Webhook:
         if payload:
             self.email_git_payload_response(payload, email_list, git_result)
 
-            if not git_result.get("error") and self.DashContext["asset_path"] == "candy":
-                self.PostToSlack(payload)
+            # Silencing this now that FV is folding
+            # if not git_result.get("error") and self.DashContext["asset_path"] == "candy":
+            #     self.PostToSlack(payload)
 
         if (
             "/shop_io" in self.DashContext.get("git_repo", "")
