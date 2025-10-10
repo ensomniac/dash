@@ -589,7 +589,7 @@ class ApiCore:
         self._proceeding_with_empty_fs = True
 
     def get_misc_for_email(self, strict_notify, notify_email_list):
-        from Dash import PersonalContexts
+        from Dash import AdminEmails, PersonalContexts, ExcludedContexts
 
         if not strict_notify:
             for email in self._additional_notify_emails:
@@ -603,10 +603,33 @@ class ApiCore:
 
         for email in PersonalContexts:
             if self._asset_path in PersonalContexts[email]["asset_paths"]:
+                # Must be set to True to ensure the Mail module doesn't add irrelevant admins back.
                 strict_notify = True
+
                 notify_email_list = [email]
 
                 break
+
+        # ------- Mirrored in Users.py -------
+        removed_admin_emails = []
+
+        for email in ExcludedContexts:
+            if self._asset_path in ExcludedContexts[email]["asset_paths"] and email in notify_email_list:
+                # Must be set to True to ensure the Mail module doesn't add the admin back.
+                strict_notify = True
+
+                notify_email_list.remove(email)
+
+                removed_admin_emails.append(email)
+
+        if removed_admin_emails:
+            for email in AdminEmails:
+                if email not in removed_admin_emails and email not in notify_email_list:
+                    # Since we have to set `strict_notify = True` to ensure the Mail module
+                    # doesn't add all admins when an admin is excluded, we can do this to
+                    # ensure that any other non-excluded admins are added.
+                    notify_email_list.append(email)
+        # ------------------------------------
 
         return sender_name, strict_notify, notify_email_list
 

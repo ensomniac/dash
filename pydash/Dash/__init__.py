@@ -13,9 +13,12 @@ AdminEmails = [
     "stetandrew@gmail.com"
 ]
 
-# It would be idea to just use IDs, but that's not readily available in each unique instance of code
-# where we check for personal packages. For example, in GitHub.py, we have ready access to the repo name,
-# and in Core.py we have access to the asset path (without needing to instantiate self.DashContext).
+# For the context filters below, it would be ideal to just use IDs, but that's not readily available in
+# each unique instance of code where we check for personal packages. For example, in GitHub.py, we have
+# ready access to the repo name, and in Core.py we have access to the asset path (without needing to
+# instantiate self.DashContext).
+
+# When an email is sent (error, etc), the owner of these contexts will be made the sole recipient.
 PersonalContexts = {
     "ryan@ensomniac.com": {
         "asset_paths": [
@@ -41,6 +44,26 @@ PersonalContexts = {
         ],
         "repo_names": [
             "simplepaycheckbudget"
+        ]
+    }
+}
+
+# When an email is sent (error, etc) from these contexts, the
+# specified admin will be removed from the recipient list.
+# There is no need to include contexts from PersonalContexts here.
+ExcludedContexts = {
+    "ryan@ensomniac.com": {
+        "asset_paths": [],
+        "repo_names": []
+    },
+    "stetandrew@gmail.com": {
+        "asset_paths": [
+            "candy",
+            "fantom"
+        ],
+        "repo_names": [
+            "realtimecandy",
+            "fantom"
         ]
     }
 }

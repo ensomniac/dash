@@ -642,7 +642,7 @@ class Users:
             sender_email = ""
 
         if asset_path:
-            from Dash import PersonalContexts
+            from Dash import AdminEmails, PersonalContexts, ExcludedContexts
 
             for email in PersonalContexts:
                 if asset_path in PersonalContexts[email]["asset_paths"]:
@@ -655,6 +655,35 @@ class Users:
                         notify_email_list.append(email)
 
                     break
+
+            # ------- Mirrored in Core.py -------
+            removed_admin_emails = []
+
+            for email in ExcludedContexts:
+                if asset_path in ExcludedContexts[email]["asset_paths"] and email in notify_email_list:
+                    # Must be set to True to ensure the Mail module doesn't add the admin back.
+                    strict_notify = True
+
+                    if notify_email_list:
+                        notify_email_list.remove(email)
+
+                    if bcc_email_list:
+                        bcc_email_list.remove(email)
+
+                    removed_admin_emails.append(email)
+
+            if removed_admin_emails:
+                for email in AdminEmails:
+                    if email not in removed_admin_emails:
+                        # Since we have to set `strict_notify = True` to ensure the Mail module
+                        # doesn't add all admins when an admin is excluded, we can do this to
+                        # ensure that any other non-excluded admins are added.
+                        if notify_email_list and email not in bcc_email_list:
+                            bcc_email_list.append(email)
+
+                        elif email not in notify_email_list:
+                            notify_email_list.append(email)
+            # -----------------------------------
 
         SendEmail(
             subject=subject,
