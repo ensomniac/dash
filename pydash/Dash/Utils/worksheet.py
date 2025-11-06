@@ -35,6 +35,16 @@ class WorksheetUtils:
                 max_length + pad  # Adding a little extra space
             )
 
+    def RemoveTrailingColumns(self):
+        for col in range(self.worksheet.max_column, 0, -1):
+            if all(
+                self.worksheet.cell(row=row, column=col).value is None
+                for row in range(1, self.worksheet.max_row + 1)
+            ):
+                self.worksheet.delete_cols(col)
+            else:
+                break  # Stop as soon as we hit a column that has data
+
     def CenterTextVerticallyInAllCells(self, min_height=30, min_height_mults={}):
         alignment = self.get_alignment(vertical="center")
 

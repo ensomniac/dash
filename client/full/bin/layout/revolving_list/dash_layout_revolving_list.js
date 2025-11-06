@@ -192,9 +192,7 @@ function DashLayoutRevolvingList (
 
         this.create_filler_space();
 
-        for (var row of this.row_objects) {
-            this.container.append(row.html);
-        }
+        this.container.append(this.row_objects.map(row => row.html));
 
         this.on_view_scrolled();
 
