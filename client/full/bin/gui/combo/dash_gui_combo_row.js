@@ -165,7 +165,7 @@ function DashGuiComboRow (combo, option) {
     };
 
     this.add_checkbox = function () {
-        if (!this.multi_select) {
+        if (!this.multi_select || !this.id || this.id === "none") {
             return;
         }
 
