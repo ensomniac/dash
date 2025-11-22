@@ -24834,10 +24834,17 @@ function DashGuiModal (
         return this;
     };
     this.SetOnCloseCallback = function (binder=null, callback=null) {
-        if (!this.include_close_button) {
+        if (!this.include_close_button && !this.esc_shortcut_active) {
             return;
         }
         this.on_close_callback = callback && binder ? callback.bind(binder) : callback;
+        return this;
+    };
+    this.SetCanCloseCallback = function (binder=null, callback=null) {
+        if (!this.include_close_button && !this.esc_shortcut_active) {
+            return;
+        }
+        this.can_close_callback = callback && binder ? callback.bind(binder) : callback;
         return this;
     };
     this.SetParentHTML = function (parent_html) {
@@ -25005,10 +25012,7 @@ function DashGuiModal (
         this.close_button = new Dash.Gui.IconButton(
             "close",
             () => {
-                this.Hide();
-                if (this.on_close_callback) {
-                    this.on_close_callback();
-                }
+                this.close();
             },
             this,
             this.color,
@@ -25025,6 +25029,15 @@ function DashGuiModal (
         });
         this.close_button.SetHoverHint("Close window (esc)");
         this.modal.append(this.close_button.html);
+    };
+    this.close = function (check_can_close=true) {
+        if (check_can_close && this.can_close_callback && !this.can_close_callback()) {
+            return;
+        }
+        this.Hide();
+        if (this.on_close_callback) {
+            this.on_close_callback();
+        }
     };
     this.add_background = function () {
         if (!this.include_bg) {
@@ -25078,8 +25091,8 @@ function DashGuiModal (
                     return;
                 }
                 if (e.key === "Escape") {
-                    Dash.Log.Log("(Esc key pressed) Close modal");
-                    this.Hide();
+                    Dash.Log.Log("(Esc key pressed)");
+                    this.close();
                 }
             }
         );
