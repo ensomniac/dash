@@ -125,7 +125,7 @@ class Excalidraw:
         return response
 
     def clean_version_dir(self):
-        max_revisions = 100
+        max_revisions = 98
 
         all_versions = os.listdir(self.version_root)
         all_versions.sort()
