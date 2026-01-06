@@ -664,10 +664,10 @@ class Users:
                     # Must be set to True to ensure the Mail module doesn't add the admin back.
                     strict_notify = True
 
-                    if notify_email_list:
+                    if notify_email_list and email in notify_email_list:
                         notify_email_list.remove(email)
 
-                    if bcc_email_list:
+                    if bcc_email_list and email in bcc_email_list:
                         bcc_email_list.remove(email)
 
                     removed_admin_emails.append(email)

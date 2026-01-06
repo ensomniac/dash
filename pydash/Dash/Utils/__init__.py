@@ -365,12 +365,13 @@ def SendEmail(
     )
 
 
-def SendDebugEmail(msg, recipient="stetandrew@gmail.com"):
+def SendDebugEmail(msg, recipient=""):
     from .comms import SendEmail
+    from Dash import AdminEmails
 
     return SendEmail(
         subject="Debug/Test",
-        notify_email_list=[recipient],
+        notify_email_list=[recipient or AdminEmails[1]],
         strict_notify=True,
         msg=msg
     )

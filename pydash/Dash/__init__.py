@@ -58,12 +58,12 @@ ExcludedContexts = {
     },
     "stetandrew@gmail.com": {
         "asset_paths": [
-            "candy",
-            "fantom"
+            # "candy",
+            # "fantom"
         ],
         "repo_names": [
-            "realtimecandy",
-            "fantom"
+            # "realtimecandy",
+            # "fantom"
         ]
     }
 }

@@ -843,7 +843,7 @@ class ApiCore:
                 subject="ApiCore.SendEmail Error",
                 msg=(
                     f"Email failed to send from '{self.DashContext.get('admin_from_email') or AdminEmails[0]}', "
-                    f"likely due to an token that failed to refresh (see error to confirm):"
+                    f"likely due to a token that failed to refresh (see error to confirm):"
                 ),
                 error=format_exc()
             )
