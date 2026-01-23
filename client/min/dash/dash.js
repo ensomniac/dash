@@ -28257,6 +28257,10 @@ function DashGuiButtonBar (binder, color=null, button_style="default") {
         }
         return button;
     };
+    this.Empty = function () {
+        this.html.empty();
+        this.buttons = [];
+    };
     this.setup_styles();
 }
 
@@ -28317,13 +28321,13 @@ function DashGuiIconButton (icon_name, callback, binder, color, options={}) {
         this.html.attr("title", hint);
         return this;
     };
-    this.AddHighlight = function (force_in_container=false) {
+    this.AddHighlight = function (force_in_container=false, color="") {
         if (Dash.IsMobile) {
             return this;
         }
         var height = 3;
         this.highlight.css({
-            "background": this.color.AccentGood,
+            "background": color || this.color.AccentGood,
             "top": force_in_container && this.icon_height ? (this.icon_height - height) : "auto",
             "height": height,
             "bottom": -height
@@ -44907,6 +44911,7 @@ DashGuiIconMap = {
     "add_phone":                 ["Add Phone", DashGuiIconWeights["regular"], "phone-plus"],
     "add_square":                ["Add (Square)", DashGuiIconWeights["regular"], "plus-square"],
     "add_square_light":          ["Add (Square)", DashGuiIconWeights["light"], "plus-square"],
+    "add_square_solid":          ["Add (Square)", DashGuiIconWeights["solid"], "plus-square"],
     "add_to_cart":               ["Add To Cart", DashGuiIconWeights["regular"], "cart-plus"],
     "admin_tools":               ["Admin Tools", DashGuiIconWeights["regular"], "shield-alt"],
     "alert":                     ["Alert", DashGuiIconWeights["solid"], "exclamation"],
@@ -45115,6 +45120,7 @@ DashGuiIconMap = {
     "info":                      ["Info Circle", DashGuiIconWeights["regular"], "info-circle"],
     "invoice":                   ["Invoice", DashGuiIconWeights["regular"], "file-invoice-dollar"],
     "invoice_alt":               ["Invoice Alt", DashGuiIconWeights["regular"], "file-invoice"],
+    "invoice_solid":             ["Invoice", DashGuiIconWeights["solid"], "file-invoice-dollar"],
     "javascript_logo":           ["JavaScript", DashGuiIconWeights["brand"], "js-square"],
     "key":                       ["Key", DashGuiIconWeights["regular"], "key"],
     "key_solid":                 ["Key (Solid)", DashGuiIconWeights["solid"], "key"],

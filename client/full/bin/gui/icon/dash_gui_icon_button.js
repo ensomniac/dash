@@ -77,7 +77,7 @@ function DashGuiIconButton (icon_name, callback, binder, color, options={}) {
         return this;
     };
 
-    this.AddHighlight = function (force_in_container=false) {
+    this.AddHighlight = function (force_in_container=false, color="") {
         if (Dash.IsMobile) {
             return this;
         }
@@ -85,7 +85,7 @@ function DashGuiIconButton (icon_name, callback, binder, color, options={}) {
         var height = 3;
 
         this.highlight.css({
-            "background": this.color.AccentGood,
+            "background": color || this.color.AccentGood,
             "top": force_in_container && this.icon_height ? (this.icon_height - height) : "auto",
             "height": height,
             "bottom": -height

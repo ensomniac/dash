@@ -144,5 +144,11 @@ function DashGuiButtonBar (binder, color=null, button_style="default") {
         return button;
     };
 
+    this.Empty = function () {
+        this.html.empty();
+
+        this.buttons = [];
+    };
+
     this.setup_styles();
 }
