@@ -40035,7 +40035,7 @@ function DashGuiFileExplorer (
         // Draw files that don't live in subfolders
         this.files_data["order"].forEach(
             (file_id) => {
-                if (!Dash.Validate.Object(this.get_file_data(file_id)["parent_folders"])) {
+                if (!Dash.Validate.Object(this.get_file_data(file_id)?.["parent_folders"])) {
                     this.add_row(file_id);
                 }
             },
@@ -40069,13 +40069,13 @@ function DashGuiFileExplorer (
         );
     };
     this.get_file_data = function (file_id) {
-        return this.files_data["data"][file_id];
+        return this.files_data["data"]?.[file_id];
     };
     this.get_filename = function (file_data) {
-        return file_data["filename"] || file_data["orig_filename"] || "";
+        return file_data?.["filename"] || file_data?.["orig_filename"] || "";
     };
     this.get_file_url = function (file_data) {
-        return file_data["url"] || file_data["orig_url"] || "";
+        return file_data?.["url"] || file_data?.["orig_url"] || "";
     };
     this.get_header_text = function () {
         var text = this.header_text;
@@ -40087,21 +40087,33 @@ function DashGuiFileExplorer (
         }
         return text;
     };
-    this.GetDataForKey = function (file_id, key) {
-        if (key === "filename") {
-            var file_data = this.get_file_data(file_id);
-            return this.get_filename(file_data) || file_data["id"];
-        }
-        var value = this.get_file_data(file_id)[key];
-        if (key === "uploaded_on" || key === "modified_on") {
-            if (Dash.DateTime.IsIsoFormat(value)) {
-                return Dash.DateTime.Readable(value, false);
+    this.GetDataForKey = function (file_id, key, column) {
+        var file_data = this.get_file_data(file_id);
+        // This would happen if a sublist is expanded when updates come through that had file deletions.
+        // We don't redraw when new data comes in and a sublist is expanded because we don't want to
+        // interrupt the user. So if they close the sublists and re-open them, we can hide the deleted
+        // files this way. But there might also be a redraw by then, depending on the timing.
+        if (!file_data) {
+            if (key === "filename") {
+                column.list_row.html.hide();
             }
+            return "";
         }
-        else if (key === "uploaded_by" || key === "modified_by") {
-            var user = Dash.User.Init["team"][value];
-            if (user && user["display_name"]) {
-                return user["display_name"];
+        if (key === "filename") {
+            return this.get_filename(file_data) || file_data?.["id"] || "";
+        }
+        var value = file_data[key] ?? "";
+        if (value) {
+            if (key === "uploaded_on" || key === "modified_on") {
+                if (Dash.DateTime.IsIsoFormat(value)) {
+                    return Dash.DateTime.Readable(value, false);
+                }
+            }
+            else if (key === "uploaded_by" || key === "modified_by") {
+                var user = Dash.User.Init["team"][value];
+                if (user && user["display_name"]) {
+                    return user["display_name"];
+                }
             }
         }
         return value;
