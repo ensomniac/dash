@@ -87,7 +87,7 @@ class WorksheetUtils:
     def StyleCell(
         self, row_num, col_num, font=None, border=None, fill=None,
         bg_color="", font_type="", font_color="", include_border=True,
-        alignment=None, align_hor="center", align_ver="center"
+        alignment=None, align_hor="left", align_ver="center"
     ):
         return self.StyleRow(
             row_num=row_num,
@@ -107,7 +107,7 @@ class WorksheetUtils:
     def StyleRow(
         self, row_num, font=None, border=None, fill=None, bg_color="",
         font_type="", font_color="", include_border=True, alignment=None,
-        align_hor="center", align_ver="center", _col_num=0
+        align_hor="left", align_ver="center", _col_num=0
     ):
         fill, font, border, alignment = self.init_style_params(
             fill, bg_color, font, font_type, font_color, border, include_border, alignment, align_hor, align_ver
@@ -128,7 +128,7 @@ class WorksheetUtils:
     def StyleColumn(
         self, col_letter_or_num, font=None, border=None, fill=None,
         bg_color="", font_type="", font_color="", include_border=True,
-        alignment=None, align_hor="center", align_ver="center"
+        alignment=None, align_hor="left", align_ver="center"
     ):
         if type(col_letter_or_num) is int:
             from openpyxl.utils import get_column_letter
@@ -152,7 +152,18 @@ class WorksheetUtils:
                 self.style_cell(cell, fill, font, border, alignment)
 
     def get_font(self, font_type="", font_color=""):
-        key = f"{font_type}{font_color}"
+        font_types = []
+        font_color = font_color.lower().strip().replace("#", "")
+
+        if font_type:
+            if "_" in font_type:
+                font_types = font_type.split("_")
+
+                font_types.sort()
+            else:
+                font_types = [font_type]
+
+        key = f"{''.join(font_types)}{font_color}"
 
         if not self.fonts.get(key):
             from openpyxl.styles import Font
@@ -162,14 +173,27 @@ class WorksheetUtils:
             if font_color:
                 kwargs["color"] = font_color
 
-            if font_type:
-                kwargs[font_type] = True
+            if font_types:
+                for font_type in font_types:
+                    kwargs[font_type] = True
 
             self.fonts[key] = Font(**kwargs)
 
         return self.fonts[key]
 
     def get_fill(self, start_color, end_color="", fill_type="solid"):
+        start_color = start_color.lower().strip().replace("#", "")
+        end_color = end_color.lower().strip().replace("#", "")
+
+        if start_color == "none":
+            start_color = None
+
+        if end_color == "none":
+            end_color = None
+
+        if not start_color and not end_color:
+            fill_type = None
+
         key = f"{start_color}{end_color}{fill_type}"
 
         if not self.fills.get(key):
@@ -245,7 +269,7 @@ class WorksheetUtils:
         if not border and include_border:
             border = self.get_border("thin", "thin", "thin", "thin")
 
-        if not alignment and (align_hor != "center" or align_ver != "center"):
+        if not alignment and (align_hor != "left" or align_ver != "center"):
             alignment = self.get_alignment(
                 horizontal=align_hor,
                 vertical=align_ver

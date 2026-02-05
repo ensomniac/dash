@@ -408,7 +408,7 @@ def StyleFooterRow(worksheet, bg_color="dcdfe3", font=None, border=None, fill=No
 def StyleRow(
     worksheet, row_num, font=None, border=None, fill=None,
     bg_color="", font_type="", font_color="", include_border=True,
-    alignment=None, align_hor="center", align_ver="center"
+    alignment=None, align_hor="left", align_ver="center"
 ):
     return GetWorksheetUtils(worksheet).StyleRow(
         row_num, font, border, fill, bg_color, font_type, font_color,
@@ -419,7 +419,7 @@ def StyleRow(
 def StyleColumn(
     worksheet, col_letter_or_num, font=None, border=None, fill=None,
     bg_color="", font_type="", font_color="", include_border=True,
-    alignment=None, align_hor="center", align_ver="center"
+    alignment=None, align_hor="left", align_ver="center"
 ):
     return GetWorksheetUtils(worksheet).StyleColumn(
         col_letter_or_num, font, border, fill, bg_color, font_type,
@@ -430,7 +430,7 @@ def StyleColumn(
 def StyleCell(
     worksheet, row_num, col_num, font=None, border=None, fill=None,
     bg_color="", font_type="", font_color="", include_border=True,
-    alignment=None, align_hor="center", align_ver="center"
+    alignment=None, align_hor="left", align_ver="center"
 ):
     return GetWorksheetUtils(worksheet).StyleCell(
         row_num, col_num, font, border, fill, bg_color, font_type,

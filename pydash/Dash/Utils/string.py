@@ -188,6 +188,10 @@ def FormatTime(dt_obj, time_format=1, tz="utc", update_tz=True):
     if time_format == 24:
         return dt_obj.strftime("%-m/%-d/%y")
 
+    # Format: 7:15pm (non-zero-padded hour)
+    if time_format == 25:
+        return f"{dt_obj.strftime('%I').lstrip('0')}:{dt_obj.strftime('%M%p').lower()}"
+
     # Format: Monday, October 9th, 2023 at 2:51 pm
     return f"{date_markup} at {time_markup}"
 
