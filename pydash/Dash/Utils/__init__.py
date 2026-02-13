@@ -393,8 +393,8 @@ def GetWorksheetUtils(worksheet):
     return WorksheetUtils(worksheet)
 
 
-def AutoSizeColumnsByContent(worksheet, pad=0):
-    return GetWorksheetUtils(worksheet).AutoSizeColumnsByContent(pad)
+def AutoSizeColumnsByContent(worksheet, pad=0, min_col=-1, max_col=-1):
+    return GetWorksheetUtils(worksheet).AutoSizeColumnsByContent(pad, min_col, max_col)
 
 
 def StyleHeaderRow(worksheet, bg_color="dcdfe3", font=None, border=None, fill=None, font_color=""):

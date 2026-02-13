@@ -17,11 +17,19 @@ class WorksheetUtils:
         self.borders = {}
         self.alignments = {}
 
-    def AutoSizeColumnsByContent(self, pad=0):
+    def AutoSizeColumnsByContent(self, pad=0, min_col=-1, max_col=-1):
         from openpyxl.utils import get_column_letter
 
         # Auto-size columns based on content
         for column in self.worksheet.columns:
+            col_num = column[0].column
+
+            if min_col > -1 and col_num < min_col:
+                continue
+
+            if max_col > -1 and col_num > max_col:
+                break
+
             max_length = 0
             column = [cell for cell in column if cell.value]
 
@@ -31,7 +39,7 @@ class WorksheetUtils:
                 except:
                     pass
 
-            self.worksheet.column_dimensions[get_column_letter(column[0].column)].width = (
+            self.worksheet.column_dimensions[get_column_letter(col_num)].width = (
                 max_length + pad  # Adding a little extra space
             )
 
