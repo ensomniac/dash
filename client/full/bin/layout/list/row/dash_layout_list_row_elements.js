@@ -498,10 +498,14 @@ function DashLayoutListRowElements () {
                     return options["getter_cb"].bind(options["binder"])(self);
                 },
                 options["size_mult"],
-                null,
+                undefined,
                 "default",
                 options["icon_name"],
-                options["color"] || self.color
+                options["color"] || self.color,
+                undefined,
+                undefined,
+                options["icon_color"],
+                options["use_getter_result_for_label"] || false
             );
         })(this);
 

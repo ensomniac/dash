@@ -27449,8 +27449,8 @@ function DashGuiSignature (width=null, height=null, binder=null, on_save_cb=null
 }
 
 function DashGuiCopyButton (
-    binder, getter_cb, size_mult=1, container_size=null, style="default",
-    icon_name="copy", color=null, label_text="Copied!", font_size_override=0
+    binder, getter_cb, size_mult=1, container_size=null, style="default", icon_name="copy",
+    color=null, label_text="Copied!", font_size_override=0, icon_color=null, use_getter_result_for_label=false
 ) {
     this.binder = binder;
     this.getter_cb = getter_cb.bind(binder);
@@ -27461,8 +27461,9 @@ function DashGuiCopyButton (
     this.color = color || binder.color || Dash.Color.Light;
     this.label_text = label_text;
     this.font_size_override = font_size_override;
+    this.icon_color = icon_color;
+    this.use_getter_result_for_label = use_getter_result_for_label;
     this.button = null;
-    this.icon_color = null;
     this.html = $("<div></div>");
     this.label = $("<div>" + this.label_text + "</div>");
     this.opposite_color = Dash.Color.GetOpposite(this.color);
@@ -27478,7 +27479,8 @@ function DashGuiCopyButton (
             this.color,
             {
                 "container_size": this.container_size,
-                "size_mult": this.size_mult
+                "size_mult": this.size_mult,
+                "icon_color": this.icon_color
             }
         );
         this.html.append(this.button.html);
@@ -27537,6 +27539,12 @@ function DashGuiCopyButton (
     };
     this.on_click = function () {
         var text = this.getter_cb();
+        if (this.use_getter_result_for_label) {
+            if (!text) {
+                return;
+            }
+            this.label.text(text);
+        }
         this.button.SetIconColor(this.color.Button.Background.Selected);
         navigator.clipboard.writeText(text).then(() => {
             Dash.Log.Log("Copied '" + text + "' to clipboard");
@@ -53223,7 +53231,8 @@ function DashLayoutListColumnConfig () {
     };
     this.AddCopyButton = function (
         binder, getter_cb, hover_text="Copy", width_mult=0.25, css={},
-        header_css={}, size_mult=0.8, icon_name="copy", footer_css={}
+        header_css={}, size_mult=0.8, icon_name="copy", footer_css={},
+        icon_color=null, use_getter_result_for_label=false
     ) {
         css["flex"] = "none";
         header_css["flex"] = "none";
@@ -53241,7 +53250,9 @@ function DashLayoutListColumnConfig () {
                     "size_mult": size_mult,
                     "icon_name": icon_name,
                     "color": binder.color || Dash.Color.Light,
-                    "hover_text": hover_text
+                    "hover_text": hover_text,
+                    "icon_color": icon_color,
+                    "use_getter_result_for_label": use_getter_result_for_label
                 },
                 "css": css,
                 "header_css": header_css,
@@ -53974,10 +53985,14 @@ function DashLayoutListRowElements () {
                     return options["getter_cb"].bind(options["binder"])(self);
                 },
                 options["size_mult"],
-                null,
+                undefined,
                 "default",
                 options["icon_name"],
-                options["color"] || self.color
+                options["color"] || self.color,
+                undefined,
+                undefined,
+                options["icon_color"],
+                options["use_getter_result_for_label"] || false
             );
         })(this);
         copy_button.html.css({

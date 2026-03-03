@@ -139,7 +139,8 @@ function DashLayoutListColumnConfig () {
 
     this.AddCopyButton = function (
         binder, getter_cb, hover_text="Copy", width_mult=0.25, css={},
-        header_css={}, size_mult=0.8, icon_name="copy", footer_css={}
+        header_css={}, size_mult=0.8, icon_name="copy", footer_css={},
+        icon_color=null, use_getter_result_for_label=false
     ) {
         css["flex"] = "none";
         header_css["flex"] = "none";
@@ -158,7 +159,9 @@ function DashLayoutListColumnConfig () {
                     "size_mult": size_mult,
                     "icon_name": icon_name,
                     "color": binder.color || Dash.Color.Light,
-                    "hover_text": hover_text
+                    "hover_text": hover_text,
+                    "icon_color": icon_color,
+                    "use_getter_result_for_label": use_getter_result_for_label
                 },
                 "css": css,
                 "header_css": header_css,
