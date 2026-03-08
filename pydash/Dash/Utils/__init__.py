@@ -467,6 +467,10 @@ class Cron:
         try:
             if self.DashContext["asset_path"] == "fantom":
                 sys.path.append(os.path.join(self.DashContext["srv_path_git_oapi"], "factory", "server", "cgi-bin"))
+
+            elif self.DashContext["asset_path"] == "simple_paycheck_budget":
+                sys.path.append(os.path.join(self.DashContext["srv_path_http_root"], "cgi-bin"))
+
             else:
                 sys.path.append(os.path.join(self.DashContext["srv_path_git_oapi"], "server", "cgi-bin"))
 
