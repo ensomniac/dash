@@ -458,7 +458,11 @@ class Cron:
             dash_context_asset_path = ParseDashContextAssetPath()
 
         self.DashContext = Memory.SetContext(dash_context_asset_path)
-        self.User = Memory.SetUser(AdminEmails[0])
+
+        self.User = Memory.SetUser(AdminEmails[
+            1 if self.DashContext["asset_path"] == "simple_paycheck_budget" else 0
+        ])
+
         self.AnalogContext = Memory.SetAnalogContext(analog_context_domain or self.DashContext["domain"])
         self.default_error_notify_email_list = []
 
