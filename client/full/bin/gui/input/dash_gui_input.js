@@ -299,6 +299,8 @@ function DashGuiInput (placeholder_text="", color=null) {
                             "margin-left": -border_size * 0.5
                         });
 
+                        prompt.continue_button.Enable();
+
                         return;
                     }
 

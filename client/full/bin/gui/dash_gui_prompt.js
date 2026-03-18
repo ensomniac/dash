@@ -114,6 +114,8 @@ function DashGuiPrompt (
             return self.button_bar.AddButton(
                 label_text,
                 function (button) {
+                    button.Disable();
+
                     self.on_selection(self.button_bar.GetIndex(button));
                 },
                 prepend

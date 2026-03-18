@@ -610,6 +610,10 @@ class DashGuiFlow {
         prompt.DisableEscShortcut();
         prompt.DisableEnterShortcut();
 
+        if (prompt.continue_button) {
+            prompt.continue_button.Enable();
+        }
+
         var alert = new Dash.Gui.Alert(
             (
                 "It looks like you forgot to explain your request.\n\n" +

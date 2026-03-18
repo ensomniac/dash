@@ -20188,6 +20188,7 @@ function DashGuiPrompt (
             return self.button_bar.AddButton(
                 label_text,
                 function (button) {
+                    button.Disable();
                     self.on_selection(self.button_bar.GetIndex(button));
                 },
                 prepend
@@ -44205,6 +44206,9 @@ class DashGuiFlow {
     on_empty_request_text (prompt) {
         prompt.DisableEscShortcut();
         prompt.DisableEnterShortcut();
+        if (prompt.continue_button) {
+            prompt.continue_button.Enable();
+        }
         var alert = new Dash.Gui.Alert(
             (
                 "It looks like you forgot to explain your request.\n\n" +
@@ -45567,6 +45571,7 @@ function DashGuiInput (placeholder_text="", color=null) {
                             "margin-top": -border_size * 0.5,
                             "margin-left": -border_size * 0.5
                         });
+                        prompt.continue_button.Enable();
                         return;
                     }
                     input.html.css({
