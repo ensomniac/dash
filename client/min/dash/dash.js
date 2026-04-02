@@ -20810,7 +20810,7 @@ class DashGuiPhoneNumber {
     ) {
         this.on_submit_cb = on_submit_cb;
         this.color = color || Dash.Color.Light;
-        this.return_with_separators = international;
+        this.return_with_separators = return_with_separators;
         this.international = international;
         this.allow_incomplete = allow_incomplete;
         this.height = null;
