@@ -142,8 +142,7 @@ class GitHub:
         cmds.append(f"chown ensomniac {dest_path} -R")
         cmds.append(f"chgrp psacln {dest_path} -R")
 
-        # TODO: Check to see if there is already a
-        # github command running for this site!
+        # TODO: Check to see if there is already a GitHub command running for this site!
 
         # return RunAsRoot.Queue(";".join(cmds))  # Chaining the commands led to silent failures when commands would abort before the other commands were called.
         return RunAsRoot.Queue(cmds)
@@ -173,6 +172,15 @@ class _Webhook:
             raise NotImplementedError(f"This Dash Context is not set up for GitHub/Webhook:\n{self.DashContext}")
 
     def ForAssetPath(self, payload={}):
+        should_process, ignored_payload = self.should_process_payload(payload)
+
+        if not should_process:
+            return {
+                "email_list": [],
+                "git_result": {},
+                **ignored_payload
+            }
+
         email_list_csv = self.DashContext.get("email_git_webhook_csv")
 
         if not email_list_csv:
@@ -186,7 +194,7 @@ class _Webhook:
         if payload:
             self.email_git_payload_response(payload, email_list, git_result)
 
-            # Silencing this now that FV is folding
+            # Silencing this now that FV has folded
             # if not git_result.get("error") and self.DashContext["asset_path"] == "candy":
             #     self.PostToSlack(payload)
 
@@ -308,6 +316,46 @@ class _Webhook:
             )
 
             return {}
+
+    def should_process_payload(self, payload):
+        if not payload:
+            return True, {}
+
+        ref = payload.get("ref", "")
+        repository = payload.get("repository", {})
+        default_branch = repository.get("default_branch", "")
+
+        ignored_payload = {
+            "ignored": True,
+            "ref": ref,
+            "default_branch": default_branch
+        }
+
+        if not ref:
+            ignored_payload["reason"] = "Ignoring webhook payload without a Git ref"
+
+            return False, ignored_payload
+
+        branch_ref_prefix = "refs/heads/"
+
+        if not ref.startswith(branch_ref_prefix):
+            ignored_payload["reason"] = f"Ignoring non-branch ref: {ref}"
+
+            return False, ignored_payload
+
+        ignored_payload["branch"] = ref.replace(branch_ref_prefix, "", 1)
+
+        if not default_branch:
+            ignored_payload["reason"] = "Ignoring branch webhook payload without a repository default branch"
+
+            return False, ignored_payload
+
+        if ignored_payload["branch"] != default_branch:
+            ignored_payload["reason"] = f"Ignoring non-default branch: {ignored_payload['branch']}"
+
+            return False, ignored_payload
+
+        return True, {}
 
     def git_pull_clean(self):
         from Dash.RunAsRoot import Queue
