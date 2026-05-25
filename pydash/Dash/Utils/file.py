@@ -425,6 +425,49 @@ def GetVideoDetails(path):
         "duration_sec": str(props.get("duration", "Unknown")).strip("0")
     }
 
+def WaitForFileReady(
+    path, timeout_sec=5, interval=0.1, stable_checks=2, allow_empty=False, label="file"
+):
+    from time import monotonic, sleep
+
+    last_size = None
+    stable_count = 0
+    deadline = monotonic() + timeout_sec
+
+    while monotonic() < deadline:
+        if os.path.exists(path):
+            size = os.path.getsize(path)
+
+            if not allow_empty and size == 0:
+                stable_count = 0
+                last_size = size
+
+            elif size == last_size:
+                stable_count += 1
+
+                if stable_count >= stable_checks:
+                    return path
+
+            else:
+                stable_count = 0
+                last_size = size
+
+        sleep(interval)
+
+    raise TimeoutError(f"Timed-out waiting for {label} to be ready: {path}")
+
+
+# Basic wrapper for a common operation
+def RemoveFileIfExists(path):
+    if not path:
+        return
+
+    try:
+        os.remove(path)
+
+    except FileNotFoundError:
+        pass
+
 
 def get_tagless_filename(filename, return_tag_num=False):
     if ")." not in filename:

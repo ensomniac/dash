@@ -189,6 +189,20 @@ def GetVideoDetails(path):
     return GetVideoDetails(path)
 
 
+def WaitForFileReady(
+    path, timeout_sec=5, interval=0.1, stable_checks=2, allow_empty=False, label="file"
+):
+    from .file import WaitForFileReady
+
+    return WaitForFileReady(path, timeout_sec, interval, stable_checks, allow_empty, label)
+
+
+def RemoveFileIfExists(path):
+    from .file import RemoveFileIfExists
+
+    return RemoveFileIfExists(path)
+
+
 # ------------------------------------------------- MODEL ---------------------------------------------------
 
 
