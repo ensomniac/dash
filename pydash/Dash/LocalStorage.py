@@ -4,11 +4,60 @@
 #                Andrew Stet, stetandrew@gmail.com
 
 """
-Utility for reading, writing and maintaining common data.
+Utility for reading, writing, and maintaining common data.
 """
 
 import os
 import sys
+
+from contextlib import contextmanager
+from threading import Lock, RLock
+
+
+_JSON_READ_MODIFY_WRITE_LOCKS = {} 
+_JSON_READ_MODIFY_WRITE_LOCKS_LOCK = Lock()
+
+
+def _get_json_read_modify_write_lock(full_path):
+    lock_key = os.path.abspath(full_path)
+
+    with _JSON_READ_MODIFY_WRITE_LOCKS_LOCK:
+        if lock_key not in _JSON_READ_MODIFY_WRITE_LOCKS:
+            _JSON_READ_MODIFY_WRITE_LOCKS[lock_key] = RLock()
+
+        return _JSON_READ_MODIFY_WRITE_LOCKS[lock_key]
+
+
+def _get_json_read_modify_write_lock_path(full_path):
+    full_path = os.path.abspath(full_path)
+
+    return os.path.join(os.path.dirname(full_path), f".{os.path.basename(full_path)}.lock")
+
+
+@contextmanager
+def _locked_json_file(full_path):
+    """
+    Serialize JSON writes and read-modify-write transactions for one file path.
+
+    The in-process RLock keeps threads in this interpreter ordered, while `flock` on a
+    sibling hidden lock file coordinates with other processes. Callers should hold this
+    only around short JSON file operations. Slow request, network, or scan work should be
+    done before entering a ReadModifyWrite callback when possible.
+    """
+
+    import fcntl
+
+    thread_lock = _get_json_read_modify_write_lock(full_path)
+    lock_path = _get_json_read_modify_write_lock_path(full_path)
+
+    with thread_lock:
+        with open(lock_path, "a+") as lock_file:
+            fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX)
+
+            try:
+                yield
+            finally:
+                fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
 
 
 class DashLocalStorage:
@@ -19,7 +68,7 @@ class DashLocalStorage:
 
     def __init__(self, dash_context=None, store_path="", nested=False, sort_by_key="", filter_out_keys=[]):
         """
-        Utility for reading, writing and maintaining common data.
+        Utility for reading, writing, and maintaining common data.
 
         :param dash_context: Dash Context (default=None)
         :param str store_path: Name of the folder located in /local/, such as
@@ -485,20 +534,60 @@ class DashLocalStorage:
 
         return data
 
-    # Shortcut/wrapper for Read->Write
+    def ReadModifyWrite(self, full_path, modify, default_data=None, conform_permissions=True):
+        """
+        Lock a JSON file, read it, modify the decoded data, and protected-write the result.
+
+        The 'modify' callable may return replacement data or mutate the provided data in place
+        and return None.
+
+        Use this instead of `Read` -> custom mutation logic -> `Write` when the new value depends
+        on the latest saved JSON data. `UpdateData` is a convenience wrapper around this transaction
+        helper, so use it for simple dictionary merges. Use `Write` for standalone full-file
+        replacements where the caller already has the authoritative data and does not need to
+        merge with the existing file contents.
+        """
+
+        if not full_path:
+            raise ValueError(f"No path provided to LocalStorage.ReadModifyWrite: {full_path}")
+
+        if not callable(modify):
+            raise TypeError("LocalStorage.ReadModifyWrite requires a callable modify argument")
+
+        from copy import deepcopy
+
+        with _locked_json_file(full_path):
+            data = self.Read(full_path)
+
+            if data is None and default_data is not None:
+                data = deepcopy(default_data)
+
+            updated_data = modify(data)
+
+            if updated_data is None:
+                updated_data = data
+
+            return self.write_json_protected(full_path, updated_data, conform_permissions)
+
+    # Shortcut/wrapper for Read->Write for simple top-level dict updates
     def UpdateData(self, full_path, update_data, conform_permissions=True):
-        data = Read(full_path)
+        """
+        Lock a JSON file, merge update_data into the existing dictionary, and write it back.
 
-        if type(data) is not dict:
-            raise ValueError(f"Data must be a dictionary, not {type(data).__name__}")
+        Use this for simple top-level dict updates. Use `ReadModifyWrite` when the change needs
+        custom logic such as list append/removal, nested merges, deleting keys, or computing a
+        value from the latest saved JSON.
+        """
 
-        data.update(update_data)  # Leave this here (returns None)
+        def modify(data):
+            if type(data) is not dict:
+                raise ValueError(f"Data must be a dictionary, not {type(data).__name__}")
 
-        return Write(
-            full_path=full_path,
-            data=data,
-            conform_permissions=conform_permissions
-        )
+            data.update(update_data)  # Leave this here (returns None)
+
+            return data
+
+        return self.ReadModifyWrite(full_path, modify, conform_permissions=conform_permissions)
 
     def Write(self, full_path, data, conform_permissions=True):
         if not full_path:
@@ -507,7 +596,8 @@ class DashLocalStorage:
         if type(data) is bytes or type(data) is memoryview:
             return self.write_binary(full_path, data, conform_permissions)
 
-        return self.write_json_protected(full_path, data, conform_permissions)
+        with _locked_json_file(full_path):
+            return self.write_json_protected(full_path, data, conform_permissions)
 
     def Read(self, full_path, is_json=True):
         if not full_path:
@@ -527,7 +617,8 @@ class DashLocalStorage:
             attempts += 1
 
             try:
-                data = open(full_path).read()
+                with open(full_path) as file:
+                    data = file.read()
 
                 if is_json:
                     data = loads(data)
@@ -689,7 +780,7 @@ class DashLocalStorage:
                 except FileNotFoundError:
                     continue
 
-            return
+            return True
 
         try:
             from shutil import chown
@@ -728,6 +819,8 @@ class DashLocalStorage:
 
                 except FileNotFoundError:
                     continue
+
+        return True
 
     def get_folder_possibilities(self, name):
         return [name, f"/{name}", f"{name}/", f"/{name}/"]
@@ -821,7 +914,7 @@ class DashLocalStorage:
 
     def get_data_root(self, obj_id=""):
         """
-        Nearly identical to self.get_store_root, but returns slightly
+        Nearly identical to self.get_store_root but returns slightly
         different paths depending on whether the record is nested
         """
 
@@ -832,7 +925,8 @@ class DashLocalStorage:
         return self.GetRecordRoot(obj_id if (self.store_path == "users" and "@" in obj_id) else "")
 
     def write_binary(self, full_path, data, conform_permissions=True):
-        open(full_path, "wb").write(data)
+        with open(full_path, "wb") as file:
+            file.write(data)
 
         if conform_permissions:
             self.ConformPermissions(full_path)
@@ -842,7 +936,8 @@ class DashLocalStorage:
     def write_json_unprotected(self, full_path, data, conform_permissions=True):
         from json import dumps
 
-        open(full_path, "w").write(dumps(data))
+        with open(full_path, "w") as file:
+            file.write(dumps(data))
 
         if conform_permissions:
             self.ConformPermissions(full_path)
@@ -867,7 +962,8 @@ class DashLocalStorage:
         )
 
         try:
-            open(tmp_file_path, "w").write(dumps(data))
+            with open(tmp_file_path, "w") as file:
+                file.write(dumps(data))
 
         except Exception as e:
             raise IOError(f"Write fail at {tmp_file_path} from {full_path}") from e
@@ -1211,8 +1307,26 @@ def Write(full_path, data, conform_permissions=True):
     return DashLocalStorage().Write(full_path, data, conform_permissions)
 
 
+def ReadModifyWrite(full_path, modify, default_data=None, conform_permissions=True):
+    """
+    Lock a JSON file, read it, run custom mutation logic, and protected-write the result.
+
+    Use this instead of Read -> custom mutation logic -> Write when the new value depends
+    on the latest saved JSON data. Use UpdateData for simple dictionary merges; use Write
+    for standalone full-file replacements with already-authoritative data.
+    """
+
+    return DashLocalStorage().ReadModifyWrite(full_path, modify, default_data, conform_permissions)
+
+
 # Shortcut/wrapper for Read->Write
 def UpdateData(full_path, update_data, conform_permissions=True):
+    """
+    Lock a JSON file, merge update_data into the existing dictionary, and write it back.
+
+    Use ReadModifyWrite when the change needs custom logic beyond a simple dict update.
+    """
+
     return DashLocalStorage().UpdateData(full_path, update_data, conform_permissions)
 
 
