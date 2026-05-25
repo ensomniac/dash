@@ -39,6 +39,20 @@ def _increment_counter(path, start_event, iterations):
 
 
 class TestLocalStorageReadModifyWrite(unittest.TestCase):
+    def setUp(self):
+        self._original_lock_root = os.environ.get("DASH_LOCAL_STORAGE_LOCK_ROOT")
+        self._lock_root = TemporaryDirectory()
+
+        os.environ["DASH_LOCAL_STORAGE_LOCK_ROOT"] = self._lock_root.name
+
+    def tearDown(self):
+        if self._original_lock_root is None:
+            os.environ.pop("DASH_LOCAL_STORAGE_LOCK_ROOT", None)
+        else:
+            os.environ["DASH_LOCAL_STORAGE_LOCK_ROOT"] = self._original_lock_root
+
+        self._lock_root.cleanup()
+
     def test_method_accepts_in_place_mutation(self):
         from Dash.LocalStorage import DashLocalStorage, Read, Write
 
@@ -53,6 +67,24 @@ class TestLocalStorageReadModifyWrite(unittest.TestCase):
             DashLocalStorage().ReadModifyWrite(path, modify, conform_permissions=False)
 
             self.assertEqual(Read(path), {"count": 2})
+
+    def test_lock_file_is_not_created_next_to_json_file(self):
+        from Dash.LocalStorage import ReadModifyWrite, _get_json_read_modify_write_lock_path
+
+        with TemporaryDirectory() as temp_dir:
+            path = os.path.join(temp_dir, "data.json")
+            sibling_lock_path = os.path.join(temp_dir, ".data.json.lock")
+
+            def modify(data):
+                data = data or {}
+                data["count"] = 1
+
+                return data
+
+            ReadModifyWrite(path, modify, default_data={}, conform_permissions=False)
+
+            self.assertFalse(os.path.exists(sibling_lock_path))
+            self.assertNotEqual(os.path.dirname(_get_json_read_modify_write_lock_path(path)), temp_dir)
 
     def test_method_serializes_threaded_updates(self):
         from threading import Event, Thread

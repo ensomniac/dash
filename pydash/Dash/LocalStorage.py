@@ -14,7 +14,7 @@ from contextlib import contextmanager
 from threading import Lock, RLock
 
 
-_JSON_READ_MODIFY_WRITE_LOCKS = {} 
+_JSON_READ_MODIFY_WRITE_LOCKS = {}
 _JSON_READ_MODIFY_WRITE_LOCKS_LOCK = Lock()
 
 
@@ -29,9 +29,15 @@ def _get_json_read_modify_write_lock(full_path):
 
 
 def _get_json_read_modify_write_lock_path(full_path):
-    full_path = os.path.abspath(full_path)
+    from hashlib import sha256
 
-    return os.path.join(os.path.dirname(full_path), f".{os.path.basename(full_path)}.lock")
+    lock_root = os.environ.get("DASH_LOCAL_STORAGE_LOCK_ROOT", "/tmp")
+
+    os.makedirs(lock_root, exist_ok=True)
+
+    lock_key = sha256(os.path.abspath(full_path).encode()).hexdigest()
+
+    return os.path.join(lock_root, f"dash_local_storage_{lock_key}.lock")
 
 
 @contextmanager
@@ -40,9 +46,11 @@ def _locked_json_file(full_path):
     Serialize JSON writes and read-modify-write transactions for one file path.
 
     The in-process RLock keeps threads in this interpreter ordered, while `flock` on a
-    sibling hidden lock file coordinates with other processes. Callers should hold this
-    only around short JSON file operations. Slow request, network, or scan work should be
-    done before entering a ReadModifyWrite callback when possible.
+    lock file in the configured lock root (default /tmp) coordinates with other
+    processes. The lock file intentionally does not live next to the JSON file, because
+    many Dash storage folders are enumerated as record directories. Callers should hold
+    this only around short JSON file operations. Slow request, network, or scan work
+    should be done before entering a ReadModifyWrite callback when possible.
     """
 
     import fcntl
