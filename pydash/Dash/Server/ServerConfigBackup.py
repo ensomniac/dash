@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #
-# Ensomniac 2025 Ryan Martin, ryan@ensomniac.com
+# Ensomniac 2026 Ryan Martin, ryan@ensomniac.com
 #
 # This is meant to be run manually and ran as root
 
