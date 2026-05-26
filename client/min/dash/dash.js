@@ -20450,6 +20450,7 @@ function DashGuiConfirm (
  *
  * REQUIREMENTS IN GOOGLE CLOUD CONSOLE: <br>
  *  - Enable Places API
+ *  - Enable Places API (New)
  *  - Enable Maps JavaScript API
  *  - Enable Geocoding API
  *  - Create an API key, restrict it to this specific website
@@ -20497,19 +20498,39 @@ class DashGuiAddress extends DashGuiInputType {
         this._on_submit_cb = (on_submit_cb && binder ? on_submit_cb.bind(binder) : on_submit_cb);
         this.international = international;
         this.include_tip_icon = include_tip_icon;
+        this.placeholder_text = placeholder_text;
         this.geocoder = null;
+        this.tip_icon = null;
         this.map_link_url = "";
         this.on_submit_timer = null;
         this.formatted_address = "";
         this.map_link_button = null;
         this.address_components = {};
+        this.last_selected_value = "";
         this.last_submitted_value = "";
+        this.place_selection_pending = false;
         this.google_places_autocomplete = null;
+        this.google_places_autocomplete_place = {};
+        this.fallback_to_legacy_in_progress = false;
+        this.google_places_autocomplete_listeners = [];
+        this.google_places_autocomplete_is_new = false;
         this.tip_text = (
             "Start typing an address to search,\nthen select the corresponding address.\n\n" +
             "You can also freely enter any address if it's\nnot listed, though this will be uncommon.\n\n" +
             'More granular address details,\nsuch as "Suite 100", can be manually\nadded after selecting the address.'
         );
+        // Ref: https://developers.google.com/maps/documentation/javascript/reference/places-widget#AutocompleteOptions
+        this.legacy_autocomplete_options = {
+            // Ref: https://developers.google.com/maps/documentation/javascript/supported_types#table3
+            "types": ["geocode"],
+            // *** KEEP THESE AS SPARSE AS POSSIBLE FOR BILLING ***
+            // Ref: https://developers.google.com/maps/documentation/javascript/reference/places-service#PlaceResult
+            "fields": [
+                "address_components",
+                "formatted_address",
+                "url"
+            ]
+        };
         // For some reason, traditional function overriding is not working.
         // I can't figure it out, but it seems to have something to do with
         // this class being a proper class and DashGuiInputType and DashGuiInputBase
@@ -20520,11 +20541,7 @@ class DashGuiAddress extends DashGuiInputType {
         this._setup_styles();
     }
     _setup_styles () {
-        this.input.css({
-            "padding-left": Dash.Size.Padding * 0.5,
-            "padding-right": Dash.Size.Padding * 0.5,
-            "border-bottom": "1px solid " + this.color.PinstripeDark
-        });
+        this.apply_input_styles();
         this.setup_autocomplete();
         this.add_icon();
         this.add_map_link_button();
@@ -20535,49 +20552,45 @@ class DashGuiAddress extends DashGuiInputType {
     GetComponents () {
         return this.address_components;
     }
-    add_icon = function () {
+    apply_input_styles () {
+        this.input.css({
+            "padding-left": Dash.Size.Padding * 0.5,
+            "padding-right": Dash.Size.Padding * 0.5,
+            "border-bottom": "1px solid " + this.color.PinstripeDark,
+            "box-sizing": "border-box",
+            "height": this.height,
+            "width": "100%"
+        });
+    }
+    add_icon () {
         if (!this.include_tip_icon) {
-            if (this.label && this.google_places_autocomplete) {
-                this.label.attr("title", this.tip_text);
-                this.label.css({
-                    "cursor": "help"
-                });
-            }
+            this.refresh_autocomplete_dependent_ui();
             return;
         }
-        var icon = new Dash.Gui.Icon(
+        this.tip_icon = new Dash.Gui.Icon(
             this.color,
             "map_marker",
             this.height,
             0.9,
             this.color.Stroke
         );
-        if (this.google_places_autocomplete) {
-            icon.html.attr("title", this.tip_text);
-        }
-        icon.html.css({
-            "cursor": this.google_places_autocomplete ? "help" : "default",
+        this.tip_icon.html.css({
             "margin-right": Dash.Size.Padding * 0.3
         });
-        this.html.prepend(icon.html);
-    };
+        this.html.prepend(this.tip_icon.html);
+        this.refresh_autocomplete_dependent_ui();
+    }
     setup_autocomplete () {
-        // Ref: https://developers.google.com/maps/documentation/javascript/reference/places-widget#AutocompleteOptions
-        var options = {
-            // Ref: https://developers.google.com/maps/documentation/javascript/supported_types#table3
-            "types": [
-                "geocode"
-            ],
-            // *** KEEP THESE AS SPARSE AS POSSIBLE FOR BILLING ***
-            // Ref: https://developers.google.com/maps/documentation/javascript/reference/places-service#PlaceResult
-            "fields": [
-                "address_components",
-                "formatted_address",
-                "url"
-            ]
+        // Ref: https://developers.google.com/maps/documentation/javascript/reference/places-widget#PlaceAutocompleteElementOptions
+        var place_autocomplete_options = {
+            "includedPrimaryTypes": ["geocode"],
+            "noInputIcon": true,
+            "placeholder": this.placeholder_text
         };
         if (!this.international) {
-            options["componentRestrictions"] = {"country": "us"};
+            this.legacy_autocomplete_options["componentRestrictions"] = {"country": "us"};
+            place_autocomplete_options["includedRegionCodes"] = ["US"];
+            place_autocomplete_options["requestedRegion"] = "US";
         }
         else {
             // TODO: Resolve the other international TODOs in this code first
@@ -20589,6 +20602,341 @@ class DashGuiAddress extends DashGuiInputType {
             return;
         }
         try {
+            if (google.maps.places.PlaceAutocompleteElement) {
+                this.setup_place_autocomplete_element(
+                    google.maps.places.PlaceAutocompleteElement,
+                    place_autocomplete_options
+                );
+                return;
+            }
+            if (google.maps.importLibrary) {
+                this.setup_place_autocomplete_element_async(place_autocomplete_options, this.legacy_autocomplete_options);
+                return;
+            }
+        }
+        catch {
+            // Pass
+        }
+        this.setup_legacy_autocomplete(this.legacy_autocomplete_options);
+    }
+    setup_place_autocomplete_element_async (place_autocomplete_options, legacy_options) {
+        google.maps.importLibrary("places").then((places) => {
+            if (places.PlaceAutocompleteElement) {
+                this.setup_place_autocomplete_element(places.PlaceAutocompleteElement, place_autocomplete_options);
+            }
+            else {
+                this.setup_legacy_autocomplete(legacy_options);
+            }
+        }).catch(() => {
+            this.setup_legacy_autocomplete(legacy_options);
+        });
+    }
+    setup_place_autocomplete_element (PlaceAutocompleteElement, options) {
+        var current_value = this.input.val();
+        var place_autocomplete = new PlaceAutocompleteElement(options);
+        this.google_places_autocomplete = place_autocomplete;
+        this.google_places_autocomplete_is_new = true;
+        this.setup_place_autocomplete_legacy_adapter(place_autocomplete);
+        this.replace_input(place_autocomplete, current_value);
+        this.setup_place_autocomplete_styles();
+        place_autocomplete.addEventListener("gmp-select", async (event) => {
+            if (!event.placePrediction) {
+                return;
+            }
+            this.place_selection_pending = true;
+            if (this.on_submit_timer) {
+                clearTimeout(this.on_submit_timer);
+                this.on_submit_timer = null;
+            }
+            try {
+                var place = event.placePrediction.toPlace();
+                await place.fetchFields({
+                    "fields": [
+                        "addressComponents",
+                        "formattedAddress",
+                        "googleMapsURI"
+                    ]
+                });
+                this.update_place_attrs(place, this.Text());
+                this.last_selected_value = this.formatted_address;
+                this.input.val(this.formatted_address);
+                this._on_submit(true);
+                this.notify_place_changed_listeners();
+            }
+            catch (error) {
+                console.warn("Warn (google.maps.places.PlaceAutocompleteElement):\nFailed to fetch place fields.", error);
+            }
+            finally {
+                this.place_selection_pending = false;
+            }
+        });
+        place_autocomplete.addEventListener("gmp-error", (event) => {
+            console.warn("Warn (google.maps.places.PlaceAutocompleteElement):\nAutocomplete request failed.", event);
+            this.fallback_to_legacy_autocomplete();
+        });
+        this.refresh_autocomplete_dependent_ui();
+    }
+    setup_place_autocomplete_legacy_adapter (place_autocomplete) {
+        place_autocomplete.getPlace = () => {
+            return this.google_places_autocomplete_place || {};
+        };
+        place_autocomplete.addListener = (event_name, callback) => {
+            if (event_name !== "place_changed") {
+                return null;
+            }
+            this.google_places_autocomplete_listeners.push(callback);
+            return {
+                "remove": () => {
+                    this.google_places_autocomplete_listeners = this.google_places_autocomplete_listeners.filter(
+                        (listener) => listener !== callback
+                    );
+                }
+            };
+        };
+    }
+    replace_input (place_autocomplete, current_value="") {
+        var previous_input = this.input;
+        var prediction_colors = this.get_place_autocomplete_prediction_colors();
+        previous_input.replaceWith(place_autocomplete);
+        this.input = $(place_autocomplete);
+        this.input.addClass("dash-google-address");
+        this.setup_place_autocomplete_value_adapter(place_autocomplete);
+        this.set_place_autocomplete_placeholder(place_autocomplete);
+        this.apply_input_styles();
+        this.input.css({
+            "background": "none",
+            "border": "none",
+            "border-bottom": "1px solid " + this.color.PinstripeDark,
+            "color": this.color.Text,
+            "color-scheme": Dash.Color.IsDark(this.color) ? "dark" : "light",
+            "flex": 2,
+            "font-family": "sans_serif_normal",
+            "font-size": "100%",
+            "line-height": this.height + "px",
+            "--dash-address-prediction-background": prediction_colors["background"],
+            "--dash-address-prediction-border": prediction_colors["border"],
+            "--dash-address-prediction-main-text": prediction_colors["main_text"],
+            "--dash-address-prediction-primary": prediction_colors["primary"],
+            "--dash-address-prediction-selected-background": prediction_colors["selected_background"],
+            "--dash-address-prediction-text": prediction_colors["text"],
+            "--gmp-mat-color-surface": prediction_colors["background"],
+            "--gmp-mat-color-on-surface": prediction_colors["main_text"],
+            "--gmp-mat-color-on-surface-variant": prediction_colors["text"],
+            "--gmp-mat-color-primary": prediction_colors["primary"],
+            "--gmp-mat-color-outline-decorative": prediction_colors["border"],
+            "--gmp-mat-font-family": "sans_serif_normal"
+        });
+        if (current_value) {
+            this.input.val(current_value);
+        }
+        this.setup_connections();
+        this.input.on("input", () => {
+            this.on_change();
+        });
+        if (this.locked) {
+            this._on_set_locked(true);
+        }
+    }
+    get_place_autocomplete_prediction_colors () {
+        if (Dash.Color.IsDark(this.color)) {
+            return {
+                "background": this.get_place_autocomplete_solid_color(
+                    this.color.BackgroundRaised || this.color.Background,
+                    "#1f242c"
+                ),
+                "border": this.color.PinstripeDark || this.color.StrokeLight || "#4b5563",
+                "main_text": this.color.Text || "#f2f2f2",
+                "primary": this.color.Button?.Background?.Base || this.color.AccentGood || "#659cba",
+                "selected_background": this.color.PinstripeDark || "rgba(255, 255, 255, 0.16)",
+                "text": this.color.Stroke || this.color.Text || "#d7dce8"
+            };
+        }
+        return {
+            "background": this.get_place_autocomplete_solid_color(
+                this.color.BackgroundRaised || this.color.Background,
+                "#ffffff"
+            ),
+            "border": this.color.PinstripeDark || this.color.StrokeLight || "#9ba8b6",
+            "main_text": this.color.Text || "#07112f",
+            "primary": this.color.Button?.Background?.Base || this.color.AccentGood || "#659cba",
+            "selected_background": "rgba(101, 156, 186, 0.18)",
+            "text": this.color.StrokeDark || this.color.Text || "#39445c"
+        };
+    }
+    get_place_autocomplete_solid_color (color, fallback) {
+        if (
+               !color
+            || color === "none"
+            || color === "transparent"
+            || typeof color !== "string"
+            || color.includes("gradient")
+            || color.includes("var(")
+        ) {
+            return fallback;
+        }
+        try {
+            var color_data = Dash.Color.Parse(color);
+            if (
+                   !color_data
+                || isNaN(color_data[0])
+                || isNaN(color_data[1])
+                || isNaN(color_data[2])
+            ) {
+                return fallback;
+            }
+            return Dash.Color.ParseToRGBA(color, 1);
+        }
+        catch {
+            return fallback;
+        }
+    }
+    setup_place_autocomplete_styles () {
+        var style_id = "dash-google-address-place-autocomplete-styles";
+        if ($("#" + style_id).length) {
+            return;
+        }
+        $("head").append(
+            $("<style>", {
+                "id": style_id,
+                "text": `
+                    gmp-place-autocomplete.dash-google-address {
+                        border-radius: 0;
+                        --gmp-mat-color-surface: var(--dash-address-prediction-background, #ffffff);
+                        --gmp-mat-color-on-surface: var(--dash-address-prediction-main-text, #07112f);
+                        --gmp-mat-color-on-surface-variant: var(--dash-address-prediction-text, #39445c);
+                        --gmp-mat-color-primary: var(--dash-address-prediction-primary, #659cba);
+                        --gmp-mat-color-outline-decorative: var(--dash-address-prediction-border, #9ba8b6);
+                        --gmp-mat-font-family: sans_serif_normal;
+                    }
+                    gmp-place-autocomplete.dash-google-address::part(input) {
+                        background: transparent;
+                        border: 0;
+                        color: inherit;
+                        color-scheme: inherit;
+                        font-family: sans_serif_normal;
+                        font-size: 100%;
+                        line-height: inherit;
+                    }
+                    gmp-place-autocomplete.dash-google-address::part(prediction-list) {
+                        background: var(--dash-address-prediction-background, #ffffff) !important;
+                        background-color: var(--dash-address-prediction-background, #ffffff) !important;
+                        backdrop-filter: none;
+                        border: 1px solid var(--dash-address-prediction-border, #9ba8b6);
+                        border-radius: ${Dash.Size.BorderRadius * 0.5}px;
+                        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
+                        color: var(--dash-address-prediction-text, #39445c);
+                        font-family: sans_serif_normal;
+                        opacity: 1;
+                        overflow: hidden;
+                        z-index: 2000000;
+                    }
+                    gmp-place-autocomplete.dash-google-address::part(prediction-item) {
+                        background: var(--dash-address-prediction-background, #ffffff) !important;
+                        background-color: var(--dash-address-prediction-background, #ffffff) !important;
+                        color: var(--dash-address-prediction-text, #39445c);
+                        opacity: 1;
+                    }
+                    gmp-place-autocomplete.dash-google-address::part(prediction-item-icon) {
+                        color: var(--dash-address-prediction-primary, #659cba);
+                    }
+                    gmp-place-autocomplete.dash-google-address::part(prediction-item-main-text),
+                    gmp-place-autocomplete.dash-google-address::part(prediction-item-match) {
+                        color: var(--dash-address-prediction-main-text, #07112f);
+                    }
+                    gmp-place-autocomplete.dash-google-address::part(prediction-item-selected) {
+                        background: var(--dash-address-prediction-selected-background, rgba(101, 156, 186, 0.18)) !important;
+                        background-color: var(--dash-address-prediction-selected-background, rgba(101, 156, 186, 0.18)) !important;
+                        color: var(--dash-address-prediction-main-text, #07112f);
+                    }
+                `
+            })
+        );
+    }
+    setup_place_autocomplete_value_adapter (place_autocomplete) {
+        this.input.val = (...args) => {
+            if (args.length < 1) {
+                return this.get_place_autocomplete_value(place_autocomplete);
+            }
+            this.set_place_autocomplete_value(place_autocomplete, args[0]);
+            return this.input;
+        };
+    }
+    set_place_autocomplete_placeholder (place_autocomplete) {
+        place_autocomplete.placeholder = this.placeholder_text;
+        place_autocomplete.setAttribute("placeholder", this.placeholder_text);
+        var input = this.get_place_autocomplete_input(place_autocomplete);
+        if (input) {
+            input.placeholder = this.placeholder_text;
+        }
+    }
+    get_place_autocomplete_value (place_autocomplete) {
+        var input = this.get_place_autocomplete_input(place_autocomplete);
+        if (input) {
+            return input.value || "";
+        }
+        return place_autocomplete.value || "";
+    }
+    set_place_autocomplete_value (place_autocomplete, value="") {
+        value = value || "";
+        place_autocomplete.value = value;
+        place_autocomplete.setAttribute("value", value);
+        var input = this.get_place_autocomplete_input(place_autocomplete);
+        if (input) {
+            input.value = value;
+        }
+    }
+    get_place_autocomplete_input (place_autocomplete) {
+        if (place_autocomplete.inputElement) {
+            return place_autocomplete.inputElement;
+        }
+        if (place_autocomplete.shadowRoot) {
+            return place_autocomplete.shadowRoot.querySelector("input");
+        }
+        return null;
+    }
+    notify_place_changed_listeners () {
+        for (var listener of this.google_places_autocomplete_listeners) {
+            listener();
+        }
+    }
+    fallback_to_legacy_autocomplete () {
+        if (this.fallback_to_legacy_in_progress || !this.google_places_autocomplete_is_new) {
+            return;
+        }
+        this.fallback_to_legacy_in_progress = true;
+        var current_value = this.Text();
+        var legacy_input = $("<input>", {"placeholder": this.placeholder_text});
+        this.input.replaceWith(legacy_input);
+        this.input = legacy_input;
+        this.google_places_autocomplete = null;
+        this.google_places_autocomplete_is_new = false;
+        this.apply_input_styles();
+        this.apply_replacement_input_styles();
+        this.input.val(current_value);
+        this.setup_connections();
+        this.setup_legacy_autocomplete(this.legacy_autocomplete_options);
+        if (current_value) {
+            this.input.trigger("focus");
+            this.input[0].dispatchEvent(new Event("input", {"bubbles": true}));
+        }
+        this.fallback_to_legacy_in_progress = false;
+    }
+    apply_replacement_input_styles () {
+        this.input.css({
+            "background": "none",
+            "color": this.color.Text,
+            "flex": 2,
+            "font-family": "sans_serif_normal",
+            "font-size": "100%",
+            "line-height": this.height + "px",
+            "overflow": "hidden",
+            "text-overflow": "ellipsis",
+            "white-space": "nowrap"
+        });
+    }
+    setup_legacy_autocomplete (options) {
+        Dash.Log.Debug("❗️DashGuiAddress: Falling back to legacy Google Maps Places Autocomplete API (safe to ignore)");
+        try {
             this.google_places_autocomplete = new google.maps.places.Autocomplete(this.input[0], options);
         }
         catch {
@@ -20598,11 +20946,14 @@ class DashGuiAddress extends DashGuiInputType {
             );
             return;
         }
-        this.google_places_autocomplete.addListener("place_changed", () => {
-            this.parse_value();
-            this._on_submit(true);
-        });
-
+        this.google_places_autocomplete.addListener(
+            "place_changed",
+            () => {
+                this.parse_value();
+                this._on_submit(true);
+            }
+        );
+        this.refresh_autocomplete_dependent_ui();
         setTimeout(
             () => {
                 // .pac-container is the CSS class for the above autocomplete element
@@ -20617,8 +20968,24 @@ class DashGuiAddress extends DashGuiInputType {
             500  // Ensure it's been added to the DOM first
         );
     }
+    refresh_autocomplete_dependent_ui () {
+        var has_autocomplete = !!this.google_places_autocomplete;
+        if (this.label) {
+            this.label.attr("title", has_autocomplete ? this.tip_text : "");
+            this.label.css({
+                "cursor": has_autocomplete ? "help" : "default"
+            });
+        }
+        if (this.tip_icon) {
+            this.tip_icon.html.attr("title", has_autocomplete ? this.tip_text : "");
+            this.tip_icon.html.css({
+                "cursor": has_autocomplete ? "help" : "default"
+            });
+        }
+        this.add_map_link_button();
+    }
     add_map_link_button () {
-        if (!this.google_places_autocomplete) {
+        if (!this.google_places_autocomplete || this.map_link_button) {
             return;
         }
         this.map_link_button = new Dash.Gui.IconButton(
@@ -20659,7 +21026,7 @@ class DashGuiAddress extends DashGuiInputType {
             var zip_code_suffix = "";
             for (var component of components) {
                 if (full_zip_code && component["types"].includes("postal_code_suffix")) {
-                    zip_code_suffix = use_long_names ? component["long_name"] : component["short_name"];
+                    zip_code_suffix = this.get_address_component_text(component, use_long_names);
                     continue;
                 }
                 var key = "";
@@ -20685,7 +21052,7 @@ class DashGuiAddress extends DashGuiInputType {
                     key = "country";
                 }
                 if (key) {
-                    parsed[key] = use_long_names ? component["long_name"] : component["short_name"];
+                    parsed[key] = this.get_address_component_text(component, use_long_names);
                     if (key === "county") {
                         parsed[key] = parsed[key].replace("County", "").Trim();
                     }
@@ -20696,6 +21063,12 @@ class DashGuiAddress extends DashGuiInputType {
             }
         }
         return parsed;
+    }
+    get_address_component_text (component, use_long_names=false) {
+        if (use_long_names) {
+            return component["long_name"] || component["longText"] || "";
+        }
+        return component["short_name"] || component["shortText"] || component["long_name"] || component["longText"] || "";
     }
     get_place_info (address, callback) {
         if (!this.geocoder) {
@@ -20740,7 +21113,39 @@ class DashGuiAddress extends DashGuiInputType {
             }
         );
     }
+    normalize_place_result (place={}) {
+        var normalized = {};
+        if (!place) {
+            return normalized;
+        }
+        normalized["formatted_address"] = place["formatted_address"] || place["formattedAddress"] || "";
+        normalized["url"] = place["url"] || place["googleMapsURI"] || place?.googleMapsLinks?.placeURI || "";
+        normalized["address_components"] = this.normalize_address_components(
+            place["address_components"] || place["addressComponents"] || []
+        );
+        var location = place?.geometry?.location || place["location"];
+        if (location) {
+            normalized["geometry"] = {"location": location};
+        }
+        return normalized;
+    }
+    normalize_address_components (components=[]) {
+        var normalized = [];
+        if (!components) {
+            return normalized;
+        }
+        for (var component of components) {
+            normalized.push({
+                "long_name": component["long_name"] || component["longText"] || "",
+                "short_name": component["short_name"] || component["shortText"] || component["long_name"] || component["longText"] || "",
+                "types": component["types"] || []
+            });
+        }
+        return normalized;
+    }
     update_place_attrs (place={}, value="") {
+        place = this.normalize_place_result(place);
+        this.google_places_autocomplete_place = place;
         this.formatted_address = place["formatted_address"] || "";
         if (!place["url"]) {
             if (this.formatted_address) {
@@ -20760,15 +21165,16 @@ class DashGuiAddress extends DashGuiInputType {
         if (!this.formatted_address && value) {
             this.formatted_address = value;
         }
-        this.address_components = Dash.Validate.Object(place["address_components"]) ? this.parse_address_components(
-            place["address_components"]
-        ) : {};
+        var address_components = place["address_components"] || [];
+        this.address_components = (
+            address_components.length ? this.parse_address_components(address_components) : {}
+        );
         if (Dash.Validate.Object(this.address_components)) {
             this.address_components["url"] = place["url"] || "";
         }
     }
     _on_submit (from_autocomplete=false) {
-        if (this.formatted_address === this.last_submitted_value) {
+        if ((this.place_selection_pending && !from_autocomplete) || this.formatted_address === this.last_submitted_value) {
             return;
         }
         if (from_autocomplete) {
@@ -20795,12 +21201,25 @@ class DashGuiAddress extends DashGuiInputType {
     }
     // Overrides parse_value
     _parse_value (value="") {
+        if (this.google_places_autocomplete_is_new) {
+            value = value || this.Text();
+            var selected_place = (
+                   this.google_places_autocomplete_place
+                && this.last_selected_value
+                && value === this.last_selected_value
+            ) ? this.google_places_autocomplete_place : {};
+            this.update_place_attrs(selected_place, value);
+            return this.formatted_address;
+        }
         this.update_place_attrs(this.google_places_autocomplete.getPlace() || {}, value);
         return this.formatted_address;
     }
     // Overrides on_set_locked
     _on_set_locked (locked) {
         this.input.prop("disabled", locked);
+        // Intentional broad coverage
+        this.input.prop("readOnly", locked);
+        this.input.prop("readonly", locked);
     };
 }
 
