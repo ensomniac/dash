@@ -18628,10 +18628,22 @@ function DashGui () {
         var drag_button_html = null;
         var accent_color = color instanceof DashColorSet ? color.AccentGood : (color || Dash.Color.Light.AccentGood);
         var drag_bg_color = Dash.Color.GetTransparent(accent_color, 0.15);
+        var reset_drag_state = function (button_html=null) {
+            if (drag_placeholder) {
+                drag_placeholder.remove();
+            }
+            (button_html || drag_button_html)?.css({
+                "opacity": 1
+            });
+            drag_button_html = null;
+            drag_placeholder = null;
+            drag_start_index = null;
+        };
         container_html.on(
             "dragstart",
             "." + item_class_name,
             (e) => {
+                reset_drag_state();
                 var event = e.originalEvent;
                 drag_button_html = $(e.target).closest("." + item_class_name);
                 drag_start_index = drag_button_html.index();
@@ -18685,15 +18697,7 @@ function DashGui () {
             "dragend",
             "." + item_class_name,
             (e) => {
-                if (drag_placeholder) {
-                    drag_placeholder.remove();
-                }
-                $(e.currentTarget).css({
-                    "opacity": 1
-                });
-                drag_button_html = null;
-                drag_placeholder = null;
-                drag_start_index = null;
+                reset_drag_state($(e.currentTarget));
             }
         );
         // Don't include selector (`"." + item_class_name`)
@@ -18704,39 +18708,56 @@ function DashGui () {
                     return;
                 }
                 e.preventDefault();
-                if (drag_placeholder.parent().length) {
-                    drag_button_html.insertBefore(drag_placeholder);
-                    drag_placeholder.remove();
-                    drag_button_html.css({
-                        "opacity": 1
-                    });
-                    var new_index = drag_button_html.index();
-                    if (new_index !== drag_start_index) {
-                        var new_order = [];
-                        for (var el of container_html.children("." + item_class_name)) {
-                            new_order.push($(el).attr(item_id_name));
-                        }
-                        if (callback) {
-                            callback(
-                                new_order,
-                                drag_button_html.attr(item_id_name),  // Item ID that was moved
-                                drag_start_index,
-                                new_index
-                            );
+                try {
+                    if (drag_placeholder && drag_placeholder.parent().length) {
+                        drag_button_html.insertBefore(drag_placeholder);
+                        drag_placeholder.remove();
+                        drag_button_html.css({
+                            "opacity": 1
+                        });
+                        var new_index = drag_button_html.index();
+                        if (new_index !== drag_start_index) {
+                            var new_order = [];
+                            for (var el of container_html.children("." + item_class_name)) {
+                                new_order.push($(el).attr(item_id_name));
+                            }
+                            if (callback) {
+                                callback(
+                                    new_order,
+                                    drag_button_html.attr(item_id_name),  // Item ID that was moved
+                                    drag_start_index,
+                                    new_index
+                                );
+                            }
                         }
                     }
                 }
-                if (drag_placeholder) {
-                    drag_placeholder.remove();
+                finally {
+                    reset_drag_state();
                 }
-                if (drag_button_html) {
-                    drag_button_html.css({
-                        "opacity": 1
-                    });
+            }
+        );
+        $(document).on(
+            "dragend.drag_drop_vertical_reorder_" + item_class_name,
+            () => {
+                if (!drag_button_html) {
+                    return;
                 }
-                drag_button_html = null;
-                drag_placeholder = null;
-                drag_start_index = null;
+                reset_drag_state();
+            }
+        );
+        $(document).on(
+            "mouseup.drag_drop_vertical_reorder_" + item_class_name,
+            () => {
+                setTimeout(
+                    () => {
+                        if (!drag_button_html) {
+                            return;
+                        }
+                        reset_drag_state();
+                    },
+                    0
+                );
             }
         );
         // Does nothing but allowing drops anywhere on the document once a drag has
