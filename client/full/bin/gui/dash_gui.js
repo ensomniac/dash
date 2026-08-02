@@ -651,7 +651,7 @@ function DashGui () {
 
                         inserted = true;
 
-                        return false;  // break out of .each()
+                        return false;  // Break out of .each()
                     }
                 });
 

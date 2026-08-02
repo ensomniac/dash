@@ -18685,7 +18685,7 @@ function DashGui () {
                     if (y < mid) {
                         drag_placeholder.insertBefore(r);
                         inserted = true;
-                        return false;  // break out of .each()
+                        return false;  // Break out of .each()
                     }
                 });
                 if (!inserted) {
