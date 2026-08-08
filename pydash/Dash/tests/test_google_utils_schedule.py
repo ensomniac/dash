@@ -34,6 +34,9 @@ class TestValidateYouTubeSchedule(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "timezone-aware ISO 8601"):
             ValidateYouTubeSchedule("tomorrow", "private", now=self.now)
 
+        with self.assertRaisesRegex(ValueError, "timezone-aware ISO 8601"):
+            ValidateYouTubeSchedule(0, "private", now=self.now)
+
     def test_scheduled_upload_must_enter_provider_as_private(self):
         for visibility in ("public", "unlisted"):
             with self.subTest(visibility=visibility):

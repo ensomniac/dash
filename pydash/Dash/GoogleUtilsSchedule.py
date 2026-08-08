@@ -9,7 +9,7 @@
 def ValidateYouTubeSchedule(future_iso, visibility, now=None):
     """Return a canonical UTC publish time after validating YouTube's contract."""
 
-    if not future_iso:
+    if future_iso is None or future_iso == "":
         return ""
 
     if visibility != "private":
