@@ -108,7 +108,7 @@ function DashGuiInputType (
             this.label_text += ":";
         }
 
-        this.label = $("<div>" + this.label_text + "</div>");
+        this.label = $("<div></div>").text(String(this.label_text ?? ""));
 
         var css = {
             "font-family": "sans_serif_bold",

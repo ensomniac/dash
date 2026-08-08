@@ -227,7 +227,11 @@ function DashFile () {
         // ways in the back-end to convert them to GLB format - FBX is the only one supported for now
 
         return this.set_preview_size(
-            $("<model-viewer src='" + glb_url + "' alt='' camera-controls></model-viewer>"),
+            $("<model-viewer></model-viewer>", {
+                "src": glb_url,
+                "alt": "",
+                "camera-controls": ""
+            }),
             height,
             "100%"
         );
@@ -257,7 +261,11 @@ function DashFile () {
     };
 
     this.GetAudioPreview = function (url, height, center_in_parent=true) {
-        var html = $("<audio src='" + url + "' crossorigin='anonymous' controls></audio>");
+        var html = $("<audio></audio>", {
+            "src": url,
+            "crossorigin": "anonymous",
+            "controls": ""
+        });
 
         if (center_in_parent) {
             html.css(this.abs_center_css);

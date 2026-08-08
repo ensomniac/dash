@@ -6,7 +6,7 @@ function DashGuiLoadingLabel (binder=null, label_text="Loading...", height=null,
 
     this.html = null;
     this.loading_dots = null;
-    this.label = $("<div>" + this.label_text + "</div>");
+    this.label = $("<div></div>").text(String(this.label_text ?? ""));
 
     this.setup_styles = function () {
         this.loading_dots = new Dash.Gui.LoadDots(this.height, this.color);

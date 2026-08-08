@@ -676,7 +676,7 @@ function DashGuiPropertyBoxInterface () {
         if (end_tag_text) {
             checkbox.AddExtraElement(Dash.Gui.GetFlexSpacer());
 
-            var tag = $("<div>" + end_tag_text + "</div>");
+            var tag = $("<div></div>").text(String(end_tag_text ?? ""));
 
             tag.css({
                 "color": this.color.Stroke,
@@ -814,7 +814,7 @@ function DashGuiPropertyBoxInterface () {
 
             this.color_pickers[data_key].end_tag_spacer = spacer;
 
-            var tag = $("<div>" + end_tag_text + "</div>");
+            var tag = $("<div></div>").text(String(end_tag_text ?? ""));
 
             tag.css({
                 "color": this.color.Stroke,

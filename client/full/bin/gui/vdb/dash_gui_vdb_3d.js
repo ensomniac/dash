@@ -312,7 +312,11 @@ function DashGuiVDB3D (
         var url = this.data["model"] ? (this.data["model"]["glb_url"] || this.data["model"]["url"] || "") : "";
 
         if (url) {
-            var viewer = $("<model-viewer src='" + url + "' alt='' camera-controls></model-viewer>");
+            var viewer = $("<model-viewer></model-viewer>", {
+                "src": url,
+                "alt": "",
+                "camera-controls": ""
+            });
 
             viewer.css({
                 "width": this.preview_width,
@@ -369,7 +373,7 @@ function DashGuiVDB3D (
 
     this.get_unity_placeholder = function (text) {
         var line_break = text.includes("\n");
-        var placeholder = $("<div>" + text + "</div>");
+        var placeholder = $("<div></div>").text(String(text ?? ""));
 
         var css = {
             "border-radius": Dash.Size.BorderRadius,

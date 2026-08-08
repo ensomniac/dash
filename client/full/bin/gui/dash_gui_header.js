@@ -7,7 +7,7 @@ function DashGuiHeader (label_text, color=null, include_border=true) {
     this.line = null;
     this.border = null;
     this.html = $("<div></div>");
-    this.label = $("<div>" + this.label_text + "</div>");
+    this.label = $("<div></div>").text(String(this.label_text ?? ""));
 
     this.setup_styles = function () {
         this.html.css({

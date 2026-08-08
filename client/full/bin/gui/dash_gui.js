@@ -47,7 +47,7 @@ function DashGui () {
             color = Dash.Color.Light;
         }
 
-        var html = $("<div>" + optional_label_text + "</div>");
+        var html = $("<div></div>").text(String(optional_label_text ?? ""));
 
         html.css({
             "color": color.Text,
@@ -64,7 +64,7 @@ function DashGui () {
             color = Dash.Color.Light;
         }
 
-        var html = $("<div>" + optional_label_text + "</div>");
+        var html = $("<div></div>").text(String(optional_label_text ?? ""));
 
         html.css({
             "position": "absolute",

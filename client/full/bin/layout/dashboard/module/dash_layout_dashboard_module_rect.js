@@ -102,8 +102,8 @@ function DashLayoutDashboardModuleRect () {
     this.get_list_row = function (key, value) {
         var list_row = $("<div></div>");
         var content = $("<div></div>");
-        var key_text = $("<div>" + key + "</div>");
-        var value_text = $("<div>" + value + "</div>");
+        var key_text = $("<div></div>").text(String(key ?? ""));
+        var value_text = $("<div></div>").text(String(value ?? ""));
 
         list_row.css({
             "width": "98%",

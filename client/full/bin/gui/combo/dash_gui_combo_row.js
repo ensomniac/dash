@@ -14,7 +14,7 @@ function DashGuiComboRow (combo, option) {
 
     this.html = $("<div>", {"class": "Combo"});
     this.highlight = $("<div>", {"class": "Combo"});
-    this.label = $("<div>" + this.label_text + "</div>", {"class": "Combo"});
+    this.label = $("<div></div>", {"class": "Combo"}).text(String(this.label_text ?? ""));
 
     this.setup_styles = function () {
         var html_css = {

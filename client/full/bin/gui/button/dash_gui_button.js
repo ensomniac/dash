@@ -22,7 +22,7 @@ function DashGuiButton (label, callback, binder, color=null, options={}) {
     this.change_text_color_on_hover = true;
     this.click_highlight = $("<div></div>");
     this.click_highlight_color_override = null;
-    this.label = $("<div>" + this.label + "</div>");
+    this.label = $("<div></div>").text(String(this.label ?? ""));
     this.style = this.options["style"] || "default";
 
     DashGuiButtonInterface.call(this);

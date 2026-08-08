@@ -101,7 +101,7 @@ class DashGuiFlowOption {
 
     SetLabelText (text) {
         if (this.label) {
-            this.label.text(text);
+            this.label.text(String(text ?? ""));
 
             this.label.css({
                 "font-size": this.get_font_size()
@@ -313,7 +313,7 @@ class DashGuiFlowOption {
             return;
         }
 
-        this.label = $("<div>" + text + "</div>");
+        this.label = $("<div></div>").text(String(text ?? ""));
 
         var css = {
             ...this.label_css,
@@ -336,7 +336,7 @@ class DashGuiFlowOption {
             return;
         }
 
-        this.sub_label = $("<div>" + text + "</div>");
+        this.sub_label = $("<div></div>").text(String(text ?? ""));
 
         var css = {
             ...this.label_css,
@@ -463,7 +463,7 @@ class DashGuiFlowOption {
         }
 
         if (!this.multi_icon_num) {
-            this.multi_icon_num = $("<div>" + num + "</div>");
+            this.multi_icon_num = $("<div></div>").text(String(num ?? ""));
 
             this.multi_icon_num.css({
                 "color": this.color.AccentGood,

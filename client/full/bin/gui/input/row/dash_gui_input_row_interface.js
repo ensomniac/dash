@@ -194,7 +194,7 @@ function DashGuiInputRowInterface () {
     };
 
     this.AddEndTag = function (text, css={}) {
-        this.end_tag = $("<div>" + text + "</div>");
+        this.end_tag = $("<div></div>").text(String(text ?? ""));
 
         this.end_tag.css({
             "color": this.color.Stroke,

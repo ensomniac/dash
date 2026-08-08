@@ -438,13 +438,7 @@ function DashGuiCombo (
     };
 
     this.set_label_text = function (text) {
-        if (text && text.includes("</i>")) {
-            this.label.html(text);
-        }
-
-        else {
-            this.label.text(text);
-        }
+        this.label.text(String(text ?? ""));
     };
 
     this.update_label_for_multi_select = function (ids_for_override=null) {

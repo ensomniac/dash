@@ -35,7 +35,7 @@ function  DashGuiInputRow (
         this.html.append(this.highlight);
         this.html.append(this.flash_save);
 
-        this.label = $("<div>" + this.label_text + ": </div>");
+        this.label = $("<div></div>").text(String(this.label_text ?? "") + ": ");
         this.input = new Dash.Gui.Input(this.placeholder_text, this.color);
 
         this.input.EnableAutosave();

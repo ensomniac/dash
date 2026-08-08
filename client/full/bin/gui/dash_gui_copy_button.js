@@ -16,7 +16,7 @@ function DashGuiCopyButton (
 
     this.button = null;
     this.html = $("<div></div>");
-    this.label = $("<div>" + this.label_text + "</div>");
+    this.label = $("<div></div>").text(String(this.label_text ?? ""));
     this.opposite_color = Dash.Color.GetOpposite(this.color);
 
     this.setup_styles = function () {

@@ -18204,7 +18204,7 @@ function DashGui () {
         if (!color) {
             color = Dash.Color.Light;
         }
-        var html = $("<div>" + optional_label_text + "</div>");
+        var html = $("<div></div>").text(String(optional_label_text ?? ""));
         html.css({
             "color": color.Text,
             "font-family": "sans_serif_normal",
@@ -18217,7 +18217,7 @@ function DashGui () {
         if (!color) {
             color = Dash.Color.Light;
         }
-        var html = $("<div>" + optional_label_text + "</div>");
+        var html = $("<div></div>").text(String(optional_label_text ?? ""));
         html.css({
             "position": "absolute",
             "inset": 0,
@@ -19470,7 +19470,11 @@ function DashFile () {
         // As we become aware of more model file types that are commonly uploaded, we need to write
         // ways in the back-end to convert them to GLB format - FBX is the only one supported for now
         return this.set_preview_size(
-            $("<model-viewer src='" + glb_url + "' alt='' camera-controls></model-viewer>"),
+            $("<model-viewer></model-viewer>", {
+                "src": glb_url,
+                "alt": "",
+                "camera-controls": ""
+            }),
             height,
             "100%"
         );
@@ -19494,7 +19498,11 @@ function DashFile () {
         return html;
     };
     this.GetAudioPreview = function (url, height, center_in_parent=true) {
-        var html = $("<audio src='" + url + "' crossorigin='anonymous' controls></audio>");
+        var html = $("<audio></audio>", {
+            "src": url,
+            "crossorigin": "anonymous",
+            "controls": ""
+        });
         if (center_in_parent) {
             html.css(this.abs_center_css);
         }
@@ -26171,7 +26179,7 @@ function DashGuiHeader (label_text, color=null, include_border=true) {
     this.line = null;
     this.border = null;
     this.html = $("<div></div>");
-    this.label = $("<div>" + this.label_text + "</div>");
+    this.label = $("<div></div>").text(String(this.label_text ?? ""));
     this.setup_styles = function () {
         this.html.css({
             "height": Dash.Size.RowHeight,
@@ -27906,7 +27914,7 @@ function DashGuiCopyButton (
     this.use_getter_result_for_label = use_getter_result_for_label;
     this.button = null;
     this.html = $("<div></div>");
-    this.label = $("<div>" + this.label_text + "</div>");
+    this.label = $("<div></div>").text(String(this.label_text ?? ""));
     this.opposite_color = Dash.Color.GetOpposite(this.color);
     this.setup_styles = function () {
         this.add_button();
@@ -28414,7 +28422,7 @@ function DashGuiButton (label, callback, binder, color=null, options={}) {
     this.change_text_color_on_hover = true;
     this.click_highlight = $("<div></div>");
     this.click_highlight_color_override = null;
-    this.label = $("<div>" + this.label + "</div>");
+    this.label = $("<div></div>").text(String(this.label ?? ""));
     this.style = this.options["style"] || "default";
     DashGuiButtonInterface.call(this);
     this.initialize_style = function () {
@@ -29981,7 +29989,7 @@ function DashGuiSelectorItem (tray, details) {
     this.height  = this.tray.item_height;
     this.width   = this.tray.item_width;
     this.html    = $("<div>", {"class": "SelectorMenuItem"});
-    this.label   = $("<div>" + this.details["display_name"] + "</div>");
+    this.label   = $("<div></div>").text(String(this.details["display_name"] ?? ""));
     this.hover   = Dash.Gui.GetHTMLAbsContext();
     this.setup_styles = function () {
         this.icon_size = this.height - (Dash.Size.Padding);
@@ -31523,12 +31531,7 @@ function DashGuiCombo (
         }
     };
     this.set_label_text = function (text) {
-        if (text && text.includes("</i>")) {
-            this.label.html(text);
-        }
-        else {
-            this.label.text(text);
-        }
+        this.label.text(String(text ?? ""));
     };
     this.update_label_for_multi_select = function (ids_for_override=null) {
         if (!this.multi_select) {
@@ -32288,7 +32291,7 @@ function DashGuiComboRow (combo, option) {
     this.label_text = this.option["label_text"] || this.option["display_name"];
     this.html = $("<div>", {"class": "Combo"});
     this.highlight = $("<div>", {"class": "Combo"});
-    this.label = $("<div>" + this.label_text + "</div>", {"class": "Combo"});
+    this.label = $("<div></div>", {"class": "Combo"}).text(String(this.label_text ?? ""));
     this.setup_styles = function () {
         var html_css = {
             "border-bottom": this.multi_select ? "1px solid rgba(255, 255, 255, 0.1)" : "none",
@@ -41751,7 +41754,7 @@ class DashGuiFlowOption {
     }
     SetLabelText (text) {
         if (this.label) {
-            this.label.text(text);
+            this.label.text(String(text ?? ""));
             this.label.css({
                 "font-size": this.get_font_size()
             });
@@ -41916,7 +41919,7 @@ class DashGuiFlowOption {
         if (this.label) {
             return;
         }
-        this.label = $("<div>" + text + "</div>");
+        this.label = $("<div></div>").text(String(text ?? ""));
         var css = {
             ...this.label_css,
             "color": this.color.Text,
@@ -41933,7 +41936,7 @@ class DashGuiFlowOption {
         if (this.sub_label) {
             return;
         }
-        this.sub_label = $("<div>" + text + "</div>");
+        this.sub_label = $("<div></div>").text(String(text ?? ""));
         var css = {
             ...this.label_css,
             "color": this.active ? this.sub_label_active_text_color : this.sub_label_text_color,
@@ -42031,7 +42034,7 @@ class DashGuiFlowOption {
             num = this.options.multi_select_order.indexOf(this) + 1;
         }
         if (!this.multi_icon_num) {
-            this.multi_icon_num = $("<div>" + num + "</div>");
+            this.multi_icon_num = $("<div></div>").text(String(num ?? ""));
             this.multi_icon_num.css({
                 "color": this.color.AccentGood,
                 "font-family": "sans_serif_bold",
@@ -46571,7 +46574,7 @@ function DashGuiInputType (
         if (!Dash.IsMobile && !(this.label_text.endsWith(":"))) {
             this.label_text += ":";
         }
-        this.label = $("<div>" + this.label_text + "</div>");
+        this.label = $("<div></div>").text(String(this.label_text ?? ""));
         var css = {
             "font-family": "sans_serif_bold",
             "font-size": "80%"
@@ -46625,7 +46628,7 @@ function  DashGuiInputRow (
         this.html.append(this.invalid_input_highlight);
         this.html.append(this.highlight);
         this.html.append(this.flash_save);
-        this.label = $("<div>" + this.label_text + ": </div>");
+        this.label = $("<div></div>").text(String(this.label_text ?? "") + ": ");
         this.input = new Dash.Gui.Input(this.placeholder_text, this.color);
         this.input.EnableAutosave();
         this.input.SetTransparent(true);
@@ -47085,7 +47088,7 @@ function DashGuiInputRowInterface () {
         })(this);
     };
     this.AddEndTag = function (text, css={}) {
-        this.end_tag = $("<div>" + text + "</div>");
+        this.end_tag = $("<div></div>").text(String(text ?? ""));
         this.end_tag.css({
             "color": this.color.Stroke,
             "font-family": "sans_serif_italic",
@@ -47283,7 +47286,7 @@ function DashGuiLoadingLabel (binder=null, label_text="Loading...", height=null,
     this.color = color || (this.binder && this.binder.color ? this.binder.color : Dash.Color.Light);
     this.html = null;
     this.loading_dots = null;
-    this.label = $("<div>" + this.label_text + "</div>");
+    this.label = $("<div></div>").text(String(this.label_text ?? ""));
     this.setup_styles = function () {
         this.loading_dots = new Dash.Gui.LoadDots(this.height, this.color);
         this.html = this.loading_dots.html;
@@ -48536,7 +48539,7 @@ function DashGuiPropertyBoxInterface () {
         checkbox.AddIconButtonRedrawStyling(icon_redraw_styling);
         if (end_tag_text) {
             checkbox.AddExtraElement(Dash.Gui.GetFlexSpacer());
-            var tag = $("<div>" + end_tag_text + "</div>");
+            var tag = $("<div></div>").text(String(end_tag_text ?? ""));
             tag.css({
                 "color": this.color.Stroke,
                 "font-family": "sans_serif_italic",
@@ -48649,7 +48652,7 @@ function DashGuiPropertyBoxInterface () {
             var spacer = Dash.Gui.GetFlexSpacer();
             this.color_pickers[data_key].html.append(spacer);
             this.color_pickers[data_key].end_tag_spacer = spacer;
-            var tag = $("<div>" + end_tag_text + "</div>");
+            var tag = $("<div></div>").text(String(end_tag_text ?? ""));
             tag.css({
                 "color": this.color.Stroke,
                 "font-family": "sans_serif_italic",
@@ -49089,7 +49092,11 @@ function DashGuiVDB3D (
         var toolbar = this.get_toolbar("Model (FBX)", "model");
         var url = this.data["model"] ? (this.data["model"]["glb_url"] || this.data["model"]["url"] || "") : "";
         if (url) {
-            var viewer = $("<model-viewer src='" + url + "' alt='' camera-controls></model-viewer>");
+            var viewer = $("<model-viewer></model-viewer>", {
+                "src": url,
+                "alt": "",
+                "camera-controls": ""
+            });
             viewer.css({
                 "width": this.preview_width,
                 "height": this.preview_width,
@@ -49133,7 +49140,7 @@ function DashGuiVDB3D (
     };
     this.get_unity_placeholder = function (text) {
         var line_break = text.includes("\n");
-        var placeholder = $("<div>" + text + "</div>");
+        var placeholder = $("<div></div>").text(String(text ?? ""));
         var css = {
             "border-radius": Dash.Size.BorderRadius,
             "background": this.color.StrokeDark,
@@ -52460,8 +52467,8 @@ function DashLayoutDashboardModuleRect () {
     this.get_list_row = function (key, value) {
         var list_row = $("<div></div>");
         var content = $("<div></div>");
-        var key_text = $("<div>" + key + "</div>");
-        var value_text = $("<div>" + value + "</div>");
+        var key_text = $("<div></div>").text(String(key ?? ""));
+        var value_text = $("<div></div>").text(String(value ?? ""));
         list_row.css({
             "width": "98%",
             "margin-top": "3%",
@@ -52603,8 +52610,8 @@ function DashLayoutDashboardModuleRect () {
     this.get_list_row = function (key, value) {
         var list_row = $("<div></div>");
         var content = $("<div></div>");
-        var key_text = $("<div>" + key + "</div>");
-        var value_text = $("<div>" + value + "</div>");
+        var key_text = $("<div></div>").text(String(key ?? ""));
+        var value_text = $("<div></div>").text(String(value ?? ""));
         list_row.css({
             "width": "98%",
             "margin-top": "3%",
