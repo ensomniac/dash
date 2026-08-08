@@ -68,6 +68,7 @@ function DashGuiCombo (
     this.additional_data = this.options["additional_data"] || {};
     this.font_size = Dash.Size.DesktopToMobileMode ? "75%" : "100%";
     this.label_container = $("<div>", {"class": "ComboLabel Combo"});
+    this.show_all_multi_selections_when_collapsed = this.options["show_all_multi_selections_when_collapsed"] || false;
 
     // Originally wrote this to check programmatically for every combo, but
     // got concerned that it was inefficient to check any and every combo
@@ -349,7 +350,7 @@ function DashGuiCombo (
 
         this.init_labels_drawn = true;
 
-        if (this.pending_initial_multi_select_ids.length) {
+        if (Dash.IsValidObject(this.pending_initial_multi_select_ids)) {
             this.SetMultiSelections(this.pending_initial_multi_select_ids);
 
             this.pending_initial_multi_select_ids = [];
@@ -473,17 +474,23 @@ function DashGuiCombo (
             return "Multiple Selections";
         }
 
-        if (!this.row_buttons.length) {
+        if (this.initialized && !this.row_buttons.length && !Dash.IsValidObject(this.pending_initial_multi_select_ids)) {
             return (this.name || "Multiple Options");
         }
 
         var selections = this.GetMultiSelections(false);
 
         if (selections.length === 1) {
-            return (selections[0]["label_text"] || selections[0]["display_name"] || this.name || "Nothing Selected");
+            return (selections[0]["label_text"] || selections[0]["display_name"] || this.name || "One Selection");
         }
 
         if (selections.length > 1) {
+            if (this.show_all_multi_selections_when_collapsed) {
+                return selections.map((selection) => {
+                    return selection["label_text"] || selection["display_name"] || "";
+                }).join(", ");
+            }
+
             return "Multiple Selections";
         }
 

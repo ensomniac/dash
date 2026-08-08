@@ -343,11 +343,11 @@ function DashGuiPropertyBoxInterface () {
 
         var combo = (function (self) {
             return new Dash.Gui.Combo(
-                selected_key,
+                options["multi_select"] ? default_value : selected_key,
                 options["callback"] ? function (selected_option) {
-                    options["callback"](property_key, selected_option["id"]);
+                    options["callback"](property_key, options["multi_select"] ? selected_option : selected_option["id"]);
                 } : function (selected_option) {
-                    self.on_combo_updated(property_key, selected_option["id"]);
+                    self.on_combo_updated(property_key, options["multi_select"] ? selected_option : selected_option["id"]);
                 },
                 self,
                 combo_options,

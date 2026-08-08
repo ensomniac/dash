@@ -28,11 +28,25 @@ function DashGuiComboInterface () {
             return;
         }
 
-        if (!this.init_labels_drawn && ids_only && this.pending_initial_multi_select_ids) {
-            return this.pending_initial_multi_select_ids;
+        var selections;
+
+        if (!this.init_labels_drawn && Dash.IsValidObject(this.pending_initial_multi_select_ids)) {
+            if (ids_only) {
+                return this.pending_initial_multi_select_ids;
+            }
+
+            selections = [];  // Selected option(s)
+
+            for (var option of this.option_list) {
+                if (this.pending_initial_multi_select_ids.includes(option["id"])) {
+                    selections.push(option);
+                }
+            }
+
+            return selections;
         }
 
-        var selections = [];  // Selected option(s)
+        selections = [];  // Selected option(s)
 
         for (var row of this.row_buttons) {
             if (row.IsMultiSelected()) {

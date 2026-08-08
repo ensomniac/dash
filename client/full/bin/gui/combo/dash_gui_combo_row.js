@@ -229,7 +229,14 @@ function DashGuiComboRow (combo, option) {
 
             self.label.on("click", function (e) {
                 if (self.multi_select) {
-                    self.checkbox.Toggle();
+                    if (self.checkbox) {
+                        self.checkbox.Toggle();
+                    }
+
+                    else {
+                        self.combo.SetMultiSelections();
+                        self.combo.hide();
+                    }
                 }
 
                 else {

@@ -31240,6 +31240,7 @@ function DashGuiCombo (
     this.additional_data = this.options["additional_data"] || {};
     this.font_size = Dash.Size.DesktopToMobileMode ? "75%" : "100%";
     this.label_container = $("<div>", {"class": "ComboLabel Combo"});
+    this.show_all_multi_selections_when_collapsed = this.options["show_all_multi_selections_when_collapsed"] || false;
     // Originally wrote this to check programmatically for every combo, but
     // got concerned that it was inefficient to check any and every combo
     this.is_user_list = this.options["is_user_list"] || false;
@@ -31456,7 +31457,7 @@ function DashGuiCombo (
             this.on_rows_drawn_cb();
         }
         this.init_labels_drawn = true;
-        if (this.pending_initial_multi_select_ids.length) {
+        if (Dash.IsValidObject(this.pending_initial_multi_select_ids)) {
             this.SetMultiSelections(this.pending_initial_multi_select_ids);
             this.pending_initial_multi_select_ids = [];
         }
@@ -31550,14 +31551,19 @@ function DashGuiCombo (
             }
             return "Multiple Selections";
         }
-        if (!this.row_buttons.length) {
+        if (this.initialized && !this.row_buttons.length && !Dash.IsValidObject(this.pending_initial_multi_select_ids)) {
             return (this.name || "Multiple Options");
         }
         var selections = this.GetMultiSelections(false);
         if (selections.length === 1) {
-            return (selections[0]["label_text"] || selections[0]["display_name"] || this.name || "Nothing Selected");
+            return (selections[0]["label_text"] || selections[0]["display_name"] || this.name || "One Selection");
         }
         if (selections.length > 1) {
+            if (this.show_all_multi_selections_when_collapsed) {
+                return selections.map((selection) => {
+                    return selection["label_text"] || selection["display_name"] || "";
+                }).join(", ");
+            }
             return "Multiple Selections";
         }
         return (this.name || "Nothing Selected");
@@ -32453,7 +32459,13 @@ function DashGuiComboRow (combo, option) {
             });
             self.label.on("click", function (e) {
                 if (self.multi_select) {
-                    self.checkbox.Toggle();
+                    if (self.checkbox) {
+                        self.checkbox.Toggle();
+                    }
+                    else {
+                        self.combo.SetMultiSelections();
+                        self.combo.hide();
+                    }
                 }
                 else {
                     self.combo.on_selection(self.option);
@@ -32490,10 +32502,20 @@ function DashGuiComboInterface () {
         if (!this.multi_select) {
             return;
         }
-        if (!this.init_labels_drawn && ids_only && this.pending_initial_multi_select_ids) {
-            return this.pending_initial_multi_select_ids;
+        var selections;
+        if (!this.init_labels_drawn && Dash.IsValidObject(this.pending_initial_multi_select_ids)) {
+            if (ids_only) {
+                return this.pending_initial_multi_select_ids;
+            }
+            selections = [];  // Selected option(s)
+            for (var option of this.option_list) {
+                if (this.pending_initial_multi_select_ids.includes(option["id"])) {
+                    selections.push(option);
+                }
+            }
+            return selections;
         }
-        var selections = [];  // Selected option(s)
+        selections = [];  // Selected option(s)
         for (var row of this.row_buttons) {
             if (row.IsMultiSelected()) {
                 selections.push(ids_only ? row.option["id"] : row.option);
@@ -48260,11 +48282,11 @@ function DashGuiPropertyBoxInterface () {
         var selected_key = default_value || this.get_data_cb()[property_key];
         var combo = (function (self) {
             return new Dash.Gui.Combo(
-                selected_key,
+                options["multi_select"] ? default_value : selected_key,
                 options["callback"] ? function (selected_option) {
-                    options["callback"](property_key, selected_option["id"]);
+                    options["callback"](property_key, options["multi_select"] ? selected_option : selected_option["id"]);
                 } : function (selected_option) {
-                    self.on_combo_updated(property_key, selected_option["id"]);
+                    self.on_combo_updated(property_key, options["multi_select"] ? selected_option : selected_option["id"]);
                 },
                 self,
                 combo_options,
