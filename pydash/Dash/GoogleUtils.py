@@ -1189,6 +1189,11 @@ class _YouTubeUtils:
         if visibility not in ["public", "private", "unlisted"]:
             raise ValueError(f"Invalid visibility '{visibility}', expected 'public', 'private', or 'unlisted'")
 
+        if future_iso:
+            from Dash.GoogleUtilsSchedule import ValidateYouTubeSchedule
+
+            future_iso = ValidateYouTubeSchedule(future_iso, visibility)
+
         if "<" in title or ">" in title:
             raise ValueError("Title can't contain '<' or '>'")
 
@@ -1266,12 +1271,6 @@ class _YouTubeUtils:
         }
 
         if future_iso:
-            from datetime import datetime
-            from dateutil.parser import isoparse
-
-            if isoparse(future_iso) <= datetime.now():
-                raise ValueError("Future ISO must be in the future")
-
             params["body"]["status"]["publishAt"] = future_iso
 
         try:
