@@ -146,6 +146,36 @@ class GitDeploymentTest(unittest.TestCase):
                 ["clean", "-fd"],
             )
 
+    def test_fetch_uses_root_credentials_but_live_mutation_uses_owner(self):
+        completed = subprocess.CompletedProcess([], 0, stdout="", stderr="")
+        with (
+            mock.patch.object(
+                GitHubModule,
+                "_deployment_git_prefix",
+                return_value=["owner-git"],
+            ),
+            mock.patch.object(GitHubModule.os, "geteuid", return_value=0),
+            mock.patch.object(GitHubModule.shutil, "which", return_value="/usr/bin/git"),
+            mock.patch.object(
+                GitHubModule.subprocess,
+                "run",
+                return_value=completed,
+            ) as run,
+        ):
+            runner = GitHubModule._build_deployment_git_runner(
+                "/validated/repository",
+                "ensomniac",
+            )
+            runner("fetch", ["fetch", "origin", "main"], 10)
+            runner("reset", ["reset", "--hard", "a" * 40], 10)
+
+        fetch_command = run.call_args_list[0].args[0]
+        reset_command = run.call_args_list[1].args[0]
+        self.assertEqual(fetch_command[0], "/usr/bin/git")
+        self.assertEqual(reset_command[0], "owner-git")
+        self.assertIn("safe.directory=/validated/repository", fetch_command)
+        self.assertIn("safe.directory=/validated/repository", reset_command)
+
     def test_relative_broad_and_symlinked_repositories_fail_before_git(self):
         with tempfile.TemporaryDirectory() as temporary_root:
             root = Path(temporary_root).resolve()

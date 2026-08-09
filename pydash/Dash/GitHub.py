@@ -118,15 +118,21 @@ def _deployment_git_prefix(git_user):
 
 
 def _build_deployment_git_runner(repository, git_user):
-    prefix = _deployment_git_prefix(git_user)
+    owner_prefix = _deployment_git_prefix(git_user)
+    git_binary = shutil.which("git")
+    if not git_binary:
+        raise _GitDeploymentError("validate", "GitUnavailable")
+    fetch_prefix = [git_binary] if os.geteuid() == 0 else owner_prefix
     environment = os.environ.copy()
     environment["GIT_TERMINAL_PROMPT"] = "0"
     environment["LC_ALL"] = "C"
 
     def run_git(stage, arguments, timeout_seconds):
+        prefix = fetch_prefix if stage == "fetch" else owner_prefix
         command = [
             *prefix,
             "-c", "core.fileMode=false",
+            "-c", "safe.directory=" + repository,
             "-C", repository,
             *arguments,
         ]
