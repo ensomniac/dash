@@ -91,6 +91,109 @@ def _increment_counter(path, start_event, iterations):
         )
 
 
+class TestLocalStorageReads(unittest.TestCase):
+    def test_supported_json_values_return_after_one_successful_open(self):
+        from Dash.LocalStorage import Read
+
+        values = [
+            None,
+            False,
+            0,
+            "",
+            [],
+            {},
+            {"object": [1, True, None]}
+        ]
+
+        with TemporaryDirectory() as temp_dir:
+            for index, value in enumerate(values):
+                with self.subTest(value_type=type(value).__name__, index=index):
+                    path = os.path.join(temp_dir, f"value-{index}.json")
+
+                    with open(path, "w") as file:
+                        json.dump(value, file)
+
+                    real_open = open
+
+                    with patch("builtins.open", wraps=real_open) as open_file:
+                        self.assertEqual(Read(path), value)
+
+                    self.assertEqual(open_file.call_count, 1)
+
+    def test_missing_path_returns_none_without_opening(self):
+        from Dash.LocalStorage import Read
+
+        with TemporaryDirectory() as temp_dir:
+            path = os.path.join(temp_dir, "missing.json")
+            real_open = open
+
+            with patch("builtins.open", wraps=real_open) as open_file:
+                self.assertIsNone(Read(path))
+
+            open_file.assert_not_called()
+
+    def test_empty_raw_text_returns_after_one_successful_open(self):
+        from Dash.LocalStorage import Read
+
+        with TemporaryDirectory() as temp_dir:
+            path = os.path.join(temp_dir, "empty.txt")
+
+            Path(path).write_text("", encoding="utf-8")
+
+            real_open = open
+
+            with patch("builtins.open", wraps=real_open) as open_file:
+                self.assertEqual(Read(path, is_json=False), "")
+
+            self.assertEqual(open_file.call_count, 1)
+
+    def test_invalid_json_retries_and_raises_the_decode_error(self):
+        from Dash.LocalStorage import Read
+
+        invalid_values = {
+            "empty": "",
+            "malformed": "{"
+        }
+
+        with TemporaryDirectory() as temp_dir:
+            for label, value in invalid_values.items():
+                with self.subTest(label=label):
+                    path = os.path.join(temp_dir, f"{label}.json")
+
+                    Path(path).write_text(value, encoding="utf-8")
+
+                    real_open = open
+
+                    with patch("builtins.open", wraps=real_open) as open_file, patch(
+                        "time.sleep"
+                    ) as retry_sleep, self.assertRaisesRegex(OSError, "Failed to read") as raised:
+                        Read(path)
+
+                    self.assertIsInstance(raised.exception.__cause__, json.JSONDecodeError)
+                    self.assertEqual(open_file.call_count, 3)
+                    self.assertEqual(retry_sleep.call_count, 2)
+
+    def test_permission_failure_retries_and_preserves_the_cause(self):
+        from Dash.LocalStorage import Read
+
+        with TemporaryDirectory() as temp_dir:
+            path = os.path.join(temp_dir, "unreadable.json")
+
+            Path(path).write_text("{}", encoding="utf-8")
+
+            with patch(
+                "builtins.open",
+                side_effect=PermissionError("injected read permission failure")
+            ) as open_file, patch(
+                "time.sleep"
+            ) as retry_sleep, self.assertRaisesRegex(OSError, "Failed to read") as raised:
+                Read(path)
+
+            self.assertIsInstance(raised.exception.__cause__, PermissionError)
+            self.assertEqual(open_file.call_count, 3)
+            self.assertEqual(retry_sleep.call_count, 2)
+
+
 class TestLocalStorageReadModifyWrite(unittest.TestCase):
     def setUp(self):
         self._original_lock_root = os.environ.get("DASH_LOCAL_STORAGE_LOCK_ROOT")
@@ -308,8 +411,7 @@ class TestLocalStorageCrashCleanWrites(unittest.TestCase):
                     self.assertIs(Write(path, value, conform_permissions=False), value)
                     self.assertEqual(self._read_json(path), value)
 
-                    if value is not None:
-                        self.assertEqual(Read(path), value)
+                    self.assertEqual(Read(path), value)
 
                     self.assertEqual(stat.S_IMODE(os.stat(path).st_mode), 0o600)
 

@@ -855,26 +855,34 @@ class DashLocalStorage:
         data = None
         error = None
         attempts = 0
+        read_succeeded = False
 
         while attempts < 3:
             attempts += 1
 
             try:
                 with open(full_path) as file:
-                    data = file.read()
+                    raw_data = file.read()
 
                 if is_json:
-                    data = loads(data)
+                    data = loads(raw_data)
+                else:
+                    data = raw_data
 
-                if data:
-                    return data
+                read_succeeded = True
+
+                break
 
             except Exception as e:
                 error = e
 
-                sleep(0.2)
+                if attempts < 3:
+                    sleep(0.2)
 
-        if attempts >= 3 and data is None:
+        if read_succeeded:
+            return data
+
+        if attempts >= 3:
             msg = f"Failed to read: {full_path}, ({attempts} attempts)"
 
             if error:
