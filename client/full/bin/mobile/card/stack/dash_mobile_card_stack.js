@@ -25,6 +25,7 @@ function DashMobileCardStack (binder, color=null) {
     this.footer_button_overlay = null;
     this.vertical_scroll_active = false;
     this.vertical_scroll_timer_id = null;
+    this.resize_worker = null;
     this.html = Dash.Gui.GetHTMLAbsContext();
     this.footer_overlay_width_padding = Dash.Size.Padding * 0.5;
     this.iphone_standalone = /iPhone/i.test(navigator.userAgent) && Dash.IsMobileFromHomeScreen;
@@ -60,7 +61,7 @@ function DashMobileCardStack (binder, color=null) {
 
         this.html.append(this.slider);
 
-        Dash.OnHTMLResized(this, this.on_resized);
+        this.resize_worker = Dash.OnHTMLResized(this, this.on_resized);
 
         this.on_resized(window.innerWidth, window.innerHeight);
     };

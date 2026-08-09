@@ -2,6 +2,8 @@ function DashUtils () {
     this.animation_frame_iter = 0;
     this.animation_frame_workers = [];
     this.animation_frame_manager_running = false;
+    this.animation_frame_request_id = null;
+    this.animation_frame_detached_grace_frames = 30;
 
     this.SetDynamicFont = function (html, font_url, font_display_name, font_original_filename, on_load_cb) {
         var font_name = "";
@@ -118,7 +120,7 @@ function DashUtils () {
 
     // Very similar to OnFrame, except we capture the size of binder.html and only fire the callback if the size changes
     this.OnHTMLResized = function (binder, callback) {
-        this.register_anim_frame_worker({
+        return this.register_anim_frame_worker({
             "callback": callback.bind(binder),
             "source": binder,
             "width": binder.html.width(),
@@ -156,7 +158,7 @@ function DashUtils () {
 
     // Store a tiny bit of information about this request
     this.OnFrame = function (binder, callback) {
-        this.register_anim_frame_worker({
+        return this.register_anim_frame_worker({
             "callback": callback.bind(binder),
             "source": binder
         });
@@ -268,73 +270,215 @@ function DashUtils () {
         timer["callback"]();
     };
 
-    this.register_anim_frame_worker = function (anim_frame_worker) {
-        if (!this.animation_frame_manager_running) {
-            // This only needs to be started once, and it will run forever
-            this.animation_frame_manager_running = true;
+    this.get_anim_frame_worker_element = function (source) {
+        var html = source && source.html ? source.html : source;
 
-            this.draw_anim_frame_workers();
+        if (!html) {
+            return null;
         }
 
-        // This is intentionally called after we start the worker so that
-        // the behavior of Dash.OnFrame is similar to Window.RequestAnimationFrame in that
-        // you would not expect the callback to fire until the next frame...
-        this.animation_frame_workers.push(anim_frame_worker);
+        if (html.jquery && typeof html.get === "function") {
+            html = html.get(0);
+        }
+        else if (html[0] && (html[0].nodeType || typeof html[0].isConnected === "boolean")) {
+            html = html[0];
+        }
+
+        if (!html || typeof html !== "object") {
+            return null;
+        }
+
+        if (html.nodeType || typeof html.isConnected === "boolean") {
+            return html;
+        }
+
+        return null;
     };
 
-    this.draw_anim_frame_workers = function () {
-        this.animation_frame_iter += 1;
+    this.is_anim_frame_worker_source_connected = function (anim_frame_worker) {
+        var element = this.get_anim_frame_worker_element(anim_frame_worker["source"]);
 
-        // Coarse timeout
-        if (this.animation_frame_iter >= 30) {
-            this.animation_frame_iter = 0;
-
-            this.manage_anim_frame_workers();
+        if (!element) {
+            return null;
         }
 
-        // Actually fire each callback
-        for (var x in this.animation_frame_workers) {
-            if (this.animation_frame_workers[x]["on_resize"]) {
-                this.manage_on_resize_worker(x);
-            }
+        if (typeof element.isConnected === "boolean") {
+            return element.isConnected;
+        }
 
-            else {
-                this.animation_frame_workers[x]["callback"]();
+        if (document.documentElement && typeof document.documentElement.contains === "function") {
+            return document.documentElement.contains(element);
+        }
+
+        return null;
+    };
+
+    this.CancelAnimationFrameWorker = function (registration_or_source) {
+        var cancelled = [];
+        var retained = [];
+
+        for (var anim_frame_worker of this.animation_frame_workers) {
+            if (anim_frame_worker === registration_or_source || anim_frame_worker["source"] === registration_or_source) {
+                cancelled.push(anim_frame_worker);
             }
+            else {
+                retained.push(anim_frame_worker);
+            }
+        }
+
+        this.animation_frame_workers = retained;
+
+        for (var anim_frame_worker of cancelled) {
+            anim_frame_worker["active"] = false;
+            anim_frame_worker["callback"] = null;
+            anim_frame_worker["source"] = null;
+        }
+
+        if (!this.animation_frame_workers.length) {
+            this.stop_anim_frame_worker_manager();
+        }
+
+        return cancelled.length;
+    };
+
+    this.register_anim_frame_worker = function (anim_frame_worker) {
+        anim_frame_worker["active"] = true;
+        anim_frame_worker["connected_once"] = false;
+        anim_frame_worker["detached_frames"] = 0;
+        anim_frame_worker["source_connected"] = this.is_anim_frame_worker_source_connected(anim_frame_worker);
+
+        if (anim_frame_worker["source_connected"] === true) {
+            anim_frame_worker["connected_once"] = true;
+        }
+
+        (function (self, anim_frame_worker) {
+            anim_frame_worker["Cancel"] = function () {
+                return self.CancelAnimationFrameWorker(anim_frame_worker);
+            };
+        })(this, anim_frame_worker);
+
+        this.animation_frame_workers.push(anim_frame_worker);
+
+        if (!this.animation_frame_manager_running) {
+            this.animation_frame_manager_running = true;
+            this.schedule_anim_frame_worker_draw();
+        }
+
+        return anim_frame_worker;
+    };
+
+    this.schedule_anim_frame_worker_draw = function () {
+        if (!this.animation_frame_manager_running || this.animation_frame_request_id !== null) {
+            return;
         }
 
         (function (self) {
-            // Call this function again
-            requestAnimationFrame(function () {
+            self.animation_frame_request_id = requestAnimationFrame(function () {
+                self.animation_frame_request_id = null;
                 self.draw_anim_frame_workers();
             });
         })(this);
     };
 
-    this.manage_on_resize_worker = function (index) {
-        var width = this.animation_frame_workers[index]["source"].html.width();
-        var height = this.animation_frame_workers[index]["source"].html.height();
+    this.stop_anim_frame_worker_manager = function () {
+        if (this.animation_frame_request_id !== null) {
+            window.cancelAnimationFrame(this.animation_frame_request_id);
+        }
 
-        if (parseInt(width) === parseInt(this.animation_frame_workers[index]["width"])) {
-            if (parseInt(height) === parseInt(this.animation_frame_workers[index]["height"])) {
+        this.animation_frame_request_id = null;
+        this.animation_frame_manager_running = false;
+        this.animation_frame_iter = 0;
+    };
+
+    this.draw_anim_frame_workers = function () {
+        if (!this.animation_frame_manager_running) {
+            return;
+        }
+
+        this.animation_frame_iter += 1;
+
+        this.manage_anim_frame_workers();
+
+        // Actually fire each callback
+        var anim_frame_workers = this.animation_frame_workers.slice();
+
+        for (var anim_frame_worker of anim_frame_workers) {
+            if (!anim_frame_worker["active"] || anim_frame_worker["source_connected"] === false) {
+                continue;
+            }
+
+            if (anim_frame_worker["on_resize"]) {
+                this.manage_on_resize_worker(anim_frame_worker);
+            }
+
+            else {
+                anim_frame_worker["callback"]();
+            }
+        }
+
+        if (!this.animation_frame_workers.length) {
+            this.stop_anim_frame_worker_manager();
+
+            return;
+        }
+
+        this.schedule_anim_frame_worker_draw();
+    };
+
+    this.manage_on_resize_worker = function (anim_frame_worker) {
+        var width = anim_frame_worker["source"].html.width();
+        var height = anim_frame_worker["source"].html.height();
+
+        if (parseInt(width) === parseInt(anim_frame_worker["width"])) {
+            if (parseInt(height) === parseInt(anim_frame_worker["height"])) {
                 return;  // Nothing to do, height and width are the same
             }
         }
 
-        this.animation_frame_workers[index]["width"] = width;
-        this.animation_frame_workers[index]["height"] = height;
-        this.animation_frame_workers[index]["callback"](width, height);
+        anim_frame_worker["width"] = width;
+        anim_frame_worker["height"] = height;
+        anim_frame_worker["callback"](width, height);
     };
 
     this.manage_anim_frame_workers = function () {
-        // This breakout function is not called on every frame, but on
-        // approximately every 30 frames. This is so we're not doing anything
-        // too heavy on each frame. Check each worker to see if we should
-        // still be processing frame updates
-        // Dash.Log.Log("Manage them all....");
-        // Dash.Log.Log(this.animation_frame_workers.length);
+        var stale_workers = [];
 
-        // TODO: Round out this function to clean up stale html objects
+        for (var anim_frame_worker of this.animation_frame_workers) {
+            if (!anim_frame_worker["active"]) {
+                stale_workers.push(anim_frame_worker);
+
+                continue;
+            }
+
+            var source_connected = this.is_anim_frame_worker_source_connected(anim_frame_worker);
+            anim_frame_worker["source_connected"] = source_connected;
+
+            if (source_connected === null) {
+                anim_frame_worker["detached_frames"] = 0;
+
+                continue;
+            }
+
+            if (source_connected) {
+                anim_frame_worker["connected_once"] = true;
+                anim_frame_worker["detached_frames"] = 0;
+
+                continue;
+            }
+
+            anim_frame_worker["detached_frames"] += 1;
+
+            if (
+                anim_frame_worker["connected_once"] ||
+                anim_frame_worker["detached_frames"] >= this.animation_frame_detached_grace_frames
+            ) {
+                stale_workers.push(anim_frame_worker);
+            }
+        }
+
+        for (var stale_worker of stale_workers) {
+            this.CancelAnimationFrameWorker(stale_worker);
+        }
     };
 
     // This is called on the next frame because window.Dash.<> is

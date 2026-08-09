@@ -31,6 +31,23 @@ class DashLog {
         this.log("error", ...msg);
     }
 
+    Event (type, subsystem, state) {
+        this.assert_debug_mode();
+
+        if (!this.remote_debug_mode_enabled && !Dash.LocalDev) {
+            return;
+        }
+
+        if (!["debug", "info", "log", "warn"].includes(type)) {
+            type = "debug";
+        }
+
+        subsystem = this.get_safe_identifier(subsystem, "dash");
+        state = this.get_safe_identifier(state, "event");
+
+        console[type]("[" + subsystem + "] " + state);
+    }
+
     // Calling 'Dash.Log.ToggleRemoteDebugMode()' in the console
     // will force all logs coming through this class to be printed.
     // This is useful when remotely debugging someone else's client.
@@ -57,7 +74,51 @@ class DashLog {
             return;
         }
 
-        console[type](...msg);
+        console[type](this.get_safe_summary(type, msg));
+    }
+
+    get_safe_identifier (value, fallback) {
+        if (typeof value !== "string") {
+            return fallback;
+        }
+
+        value = value.toLowerCase();
+
+        return /^[a-z0-9_-]{1,80}$/.test(value) ? value : fallback;
+    }
+
+    get_safe_summary (type, msg) {
+        var value_types = msg.map((value) => this.get_value_type(value));
+        var suffix = value_types.length ? value_types.join("-") : "none";
+
+        return "[dash] " + this.get_safe_identifier(type, "debug") + "-" + suffix;
+    }
+
+    get_value_type (value) {
+        if (value === null) {
+            return "null";
+        }
+
+        try {
+            if (Array.isArray(value)) {
+                return "array";
+            }
+
+            if (value instanceof Error) {
+                return "error";
+            }
+        }
+        catch {
+            return typeof value;
+        }
+
+        var value_type = typeof value;
+
+        if (["bigint", "boolean", "function", "number", "string", "symbol", "undefined"].includes(value_type)) {
+            return value_type;
+        }
+
+        return "object";
     }
 
     assert_debug_mode () {

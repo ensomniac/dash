@@ -13,7 +13,7 @@ function DashValidate () {
 
         if (!response) {
             if (show_alert) {
-                console.error("(Dash.Validate.Response) No response received:", response);
+                console.error("(Dash.Validate.Response) No response received");
 
                 alert("There was a server problem with this request:\nNo response received");
             }
@@ -25,7 +25,7 @@ function DashValidate () {
 
         else if (response["error"]) {
             if (show_alert) {
-                console.error("There was a server problem with this request:", response);
+                console.error("There was a server problem with this request");
 
                 alert(response["error"]);
             }

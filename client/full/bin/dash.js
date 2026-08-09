@@ -123,6 +123,7 @@ function _Dash () {
 
     this.GetDeepCopy         = this.Utils.GetDeepCopy.bind(this.Utils);
     this.Logout              = this.User.Logout;
+    this.CancelAnimationFrameWorker = this.Utils.CancelAnimationFrameWorker.bind(this.Utils);
     this.OnAnimationFrame    = this.Utils.OnAnimationFrame.bind(this.Utils);
     this.OnHTMLResized       = this.Utils.OnHTMLResized.bind(this.Utils);
     this.OnInitialVisibility = this.Utils.OnInitialVisibility.bind(this.Utils);
