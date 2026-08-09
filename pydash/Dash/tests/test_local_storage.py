@@ -147,6 +147,37 @@ class TestLocalStorageReads(unittest.TestCase):
 
             self.assertEqual(open_file.call_count, 1)
 
+    def test_source_files_default_to_raw_text(self):
+        from Dash.LocalStorage import Read
+
+        with TemporaryDirectory() as temp_dir:
+            for extension in ["js", "py"]:
+                with self.subTest(extension=extension):
+                    path = os.path.join(temp_dir, f"source.{extension}")
+                    content = "function example() {}" if extension == "js" else "def example():\n    pass\n"
+
+                    Path(path).write_text(content, encoding="utf-8")
+
+                    real_open = open
+
+                    with patch("builtins.open", wraps=real_open) as open_file:
+                        self.assertEqual(Read(path), content)
+
+                    self.assertEqual(open_file.call_count, 1)
+
+    def test_explicit_json_mode_remains_strict_for_source_extension(self):
+        from Dash.LocalStorage import Read
+
+        with TemporaryDirectory() as temp_dir:
+            path = os.path.join(temp_dir, "source.py")
+
+            Path(path).write_text("not-json", encoding="utf-8")
+
+            with patch("time.sleep"), self.assertRaisesRegex(OSError, "Failed to read") as raised:
+                Read(path, is_json=True)
+
+            self.assertIsInstance(raised.exception.__cause__, json.JSONDecodeError)
+
     def test_invalid_json_retries_and_raises_the_decode_error(self):
         from Dash.LocalStorage import Read
 

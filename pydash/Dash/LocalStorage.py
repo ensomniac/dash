@@ -19,6 +19,7 @@ _JSON_WRITE_STAGING_PREFIX = "_tmp_dash_json_"
 _JSON_WRITE_STAGING_RANDOM_LENGTH = 8
 _JSON_WRITE_STAGING_INVENTORY_LIMIT = 100000
 _JSON_WRITE_STAGING_INVENTORY_MAX = 1000000
+_SOURCE_TEXT_EXTENSIONS = {".js", ".py"}
 
 
 def _get_json_read_modify_write_lock(full_path):
@@ -841,12 +842,16 @@ class DashLocalStorage:
         with _locked_json_file(full_path):
             return self.write_json_protected(full_path, data, conform_permissions)
 
-    def Read(self, full_path, is_json=True):
+    def Read(self, full_path, is_json=None):
         if not full_path:
             raise ValueError(f"No path provided to LocalStorage.Read: {full_path}")
 
         if not os.path.exists(full_path):
             return None
+
+        if is_json is None:
+            extension = os.path.splitext(os.fspath(full_path))[1].lower()
+            is_json = extension not in _SOURCE_TEXT_EXTENSIONS
 
         from json import loads
         from time import sleep
@@ -1610,7 +1615,7 @@ def GetRecordPath(dash_context, store_path, obj_id, nested=False):
     return DashLocalStorage(dash_context, store_path, nested).GetRecordPath(obj_id)
 
 
-def Read(full_path, is_json=True):
+def Read(full_path, is_json=None):
     return DashLocalStorage().Read(full_path, is_json=is_json)
 
 
