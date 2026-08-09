@@ -16,6 +16,10 @@ from threading import Lock, RLock
 
 _JSON_READ_MODIFY_WRITE_LOCKS = {}
 _JSON_READ_MODIFY_WRITE_LOCKS_LOCK = Lock()
+_JSON_WRITE_STAGING_PREFIX = "_tmp_dash_json_"
+_JSON_WRITE_STAGING_RANDOM_LENGTH = 8
+_JSON_WRITE_STAGING_INVENTORY_LIMIT = 100000
+_JSON_WRITE_STAGING_INVENTORY_MAX = 1000000
 
 
 def _get_json_read_modify_write_lock(full_path):
@@ -28,16 +32,247 @@ def _get_json_read_modify_write_lock(full_path):
         return _JSON_READ_MODIFY_WRITE_LOCKS[lock_key]
 
 
-def _get_json_read_modify_write_lock_path(full_path):
+def _get_json_read_modify_write_lock_path(full_path, create_root=True):
     from hashlib import sha256
 
     lock_root = os.environ.get("DASH_LOCAL_STORAGE_LOCK_ROOT", "/tmp")
 
-    os.makedirs(lock_root, exist_ok=True)
+    if create_root:
+        os.makedirs(lock_root, exist_ok=True)
 
     lock_key = sha256(os.path.abspath(full_path).encode()).hexdigest()
 
     return os.path.join(lock_root, f"dash_local_storage_{lock_key}.lock")
+
+
+def _get_json_write_staging_target(filename):
+    """Return the staged target basename for exact current or legacy writer names."""
+
+    import re
+
+    current_match = re.fullmatch(
+        rf"{re.escape(_JSON_WRITE_STAGING_PREFIX)}[a-z0-9_]"
+        rf"{{{_JSON_WRITE_STAGING_RANDOM_LENGTH}}}_(.+)",
+        filename
+    )
+
+    if current_match:
+        return current_match.group(1)
+
+    legacy_match = re.fullmatch(r"_tmp_[0-9]{6}_(.+)", filename)
+
+    if legacy_match:
+        return legacy_match.group(1)
+
+    return None
+
+
+def _get_json_write_staging_state(staging_path, target_filename):
+    """Classify a staging file from the existing target lock without creating files."""
+
+    import fcntl
+    import stat
+
+    target_path = os.path.join(os.path.dirname(staging_path), target_filename)
+    lock_path = _get_json_read_modify_write_lock_path(target_path, create_root=False)
+
+    try:
+        lock_stat = os.lstat(lock_path)
+
+        if not stat.S_ISREG(lock_stat.st_mode):
+            return "unclassified"
+
+        open_flags = os.O_RDONLY | getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_NOFOLLOW", 0)
+        lock_fd = os.open(lock_path, open_flags)
+    except FileNotFoundError:
+        return "orphaned"
+    except OSError:
+        return "unclassified"
+
+    try:
+        try:
+            fcntl.flock(lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            return "in_flight"
+        except OSError:
+            return "unclassified"
+
+        try:
+            if not os.path.exists(staging_path):
+                return None
+
+            return "orphaned"
+        finally:
+            fcntl.flock(lock_fd, fcntl.LOCK_UN)
+    finally:
+        os.close(lock_fd)
+
+
+def _new_json_write_inventory_bucket():
+    return {
+        "count": 0,
+        "bytes": 0,
+        "youngest_age_seconds": None,
+        "oldest_age_seconds": None
+    }
+
+
+def _update_json_write_inventory_bucket(bucket, file_stat, now):
+    age_seconds = max(0, int(now - file_stat.st_mtime))
+
+    bucket["count"] += 1
+    bucket["bytes"] += file_stat.st_size
+
+    if bucket["youngest_age_seconds"] is None:
+        bucket["youngest_age_seconds"] = age_seconds
+        bucket["oldest_age_seconds"] = age_seconds
+    else:
+        bucket["youngest_age_seconds"] = min(bucket["youngest_age_seconds"], age_seconds)
+        bucket["oldest_age_seconds"] = max(bucket["oldest_age_seconds"], age_seconds)
+
+
+def _get_json_write_staging_inventory(root_path, max_entries=_JSON_WRITE_STAGING_INVENTORY_LIMIT):
+    """
+    Return bounded aggregate metadata for exact Dash JSON staging signatures.
+
+    Paths, filenames, target names, and file contents are intentionally omitted. Current
+    writers are identified only when the already-existing target lock is actively held.
+    Symlinks are neither followed nor counted as staging files.
+    """
+
+    import stat
+    from time import time
+
+    if type(max_entries) is not int or not 1 <= max_entries <= _JSON_WRITE_STAGING_INVENTORY_MAX:
+        raise ValueError(
+            "LocalStorage JSON staging inventory max_entries must be an integer between "
+            f"1 and {_JSON_WRITE_STAGING_INVENTORY_MAX}"
+        )
+
+    root_path = os.path.abspath(root_path)
+
+    try:
+        root_stat = os.lstat(root_path)
+    except FileNotFoundError as error:
+        raise FileNotFoundError(f"JSON staging inventory root does not exist: {root_path}") from error
+
+    if not stat.S_ISDIR(root_stat.st_mode) or stat.S_ISLNK(root_stat.st_mode):
+        raise NotADirectoryError(f"JSON staging inventory root must be a real directory: {root_path}")
+
+    inventory = {
+        "scanned_entries": 0,
+        "matched_staging_files": 0,
+        "truncated": False,
+        "scan_errors": 0,
+        "in_flight": _new_json_write_inventory_bucket(),
+        "orphaned": _new_json_write_inventory_bucket(),
+        "unclassified": _new_json_write_inventory_bucket()
+    }
+    now = time()
+    directories = [root_path]
+
+    while directories:
+        directory = directories.pop()
+
+        try:
+            entries = os.scandir(directory)
+        except OSError:
+            inventory["scan_errors"] += 1
+            continue
+
+        with entries:
+            for entry in entries:
+                if inventory["scanned_entries"] >= max_entries:
+                    inventory["truncated"] = True
+                    return inventory
+
+                inventory["scanned_entries"] += 1
+
+                try:
+                    if entry.is_dir(follow_symlinks=False):
+                        directories.append(entry.path)
+                        continue
+
+                    if not entry.is_file(follow_symlinks=False):
+                        continue
+
+                    target_filename = _get_json_write_staging_target(entry.name)
+
+                    if not target_filename:
+                        continue
+
+                    file_stat = entry.stat(follow_symlinks=False)
+                    state = _get_json_write_staging_state(entry.path, target_filename)
+
+                    if state is None:
+                        continue
+
+                    inventory["matched_staging_files"] += 1
+                    _update_json_write_inventory_bucket(inventory[state], file_stat, now)
+                except OSError:
+                    inventory["scan_errors"] += 1
+
+    return inventory
+
+
+def _sync_json_parent_directory(directory):
+    """Persist an atomic replacement's directory entry when the platform supports it."""
+
+    import errno
+
+    open_flags = os.O_RDONLY | getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_DIRECTORY", 0)
+    directory_fd = os.open(directory, open_flags)
+
+    try:
+        try:
+            os.fsync(directory_fd)
+        except OSError as error:
+            unsupported_errors = {
+                errno.EINVAL,
+                getattr(errno, "ENOTSUP", errno.EINVAL),
+                getattr(errno, "EOPNOTSUPP", errno.EINVAL)
+            }
+
+            if error.errno not in unsupported_errors:
+                raise
+    finally:
+        os.close(directory_fd)
+
+
+def _get_regular_file_mode(full_path):
+    import stat
+
+    try:
+        target_stat = os.lstat(full_path)
+    except FileNotFoundError:
+        return None
+
+    if stat.S_ISREG(target_stat.st_mode):
+        return stat.S_IMODE(target_stat.st_mode)
+
+    return None
+
+
+def _cleanup_json_write_staging(staging_fd, staging_path):
+    """Best-effort exact cleanup that returns encountered exception types to the caller."""
+
+    cleanup_errors = []
+
+    if staging_fd is not None:
+        try:
+            os.close(staging_fd)
+        except OSError as error:
+            cleanup_errors.append(error)
+
+    if staging_path is not None:
+        try:
+            os.unlink(staging_path)
+        except FileNotFoundError:
+            pass
+        except OSError as error:
+            cleanup_errors.append(error)
+
+    return cleanup_errors
 
 
 @contextmanager
@@ -954,32 +1189,75 @@ class DashLocalStorage:
 
     def write_json_protected(self, full_path, data, conform_permissions=True):
         """
-        This is a newer system that first writes a unique filename to
-        disk, then moves that file into the correct location. This should resolve
-        clobbered .json files, but it will not prevent in-memory merge failures.
+        Crash-clean, atomically replace one JSON file without changing its schema.
+
+        Callers that need to merge against current contents must continue to use
+        ReadModifyWrite so the per-target lock covers both the read and this write.
         """
 
         from json import dumps
-        from random import randint
-
-        filename = full_path.split("/")[-1].strip()
-
-        tmp_file_path = os.path.join(
-            full_path.rstrip(filename),
-            f"_tmp_{randint(100000, 999999)}_{filename}"
-        )
+        from tempfile import mkstemp
 
         try:
-            with open(tmp_file_path, "w") as file:
-                file.write(dumps(data))
+            serialized_data = dumps(data)
+        except Exception as error:
+            raise IOError(f"Write fail before staging for {full_path}") from error
 
-        except Exception as e:
-            raise IOError(f"Write fail at {tmp_file_path} from {full_path}") from e
+        target_path = os.path.abspath(full_path)
+        target_directory = os.path.dirname(target_path)
+        target_filename = os.path.basename(target_path)
+        existing_mode = _get_regular_file_mode(target_path)
+        staging_fd = None
+        staging_path = None
 
-        os.rename(tmp_file_path, full_path)
+        try:
+            staging_fd, staging_path = mkstemp(
+                prefix=_JSON_WRITE_STAGING_PREFIX,
+                suffix=f"_{target_filename}",
+                dir=target_directory,
+                text=True
+            )
 
-        if conform_permissions:
-            self.ConformPermissions(full_path)
+            staging_file = os.fdopen(staging_fd, "w")
+            staging_fd = None
+
+            with staging_file as file:
+                written_length = file.write(serialized_data)
+
+                if written_length != len(serialized_data):
+                    raise IOError(
+                        f"Incomplete JSON staging write for {full_path}: "
+                        f"{written_length} of {len(serialized_data)} characters"
+                    )
+
+                file.flush()
+                os.fsync(file.fileno())
+
+                if conform_permissions:
+                    self.ConformPermissions(staging_path)
+                elif existing_mode is not None:
+                    os.chmod(staging_path, existing_mode)
+
+                os.fsync(file.fileno())
+
+            os.replace(staging_path, target_path)
+            staging_path = None
+
+            _sync_json_parent_directory(target_directory)
+        except BaseException as error:
+            cleanup_errors = _cleanup_json_write_staging(staging_fd, staging_path)
+
+            if isinstance(error, (KeyboardInterrupt, SystemExit)):
+                raise
+
+            if cleanup_errors:
+                cleanup_error_types = ", ".join(type(item).__name__ for item in cleanup_errors)
+                raise IOError(
+                    f"Write fail for {full_path}; exact staging cleanup also failed "
+                    f"({cleanup_error_types})"
+                ) from error
+
+            raise IOError(f"Write fail for {full_path}") from error
 
         return data
 
@@ -1309,6 +1587,10 @@ def GetRecordPath(dash_context, store_path, obj_id, nested=False):
 
 def Read(full_path, is_json=True):
     return DashLocalStorage().Read(full_path, is_json=is_json)
+
+
+def GetJSONWriteStagingInventory(root_path, max_entries=_JSON_WRITE_STAGING_INVENTORY_LIMIT):
+    return _get_json_write_staging_inventory(root_path, max_entries)
 
 
 def Write(full_path, data, conform_permissions=True):
