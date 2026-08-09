@@ -194,6 +194,130 @@ class TestLocalStorageReads(unittest.TestCase):
             self.assertEqual(retry_sleep.call_count, 2)
 
 
+class TestLocalStorageSortOrdering(unittest.TestCase):
+    @staticmethod
+    def _order(values):
+        from Dash.LocalStorage import DashLocalStorage
+
+        data = {
+            entry_id: {"id": entry_id, "rank": value}
+            for entry_id, value in values
+        }
+        original = {
+            entry_id: entry_data.copy()
+            for entry_id, entry_data in data.items()
+        }
+        order = DashLocalStorage(
+            sort_by_key="rank"
+        ).get_dict_order_by_sort_key(data)
+
+        if data != original:
+            raise AssertionError("ordering must not mutate source data")
+
+        return order
+
+    def test_representative_successful_ordering_remains_unchanged(self):
+        cases = [
+            (
+                "accented text",
+                [("z", "Zulu"), ("e", "Éclair"), ("a", "apple")],
+                ["a", "e", "z"],
+            ),
+            (
+                "canonical numeric strings",
+                [("ten", "10"), ("two", "2"), ("one", "1")],
+                ["one", "two", "ten"],
+            ),
+            (
+                "leading-zero lexical fallback",
+                [("one", "01"), ("ten", "010"), ("two", "2"), ("name", "name")],
+                ["one", "ten", "two", "name"],
+            ),
+            (
+                "integer values",
+                [("ten", 10), ("two", 2), ("one", 1)],
+                ["one", "two", "ten"],
+            ),
+            (
+                "float values",
+                [("ten", 10.5), ("two", 2.5), ("one", 1.5)],
+                ["one", "two", "ten"],
+            ),
+            (
+                "duplicate text",
+                [("first", "Same"), ("second", "Same"), ("else", "Else")],
+                ["else", "first", "second"],
+            ),
+            (
+                "falsy values first",
+                [("none", None), ("zero", 0), ("empty", ""), ("a", "A")],
+                ["none", "zero", "empty", "a"],
+            ),
+        ]
+
+        for label, values, expected in cases:
+            with self.subTest(label=label):
+                self.assertEqual(self._order(values), expected)
+
+    def test_expected_attribute_type_and_value_fallbacks_remain_supported(self):
+        class AttributeFallbackKey:
+            def __bool__(self):
+                return True
+
+            def __hash__(self):
+                return 1
+
+            def __len__(self):
+                return 2
+
+        self.assertEqual(
+            self._order([("attribute", AttributeFallbackKey())]),
+            ["attribute"],
+        )
+        self.assertEqual(
+            self._order([("two", 2), ("one", 1)]),
+            ["one", "two"],
+        )
+        self.assertEqual(
+            self._order([("beta", "beta"), ("alpha", "alpha")]),
+            ["alpha", "beta"],
+        )
+
+    def test_ordinary_transliteration_and_conversion_failures_fall_back(self):
+        with patch(
+            "unidecode.unidecode",
+            side_effect=ValueError("injected transliteration failure"),
+        ) as transliterate:
+            transliteration_order = self._order(
+                [("z", "Zulu"), ("a", "apple")]
+            )
+
+        self.assertEqual(transliteration_order, ["a", "z"])
+        self.assertEqual(transliterate.call_count, 2)
+
+        with patch(
+            "builtins.int",
+            side_effect=ValueError("injected integer conversion failure"),
+        ) as convert:
+            conversion_order = self._order([("two", "2"), ("ten", "10")])
+
+        self.assertEqual(conversion_order, ["ten", "two"])
+        convert.assert_called_once_with("2")
+
+    def test_process_control_exceptions_are_not_swallowed(self):
+        with patch(
+            "unidecode.unidecode",
+            side_effect=KeyboardInterrupt("injected interrupt"),
+        ), self.assertRaises(KeyboardInterrupt):
+            self._order([("name", "Name")])
+
+        with patch(
+            "builtins.int",
+            side_effect=SystemExit("injected exit"),
+        ), self.assertRaises(SystemExit):
+            self._order([("rank", "1")])
+
+
 class TestLocalStorageReadModifyWrite(unittest.TestCase):
     def setUp(self):
         self._original_lock_root = os.environ.get("DASH_LOCAL_STORAGE_LOCK_ROOT")

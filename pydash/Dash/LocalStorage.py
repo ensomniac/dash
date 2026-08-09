@@ -8,7 +8,6 @@ Utility for reading, writing, and maintaining common data.
 """
 
 import os
-import sys
 
 from contextlib import contextmanager
 from threading import Lock, RLock
@@ -560,8 +559,8 @@ class DashLocalStorage:
                 "Warning:\nFolder(s) were identified as missing a data.json file. This typically happens if an "
                 "object failed to be fully deleted, and therefore, this folder likely needs to be removed.\n"
                 "Alternatively, a request to get the data may have happened at the same moment it was deleted."
-                f"\n\nFolders:\n" + "\n- ".join(missing) +
-                f"\n\nStack trace:\n" + "\n".join(format_stack())
+                "\n\nFolders:\n" + "\n- ".join(missing) +
+                "\n\nStack trace:\n" + "\n".join(format_stack())
             )
 
             sender_email = self.DashContext.get("admin_from_email") if self.DashContext else ""
@@ -1112,7 +1111,7 @@ class DashLocalStorage:
             if type(sort_value) is str:
                 try:
                     sort_value = unidecode(sort_value)
-                except:
+                except Exception:
                     pass
 
                 sort_value = sort_value.lower().strip()
@@ -1134,7 +1133,7 @@ class DashLocalStorage:
                     sorted_to_prepend.append(key)
 
                 keys_to_sort[index] = int(key)
-            except:
+            except (AttributeError, TypeError, ValueError):
                 sorted_to_prepend = []
                 keys_to_sort = og_keys_to_sort.copy()
 
