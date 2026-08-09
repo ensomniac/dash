@@ -5,6 +5,7 @@ import json
 import os
 import pwd
 import shlex
+import stat
 import subprocess
 import tempfile
 import unittest
@@ -99,6 +100,47 @@ class GitDeploymentTest(unittest.TestCase):
             self.assertEqual((deployed / "ignored.txt").read_text(), "preserve\n")
             self.assertEqual(self.git(deployed, "status", "--porcelain"), "")
 
+    def test_fast_forward_restores_tree_declared_file_modes(self):
+        with tempfile.TemporaryDirectory() as temporary_root:
+            root = Path(temporary_root).resolve()
+            _, publisher, deployed = self.repositories(root)
+            locks = root / "locks"
+            locks.mkdir()
+
+            executable = publisher / "executable.sh"
+            executable.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+            executable.chmod(0o755)
+            self.git(publisher, "add", "executable.sh")
+            self.git(publisher, "commit", "-m", "Add executable")
+            self.git(publisher, "push")
+
+            first_result = GitHubModule.DeployGitRepository(
+                str(deployed),
+                lock_root=str(locks),
+                git_user=self.current_user(),
+            )
+            self.assertTrue(first_result["ok"], first_result)
+
+            (deployed / "tracked.txt").chmod(0o755)
+            (deployed / "executable.sh").chmod(0o644)
+            self.assertNotEqual(self.git(deployed, "status", "--porcelain"), "")
+
+            (publisher / "next.txt").write_text("next\n", encoding="utf-8")
+            self.git(publisher, "add", "next.txt")
+            self.git(publisher, "commit", "-m", "Advance different path")
+            self.git(publisher, "push")
+
+            result = GitHubModule.DeployGitRepository(
+                str(deployed),
+                lock_root=str(locks),
+                git_user=self.current_user(),
+            )
+
+            self.assertTrue(result["ok"], result)
+            self.assertEqual(stat.S_IMODE((deployed / "tracked.txt").stat().st_mode), 0o644)
+            self.assertEqual(stat.S_IMODE((deployed / "executable.sh").stat().st_mode), 0o755)
+            self.assertEqual(self.git(deployed, "status", "--porcelain"), "")
+
     def test_command_order_has_one_reset_and_one_clean(self):
         with tempfile.TemporaryDirectory() as temporary_root:
             root = Path(temporary_root).resolve()
@@ -175,6 +217,8 @@ class GitDeploymentTest(unittest.TestCase):
         self.assertEqual(reset_command[0], "owner-git")
         self.assertIn("safe.directory=/validated/repository", fetch_command)
         self.assertIn("safe.directory=/validated/repository", reset_command)
+        self.assertIn("core.fileMode=false", fetch_command)
+        self.assertIn("core.fileMode=true", reset_command)
 
     def test_relative_broad_and_symlinked_repositories_fail_before_git(self):
         with tempfile.TemporaryDirectory() as temporary_root:

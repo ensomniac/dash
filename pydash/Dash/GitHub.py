@@ -3,15 +3,7 @@
 # Ensomniac 2026 Ryan Martin, ryan@ensomniac.com
 #                Andrew Stet, stetandrew@gmail.com
 
-"""
-| When setting up a new repo, you likely have to run this on the server:
-| https://stackoverflow.com/questions/1580596/how-do-i-make-git-ignore-file-mode-chmod-changes
-|
-| git config core.fileMode false
-|
-| or set it globally:
-| git config --global core.fileMode false
-"""
+"""GitHub webhook and bounded repository-deployment helpers."""
 
 import contextlib
 import fcntl
@@ -129,9 +121,10 @@ def _build_deployment_git_runner(repository, git_user):
 
     def run_git(stage, arguments, timeout_seconds):
         prefix = fetch_prefix if stage == "fetch" else owner_prefix
+        file_mode = "false" if stage == "fetch" else "true"
         command = [
             *prefix,
-            "-c", "core.fileMode=false",
+            "-c", "core.fileMode=" + file_mode,
             "-c", "safe.directory=" + repository,
             "-C", repository,
             *arguments,
