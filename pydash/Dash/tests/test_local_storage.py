@@ -317,6 +317,54 @@ class TestLocalStorageSortOrdering(unittest.TestCase):
         ), self.assertRaises(SystemExit):
             self._order([("rank", "1")])
 
+    def test_noncanonical_and_mixed_numeric_values_have_total_order(self):
+        cases = [
+            (
+                "all-numeric leading zeros",
+                [("one", "01"), ("ten", "010"), ("two", "2")],
+                ["one", "ten", "two"],
+            ),
+            (
+                "duplicate integers",
+                [("first", 2), ("second", 2), ("else", 1)],
+                ["else", "first", "second"],
+            ),
+            (
+                "mixed numeric types",
+                [("ten", 10), ("two", "2"), ("one", 1.5)],
+                ["one", "two", "ten"],
+            ),
+        ]
+
+        for label, values, expected in cases:
+            with self.subTest(label=label):
+                order = self._order(values)
+
+                self.assertEqual(order, expected)
+                self.assertCountEqual(order, [entry_id for entry_id, _value in values])
+                self.assertEqual(len(order), len(set(order)))
+
+    def test_nan_and_hash_unfriendly_values_have_deterministic_order(self):
+        nan_order = self._order(
+            [("nan", float("nan")), ("one", 1), ("negative", -1)]
+        )
+        hash_unfriendly_values = [
+            ("list-b", ["b"]),
+            ("dictionary", {"a": 1}),
+            ("list-a", ["a"]),
+        ]
+        hash_unfriendly_order = self._order(hash_unfriendly_values)
+
+        self.assertEqual(nan_order, ["negative", "one", "nan"])
+        self.assertEqual(
+            hash_unfriendly_order,
+            ["dictionary", "list-b", "list-a"],
+        )
+        self.assertCountEqual(
+            hash_unfriendly_order,
+            [entry_id for entry_id, _value in hash_unfriendly_values],
+        )
+
 
 class TestLocalStorageReadModifyWrite(unittest.TestCase):
     def setUp(self):

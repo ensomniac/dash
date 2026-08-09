@@ -1089,16 +1089,49 @@ class DashLocalStorage:
 
         return filtered_data
 
+    @staticmethod
+    def _get_numeric_order_key(value):
+        from math import isnan
+
+        if type(value) is float and isnan(value):
+            return (1, 0)
+
+        return (0, value)
+
+    @staticmethod
+    def _coerce_numeric_sort_value(value):
+        if type(value) is str:
+            numeric_value = int(value)
+
+            if str(numeric_value) != value:
+                raise ValueError("Noncanonical numeric string")
+
+            return numeric_value
+
+        if isinstance(value, (int, float)):
+            return value
+
+        raise TypeError("Nonnumeric sort value")
+
+    def _get_heterogeneous_order_key(self, value, input_index):
+        if isinstance(value, (int, float)):
+            return (0, self._get_numeric_order_key(value), "", input_index)
+
+        if type(value) is str:
+            return (1, (0, value), "", input_index)
+
+        value_type = type(value)
+        type_name = f"{value_type.__module__}.{value_type.__qualname__}"
+
+        return (2, (0, type_name), "", input_index)
+
     def get_dict_order_by_sort_key(self, all_data):
         from unidecode import unidecode
 
-        order = []
         unsortable = []
-        keys_to_sort = []
-        sorted_to_prepend = []
-        restructured_data = {}
+        sortable = []
 
-        for entry_id in all_data:
+        for input_index, entry_id in enumerate(all_data):
             entry_data = all_data[entry_id]
 
             if not entry_data.get(self.sort_by_key):
@@ -1116,51 +1149,36 @@ class DashLocalStorage:
 
                 sort_value = sort_value.lower().strip()
 
-            if not restructured_data.get(sort_value):
-                restructured_data[sort_value] = entry_data
-            else:
-                restructured_data[f"{sort_value}_{entry_id}"] = entry_data
+            sortable.append((sort_value, entry_data["id"], input_index))
 
-        for item in restructured_data:
-            keys_to_sort.append(item)
+        numeric_order = []
 
-        og_keys_to_sort = keys_to_sort.copy()
+        try:
+            for sort_value, ordered_id, input_index in sortable:
+                numeric_value = self._coerce_numeric_sort_value(sort_value)
+                numeric_order.append(
+                    (self._get_numeric_order_key(numeric_value), input_index, ordered_id)
+                )
+        except (AttributeError, TypeError, ValueError):
+            numeric_order = None
 
-        # Check if all keys are ints, so we can sort accordingly
-        for index, key in enumerate(keys_to_sort):
-            try:
-                if len(key) > 1 and key.startswith("0") and key.endswith("0"):
-                    sorted_to_prepend.append(key)
-
-                keys_to_sort[index] = int(key)
-            except (AttributeError, TypeError, ValueError):
-                sorted_to_prepend = []
-                keys_to_sort = og_keys_to_sort.copy()
-
-                break
-
-        if keys_to_sort != og_keys_to_sort:
-            keys_to_sort.sort()
-
-            keys_to_sort = [str(k) for k in keys_to_sort]
+        if numeric_order is not None:
+            numeric_order.sort()
+            sorted_ids = [ordered_id for _value, _index, ordered_id in numeric_order]
         else:
-            keys_to_sort.sort()
+            try:
+                sortable.sort(key=lambda record: record[0])
+            except TypeError:
+                sortable.sort(
+                    key=lambda record: self._get_heterogeneous_order_key(
+                        record[0],
+                        record[2],
+                    )
+                )
 
-        # This for loop adds unsortable items to the front of the object
-        # Move this after the next for loop to add them to the end of the object instead
-        for unsorted_id in unsortable:
-            order.append(unsorted_id)
+            sorted_ids = [ordered_id for _value, ordered_id, _index in sortable]
 
-        for sort_value in keys_to_sort:
-            order.append(restructured_data[sort_value]["id"])
-
-        if len(sorted_to_prepend):
-            sorted_to_prepend.sort()
-
-            for prepend_key in sorted_to_prepend:
-                order.insert(0, restructured_data[prepend_key]["id"])
-
-        return order
+        return unsortable + sorted_ids
 
     def get_data_root(self, obj_id=""):
         """
