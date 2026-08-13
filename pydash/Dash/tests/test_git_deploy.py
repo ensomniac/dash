@@ -1,4 +1,5 @@
 import contextlib
+import grp
 import importlib
 import io
 import json
@@ -69,6 +70,10 @@ class GitDeploymentTest(unittest.TestCase):
     def current_user():
         return pwd.getpwuid(os.geteuid()).pw_name
 
+    @staticmethod
+    def current_group():
+        return grp.getgrgid(os.getegid()).gr_name
+
     def test_fast_forward_cleans_debris_and_preserves_ignored_files(self):
         with tempfile.TemporaryDirectory() as temporary_root:
             root = Path(temporary_root).resolve()
@@ -89,6 +94,7 @@ class GitDeploymentTest(unittest.TestCase):
                 str(deployed),
                 lock_root=str(locks),
                 git_user=self.current_user(),
+                git_group=self.current_group(),
             )
 
             self.assertTrue(result["ok"], result)
@@ -98,9 +104,22 @@ class GitDeploymentTest(unittest.TestCase):
             self.assertEqual((deployed / "tracked.txt").read_text(), "two\n")
             self.assertFalse((deployed / "untracked.txt").exists())
             self.assertEqual((deployed / "ignored.txt").read_text(), "preserve\n")
-            self.assertEqual(self.git(deployed, "status", "--porcelain"), "")
+            self.assertEqual(
+                stat.S_IMODE((deployed / "ignored.txt").stat().st_mode),
+                0o755,
+            )
+            self.assertEqual(
+                self.git(
+                    deployed,
+                    "-c",
+                    "core.fileMode=false",
+                    "status",
+                    "--porcelain",
+                ),
+                "",
+            )
 
-    def test_fast_forward_restores_tree_declared_file_modes(self):
+    def test_fast_forward_restores_deployment_permissions(self):
         with tempfile.TemporaryDirectory() as temporary_root:
             root = Path(temporary_root).resolve()
             _, publisher, deployed = self.repositories(root)
@@ -110,36 +129,71 @@ class GitDeploymentTest(unittest.TestCase):
             executable = publisher / "executable.sh"
             executable.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
             executable.chmod(0o755)
-            self.git(publisher, "add", "executable.sh")
-            self.git(publisher, "commit", "-m", "Add executable")
+            unchanged = publisher / "unchanged.txt"
+            unchanged.write_text("unchanged\n", encoding="utf-8")
+            outside = root / "outside.txt"
+            outside.write_text("outside\n", encoding="utf-8")
+            outside.chmod(0o600)
+            (publisher / "outside-link.txt").symlink_to("../outside.txt")
+            self.git(
+                publisher,
+                "add",
+                "executable.sh",
+                "unchanged.txt",
+                "outside-link.txt",
+            )
+            self.git(publisher, "commit", "-m", "Add deployment fixtures")
             self.git(publisher, "push")
 
             first_result = GitHubModule.DeployGitRepository(
                 str(deployed),
                 lock_root=str(locks),
                 git_user=self.current_user(),
+                git_group=self.current_group(),
             )
             self.assertTrue(first_result["ok"], first_result)
 
-            (deployed / "tracked.txt").chmod(0o755)
+            (deployed / "tracked.txt").chmod(0o644)
             (deployed / "executable.sh").chmod(0o644)
-            self.assertNotEqual(self.git(deployed, "status", "--porcelain"), "")
+            (deployed / "unchanged.txt").chmod(0o644)
 
+            (publisher / "tracked.txt").write_text("two\n", encoding="utf-8")
             (publisher / "next.txt").write_text("next\n", encoding="utf-8")
-            self.git(publisher, "add", "next.txt")
-            self.git(publisher, "commit", "-m", "Advance different path")
+            self.git(publisher, "add", "tracked.txt", "next.txt")
+            self.git(publisher, "commit", "-m", "Advance deployment")
             self.git(publisher, "push")
 
             result = GitHubModule.DeployGitRepository(
                 str(deployed),
                 lock_root=str(locks),
                 git_user=self.current_user(),
+                git_group=self.current_group(),
             )
 
             self.assertTrue(result["ok"], result)
-            self.assertEqual(stat.S_IMODE((deployed / "tracked.txt").stat().st_mode), 0o644)
-            self.assertEqual(stat.S_IMODE((deployed / "executable.sh").stat().st_mode), 0o755)
-            self.assertEqual(self.git(deployed, "status", "--porcelain"), "")
+            for deployed_path in (
+                deployed / "tracked.txt",
+                deployed / "executable.sh",
+                deployed / "unchanged.txt",
+                deployed / "next.txt",
+            ):
+                with self.subTest(path=deployed_path.name):
+                    deployed_stat = deployed_path.stat()
+                    self.assertEqual(stat.S_IMODE(deployed_stat.st_mode), 0o755)
+                    self.assertEqual(deployed_stat.st_uid, os.geteuid())
+                    self.assertEqual(deployed_stat.st_gid, os.getegid())
+            self.assertTrue((deployed / "outside-link.txt").is_symlink())
+            self.assertEqual(stat.S_IMODE(outside.stat().st_mode), 0o600)
+            self.assertEqual(
+                self.git(
+                    deployed,
+                    "-c",
+                    "core.fileMode=false",
+                    "status",
+                    "--porcelain",
+                ),
+                "",
+            )
 
     def test_command_order_has_one_reset_and_one_clean(self):
         with tempfile.TemporaryDirectory() as temporary_root:
@@ -172,6 +226,7 @@ class GitDeploymentTest(unittest.TestCase):
                 lock_root=str(locks),
                 git_user=self.current_user(),
                 git_runner=runner,
+                git_group=self.current_group(),
             )
 
             self.assertTrue(result["ok"], result)
@@ -210,15 +265,18 @@ class GitDeploymentTest(unittest.TestCase):
             )
             runner("fetch", ["fetch", "origin", "main"], 10)
             runner("reset", ["reset", "--hard", "a" * 40], 10)
+            runner("verify", ["status", "--porcelain=v1"], 10)
 
         fetch_command = run.call_args_list[0].args[0]
         reset_command = run.call_args_list[1].args[0]
+        verify_command = run.call_args_list[2].args[0]
         self.assertEqual(fetch_command[0], "/usr/bin/git")
         self.assertEqual(reset_command[0], "owner-git")
         self.assertIn("safe.directory=/validated/repository", fetch_command)
         self.assertIn("safe.directory=/validated/repository", reset_command)
         self.assertIn("core.fileMode=false", fetch_command)
         self.assertIn("core.fileMode=true", reset_command)
+        self.assertIn("core.fileMode=false", verify_command)
 
     def test_relative_broad_and_symlinked_repositories_fail_before_git(self):
         with tempfile.TemporaryDirectory() as temporary_root:
@@ -263,6 +321,7 @@ class GitDeploymentTest(unittest.TestCase):
                     git_user=self.current_user(),
                     lock_wait_seconds=0,
                     git_runner=runner,
+                    git_group=self.current_group(),
                 )
 
             self.assertFalse(result["ok"])
@@ -294,6 +353,7 @@ class GitDeploymentTest(unittest.TestCase):
                 lock_root=str(root),
                 git_user=self.current_user(),
                 git_runner=runner,
+                git_group=self.current_group(),
             )
 
             self.assertFalse(result["ok"])
@@ -332,6 +392,7 @@ class GitDeploymentTest(unittest.TestCase):
                 lock_root=str(root),
                 git_user=self.current_user(),
                 git_runner=runner,
+                git_group=self.current_group(),
             )
 
             self.assertFalse(result["ok"])

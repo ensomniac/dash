@@ -7,6 +7,7 @@
 
 import contextlib
 import fcntl
+import grp
 import hashlib
 import json
 import os
@@ -23,6 +24,8 @@ import time
 _DEPLOY_HASH = re.compile(r"^[0-9a-f]{40}$")
 _DEPLOY_BRANCH = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._/-]{0,127}$")
 _DEPLOY_RESULT_MAX_BYTES = 4096
+_DEPLOY_PERMISSION_MODE = 0o755
+_DEPLOY_PERMISSION_MAX_ENTRIES = 500000
 
 
 class _GitDeploymentError(Exception):
@@ -121,7 +124,11 @@ def _build_deployment_git_runner(repository, git_user):
 
     def run_git(stage, arguments, timeout_seconds):
         prefix = fetch_prefix if stage == "fetch" else owner_prefix
-        file_mode = "false" if stage == "fetch" else "true"
+
+        # Reset from Git's declared modes, then ignore the intentional all-0755
+        # deployment contract while checking for content changes.
+        file_mode = "false" if stage in ("fetch", "verify") else "true"
+
         command = [
             *prefix,
             "-c", "core.fileMode=" + file_mode,
@@ -156,6 +163,132 @@ def _build_deployment_git_runner(repository, git_user):
         return completed.stdout.strip()
 
     return run_git
+
+
+def _deployment_identity(git_user, git_group):
+    if (
+        type(git_group) is not str
+        or not git_group
+        or len(git_group) > 128
+        or not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_-]*", git_group)
+    ):
+        raise _GitDeploymentError("validate", "InvalidGitGroup")
+
+    try:
+        target_user = pwd.getpwnam(git_user)
+    except KeyError:
+        raise _GitDeploymentError("validate", "InvalidGitUser") from None
+
+    try:
+        target_group = grp.getgrnam(git_group)
+    except KeyError:
+        raise _GitDeploymentError("validate", "InvalidGitGroup") from None
+
+    return target_user.pw_uid, target_group.gr_gid
+
+
+def _normalize_deployment_permissions(repository, user_id, group_id, deadline):
+    """Restore the web-root ownership and mode contract without following links."""
+
+    def walk_error(err):
+        raise err
+
+    def deployment_paths():
+        yield repository
+
+        for root, directories, files in os.walk(repository, onerror=walk_error):
+            for name in directories:
+                yield os.path.join(root, name)
+
+            for name in files:
+                yield os.path.join(root, name)
+
+    try:
+        for entry_count, path in enumerate(deployment_paths(), start=1):
+            if entry_count > _DEPLOY_PERMISSION_MAX_ENTRIES:
+                raise _GitDeploymentError("permissions", "EntryLimitExceeded")
+
+            if time.monotonic() >= deadline:
+                raise _GitDeploymentError("permissions", "TimeoutExpired")
+
+            path_stat = os.lstat(path)
+
+            if stat.S_ISLNK(path_stat.st_mode):
+                if path_stat.st_uid != user_id or path_stat.st_gid != group_id:
+                    os.chown(path, user_id, group_id, follow_symlinks=False)
+
+                verified_stat = os.lstat(path)
+
+                if verified_stat.st_uid != user_id or verified_stat.st_gid != group_id:
+                    raise _GitDeploymentError("permissions", "OwnershipMismatch")
+
+                continue
+
+            if not (stat.S_ISREG(path_stat.st_mode) or stat.S_ISDIR(path_stat.st_mode)):
+                if path_stat.st_uid != user_id or path_stat.st_gid != group_id:
+                    os.chown(path, user_id, group_id)
+
+                if stat.S_IMODE(path_stat.st_mode) != _DEPLOY_PERMISSION_MODE:
+                    os.chmod(path, _DEPLOY_PERMISSION_MODE)
+
+                verified_stat = os.lstat(path)
+
+                if (
+                    verified_stat.st_uid != user_id
+                    or verified_stat.st_gid != group_id
+                    or stat.S_IMODE(verified_stat.st_mode) != _DEPLOY_PERMISSION_MODE
+                ):
+                    raise _GitDeploymentError("permissions", "PermissionMismatch")
+
+                continue
+
+            flags = os.O_RDONLY
+
+            if stat.S_ISDIR(path_stat.st_mode) and hasattr(os, "O_DIRECTORY"):
+                flags |= os.O_DIRECTORY
+
+            if hasattr(os, "O_CLOEXEC"):
+                flags |= os.O_CLOEXEC
+
+            if hasattr(os, "O_NOFOLLOW"):
+                flags |= os.O_NOFOLLOW
+
+            descriptor = os.open(path, flags)
+
+            try:
+                opened_stat = os.fstat(descriptor)
+
+                if (
+                    opened_stat.st_dev != path_stat.st_dev
+                    or opened_stat.st_ino != path_stat.st_ino
+                ):
+                    raise _GitDeploymentError("permissions", "PathChanged")
+
+                if opened_stat.st_uid != user_id or opened_stat.st_gid != group_id:
+                    os.fchown(descriptor, user_id, group_id)
+
+                if stat.S_IMODE(opened_stat.st_mode) != _DEPLOY_PERMISSION_MODE:
+                    os.fchmod(descriptor, _DEPLOY_PERMISSION_MODE)
+
+                verified_stat = os.fstat(descriptor)
+
+                if (
+                    verified_stat.st_uid != user_id
+                    or verified_stat.st_gid != group_id
+                    or stat.S_IMODE(verified_stat.st_mode) != _DEPLOY_PERMISSION_MODE
+                ):
+                    raise _GitDeploymentError("permissions", "PermissionMismatch")
+            finally:
+                os.close(descriptor)
+
+    except _GitDeploymentError:
+        raise
+
+    except OSError as error:
+        raise _GitDeploymentError(
+            "permissions",
+            _safe_deployment_error_type(error),
+        ) from None
 
 
 @contextlib.contextmanager
@@ -233,6 +366,7 @@ def DeployGitRepository(
     git_user="ensomniac",
     lock_wait_seconds=10,
     git_runner=None,
+    git_group="psacln",
 ):
     """Deploy one fast-forward Git revision with bounded, sanitized output."""
 
@@ -241,6 +375,7 @@ def DeployGitRepository(
     try:
         repository = _validate_deployment_repository(repository)
         run_git = git_runner or _build_deployment_git_runner(repository, git_user)
+        user_id, group_id = _deployment_identity(git_user, git_group)
 
         current_stage = "lock"
         lock_started = time.monotonic()
@@ -298,6 +433,14 @@ def DeployGitRepository(
 
             current_stage = "clean"
             invoke("clean", ["clean", "-fd"], 15)
+
+            current_stage = "permissions"
+            _normalize_deployment_permissions(
+                repository,
+                user_id,
+                group_id,
+                command_deadline,
+            )
 
             current_stage = "verify"
             deployed_revision = invoke("verify", ["rev-parse", "HEAD"], 10)
