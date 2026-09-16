@@ -23,6 +23,7 @@ from Dash.LocalStorage import Read, Write
 class ServerMonitor:
     _now: datetime
     _server_data_root: str
+    _is_primary_server: bool
 
     def __init__(self):
         pass
@@ -49,6 +50,15 @@ class ServerMonitor:
             self._now = datetime.now()
 
         return self._now
+
+    @property
+    def is_primary_server(self):
+        if not hasattr(self, "_is_primary_server"):
+            # This is a very crude and flimsy check, but it should suffice for this script, and
+            # I don't currently see a better way when the servers share the same root (OapiRoot)
+            self._is_primary_server = os.path.exists(os.path.join(OapiRoot, "altona", "shop_io"))
+
+        return self._is_primary_server
 
     def get_current_state(self):
         current_state = Read(self.server_state_data_path)
@@ -172,10 +182,27 @@ class ServerMonitor:
 
         from Dash.Utils import SendEmail
 
-        SendEmail(
-            subject=f"{prefix} WARNING: {used}% Disk Usage",
-            msg=f"{prefix} WARNING: Server disk usage is at {used}%"
-        )
+        server_type = "primary" if self.is_primary_server else "non-primary"
+        subject = f"{prefix} WARNING: {used}% Disk Usage"
+        msg = f"{prefix} WARNING: Server ({server_type}) disk usage is at {used}%"
+
+        if self.is_primary_server:
+            SendEmail(
+                subject=subject,
+                msg=msg
+            )
+        else:
+            from Dash import AdminEmails
+
+            SendEmail(
+                subject=subject,
+                msg=msg,
+
+                # This could probably be made more intuitive by leveraging
+                # Dash.PersonalContexts or Dash.ExcludedContexts, but this works for now
+                notify_email_list=[AdminEmails[0]],
+                strict_notify=True
+            )
 
         return used
 
