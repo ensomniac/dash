@@ -276,7 +276,7 @@ def EnsureUniqueFilename(file_data, file_root, nested, is_image):
         # Original filename exists, so we must add a numerical tag
         (not file_tag_num and 0 in matches)
 
-        # Incoming file already has a tag and it already exists, so increment it
+        # Incoming file already has a tag, and it already exists, so increment it
         or (file_tag_num and file_tag_num in matches)
     ):
         file_data[key] = update_filename_based_on_matches(filename, matches, file_tag_num)
@@ -290,6 +290,9 @@ def ImageHasTransparency(pil_image_object=None, file_bytes_or_existing_path="", 
 
     if not pil_image_object:
         pil_image_object = get_pil_image_object(file_bytes_or_existing_path, filename)
+
+        if not pil_image_object:
+            raise ValueError("Could not get PIL image object from file_bytes_or_existing_path")
 
     try:
         # So far, this one-liner has proven more than sufficient, but if
@@ -307,6 +310,9 @@ def ImageIsGrayscale(pil_image_object=None, file_bytes_or_existing_path="", file
 
     if not pil_image_object:
         pil_image_object = get_pil_image_object(file_bytes_or_existing_path, filename)
+
+        if not pil_image_object:
+            raise ValueError("Could not get PIL image object from file_bytes_or_existing_path")
 
     # If 'getcolors()' exceeds 256 (default max value), this method returns None,
     # meaning that you had more than 256 color options in your pixel list, hence
@@ -424,6 +430,7 @@ def GetVideoDetails(path):
         "num_frames": props.get("nb_frames", "Unknown"),
         "duration_sec": str(props.get("duration", "Unknown")).strip("0")
     }
+
 
 def WaitForFileReady(
     path, timeout_sec=5, interval=0.1, stable_checks=2, allow_empty=False, label="file"
@@ -568,6 +575,9 @@ def get_image_with_data(
 ):
     img = get_pil_image_object(file_bytes_or_existing_path, filename)
 
+    if not img:
+        raise ValueError("Could not get PIL image object from file_bytes_or_existing_path")
+
     if min_size and img.size[0] < min_size and img.size[1] < min_size:
         from Dash.Utils import ClientAlert
 
@@ -604,7 +614,7 @@ def get_image_with_data(
 
         raise ClientAlert(f"Invalid image aspect ratio, expected: {target_aspect_ratio}")
 
-    img_format = img.format.lower()
+    img_format = img.format.lower() if img.format else ""
 
     if is_mask:
         if len(img.getbands()) > 1:  # More than one channel
@@ -624,7 +634,7 @@ def get_image_with_data(
         "exif": {}  # process_exif_image_data(img)
     }
 
-    if file_data["exif"] and "Orientation" in file_data["exif"]:
+    if file_data["exif"] and "Orientation" in str(file_data["exif"]):
         img, file_data["rot_deg"] = rotate_image(img, file_data["exif"])
 
     return img, file_data
