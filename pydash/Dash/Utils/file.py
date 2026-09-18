@@ -736,8 +736,8 @@ def update_data_with_saved_images(
 def update_data_with_saved_file(file_data, file_root, file_ext, file_bytes_or_existing_path, dash_context, replace_existing=False, related_file_path=""):
     file_path = os.path.join(file_root, f"{file_data['id']}.{file_ext}")
 
-    if replace_existing and os.path.exists(file_path):
-        os.remove(file_path)
+    if replace_existing:
+        RemoveFileIfExists(file_path)
 
     if type(file_bytes_or_existing_path) is bytes:
         Write(file_path, file_bytes_or_existing_path)
