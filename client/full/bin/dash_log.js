@@ -74,7 +74,13 @@ class DashLog {
             return;
         }
 
-        console[type](this.get_safe_summary(type, msg));
+        if (Dash.LocalDev) {
+            console[type](...msg);
+        }
+
+        else {
+            console[type](this.get_safe_summary(type, msg));
+        }
     }
 
     get_safe_identifier (value, fallback) {

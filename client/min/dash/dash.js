@@ -19122,7 +19122,12 @@ class DashLog {
         if (!this.remote_debug_mode_enabled && !Dash.LocalDev) {
             return;
         }
-        console[type](this.get_safe_summary(type, msg));
+        if (Dash.LocalDev) {
+            console[type](...msg);
+        }
+        else {
+            console[type](this.get_safe_summary(type, msg));
+        }
     }
     get_safe_identifier (value, fallback) {
         if (typeof value !== "string") {
