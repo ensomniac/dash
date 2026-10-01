@@ -98,6 +98,18 @@ function DashMobileCardStack (binder, color=null) {
         })(this);
     };
 
+    // Call after reattaching a retained stack since detached stacks lose their resize worker
+    this.RefreshResizeTracking = function () {
+        if (!this.resize_worker || !this.resize_worker.active) {
+            this.resize_worker = Dash.OnHTMLResized(this, this.on_resized);
+        }
+
+        // Registration records the current size, so also apply it now in case it changed while detached
+        this.on_resized(this.html.width(), this.html.height());
+
+        return this;
+    };
+
     this.GetScrollTop = function () {
         return this.center_scroll_top;
     };
