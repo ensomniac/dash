@@ -9,6 +9,14 @@ function _Dash () {
     this.Daypart = "Morning/Afternoon/Evening"; // Managed by Dash.Utils -> 5-minute background update interval
     this.AdminEmails = ["ryan@ensomniac.com", "stetandrew@gmail.com"];
 
+    // Some apps that were built before the HTML-injection-prevention updates in
+    // Gui.GetHTMLContext/GetHTMLAbsContext, like Shop IO, are not concerned with
+    // HTML injection and leverage HTML in labels across the code. Those cases are
+    // old code that certainly could be written much better, but the surface area is
+    // significant. Instead, those legacy apps can opt in to the original behavior,
+    // before constructing their app UI.
+    this.AllowHTMLLabels = false;
+
     // TODO: Since these are growing and getting out of hand, split all
     //  this out to a new DashEnv file, calling Dash.Env.IsMobile instead
 

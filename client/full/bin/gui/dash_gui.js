@@ -47,7 +47,16 @@ function DashGui () {
             color = Dash.Color.Light;
         }
 
-        var html = $("<div></div>").text(String(optional_label_text ?? ""));
+        var html = $("<div></div>");
+        var label = String(optional_label_text ?? "");
+
+        if (Dash.AllowHTMLLabels === true) {
+            html.html(label);
+        }
+
+        else {
+            html.text(label);
+        }
 
         html.css({
             "color": color.Text,
@@ -64,7 +73,16 @@ function DashGui () {
             color = Dash.Color.Light;
         }
 
-        var html = $("<div></div>").text(String(optional_label_text ?? ""));
+        var html = $("<div></div>");
+        var label = String(optional_label_text ?? "");
+
+        if (Dash.AllowHTMLLabels === true) {
+            html.html(label);
+        }
+
+        else {
+            html.text(label);
+        }
 
         html.css({
             "position": "absolute",
