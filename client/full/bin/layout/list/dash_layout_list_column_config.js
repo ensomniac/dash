@@ -228,7 +228,7 @@ function DashLayoutListColumnConfig () {
 
     // Abstraction to simplify AddColumn when just using a flex text value
     this.AddFlexText = function (
-        data_key, label_text="", min_width_mult=0.25, css={}, header_css={}, footer_css={}
+        data_key, label_text="", min_width_mult=0.25, css={}, header_css={}, footer_css={}, on_click_callback=null
     ) {
         var min_width = Dash.Size.ColumnWidth * min_width_mult;
 
@@ -252,13 +252,16 @@ function DashLayoutListColumnConfig () {
             {
                 "css": css,
                 "header_css": header_css,
-                "footer_css": footer_css
+                "footer_css": footer_css,
+                "on_click_callback": on_click_callback
             }
         );
     };
 
     // Abstraction to simplify AddColumn when just using a simple text value
-    this.AddText = function (data_key, width_mult=1, label_text="", css={}, header_css={}, footer_css={}) {
+    this.AddText = function (
+        data_key, width_mult=1, label_text="", css={}, header_css={}, footer_css={}, on_click_callback=null
+    ) {
         css["flex"] = "none";
         header_css["flex"] = "none";
         footer_css["flex"] = "none";
@@ -271,7 +274,8 @@ function DashLayoutListColumnConfig () {
             {
                 "css": css,
                 "header_css": header_css,
-                "footer_css": footer_css
+                "footer_css": footer_css,
+                "on_click_callback": on_click_callback
             }
         );
     };

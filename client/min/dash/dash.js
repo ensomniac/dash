@@ -53948,7 +53948,7 @@ function DashLayoutListColumnConfig () {
     };
     // Abstraction to simplify AddColumn when just using a flex text value
     this.AddFlexText = function (
-        data_key, label_text="", min_width_mult=0.25, css={}, header_css={}, footer_css={}
+        data_key, label_text="", min_width_mult=0.25, css={}, header_css={}, footer_css={}, on_click_callback=null
     ) {
         var min_width = Dash.Size.ColumnWidth * min_width_mult;
         css["flex-grow"] = 2;
@@ -53968,12 +53968,15 @@ function DashLayoutListColumnConfig () {
             {
                 "css": css,
                 "header_css": header_css,
-                "footer_css": footer_css
+                "footer_css": footer_css,
+                "on_click_callback": on_click_callback
             }
         );
     };
     // Abstraction to simplify AddColumn when just using a simple text value
-    this.AddText = function (data_key, width_mult=1, label_text="", css={}, header_css={}, footer_css={}) {
+    this.AddText = function (
+        data_key, width_mult=1, label_text="", css={}, header_css={}, footer_css={}, on_click_callback=null
+    ) {
         css["flex"] = "none";
         header_css["flex"] = "none";
         footer_css["flex"] = "none";
@@ -53985,7 +53988,8 @@ function DashLayoutListColumnConfig () {
             {
                 "css": css,
                 "header_css": header_css,
-                "footer_css": footer_css
+                "footer_css": footer_css,
+                "on_click_callback": on_click_callback
             }
         );
     };
@@ -54192,13 +54196,21 @@ function DashLayoutListRowColumn (list_row, column_config_data, index, color=nul
             "cursor": "pointer"
         });
         this.column_config_data["on_click_callback"] = this.column_config_data["on_click_callback"].bind(this.list.binder);
-        (function (self) {
-            self.html.on("click", function (e) {
-                self.column_config_data["on_click_callback"](self.list_row.id);
-                e.preventDefault();
-                return false;
-            });
-        })(this);
+        this.html.on("click", (e) => {
+            // The callback doesn't have to return anything, it's just optional for the hack below
+            var response = this.column_config_data["on_click_callback"](this.list_row.id, this);
+            // This is super hacky, but needed a quick way to bypass this
+            // existing behavior without breaking the many uses of this callback
+            if (Dash.IsValidObject(response)) {
+                if (response?.["prevent_default"] !== false) {
+                    e.preventDefault();  // Prevent by default, matching original behavior
+                }
+                // False by default, matching original behavior
+                return response?.["return_bool"] ?? false;
+            }
+            e.preventDefault();
+            return false;
+        });
     };
     this.get_preserved_css = function (css, key) {
         if (this.list_row.is_header) {

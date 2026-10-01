@@ -257,15 +257,25 @@ function DashLayoutListRowColumn (list_row, column_config_data, index, color=nul
 
         this.column_config_data["on_click_callback"] = this.column_config_data["on_click_callback"].bind(this.list.binder);
 
-        (function (self) {
-            self.html.on("click", function (e) {
-                self.column_config_data["on_click_callback"](self.list_row.id);
+        this.html.on("click", (e) => {
+            // The callback doesn't have to return anything, it's just optional for the hack below
+            var response = this.column_config_data["on_click_callback"](this.list_row.id, this);
 
-                e.preventDefault();
+            // This is super hacky, but needed a quick way to bypass this
+            // existing behavior without breaking the many uses of this callback
+            if (Dash.IsValidObject(response)) {
+                if (response?.["prevent_default"] !== false) {
+                    e.preventDefault();  // Prevent by default, matching original behavior
+                }
 
-                return false;
-            });
-        })(this);
+                // False by default, matching original behavior
+                return response?.["return_bool"] ?? false;
+            }
+
+            e.preventDefault();
+
+            return false;
+        });
     };
 
     this.get_preserved_css = function (css, key) {
