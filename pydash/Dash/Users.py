@@ -408,7 +408,7 @@ class Users:
 
         os.makedirs(sessions_path, exist_ok=True)
 
-        token = f"{token_urlsafe(32)}_|_{validation['email']}"
+        token = f"v2:{token_urlsafe(32)}_|_{validation['email']}"
 
         session_data = {
             "HTTP_USER_AGENT": os.environ["HTTP_USER_AGENT"],
@@ -557,6 +557,14 @@ class Users:
         parts = token_data.rsplit(b"_|_", 1)
         if len(parts) != 2:
             return {"error": "Invalid token"}
+
+        if self.dash_context.get("asset_path") == "candy":
+            from re import fullmatch
+
+            # Candy's pre-incident tokens were derived from public browser and
+            # email data. Re-login establishes a fresh, unguessable credential.
+            if not fullmatch(rb"v2:[A-Za-z0-9_-]{43}", parts[0]):
+                return {"error": "Unauthorized"}
 
         try:
             email = parts[-1].strip().decode("utf-8")

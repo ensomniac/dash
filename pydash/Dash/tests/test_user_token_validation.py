@@ -85,6 +85,27 @@ class UserTokenValidationTests(unittest.TestCase):
             self.assertNotIn(b"Same browser", base64.urlsafe_b64decode(token))
             self.assertTrue(self.users.Validate(token)["valid_login"])
 
+    def test_candy_rejects_existing_legacy_session_after_cutover(self):
+        token = self.token()
+        self.session(token)
+        self.users._dash_context["asset_path"] = "candy"
+        self.assertEqual(self.users.Validate(token), {"error": "Unauthorized"})
+
+    def test_candy_accepts_fresh_v2_session(self):
+        self.users._dash_context["asset_path"] = "candy"
+        user_root = str(Path(self.temp.name) / "users/user@example.invalid")
+        self.users.ValidateCredentials = Mock(return_value={"email": "user@example.invalid", "user_root": user_root})
+        with patch.dict("os.environ", {"HTTP_USER_AGENT": "Browser", "REMOTE_ADDR": "192.0.2.1"}):
+            token = self.users.Login()["token"]
+        self.assertTrue(base64.urlsafe_b64decode(token).startswith(b"v2:"))
+        self.assertTrue(self.users.Validate(token)["valid_login"])
+
+    def test_other_products_keep_existing_sessions(self):
+        token = self.token()
+        self.session(token)
+        self.users._dash_context["asset_path"] = "other-product"
+        self.assertTrue(self.users.Validate(token)["valid_login"])
+
     def test_oversized_and_non_string_tokens_rejected_by_decoder(self):
         for value in [None, 1, {}, b"bytes", "x" * 4097]:
             self.assertEqual(self.users.get_token_data(value), (None, None))
