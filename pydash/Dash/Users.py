@@ -578,7 +578,11 @@ class Users:
         if not os.path.exists(token_path):
             return {"error": "Invalid Login x7283"}
 
-        return_data = {"valid_login": True, "user": self.get_user_info(email)}
+        user_data = self.get_user_info(email)
+        if user_data.get("terminated"):
+            return {"error": "Unauthorized"}
+
+        return_data = {"valid_login": True, "user": user_data}
 
         if self.request_params.get("init"):
             # Return additional information for this user

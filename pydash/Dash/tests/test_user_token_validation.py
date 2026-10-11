@@ -67,6 +67,13 @@ class UserTokenValidationTests(unittest.TestCase):
         self.users.request_params["token"] = "codex-invalid-verification"
         self.assertIsNone(self.users.ValidateUser())
 
+    def test_terminated_account_cannot_reuse_existing_session(self):
+        token = self.token()
+        self.session(token)
+        self.users.get_user_info.return_value = {"email": "user@example.invalid", "terminated": True}
+        self.assertEqual(self.users.Validate(token), {"error": "Unauthorized"})
+        self.users.get_user_init.assert_not_called()
+
     def test_oversized_and_non_string_tokens_rejected_by_decoder(self):
         for value in [None, 1, {}, b"bytes", "x" * 4097]:
             self.assertEqual(self.users.get_token_data(value), (None, None))

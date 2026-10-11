@@ -94,11 +94,21 @@ class ApiUsers:
     def reset(self):
         from Dash.Users import Reset
 
-        return self.SetResponse(Reset(
+        response = Reset(
             request_params=self.Params,
             dash_context=self.DashContext,
             user_email_domain_bypass_emails=self.UserEmailDomainBypassEmails
-        ))
+        )
+
+        # Only the mailbox recipient may receive the reset credential. Returning
+        # it (or user data) here bypasses email ownership verification entirely.
+        if response.get("error"):
+            return self.SetResponse({"error": response["error"]})
+        return self.SetResponse({
+            "email": response.get("email"),
+            "success": response.get("success", False),
+            "reset_email_sent": response.get("reset_email_sent", False),
+        })
 
     def login(self):
         from Dash.Users import Login
