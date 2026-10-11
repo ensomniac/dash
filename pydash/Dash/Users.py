@@ -548,27 +548,35 @@ class Users:
         token_str, token_data = self.get_token_data(token_str)
 
         if not token_data:
-            return {
-                "error": "Invalid token",
-                "_error": f"token str: {token_str}"
-            }
+            return {"error": "Invalid token"}
 
         if type(token_data) is str:
             token_data = token_data.encode()
 
-        email = token_data.split(b"_|_")[-1].strip()
+        parts = token_data.rsplit(b"_|_", 1)
+        if len(parts) != 2:
+            return {"error": "Invalid token"}
+
+        try:
+            email = parts[-1].strip().decode("utf-8")
+        except UnicodeDecodeError:
+            return {"error": "Invalid token"}
+
+        # The decoded identity is a directory name, never a caller-supplied path.
+        if (
+            not email or "@" not in email or len(email) > 254
+            or any(char in email for char in ("/", "\\"))
+            or any(ord(char) < 32 or ord(char) == 127 for char in email)
+        ):
+            return {"error": "Invalid token"}
         # HTTP_USER_AGENT = token_data.split(b"_|_")[0].strip()
 
-        user_root = os.path.join(self.UsersPath, email.decode())
+        user_root = os.path.join(self.UsersPath, email)
         sessions_path = os.path.join(user_root, "sessions")
         token_path = os.path.join(sessions_path, token_str)
 
         if not os.path.exists(token_path):
-            return {
-                "error": "Invalid Login x7283",
-                "_error": f"token path: {token_path}",
-                "token_path": token_path
-            }
+            return {"error": "Invalid Login x7283"}
 
         return_data = {"valid_login": True, "user": self.get_user_info(email)}
 
@@ -993,19 +1001,23 @@ class Users:
         return user_data
 
     def get_token_data(self, token):
-        from base64 import urlsafe_b64decode
+        from base64 import b64decode
+        from binascii import Error as Base64Error
+        from re import fullmatch
+
+        if (
+            not isinstance(token, str) or len(token) > 4096
+            or not fullmatch(r"[A-Za-z0-9_-]+={0,2}", token)
+        ):
+            return None, None
 
         for _ in range(3):
             try:
-                token_data = urlsafe_b64decode(token)
+                token_data = b64decode(token, altchars=b"-_", validate=True)
 
                 return token, token_data
-            except:
-                from traceback import format_exc
-
-                error = format_exc().lower()
-
-                if "incorrect padding" not in error:
+            except Base64Error as error:
+                if "incorrect padding" not in str(error).lower():
                     return None, None
 
             token += "="
