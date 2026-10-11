@@ -176,10 +176,11 @@ class ApiUsers:
             "terminated_by": self.User["email"] if self.User and self.User.get("email") else ""
         }
 
-        if not user_data["last_name"].endswith("(Terminated)"):
+        last_name = user_data.get("last_name") or ""
+        if not last_name.endswith("(Terminated)"):
             # Do this here so we don't have to keep track of this on any given view of the front end.
             # It doesn't hurt to do it here, since we won't be renaming them moving forward.
-            properties["last_name"] = f"{user_data['last_name']} (Terminated)"
+            properties["last_name"] = f"{last_name} (Terminated)".strip()
 
         if self._on_termination_callback:
             self._on_termination_callback(user_data)

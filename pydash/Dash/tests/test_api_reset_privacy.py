@@ -31,6 +31,18 @@ class ResetPrivacyTests(unittest.TestCase):
         with patch("Dash.Users.Reset", return_value={"error": "Unauthorized", "t": "secret", "_error": "private"}):
             self.assertEqual(self.api().reset(), {"error": "Unauthorized"})
 
+    def test_terminate_account_without_profile_name(self):
+        api = self.api()
+        api.Params = {"email_to_term": "probe@example.invalid"}
+        api.User = {"email": "operator@example.invalid"}
+        api.ValidateParams = Mock()
+        api._on_termination_callback = None
+        with patch("Dash.Users.Get", return_value={"email": "probe@example.invalid"}), patch("Dash.LocalStorage.SetProperties", side_effect=lambda **kwargs: kwargs["properties"]):
+            result = api.terminate()
+        self.assertTrue(result["terminated"])
+        self.assertEqual(result["terminated_by"], "operator@example.invalid")
+        self.assertEqual(result["last_name"], "(Terminated)")
+
 
 if __name__ == "__main__":
     unittest.main()
