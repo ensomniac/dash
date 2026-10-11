@@ -11,6 +11,10 @@ import json
 from Dash.Utils import GetRandomID
 
 
+class ApiRequestError(ValueError):
+    """Invalid caller input, distinct from an application failure."""
+
+
 class ApiCore:
     _user: dict
     _dash_context: dict
@@ -327,9 +331,27 @@ class ApiCore:
             self.run(self.dash_excalidraw)
 
         else:
-            self.SetResponse({"error": "Unknown Function x4543"})
+            self.reject_request("Unknown Function x4543", "unknown_function")
 
         self.ReturnResponse()
+
+    def reject_request(self, error, reason):
+        # Untrusted requests must not turn the error reporter into a mail relay.
+        # Keep a bounded, credential-free record in the normal server error log.
+        print("api_request_rejected " + json.dumps({
+            "api": self.__class__.__name__,
+            "function": str(self.Params.get("f", ""))[:128],
+            "reason": reason,
+            "remote_addr": os.environ.get("REMOTE_ADDR", "")[:64],
+        }), file=sys.stderr)
+
+        send_email_on_error = self._send_email_on_error
+        self._send_email_on_error = False
+        try:
+            return self.SetResponse({"error": error})
+        finally:
+            # A rejected request must never disable later real-error reporting.
+            self._send_email_on_error = send_email_on_error
 
     def ReturnResponse(self):
         if self._render_html:
@@ -358,13 +380,13 @@ class ApiCore:
         for param in required_params:
             if falsy:
                 if param not in self.Params:
-                    raise ValueError(f"Missing (falsy) param '{param}'")
+                    raise ApiRequestError(f"Missing (falsy) param '{param}'")
             else:
                 if not self.Params.get(param):
                     # if param == "file":
                     #     raise ClientAlert("File failed to properly upload, please try again.")
                     # else:
-                    raise ValueError(f"Missing param '{param}'")
+                    raise ApiRequestError(f"Missing param '{param}'")
 
     def SetParam(self, key, value):
         self._params[key] = value
@@ -806,6 +828,9 @@ class ApiCore:
 
         try:
             f()
+
+        except ApiRequestError as e:
+            self.reject_request(str(e), "missing_parameter")
 
         # See ClientAlert docstring for explainer - don't use this without reading that first
         except ClientAlert as e:
