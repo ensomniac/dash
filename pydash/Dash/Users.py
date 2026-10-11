@@ -114,7 +114,7 @@ class Users:
             account_exists = True
 
         from json import dumps
-        from random import randint
+        from secrets import token_urlsafe
         from datetime import datetime
         from base64 import urlsafe_b64encode
 
@@ -125,7 +125,7 @@ class Users:
         uri_data_64 = urlsafe_b64encode(dumps({
             "email": email,
             "time": datetime.now().isoformat(),
-            "request_token": randint(10000000, 99999999)
+            "request_token": token_urlsafe(32)
         }).encode()).decode().strip()
 
         open(os.path.join(user_reset_root, uri_data_64), "w").write("")  # Why not Dash.LocalStorage.Write?
@@ -402,12 +402,13 @@ class Users:
         from json import dumps
         from datetime import datetime
         from base64 import urlsafe_b64encode
+        from secrets import token_urlsafe
 
         sessions_path = os.path.join(validation["user_root"], "sessions")
 
         os.makedirs(sessions_path, exist_ok=True)
 
-        token = f"{os.environ['HTTP_USER_AGENT']}_|_{validation['email']}"
+        token = f"{token_urlsafe(32)}_|_{validation['email']}"
 
         session_data = {
             "HTTP_USER_AGENT": os.environ["HTTP_USER_AGENT"],

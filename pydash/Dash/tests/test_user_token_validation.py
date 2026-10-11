@@ -4,7 +4,7 @@ import base64
 import tempfile
 import unittest
 from pathlib import Path
-from unittest.mock import Mock
+from unittest.mock import Mock, patch
 
 from Dash.Users import Users
 
@@ -73,6 +73,17 @@ class UserTokenValidationTests(unittest.TestCase):
         self.users.get_user_info.return_value = {"email": "user@example.invalid", "terminated": True}
         self.assertEqual(self.users.Validate(token), {"error": "Unauthorized"})
         self.users.get_user_init.assert_not_called()
+
+    def test_new_logins_issue_independent_unpredictable_sessions(self):
+        user_root = str(Path(self.temp.name) / "users/user@example.invalid")
+        self.users.ValidateCredentials = Mock(return_value={"email": "user@example.invalid", "user_root": user_root})
+        with patch.dict("os.environ", {"HTTP_USER_AGENT": "Same browser", "REMOTE_ADDR": "192.0.2.1"}):
+            first = self.users.Login()["token"]
+            second = self.users.Login()["token"]
+        self.assertNotEqual(first, second)
+        for token in (first, second):
+            self.assertNotIn(b"Same browser", base64.urlsafe_b64decode(token))
+            self.assertTrue(self.users.Validate(token)["valid_login"])
 
     def test_oversized_and_non_string_tokens_rejected_by_decoder(self):
         for value in [None, 1, {}, b"bytes", "x" * 4097]:
