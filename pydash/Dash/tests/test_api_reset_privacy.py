@@ -13,6 +13,7 @@ class ResetPrivacyTests(unittest.TestCase):
         api.DashContext = {"asset_path": "candy"}
         api._user_email_domain_bypass_emails = []
         api.SetResponse = Mock(side_effect=lambda value: value)
+        api.reject_request = Mock(side_effect=lambda error, reason: {"error": error})
         return api
 
     def test_public_reset_only_returns_delivery_confirmation(self):

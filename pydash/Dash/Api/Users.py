@@ -83,10 +83,18 @@ class ApiUsers:
     def OnTermination(self, callback):
         self._on_termination_callback = callback
 
+    def set_auth_response(self, response):
+        # Credential/input rejections are expected caller errors. They must not
+        # send operational emails or return submitted passwords/private details.
+        # Exceptions still go through ApiCore's normal application-error path.
+        if isinstance(response, dict) and response.get("error"):
+            return self.reject_request(response["error"], "authentication_rejected")
+        return self.SetResponse(response)
+
     def r(self):
         from Dash.Users import ResetResponse
 
-        return self.SetResponse(ResetResponse(
+        return self.set_auth_response(ResetResponse(
             request_params=self.Params,
             dash_context=self.DashContext
         ))
@@ -103,7 +111,7 @@ class ApiUsers:
         # Only the mailbox recipient may receive the reset credential. Returning
         # it (or user data) here bypasses email ownership verification entirely.
         if response.get("error"):
-            return self.SetResponse({"error": response["error"]})
+            return self.set_auth_response({"error": response["error"]})
         return self.SetResponse({
             "email": response.get("email"),
             "success": response.get("success", False),
@@ -127,7 +135,7 @@ class ApiUsers:
         except:
             pass
 
-        return self.SetResponse(self.merge_addl_into_init(response))
+        return self.set_auth_response(self.merge_addl_into_init(response))
 
     def get_all(self):
         from Dash.Users import GetAll
@@ -152,7 +160,7 @@ class ApiUsers:
     def validate(self):
         from Dash.Users import Validate
 
-        return self.SetResponse(self.merge_addl_into_init(Validate(
+        return self.set_auth_response(self.merge_addl_into_init(Validate(
             request_params=self.Params,
             dash_context=self.DashContext
         )))
