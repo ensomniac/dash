@@ -400,72 +400,27 @@ class GitDeploymentTest(unittest.TestCase):
             self.assertEqual(result["error_type"], "CalledProcessError")
             self.assertFalse(any(command[0] in ("reset", "clean") for command in calls))
 
-    def test_webhook_queues_one_helper_command_and_parses_success(self):
-        success = {
-            "ok": True,
-            "stage": "complete",
-            "branch": "main",
-            "before_revision": "a" * 40,
-            "revision": "b" * 40,
-            "changed": True,
-            "lock_wait_ms": 2,
-            "duration_ms": 37,
-        }
-        queue_envelope = {
-            "error": None,
-            "result": {
-                "cmd_result": [{"result": json.dumps(success)}],
-            },
-        }
+    def test_webhook_deployment_rejects_without_queueing_commands(self):
         webhook = GitHubModule._Webhook({
-            "asset_path": "fantom",
-            "srv_path_git_oapi": "/var/www/vhosts/oapi.co/fantom/github",
+            "asset_path": "fixture",
+            "srv_path_git_oapi": "/srv/fixture",
         })
+        with mock.patch("Dash.RunAsRoot.Queue", side_effect=AssertionError("queue must remain unused")) as queue:
+            result = webhook.git_pull_clean()
+            response = webhook.ForAssetPath({"ref": "refs/heads/main"})
+        self.assertFalse(result["deployment"]["ok"])
+        self.assertEqual(result["deployment"]["stage"], "retired")
+        self.assertTrue(response["retired"])
+        queue.assert_not_called()
 
-        with mock.patch("Dash.RunAsRoot.Queue", return_value=queue_envelope) as queue:
-            response = webhook.git_pull_clean()
+    def test_arbitrary_queue_and_polling_fail_before_side_effects(self):
+        from Dash.RunAsRoot import Queue, RunAsRoot
+        from Dash.RootPoll import PollRequests
 
-        self.assertTrue(response["deployment"]["ok"])
-        self.assertIsNone(response["error"])
-        queue.assert_called_once()
-        command = queue.call_args.args[0]
-        self.assertIs(type(command), str)
-        command_parts = shlex.split(command)
-        self.assertEqual(command_parts[1:5], [
-            "-m",
-            "Dash.GitHub",
-            "deploy-repository",
-            "--repo",
-        ])
-        self.assertEqual(command_parts[5], "/var/www/vhosts/oapi.co/fantom/github")
-        self.assertNotIn("git pull", command)
-        self.assertNotIn("git checkout", command)
-        self.assertNotIn("chmod", command)
-        self.assertNotIn("chown", command)
-
-    def test_webhook_marks_failed_and_malformed_results_as_errors(self):
-        webhook = GitHubModule._Webhook({
-            "asset_path": "fantom",
-            "srv_path_git_oapi": "/var/www/vhosts/oapi.co/fantom/github",
-        })
-        failure = {
-            "ok": False,
-            "stage": "fetch",
-            "error_type": "CalledProcessError",
-            "duration_ms": 12,
-        }
-        envelopes = [
-            {"error": None, "result": {"cmd_result": [{"result": json.dumps(failure)}]}},
-            {"error": None, "result": {"cmd_result": [{"result": "private malformed output"}]}},
-        ]
-
-        for envelope in envelopes:
-            with self.subTest(result=envelope["result"]["cmd_result"][0]["result"]):
-                with mock.patch("Dash.RunAsRoot.Queue", return_value=envelope):
-                    response = webhook.git_pull_clean()
-                self.assertFalse(response["deployment"]["ok"])
-                self.assertTrue(response["error"].startswith("Git deployment failed at "))
-                self.assertNotIn("private malformed output", response["error"])
+        with mock.patch("builtins.open", side_effect=AssertionError("retired queue opened a file")), mock.patch("subprocess.Popen", side_effect=AssertionError("retired queue launched a command")):
+            for callback in (lambda: Queue("id"), lambda: RunAsRoot().Queue(["id"]), PollRequests):
+                with self.assertRaisesRegex(RuntimeError, "retired"):
+                    callback()
 
     def test_cli_emits_one_bounded_json_result(self):
         result = {

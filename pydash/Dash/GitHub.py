@@ -592,111 +592,10 @@ class GitHub:
         self.users = []
 
     def UpdateAndNotify(self, params, path_set, email_list):
-        from json import loads
-
-        return_data = {"payload": params.get("payload")}
-
-        if not return_data["payload"]:
-            return_data["error"] = "No GitHub Payload"
-
-            return return_data
-
-        return_data["payload"] = loads(return_data["payload"])
-        return_data["repository"] = return_data["payload"]["repository"]["name"]
-        return_data["sender_details"] = return_data["payload"]["sender"]
-        return_data["sender"] = return_data["sender_details"]["login"]
-        return_data["hook_type"] = "Unknown hook type"
-
-        try:
-            commits = return_data["payload"]["commits"]
-        except:
-            commits = []
-
-        if not commits:
-            return_data["msg"] = "Ignoring - no commits"
-
-            return return_data
-
-        from Dash import PersonalContexts
-        from Dash.Utils import JSON2HTML, SendEmail
-
-        subject = f"GitHub -> {return_data['repository']} -> {return_data['sender']}"
-        msg = "<b>Git Webhook Response</b><br><br>"
-        git_update_result = {}
-
-        for path_details in path_set.All:
-            git_update_result[path_details["name"]] = self.UpdateFromWebhook(
-                local_git_root=path_details["local_git_root"],
-                local_git_path=path_details["local_git_path"],
-                dest_path=path_details["dest_path"],
-            )
-
-        return_data["server_git_update"] = git_update_result
-
-        msg += "<b>Git Pull Result (via Dash):</b><br>"
-
-        html = JSON2HTML(return_data["server_git_update"])
-
-        msg += f"{html}<br><b>GitHub Commits:</b><br>"
-
-        for commit_details in commits:
-            msg += JSON2HTML(commit_details)
-
-        msg += "<br><b>Full GitHub Payload:</b><br>"
-        msg += f"{JSON2HTML(return_data['payload'])}<br>"
-
-        for email in PersonalContexts:
-            if return_data["repository"] in PersonalContexts[email]["repo_names"]:
-                email_list = [email]
-
-                break
-
-        # TODO: this needs to use the outer scope's `send_email` func
-        #  but we need to first introduce dash context at this level
-        SendEmail(
-            subject=subject,
-            msg=msg,
-            notify_email_list=email_list,
-            strict_notify=True
-        )
-
-        del return_data["payload"]
-        del return_data["sender_details"]
-
-        return return_data
+        return {"error": "Legacy HTTP deployment is retired; use restricted DashSync SSH", "retired": True}
 
     def UpdateFromWebhook(self, local_git_root, local_git_path, dest_path):
-        from . import RunAsRoot
-
-        for path in [local_git_path, local_git_root, dest_path]:
-            if not path.endswith("/"):
-                path += "/"
-
-        cmds = [
-            f"cd {local_git_root}; git pull",
-            f"cd {local_git_root}; git clean -f -d",
-            f"cd {local_git_root}; git reset HEAD .",
-            f"cd {local_git_root}; git checkout . -f",
-            f"cd {local_git_root}; git clean -fd",
-            f"cd {local_git_root}; git checkout . -f",
-            f"cd {local_git_root}; git pull",
-            f"cd {local_git_root}; git status"  # So we can see this in the output field of the email
-        ]
-
-        if local_git_root == dest_path:
-            pass  # Just update git, nothing else
-        else:
-            cmds.append(f"rm -rf {dest_path}*")
-            cmds.append(f"cp -r {local_git_path}* {dest_path}")
-
-        cmds.append(f"chmod 755 {dest_path} -R")
-        cmds.append(f"chown ensomniac {dest_path} -R")
-        cmds.append(f"chgrp psacln {dest_path} -R")
-
-        # TODO: Check to see if there is already a GitHub command running for this site!
-
-        # return RunAsRoot.Queue(";".join(cmds))  # Chaining the commands led to silent failures when commands would abort before the other commands were called.
-        return RunAsRoot.Queue(cmds)
+        return {"error": "Legacy HTTP deployment is retired; use restricted DashSync SSH", "retired": True}
 
 
 class _Webhook:
@@ -723,86 +622,7 @@ class _Webhook:
             raise NotImplementedError(f"This Dash Context is not set up for GitHub/Webhook:\n{self.DashContext}")
 
     def ForAssetPath(self, payload={}):
-        should_process, ignored_payload = self.should_process_payload(payload)
-
-        if not should_process:
-            return {
-                "email_list": [],
-                "git_result": {},
-                **ignored_payload
-            }
-
-        email_list_csv = self.DashContext.get("email_git_webhook_csv")
-
-        if not email_list_csv:
-            from Dash import AdminEmails
-
-            email_list_csv = AdminEmails[0]
-
-        email_list = [email.strip() for email in email_list_csv.split(",")]
-        git_result = self.git_pull_clean()
-
-        if payload:
-            self.email_git_payload_response(payload, email_list, git_result)
-
-            # Silencing this now that FV has folded
-            # if not git_result.get("error") and self.DashContext["asset_path"] == "candy":
-            #     self.PostToSlack(payload)
-
-        if (
-            "/shop_io" in self.DashContext.get("git_repo", "")
-            or "/shop_io" in self.DashContext.get("srv_path_git_oapi", "")
-        ):
-            self.update_shop_io_index()
-
-        non_critical_command = {}
-
-        if self.DashContext["asset_path"] == "analog":
-            path = os.path.join(self.DashContext["srv_path_git_oapi"], "python", "MinFrontendVDB.py")
-
-            non_critical_command["args"] = f"python {path}"
-
-        elif self.DashContext["asset_path"] == "pydash":
-            root = self.DashContext["srv_path_http_root"]
-
-            if not root.endswith("/"):
-                root += "/"  # Important for the command to work properly
-
-            non_critical_command["command"] = f'rsync -azP --delete -e "ssh" --rsync-path="sudo rsync" {root} rmartin@72.167.225.180:{root}'
-
-        if non_critical_command:
-            from Dash.RunAsRoot import Queue
-
-            cmd = non_critical_command["command"]
-            result = Queue(cmd)
-
-            if result.get("error"):
-                if not non_critical_command.get("error"):
-                    non_critical_command["error"] = (
-                        "Failed to run non-critical command after processing "
-                        f"GitHub webhook for {self.DashContext['asset_path']}"
-                    )
-
-                send_email(
-                    dash_context=self.DashContext,
-                    subject=f"Dash GitHub Webhook Non-Critical Error: {self.DashContext['asset_path']}",
-                    msg=f"{non_critical_command['error']}\n\nCommand:\n{cmd}\n\nError:\n{result['error']}"
-                )
-
-            # Uncomment for debugging
-            # else:
-            #     from Dash.Utils import JSON2HTML
-            #
-            #     send_email(
-            #         dash_context=self.DashContext,
-            #         subject="Non-Critical Command Success DEBUG",
-            #         msg=f"Command:\n{cmd}\n\nResult:\n{JSON2HTML(result)}"
-            #     )
-
-        return {
-            "email_list": email_list,
-            "git_result": git_result
-        }
+        return {"error": "Legacy HTTP deployment is retired; use restricted DashSync SSH", "retired": True}
 
     def PostToSlack(self, payload={}):
         msg = self.get_commit_slack_highlight(payload)
@@ -909,28 +729,11 @@ class _Webhook:
         return True, {}
 
     def git_pull_clean(self):
-        from Dash.RunAsRoot import Queue
-
-        command = shlex.join([
-            sys.executable,
-            "-m",
-            "Dash.GitHub",
-            "deploy-repository",
-            "--repo",
-            self.DashContext["srv_path_git_oapi"],
-        ])
-        queue_result = Queue(command)
-        response = dict(queue_result) if type(queue_result) is dict else {}
-        deployment_result = _deployment_result_from_queue(queue_result)
-        response["deployment"] = deployment_result
-
-        if not deployment_result["ok"]:
-            response["error"] = (
-                response.get("error")
-                or "Git deployment failed at " + deployment_result["stage"]
-            )
-
-        return response
+        return {
+            "error": "Legacy privileged deployment is retired",
+            "retired": True,
+            "deployment": {"ok": False, "stage": "retired", "error_type": "LegacyDeploymentRetired", "duration_ms": 0},
+        }
 
     def email_git_payload_response(self, payload, email_list, git_result):
         if not payload.get("commits"):
