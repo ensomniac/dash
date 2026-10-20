@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/python3 -IS
 """Root publisher for a local systemd Unix socket; no Dash/application imports.
 
 Identity comes exclusively from SO_PEERCRED, never from a request or environment.

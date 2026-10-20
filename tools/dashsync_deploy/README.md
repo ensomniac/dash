@@ -34,18 +34,19 @@ Local Dash client compilation/distribution is retained. Compiler context comes f
 Stage the reviewed server files as root:
 
 ```sh
-python3 -I tools/dashsync_deploy/stage_server.py
+python3 -I -S tools/dashsync_deploy/stage_server.py
 ```
 
 This installs protected runtime copies in `/usr/local/libexec/dashsync` and creates `/etc/dashsync/policy.json` only if absent. It creates no accounts, installs no active units or SSH rules, and enables no packages. The example policy is deliberately disabled. Real package inventory, identity allowlists, credentials, and incident records belong outside this repository.
 
 Before activation:
 
+- Privileged helpers use `-I -S`: isolated Python with automatic site initialization disabled. Their standard-library-only runtime must never load application-controlled `.pth` files or `sitecustomize`.
 - Record completed host hardening in protected gate-evidence files: independent monitoring, credential exposure review/revocation, removal of arbitrary root queues and retired deployment trust, supported OS updates, removal of root-run application dependencies, and independent source review. Gate paths are operator attestations, not automatic proof that the work happened. Do not clear gates to suppress a client error.
 - For each package, review its root, device/inode pin, approved prefixes/extensions, and protected files. Source directories and files must be root-owned and protected against application writes. Retain appropriate application-readable modes and immutable flags. Do not recursively change an entire subscription or bulk-unfreeze code. Writable ancestors outside the package root are tolerated only because the root is pinned by inode and every component is opened without following symlinks; directories inside that root must be protected.
 - Provision dedicated `dashsync_` system accounts in group `dashsync`, with `/bin/sh` and root-owned, non-writable empty homes. Use no sudo or application groups. A nologin shell prevents the forced command from working. Record actual account UIDs and grant packages independently to each developer.
 - Install chosen public keys in protected root-owned `/etc/dashsync/authorized_keys/<account>` files, with `restrict,from="<approved CIDRs>"` options. Preserve management firewall restrictions. Review and install `sshd.conf.example` with its final `Match all`; use `sshd -t` and effective per-account configuration checks before reloading. Verify ForceCommand, no forwarding/PTY/user startup files, and the root-owned key location. Retain independent administrative and console access.
-- Run `python3 -I /usr/local/libexec/dashsync/admin.py`. After its prerequisites pass, install the reviewed socket/service templates in `/etc/systemd/system`, validate them with `systemd-analyze verify`, and enable the socket. Test both developers against a non-public scratch target before enabling production packages individually. External hosts need their own reviewed receiver and policy.
+- Run `python3 -I -S /usr/local/libexec/dashsync/admin.py`. After its prerequisites pass, install the reviewed socket/service templates in `/etc/systemd/system`, validate them with `systemd-analyze verify`, and enable the socket. Test both developers against a non-public scratch target before enabling production packages individually. External hosts need their own reviewed receiver and policy.
 
 The unprivileged SSH forced command accepts one fixed protocol and forwards it to a local Unix socket. The root publisher derives identity from kernel SO_PEERCRED, reloads protected policy after upload, checks package/path/hash permissions again, and manages exact source files and immutable flags. It does not import applications, run Git/shell commands, evaluate content, or accept caller-selected destination roots.
 

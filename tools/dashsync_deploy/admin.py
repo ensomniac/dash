@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/python3 -IS
 """Read-only activation preflight. This tool never changes ownership or gates."""
 
 import argparse

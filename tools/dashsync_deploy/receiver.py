@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/python3 -IS
 """Unprivileged SSH forced command; it cannot choose a privileged operation."""
 
 import os

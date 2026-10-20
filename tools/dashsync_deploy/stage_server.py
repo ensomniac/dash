@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/python3 -IS
 """Stage inactive root-owned runtime copies. Does not create users or enable SSH.
 
 Run as root from a reviewed source checkout. Re-running never overwrites policy.

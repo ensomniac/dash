@@ -5,7 +5,7 @@ Match User dashsync_ryan,dashsync_andrew
     PasswordAuthentication no
     KbdInteractiveAuthentication no
     AuthorizedKeysFile /etc/dashsync/authorized_keys/%u
-    ForceCommand /usr/bin/python3 -I /usr/local/libexec/dashsync/receiver.py
+    ForceCommand /usr/bin/python3 -I -S /usr/local/libexec/dashsync/receiver.py
     DisableForwarding yes
     PermitTTY no
     PermitUserRC no
