@@ -7,6 +7,48 @@ import os
 import sys
 
 
+def _safe_user_email(value):
+    if isinstance(value, bytes):
+        try:
+            value = value.decode("utf-8")
+        except UnicodeDecodeError:
+            return None
+    if not isinstance(value, str):
+        return None
+    value = value.lower().strip()
+    if not value or "@" not in value or len(value) > 254 or any(c in value for c in ("/", "\\")):
+        return None
+    if any(ord(c) < 32 or ord(c) == 127 for c in value):
+        return None
+    return value
+
+
+def _parse_reset_request_token(token):
+    """Validate untrusted reset-link data before using it as a path or identity."""
+    import base64
+    import binascii
+    import json
+    import re
+    from datetime import datetime
+    if not isinstance(token, str) or not 1 <= len(token) <= 255 or not re.fullmatch(r"[A-Za-z0-9_-]+={0,2}", token):
+        return None
+    try:
+        raw = base64.b64decode(token + "=" * (-len(token) % 4), altchars=b"-_", validate=True)
+        data = json.loads(raw.decode("utf-8"))
+        if not isinstance(data, dict) or not isinstance(data.get("email"), str) or not isinstance(data.get("time"), str):
+            return None
+        email = _safe_user_email(data["email"])
+        if not email or email != data["email"]:
+            return None
+        timestamp = datetime.fromisoformat(data["time"])
+        if (datetime.now(timestamp.tzinfo) - timestamp).total_seconds() < 0:
+            return None
+        return data
+    except (ValueError, TypeError, UnicodeError, binascii.Error, OverflowError):
+        return None
+
+
+
 class Users:
     _analog_context: dict
     _dash_global: callable
@@ -94,9 +136,9 @@ class Users:
         return self._dash_global
 
     def Reset(self, user_email_domain_bypass_emails=[], send_reset_email=True):
-        email = str(self.request_params.get("email")).strip().lower()
+        email = _safe_user_email(self.request_params.get("email"))
 
-        if "@" not in email:
+        if not email:
             return {"error": "Enter a valid email address."}
 
         self.validate_reset(email, user_email_domain_bypass_emails)
@@ -164,39 +206,30 @@ class Users:
 
     def ResetResponse(self):
         uri_data_64 = self.request_params.get("t")
+        uri_data = _parse_reset_request_token(uri_data_64)
+        if uri_data is None:
+            return {"error": "Invalid or expired reset link. Request a new link to continue."}
 
-        if not uri_data_64:
-            return {
-                "error": "Invalid request token x3728",
-                "_error": f"uri_data_64: {uri_data_64}"
-            }
-
-        uri_str = self.decode_base64(uri_data_64.encode())
-
-        if not uri_str:
-            return
-
-        from json import loads
-
-        uri_data = loads(uri_str)
         email = uri_data["email"]
-        user_root = os.path.join(self.dash_context["srv_path_local"], "users", email)
+        users_root = os.path.realpath(os.path.join(self.dash_context["srv_path_local"], "users"))
+        user_root = os.path.join(users_root, email)
         user_reset_root = os.path.join(user_root, "reset_requests")
         reset_path = os.path.join(user_reset_root, uri_data_64)
+        if os.path.realpath(user_root) != user_root or os.path.realpath(user_reset_root) != user_reset_root:
+            return {"error": "Invalid or expired reset link. Request a new link to continue."}
         link = f"<a href='https://{self.dash_context['domain']}'>https://{self.dash_context['domain']}</a>"
 
-        if not os.path.exists(reset_path):
+        if not os.path.isfile(reset_path) or os.path.islink(reset_path):
             from Dash.Utils import ClientAlert
 
             raise ClientAlert(f"Your password request has expired. Visit {link} to request a new reset link.")
 
-        from random import choice
+        from secrets import choice
         from datetime import datetime
-        from dateutil.parser import parse
         from passlib.apps import custom_app_context as pwd_context
 
-        timestamp = parse(uri_data["time"])
-        seconds_since = (datetime.now() - timestamp).total_seconds()
+        timestamp = datetime.fromisoformat(uri_data["time"])
+        seconds_since = (datetime.now(timestamp.tzinfo) - timestamp).total_seconds()
         minutes_since = int(seconds_since / 60)
 
         # This used to be 10 minutes, but on 1/24/25 Altona requested it be an hour,
@@ -226,7 +259,14 @@ class Users:
         hashed_password = pwd_context.hash(new_password)
         pass_path = os.path.join(user_root, "phash")
 
-        open(pass_path, "w").write(hashed_password)
+        # Atomic single use: a concurrent or repeated redemption cannot change the password again.
+        try:
+            os.unlink(reset_path)
+        except FileNotFoundError:
+            return {"error": "Invalid or expired reset link. Request a new link to continue."}
+        descriptor = os.open(pass_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC | os.O_NOFOLLOW, 0o600)
+        with os.fdopen(descriptor, "w") as password_file:
+            password_file.write(hashed_password)
 
         return "\n".join([
             "<!DOCTYPE html>",
@@ -430,7 +470,9 @@ class Users:
         }
 
     def ValidateCredentials(self, email="", password="", use_pin=False, return_login_dict=False):
-        email = (email or self.request_params.get("email") or "").lower().strip()
+        email = _safe_user_email(email or self.request_params.get("email") or "")
+        if not email:
+            return {"error": "Unauthorized"} if return_login_dict else False
         password = (password or self.request_params.get("pass") or self.request_params.get("password") or "").strip()
 
         if use_pin and not password:
@@ -514,10 +556,10 @@ class Users:
     def GetUserDataPath(self, user_email):
         from Dash.LocalStorage import GetRecordPath
 
-        email = user_email.lower().strip()
-
-        if type(email) is bytes:
-            email = email.decode()
+        email = _safe_user_email(user_email)
+        if not email:
+            from Dash.Utils import ClientAlert
+            raise ClientAlert("Invalid user identity")
 
         return GetRecordPath(
             dash_context=self.dash_context,
@@ -600,6 +642,10 @@ class Users:
         return return_data
 
     def UploadUserImage(self):
+        # Also protect callers that bypass the HTTP ApiUsers wrapper.
+        from Dash.Utils import ClientAlert
+        raise ClientAlert("Profile image uploads are temporarily unavailable.")
+
         from Dash.Utils import UploadFile
         from Dash.LocalStorage import Read, Write
 

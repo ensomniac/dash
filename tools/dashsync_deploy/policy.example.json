@@ -1,0 +1,49 @@
+{
+  "version": 1,
+  "gates": {
+    "monitoring": null,
+    "credentials_rotated": null,
+    "root_queue_retired": null,
+    "retired_host_trust_removed": null,
+    "os_updated": null,
+    "root_jobs_demoted": null,
+    "reviewed_source": null
+  },
+  "actors": {
+    "dashsync_ryan": {
+      "uid": null,
+      "packages": []
+    },
+    "dashsync_andrew": {
+      "uid": null,
+      "packages": []
+    }
+  },
+  "packages": {
+    "example": {
+      "enabled": false,
+      "root": "/srv/dashsync/example",
+      "device": 0,
+      "inode": 0,
+      "prefixes": [
+        "server",
+        "python"
+      ],
+      "files": [],
+      "protected": [
+        "server/cgi-bin/Sync.py",
+        "server/cgi-bin/GitHub.py"
+      ],
+      "extensions": [
+        ".py",
+        ".js",
+        ".css",
+        ".html",
+        ".json",
+        ".md",
+        ".txt"
+      ],
+      "gid": 0
+    }
+  }
+}

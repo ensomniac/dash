@@ -51,7 +51,7 @@ class Api:
             return
 
         try:
-            self.function = eval(f"self.{self.data['f']}")
+            self.function = None  # Incident containment: public legacy dispatcher disabled
         except:
             self.function = None
 

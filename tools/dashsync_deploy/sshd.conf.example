@@ -1,0 +1,13 @@
+# Install only after policy gates, package ownership, and key provenance pass.
+# Validate with sshd -t, keep two administrative sessions, then reload sshd.
+Match User dashsync_ryan,dashsync_andrew
+    AuthenticationMethods publickey
+    PasswordAuthentication no
+    KbdInteractiveAuthentication no
+    AuthorizedKeysFile /etc/dashsync/authorized_keys/%u
+    ForceCommand /usr/bin/python3 -I /usr/local/libexec/dashsync/receiver.py
+    DisableForwarding yes
+    PermitTTY no
+    PermitUserRC no
+    PermitUserEnvironment no
+Match all

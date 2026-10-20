@@ -19006,6 +19006,7 @@ function DashUser () {
         };
     };
     this.build_init_team_combo = function () {
+        if (!this.Init) { return; }
         this.Init["team_combo"] = [];
         if (!this.Init["team"]) {
             return;
@@ -19019,8 +19020,9 @@ function DashUser () {
         }
     };
     this.on_auth_response = function (response) {
+        response = response && typeof response === "object" ? response : {};
         response["token"] = response["token"] || Dash.Local.Get("token");
-        if (response["valid_login"] && response["user"]["email"]) {
+        if (response["valid_login"] && response["user"] && response["user"]["email"]) {
             this.SetUserAuthentication(response["user"]["email"], response);
             this.__auth_authenticated_cb();
         }

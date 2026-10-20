@@ -390,7 +390,10 @@ class _ClientCompiler:
                 "git_repo",
                 "client_root",
                 "sync_client_root",
-                "chrome_extension_roots"
+                "chrome_extension_roots",
+                "transport",
+                "sync_policy",
+                "watch"
             ]
 
             for key in package:
@@ -470,7 +473,8 @@ class _ClientCompiler:
 
             # This file is dedicated to this data, so overwrite the whole file
             if for_chrome_extension:
-                open(html_path, "w").write("\n".join(header))
+                with open(html_path, "w") as output:
+                    output.write("\n".join(header))
 
                 print(f"{self.dist_tag} Wrote {html_path}")
 
@@ -483,7 +487,8 @@ class _ClientCompiler:
         injected_imports = False
         end_token = "<!-- DASH END -->"
         start_token = "<!-- DASH START -->"
-        index_orig = open(html_path).read()
+        with open(html_path) as source:
+            index_orig = source.read()
 
         if for_ce_popup:
             for line in index_orig.split("\n"):
@@ -544,7 +549,8 @@ class _ClientCompiler:
 
                 index_content.append(line)
 
-        open(html_path, "w").write("\n".join(index_content))
+        with open(html_path, "w") as output:
+            output.write("\n".join(index_content))
 
         print(f"{self.dist_tag} Wrote {html_path}")
 

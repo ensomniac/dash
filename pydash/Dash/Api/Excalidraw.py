@@ -44,24 +44,28 @@ class Excalidraw:
         return os.path.join(self.store_root, "versions/")
 
     def Run(self):
+        import re
+        from pathlib import Path
 
-        if not self.ID:
-            return {"error": "Missing graph_id"}
+        # Every drawing operation requires an authenticated application user.
+        if not self.User:
+            return {"error": "Authentication required"}
+        if not isinstance(self.ID, str) or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,127}", self.ID):
+            return {"error": "Invalid graph_id"}
+        base = (Path(self.DashContext["srv_path_local"]) / "excalidraw").resolve()
+        graph = base / self.ID
+        if graph.is_symlink() or graph.resolve().parent != base:
+            return {"error": "Invalid graph_id"}
+        if (graph / "data.json").is_symlink() or (graph / "versions").is_symlink():
+            return {"error": "Invalid graph storage"}
 
-        if self.Params.get("get_scene_data"):
+        get_scene = bool(self.Params.get("get_scene_data"))
+        set_scene = bool(self.Params.get("set_scene_data"))
+        if get_scene == set_scene:
+            return {"error": "Unknown function"}
+        if get_scene:
             return self.get_scene_data()
-
-        if self.Params.get("set_scene_data"):
-            return self.set_scene_data()
-
-        response = {}
-        response["error"] = "Unknown function"
-        response["ID"] = self.ID
-        response["Params"] = self.Params
-        response["DashContext"] = self.DashContext
-        response["User"] = self.User
-
-        return response
+        return self.set_scene_data()
 
     def get_default_scene_data(self):
         scene_data = {}
@@ -81,8 +85,6 @@ class Excalidraw:
         else:
             scene_data = self.get_default_scene_data()
 
-            from Dash.LocalStorage import Write
-            os.makedirs(os.path.dirname(self.data_path), exist_ok=True)
 
         return scene_data
 

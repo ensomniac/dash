@@ -1,317 +1,170 @@
-#!/usr/bin/python
-#
-# Ensomniac 2026 Ryan Martin, ryan@ensomniac.com
-#                Andrew Stet, stetandrew@gmail.com
+"""One package watcher; the main loop serializes linting and uploads."""
 
 import os
-import sys
-import json
+import stat
+import time
+from pathlib import Path
 
-from gzip import compress
-from requests import post
-from random import randint
-from threading import Timer
-from datetime import datetime
-from os.path import expanduser
-from Dash.Utils import Memory
-from subprocess import check_output
-from Dash.DashLint import DashLint as Lint
+from .protocol import MAX_FILE, MAX_PATHS, Rejected, digest, relative_path
+
+
+def read_local(repo, relative):
+    """Open each component without following symlinks, including at upload time."""
+    relative_path(relative)
+    fd = os.open(str(repo), os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+    try:
+        parts = relative.split("/")
+        for part in parts[:-1]:
+            new = os.open(part, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW, dir_fd=fd)
+            os.close(fd)
+            fd = new
+        source = os.open(parts[-1], os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK, dir_fd=fd)
+        try:
+            info = os.fstat(source)
+            if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1 or info.st_size > MAX_FILE:
+                raise Rejected("invalid_file", "Only single-link regular files of at most 10 MiB can sync")
+            chunks, size = [], 0
+            while True:
+                chunk = os.read(source, 65536)
+                if not chunk:
+                    break
+                size += len(chunk)
+                if size > MAX_FILE:
+                    raise Rejected("too_large", "Local file exceeds 10 MiB")
+                chunks.append(chunk)
+            after = os.fstat(source)
+            if (info.st_mtime_ns, info.st_size, info.st_ino) != (after.st_mtime_ns, after.st_size, after.st_ino):
+                raise Rejected("local_change", "Local file changed during reading; retrying later")
+            return b"".join(chunks)
+        finally:
+            os.close(source)
+    finally:
+        os.close(fd)
+
 
 class SyncThread:
-    _initialized: bool
-
-    def __init__(self, package, root_path, is_client, on_change_cb=None):
+    """Retains the old public name; no background timers or remote Git execution."""
+    def __init__(self, package, root_path=None, is_client=False, on_change_cb=None):
         self.context = package
-        self.root_path = root_path
+        self.repo = Path(package["usr_path_git"])
+        self.root_path = Path(root_path or self.repo)
         self.is_client = is_client
         self.on_change_cb = on_change_cb
-
+        self.transport = package.get("transport")
         self.files = {}
-        self.needs_git_push = False
-        self.last_commit_attempt = None
-        self.seconds_before_reindex = 5
-        self.start_time = datetime.now()
-        self.last_reindex_time = datetime.now()
-        self.check_timeout = randint(100, 150) * 0.01
-
+        self.previous = {}
+        self.pending = set()
+        self.conflicts = set()
+        self.next_retry = {}
+        self.last_error = {}
+        self.initialized = False
         self.index_all()
-        self.check()
 
     @property
     def Name(self):
-        return (
-            f"{'* GIT * ' if self.needs_git_push else ''}"
-            f"{self.context.get('sync_display_name', self.context['display_name'])} "
-            f"({'Client' if self.is_client else 'Server'})"
-        )
+        return self.context.get("display_name", self.context["asset_path"])
+
+    def allowed(self, path):
+        try:
+            relative_path(path)
+        except Rejected:
+            return False
+        if self.on_change_cb:
+            return path.endswith((".js", ".css", ".html"))
+        policy = self.context["sync_policy"]
+        if path in policy["protected"] or Path(path).name.lower() in {"rootpoll.py", "runasroot.py"}:
+            return False
+        return (path in policy["files"] or any(path.startswith(prefix + "/") for prefix in policy["prefixes"])) and Path(path).suffix.lower() in policy["extensions"]
+
+    def scan(self):
+        found = {}
+        roots = [self.root_path] if self.on_change_cb else [self.repo / p for p in self.context["watch"]]
+        for root in roots:
+            if root.is_symlink() or not root.exists():
+                continue
+            for directory, dirs, files in os.walk(root, followlinks=False):
+                dirs[:] = [name for name in dirs if not name.startswith(".") and not (Path(directory) / name).is_symlink()]
+                for name in files:
+                    path = Path(directory) / name
+                    relative = path.relative_to(self.repo).as_posix()
+                    if not self.allowed(relative):
+                        continue
+                    try:
+                        info = path.lstat()
+                        if stat.S_ISREG(info.st_mode) and info.st_nlink == 1 and info.st_size <= MAX_FILE:
+                            found[relative] = (info.st_mtime_ns, info.st_size, info.st_ino)
+                    except FileNotFoundError:
+                        continue
+        return found
 
     def index_all(self):
-        self.last_reindex_time = datetime.now()
-
-        paths = [self.root_path]
-
-        python_path = self.root_path.replace("/server/", "/python/")
-
-        if python_path != self.root_path and os.path.exists(python_path):
-            paths.append(python_path)
-
-        for index_path in paths:
-            self.index_all_from_path(index_path)
-
-        if not hasattr(self, "_initialized"):
-            self._initialized = True  # Don't do anything if this happened on startup
-
-            print(f"[{self.Name}] Tracking {len(list(self.files.keys()))} files...")
-
-            self.broadcast_git_status()
-
+        current = self.scan()
+        if not self.initialized:
+            if not self.on_change_cb:
+                paths = sorted(current)
+                for offset in range(0, len(paths), MAX_PATHS):
+                    self.previous.update(self.transport.hashes(self.context["asset_path"], paths[offset:offset + MAX_PATHS]))
+            self.files = current
+            self.initialized = True
+            print(f"[{self.Name}] Tracking {len(current)} files; existing differences are not uploaded at startup")
             return
-
-    def index_all_from_path(self, root_path):
-        all_files = [
-            os.path.join(dp, f)
-            for dp, dn, fn in os.walk(os.path.expanduser(root_path))
-            for f in fn
-        ]
-
-        for abspath in all_files:
-            if "/.git/" in abspath or ".pyc" in abspath or "/.D" in abspath:
-                continue
-
-            if ".idea" in abspath:
-                continue
-
-            if abspath not in self.files:
-                self.files[abspath] = {}
-                self.files[abspath]["abspath"] = abspath
-                self.files[abspath]["last_timestamp"] = os.path.getmtime(abspath)
+        removed = set(self.files) - set(current)
+        for path in sorted(removed):
+            print(f"[{self.Name}] Deletion/rename requires deliberate deployment: {path}")
+            self.pending.discard(path)
+        for path, stamp in current.items():
+            if self.files.get(path) != stamp:
+                self.pending.add(path)
+        self.files = current
 
     def check(self):
-        Timer(self.check_timeout, self.check).start()
-
-        time_since_index = int((datetime.now() - self.last_reindex_time).total_seconds())
-
-        if time_since_index >= self.seconds_before_reindex:
-            self.index_all()
-            self.broadcast_git_status()
-
-            return
-
-        self.check_timestamps()
-
-    def broadcast_git_status(self):
-        if not self.context.get("usr_path_git"):
-            return
-
-        has_changes = False
-        path = self.context["usr_path_git"].replace(" ", "\ ")
-        git_status = check_output([f"cd {path};git status;"], shell=True).decode()
-
-        if "changes not staged for commit" in git_status.lower():
-            has_changes = True
-
-        if "untracked files" in git_status.lower():
-            has_changes = True
-
-        if "nothing to commit, working tree clean" not in git_status.lower():
-            has_changes = True
-
-        if "to publish your local commits" in git_status.lower():
-            has_changes = True
-
-        response = post(
-            "https://dash.guide/Users",
-            data={
-                "f": "set_sync_state",
-                "token": Memory.UserToken,
-                "asset_path": self.context["asset_path"],
-                "git_status": git_status,
-                "has_changes": has_changes
-            }
-        )
-
-        try:
-            response = json.loads(response.text)
-        except:
-            print(f"== SERVER ERROR == x43\n{response.text}")
-
-            return
-
-        if response.get("error"):
-            print(f"== SERVER ERROR == x87\n{response}")
-
-            return
-
-        if not response.get("success"):
-            print("\n\n*** SERVER ERROR set_sync_state() ***\n\n")
-
-        if has_changes:
-            print(f"* {self.context.get('asset_path')} > GitHub > Needs commit/push")
-
-        if response.get("livesync_git_commit_request"):
-            self.attempt_git_commit(response["livesync_git_commit_request"])
-
-    def attempt_git_commit(self, commit_request):
-        if self.on_change_cb and self.context["asset_path"] == "pydash":
-            # TODO: Fix this garbage hack
-            # There is a slightly strange thing in that we monitor pydash
-            # and dash differently but they are in the same package.
-            # This hook says "this is dash client code, not pydash"
-            return
-
-        seconds_since_start = (datetime.now() - self.start_time).total_seconds()
-
-        if seconds_since_start < 3:
-            return
-
-        if self.last_commit_attempt:
-            seconds_since_attempt = (datetime.now() - self.last_commit_attempt).total_seconds()
-
-            if seconds_since_attempt < 30:
-                return  # Don't attempt again for another 30 seconds
-
-        print(
-            "\n\n\n********* SERVER GIT COMMIT REQUEST ************"
-            f"\nInitiated by: {commit_request['initiated_by']}"
-            f"\nCommit msg: '{commit_request['commit_msg']}'\n"
-        )
-
-        self.last_commit_attempt = datetime.now()
-
-        path = self.context["usr_path_git"].replace(" ", "\ ")
-
-        git_result = check_output(
-            [f"cd {path};git add .;git commit . -m '{commit_request['commit_msg']}';git push;"],
-            shell=True
-        ).decode()
-
-        response = post(
-            "https://dash.guide/Users",
-            data={
-                "f": "set_livesync_git_result",
-                "token": Memory.UserToken,
-                "asset_path": self.context["asset_path"],
-                "git_result": git_result
-            }
-        )
-
-        try:
-            response = json.loads(response.text)
-        except:
-            print(f"== SERVER ERROR == x81\n{response.text}*************************\n\n\n")
-
-            return
-
-        if response.get("error"):
-            print(f"== SERVER ERROR == x82\n{response.text}*************************\n\n\n")
-
-            return
-
-        print("Success!\n*************************\n\n\n")
-
-    def check_timestamps(self):
-        for filename in self.files:
-            last_timestamp = self.files[filename]["last_timestamp"]
-
-            if not os.path.exists(self.files[filename]["abspath"]):
-                print("\tRE-INDEX...")
-
-                self.index_all()
-
-                break
-
-            current_timestamp = os.path.getmtime(self.files[filename]["abspath"])
-
-            if last_timestamp == current_timestamp:
-                continue
-
-            self.files[filename]["last_timestamp"] = current_timestamp
-
-            if self.on_change_cb:
-                print(f"\n\t[{self.Name}] *** -> {filename} updated -> Custom Callback...")
-
+        self.index_all()
+        if self.on_change_cb:
+            if self.pending:
                 self.on_change_cb()
-            else:
-                print(f"\n\t[{self.Name}] *** -> {filename} updated -> Lint & Sync...")
-
-                lint_succeeded, msg = Lint.Process(
-                    is_client=self.is_client,
-                    dash_context=self.context,
-                    code_path=self.files[filename]["abspath"]
-                )
-
-                if lint_succeeded:
-                    Timer(0.0, self.upload_change, args=[filename]).start()
-
-                    print(f"\t\t\t{msg}")
-                else:
-                    print(f"\t\t * Fatal DashLint ERROR: This must be resolved before this file can be synced\n\t\t\t{msg}")
-
-            self.broadcast_git_status()
-
-    def upload_change(self, filename):
-        local_path = self.files[filename]["abspath"]
-
-        if self.is_client:
-            print("TODO: PATH FOR CLIENT")  # TODO
-
+                self.pending.clear()
             return
-        else:
-            remote_path = local_path.replace(
-                self.context["usr_path_git"], self.context["srv_path_git_oapi"]
-            ).replace("cgi-bin/cgi-bin", "cgi-bin")
+        for path in sorted(self.pending):
+            if path in self.conflicts or time.monotonic() < self.next_retry.get(path, 0):
+                continue
+            try:
+                self.upload_change(path)
+                self.pending.remove(path)
+                self.last_error.pop(path, None)
+            except (Rejected, OSError) as exc:
+                code = getattr(exc, "code", "local_io")
+                if code in {"conflict", "permission", "invalid_path", "invalid_file", "too_large"}:
+                    self.conflicts.add(path)
+                self.next_retry[path] = time.monotonic() + 15
+                if self.last_error.get(path) != code:
+                    print(f"[{self.Name}] {path}: {code}; unsynced change retained. Reconcile conflicts before restarting DashSync.")
+                    self.last_error[path] = code
 
-        print(f"\n\t[{self.Name}] Uploading {filename}...\n\t\tLocal: {local_path}\n\t\tRemote: {remote_path}")
+    def upload_change(self, path):
+        from Dash.DashLint import DashLint
 
-        # Move this into utils:
-        dash_data_path = os.path.join(expanduser("~"), ".dash")
-        dash_data = json.loads(open(dash_data_path).read())
-        token = dash_data["user"]["token"]
-
-        response = post(
-            "https://dash.guide/Sync",
-            data={
-                "f": "live",
-                "token": token,
-                "local_path": local_path,
-                "remote_path": remote_path,
-                "context": json.dumps(self.context),
-                "is_client": self.is_client
-            },
-
-            # Send the contents of the file as compressed binary
-            files={"fmod": compress(open(local_path).read().encode())}
-        ).text
-
-        try:
-            response = json.loads(response)
-        except:
-            print(f"\n**** Server Sync Error ****\n{response}")
-
-            return
-
-        if response.get("success"):
-            print(
-                "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
-                "\n>>>>>>>>> Upload: Success! >>>>>>>>>"
-                "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n"
-            )
-
-            if not self.needs_git_push:
-                self.needs_git_push = True
-        else:
-
-            print("\n\n" + "="*50)
-            print("== SERVER ERROR ==")
-
-            print(json.dumps(response, indent=4))
-
-            print("== SERVER ERROR ==")
-            print("="*50, "\n\n")
-
-            # print(f"\n\n== SERVER ERROR ==\n\n{response}\n\n", "== SERVER ERROR ==\n\n")
-
-
-
-
-
+        relative_path(path)
+        if not self.allowed(path):
+            raise Rejected("permission", "Local file is outside the approved sync policy")
+        if path not in self.previous:
+            current = self.transport.hashes(self.context["asset_path"], [path])[path]
+            if current is not None:
+                raise Rejected("conflict", "A newly added local path already exists remotely")
+            self.previous[path] = None
+        # Validate the file before passing its local path to the existing linter.
+        read_local(self.repo, path)
+        if Path(path).suffix.lower() in {".py", ".js"}:
+            try:
+                ok, _ = DashLint.Process(is_client=False, dash_context=self.context, code_path=str(self.repo / path))
+            except Exception as exc:
+                raise Rejected("lint", "Lint failed; review the local file") from exc
+            if not ok:
+                raise Rejected("lint", "Lint failed; fix the local file before retrying")
+        body = read_local(self.repo, path)
+        sha = digest(body)
+        result = self.transport.request({"op": "put", "package": self.context["asset_path"],
+                                         "path": path, "previous": self.previous[path], "size": len(body), "sha256": sha}, body)
+        if result.get("sha256") != sha:
+            raise Rejected("connection", "Receiver did not confirm the expected content hash")
+        self.previous[path] = sha
+        print(f"[{self.Name}] Synced {path}")

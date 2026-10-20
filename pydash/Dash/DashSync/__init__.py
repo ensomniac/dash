@@ -1,91 +1,63 @@
-#!/usr/bin/python
-#
-# Ensomniac 2026 Ryan Martin, ryan@ensomniac.com
-#                Andrew Stet, stetandrew@gmail.com
+"""DashSync v1: local file watching, pinned SSH transport, local-only Git."""
 
-"""
-| This script requires that you have an account at https://dash.guide
-|
-| This is tied to a command installed during setup.py: "dashsync"
-"""
-
+import argparse
+import fcntl
 import os
-import sys
+import time
+from pathlib import Path
 
-try:
-    from .utils import SyncUtils
-    from .sync_thread import SyncThread
-
-except ImportError:
-    from utils import SyncUtils
-    from sync_thread import SyncThread
+from .protocol import Rejected
+from .sync_thread import SyncThread
+from .transport import CONFIG_PATH, load_config
+from .utils import SyncUtils
 
 
 class DashSync:
     def __init__(self):
-        print("\nDash Sync\n")
+        parser = argparse.ArgumentParser(description="Sync approved source changes through restricted SSH. Git remains local.")
+        parser.add_argument("--check-config", action="store_true", help="validate local configuration without connecting or writing files")
+        args = parser.parse_args()
+        try:
+            config = load_config()
+            if args.check_config:
+                print(f"DashSync SSH configuration is valid: {len(config['packages'])} local packages")
+                return
+            lock_path = CONFIG_PATH.parent / "running.lock"
+            lock = os.open(str(lock_path), os.O_CREAT | os.O_RDWR | os.O_NOFOLLOW, 0o600)
+            try:
+                try:
+                    fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                except BlockingIOError as exc:
+                    raise Rejected("already_running", "DashSync is already running; stop it before starting another instance") from exc
+                self.packages = SyncUtils.GetServerSyncPackages(config=config)
+                self.sync_threads = [SyncThread(package) for package in self.packages]
+                self.add_dash_client()
+                print("DashSync SSH is running. Commits and pushes stay on this computer. Press Ctrl-C to stop.")
+                while True:
+                    for watcher in self.sync_threads:
+                        watcher.check()
+                    time.sleep(1)
+            finally:
+                os.close(lock)
+        except KeyboardInterrupt:
+            print("\nDashSync stopped. Local files retain any unsynced changes.")
+        except (Rejected, OSError) as exc:
+            code = getattr(exc, "code", "configuration")
+            raise SystemExit(f"DashSync {code}: {exc}. No HTTP deployment fallback is available.") from exc
 
-        SyncUtils.CheckForRunningProcess("dashsync")
-
-        self.packages = SyncUtils.GetServerSyncPackages()
-        self.sync_threads = []
-
-        self.add_dash_client()
-
-        for package in self.packages:
-            self.add_sync_thread(package)
-
-    def add_sync_thread(self, package):
-        # Expected to be at the top level of the git repo but double check to make sure
-        server_root, client_root = SyncUtils.FindServerClientRoots(package)
-
-        if server_root:
-            print(f"server_root: {server_root}")
-
-            self.sync_threads.append(SyncThread(package, server_root, is_client=False))
-        else:
-            print(f"Failed to find a local server path for {package.get('sync_display_name', package['display_name'])}")
-
-    # Add the dash client code to monitor for changes, but we don't actually want to live-sync the changes. Instead, if changes
-    # occur in a dash js file, we want to recompile dash.js and distribute it to any local dash packages on this machine.
     def add_dash_client(self):
-        full_pth, min_pth, pkg = SyncUtils.FindDashClientPaths(self.packages)
-        client_path_full = full_pth
-        client_path_min = min_pth
-        pydash_package = pkg
-
-        if not os.path.exists(client_path_full):
-            print(f"\nWarning: Did Dash client code missing. Expected: '{client_path_full}'\n")
-
+        package = next((p for p in self.packages if p["asset_path"] == "pydash"), None)
+        if package is None:
             return
+        root = Path(package["usr_path_git"]) / "client" / "full"
+        if root.is_dir() and not root.is_symlink():
+            self.sync_threads.append(SyncThread(package, root, is_client=True, on_change_cb=self.on_dash_client_changed))
 
-        if not os.path.exists(client_path_min):
-            print(f"\nWarning: Did Dash client code missing. Expected: '{client_path_min}'\n")
-
-            return
-
-        self.sync_threads.append(SyncThread(
-            pydash_package,
-            client_path_full,
-            is_client=True,
-            on_change_cb=self.on_dash_client_changed
-        ))
-
-    # Called when there is a change to the /client/full/ Dash code.
-    # We want to re-compile the package into /client/full/ then
-    # distribute the new version to all local clients.
     def on_dash_client_changed(self):
-        import Dash.ClientCompiler
+        from Dash.ClientCompiler import ClientCompiler
 
-        from importlib import reload
-
-        reload(Dash.ClientCompiler)
-
-        # Since we have local packages, we can set them
-        # like this to make things faster. Without this, it
-        # will pull them from the server as this code does on startup.
-        Dash.ClientCompiler.ClientCompiler.SetPackages(self.packages)
-        Dash.ClientCompiler.ClientCompiler.CompileAndDistribute()
+        ClientCompiler.SetPackages(self.packages)
+        ClientCompiler.CompileAndDistribute()
 
 
 if __name__ == "__main__":

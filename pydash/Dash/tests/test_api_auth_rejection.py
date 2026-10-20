@@ -10,6 +10,12 @@ class AuthApi(ApiCore, ApiUsers):
     pass
 
 class AuthRejectionTests(unittest.TestCase):
+    def setUp(self):
+        # Exercise response privacy independently of the production reset limiter.
+        guard = patch("Dash.Api.AuthResetGuard.admit_public_reset", return_value=True)
+        guard.start()
+        self.addCleanup(guard.stop)
+
     def api(self):
         api = AuthApi.__new__(AuthApi)
         api._params = {"f": "validate"}

@@ -1,3 +1,13 @@
+# DashSync setup
+
+DashSync now uses restricted SSH. The server administrator must enable access and supply your connection configuration before uploads can work.
+
+From your updated local Dash checkout, run `python3 setup.py`, install your configuration at `~/.config/dashsync/config.json`, then run `dashsync --check-config` and `dashsync`.
+
+See [developer setup and server activation](tools/dashsync_deploy/README.md). Existing trusted SSH keys can be used. Git commits and pushes remain local; dashboard login and HTTP deployment are no longer used for syncing.
+
+---
+
 # Welcome to Dash: A Symphony of Controlled Chaos 🎶
 
 ## "A Repository as Ambitious as Its Creator"

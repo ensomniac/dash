@@ -100,6 +100,13 @@ class ApiUsers:
         ))
 
     def reset(self):
+        from Dash.Api.AuthResetGuard import admit_public_reset
+
+        if not admit_public_reset(self.DashContext, self.Params):
+            return self.set_auth_response({
+                "error": "Account recovery requests are temporarily limited. Please retry later or contact your administrator."
+            })
+
         from Dash.Users import Reset
 
         response = Reset(
@@ -214,6 +221,9 @@ class ApiUsers:
         ))
 
     def upload_image(self):
+        # Incident containment: disable this write path before parsing caller data.
+        return self.reject_request("Profile image uploads are temporarily unavailable.", "profile_upload_disabled")
+
         from Dash.Users import UploadUserImage
 
         self.ParseParam("user_data", dict, self.User)

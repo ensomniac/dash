@@ -1,0 +1,26 @@
+[Unit]
+Description=One bounded DashSync publication
+
+[Service]
+Type=exec
+User=root
+ExecStart=/usr/bin/python3 -I /usr/local/libexec/dashsync/publisher.py
+StandardInput=socket
+StandardOutput=journal
+StandardError=journal
+UMask=0077
+TimeoutStartSec=60
+RuntimeMaxSec=60
+MemoryMax=128M
+TasksMax=1
+LimitNOFILE=64
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectHome=read-only
+ProtectSystem=full
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+NoNewPrivileges=yes
+RestrictAddressFamilies=AF_UNIX
+CapabilityBoundingSet=CAP_CHOWN CAP_FOWNER CAP_DAC_OVERRIDE CAP_LINUX_IMMUTABLE

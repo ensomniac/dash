@@ -7,6 +7,12 @@ from Dash.Api.Users import ApiUsers
 
 
 class ResetPrivacyTests(unittest.TestCase):
+    def setUp(self):
+        # Exercise response privacy independently of the production reset limiter.
+        guard = patch("Dash.Api.AuthResetGuard.admit_public_reset", return_value=True)
+        guard.start()
+        self.addCleanup(guard.stop)
+
     def api(self):
         api = ApiUsers.__new__(ApiUsers)
         api.Params = {"email": "user@example.invalid"}

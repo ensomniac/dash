@@ -1,0 +1,50 @@
+{
+  "version": 1,
+  "hosts": {
+    "oapi": {
+      "hostname": "oapi.co",
+      "port": 22,
+      "user": "dashsync_ryan",
+      "identity_file": "/Users/REPLACE/.ssh/APPROVED_EXISTING_OR_NEW_KEY",
+      "known_hosts_file": "/Users/REPLACE/.ssh/dashsync_known_hosts"
+    }
+  },
+  "packages": {
+    "pydash": {
+      "host": "oapi",
+      "repo": "/Users/REPLACE/path/to/dash",
+      "watch": [
+        "pydash/Dash"
+      ],
+      "context": {
+        "display_name": "Dash",
+        "code_copyright_text": "Ensomniac"
+      }
+    },
+    "dash_guide": {
+      "host": "oapi",
+      "repo": "/Users/REPLACE/path/to/dash_guide",
+      "watch": [
+        "server"
+      ],
+      "context": {
+        "display_name": "Dash Guide",
+        "domain": "dash.guide",
+        "code_copyright_text": "Ensomniac"
+      }
+    },
+    "altona": {
+      "host": "oapi",
+      "repo": "/Users/REPLACE/path/to/shop_io",
+      "watch": [
+        "server",
+        "python"
+      ],
+      "context": {
+        "display_name": "Altona",
+        "domain": "altona.io",
+        "code_copyright_text": "Altona Metal"
+      }
+    }
+  }
+}

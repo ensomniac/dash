@@ -35,50 +35,52 @@ class _SyncUtils:
 
         return version_path
 
-    def GetServerSyncPackages(self, quiet=False):
-        from json import loads
-        from requests import post
+    def GetServerSyncPackages(self, quiet=False, config=None):
+        from .transport import load_config, SSHTransport
+        from .protocol import Rejected, identifier, relative_path
 
-        # Get all active packages for the logged-in user
-        dash_data_path = os.path.join(expanduser("~"), ".dash")
+        config = config or load_config()
+        transports = {}
+        manifests = {}
+        for name in {pkg["host"] for pkg in config["packages"].values()}:
+            transports[name] = SSHTransport(config["hosts"][name])
+            manifests[name] = transports[name].manifest()
 
-        if not os.path.exists(dash_data_path):
-            sys.exit("\nNot Authenticated\n")
-
-        dash_data = loads(open(dash_data_path).read())
-        token = dash_data["user"]["token"]
-
-        response = post(
-            "https://dash.guide/Packages",
-            data={
-                "f": "get_sync_manifest",
-                "token": token
-            }
-        )
-
-        try:
-            response = loads(response.text)
-        except:
-            sys.exit(f"\n** SERVER ERROR **\n\n{response}\n{response.text}\n")
-
-        if response.get("error"):
-            sys.exit(f"\n**** SERVER ERROR ****\n\n{response['error']}")
-
-        sync_packages = []
-
-        for package_data in response["packages"]:
-            if "shop_io" in package_data.get("git_repo", "") and package_data.get("asset_path") != "altona":
-                continue  # Prevent duplicate syncing since the dash contexts all get injected on push
-
-            if package_data.get("asset_path") == "altona":
-                package_data["sync_display_name"] = f"Shop IO ({package_data['display_name']})"  # Clarify this without actually overwriting display_name
-
+        packages = []
+        for asset_path, local in config["packages"].items():
+            policy = manifests[local["host"]].get(asset_path)
+            if policy is None:
+                if not quiet:
+                    print(f"[{asset_path}] Disabled or not permitted on its SSH receiver; skipped")
+                continue
+            if not isinstance(policy, dict) or set(policy) != {"prefixes", "files", "protected", "extensions"}:
+                raise Rejected("connection", "Invalid remote package permissions")
+            for key in ("prefixes", "files", "protected"):
+                if not isinstance(policy[key], list):
+                    raise Rejected("connection", "Invalid remote path permissions")
+                for path in policy[key]:
+                    relative_path(path)
+            if not isinstance(policy["extensions"], list) or any(
+                not isinstance(ext, str) or not ext.startswith(".") or not ext[1:].isalnum()
+                for ext in policy["extensions"]
+            ):
+                raise Rejected("connection", "Invalid remote file permissions")
+            context = dict(local.get("context", {}))
+            context.update({
+                "asset_path": asset_path,
+                "display_name": context.get("display_name") or asset_path,
+                "code_copyright_text": context.get("code_copyright_text") or "Ensomniac",
+                "usr_path_git": local["repo"],
+                "watch": local["watch"],
+                "transport": transports[local["host"]],
+                "sync_policy": policy,
+            })
+            packages.append(context)
             if not quiet:
-                self.PrintPackageDetails(package_data)
-
-            sync_packages.append(package_data)
-
-        return sync_packages
+                print(f"[{asset_path}] Approved SSH package; local root: {local['repo']}")
+        if not packages:
+            raise Rejected("not_ready", "No configured packages are enabled for this deployment identity")
+        return packages
 
     def PrintPackageDetails(self, package_data):
         print_keys = [
@@ -115,36 +117,6 @@ class _SyncUtils:
             print(f"\t{key}: {package_data[key]}")
 
         print()
-
-    def CheckForRunningProcess(self, script_name):
-        from psutil import Process
-
-        pid_list = self.get_pids(script_name)
-        another_process_running = False
-        active_ids = [str(os.getpid()), str(os.getpid() - 1)]
-
-        for pid in pid_list:
-            if str(pid) in active_ids:
-                continue
-
-            process = Process(int(pid))
-
-            if script_name not in str(process.cmdline()):
-                continue
-
-            another_process_running = pid
-
-            break
-
-        if another_process_running:
-            from signal import SIGKILL
-
-            try:
-                os.killpg(int(another_process_running), SIGKILL)
-            except:
-                os.system(f"kill -9 {str(another_process_running)}")
-
-            print(f"\nFound existing '{script_name}' running...\n\tKilled.\n")
 
     def FindServerClientRoots(self, package):
         server_root, client_root = "", ""
@@ -266,27 +238,6 @@ class _SyncUtils:
 
         return distribution_packages
 
-    def get_pids(self, script_name):
-        from subprocess import check_output
-
-        pids = []
-        result = check_output(["ps -eaf"], shell=True).decode()
-
-        try:
-            for line in result.split("\n"):
-                if script_name not in line:
-                    continue
-
-                if "terminated" in line.lower():
-                    continue
-
-                pid = str(line.split()[1].strip())
-
-                pids.append(pid)
-        except:
-            pass
-
-        return pids
 
 
 SyncUtils = _SyncUtils()

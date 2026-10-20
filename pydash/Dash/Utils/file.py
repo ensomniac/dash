@@ -22,6 +22,21 @@ ImageExtensionsStrict = ["png", "jpg", "jpeg"]
 ImageExtensions = [*ImageExtensionsStrict, "gif", "tiff", "tga", "bmp", "heic"]
 
 
+
+def _validate_upload_filename(filename):
+    # Server-interpreted files and paths never belong in a data upload.
+    if not isinstance(filename, str) or not filename or filename != filename.strip():
+        raise ClientAlert("Invalid filename")
+    if any(c in filename for c in ("/", "\\", ":")) or any(ord(c) < 32 or ord(c) == 127 for c in filename):
+        raise ClientAlert("Invalid filename")
+    blocked = {"php", "php3", "php4", "php5", "php7", "php8", "pht", "phtm", "phtml", "phar", "phps", "phpt",
+               "cgi", "fcgi", "py", "pyc", "pyo", "pl", "pm", "rb", "sh", "bash", "zsh", "ksh", "csh",
+               "shtml", "shtm", "asp", "aspx", "ashx", "asmx", "jsp", "jspx", "war", "htaccess", "htpasswd"}
+    if any(part.lower() in blocked or (part.lower().startswith("php") and part[3:].isdigit())
+           for part in filename.split(".")[1:]):
+        raise ClientAlert("Server-executable files are not permitted")
+
+
 # Using an existing path instead of file bytes is a way to spoof a copied file as an upload
 def Upload(
     dash_context, user, file_root, file_bytes_or_existing_path, filename, nested=False, parent_folders=[],
@@ -30,6 +45,12 @@ def Upload(
     replace_extra_periods=True, include_jpg_thumb=True, include_png_thumb=True, include_square_thumb=False,
     include_orig_png=True, min_size=0, is_mask=False, allowable_exts=[], target_width=0, target_height=0
 ):
+    _validate_upload_filename(filename)
+    for metadata in (existing_data_for_update, additional_data):
+        for key in ("filename", "orig_filename"):
+            if metadata.get(key):
+                _validate_upload_filename(metadata[key])
+
     if type(file_bytes_or_existing_path) is not bytes:
         t = type(file_bytes_or_existing_path)
 

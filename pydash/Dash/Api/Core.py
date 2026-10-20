@@ -189,22 +189,14 @@ class ApiCore:
             else:
                 from Dash.Users import Users as DashUsers
 
-                # This asset path override param can be used when doing cross-context requests.
-                # For example, allowing any context to call Dash Guide's Documentation endpoint.
-                # Without this cross-context authentication, a request from any context other
-                # than Dash Guide would fail. The alternative to this would be to create a wrapper
-                # endpoint for every other context in a case like this, which is too messy.
-                if self.Params.get("dash_context_auth_asset_path"):
-                    from Dash.PackageContext import Get
-
-                    self._user = DashUsers(
-                        self._params,
-                        Get(self.Params["dash_context_auth_asset_path"])
-                    ).ValidateUser()
+                # A request cannot choose another application's credential store.
+                # Application identity comes from the server-resolved context.
+                if not self.DashContext:
+                    raise Exception("Dash Context is missing x8136")
+                requested_context = self.Params.get("dash_context_auth_asset_path")
+                if requested_context and requested_context != self.DashContext.get("asset_path"):
+                    self._user = None
                 else:
-                    if not self.DashContext:
-                        raise Exception("Dash Context is missing x8136")
-
                     self._user = DashUsers(self._params, self.DashContext).ValidateUser()
 
         return self._user
@@ -314,6 +306,12 @@ class ApiCore:
         if self._execute_as_module:
             return
 
+        requested_context = self.Params.get("dash_context_auth_asset_path")
+        if requested_context and requested_context != self.DashContext.get("asset_path"):
+            self.reject_request("Unauthorized", "cross_context_authentication_denied")
+            self.ReturnResponse()
+            return
+
         self.set_dash_globals()
 
         if self._params.get("f") in self._public:
@@ -325,10 +323,11 @@ class ApiCore:
                 self.run(self._private[self._params.get("f")])
 
         elif self._params.get("f") == "excalidraw":
-            if self.User:
-                self.set_dash_globals()  # This needs to be set again in order to capture the logged-in user's data
-
-            self.run(self.dash_excalidraw)
+            if not self.User:
+                self.reject_request("Authentication required", "excalidraw_authentication_required")
+            else:
+                self.set_dash_globals()
+                self.run(self.dash_excalidraw)
 
         else:
             self.reject_request("Unknown Function x4543", "unknown_function")
@@ -590,7 +589,10 @@ class ApiCore:
     def dash_excalidraw(self):
         from .Excalidraw import Excalidraw
 
-        return self.SetResponse(Excalidraw(self.Params, self.DashContext, self.User).Run())
+        response = Excalidraw(self.Params, self.DashContext, self.User).Run()
+        if response.get("error"):
+            return self.reject_request(response["error"], "excalidraw_request_rejected")
+        return self.SetResponse(response)
 
     def process_raw_body_content(self):
         # This was an attempt at resolving this issue, but it still
