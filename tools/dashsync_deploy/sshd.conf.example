@@ -1,4 +1,6 @@
-# Install only after policy gates, package ownership, and key provenance pass.
+# Install this forced-command boundary before adding authorized keys.
+# Policy gates, package ownership and key provenance still gate publication.
+# PermitUserEnvironment must remain no in the global SSH configuration.
 # Validate with sshd -t, keep two administrative sessions, then reload sshd.
 Match User dashsync_ryan,dashsync_andrew
     AuthenticationMethods publickey
@@ -9,5 +11,4 @@ Match User dashsync_ryan,dashsync_andrew
     DisableForwarding yes
     PermitTTY no
     PermitUserRC no
-    PermitUserEnvironment no
 Match all

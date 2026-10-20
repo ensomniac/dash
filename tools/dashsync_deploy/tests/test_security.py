@@ -11,6 +11,8 @@ import io
 import json
 import os
 import socket
+import shutil
+import subprocess
 import stat
 import struct
 import sys
@@ -47,6 +49,19 @@ server_protocol = sys.modules["protocol"]
 def put(path="server/example.py", content=b"print('new')\n", previous=None):
     return {"version": 1, "op": "put", "package": "example", "path": path,
             "previous": previous, "size": len(content), "sha256": protocol.digest(content)}
+
+
+@unittest.skipUnless(sys.platform.startswith("linux") and os.geteuid() == 0 and shutil.which("sshd"), "needs the installed Linux SSH parser and root host-key access")
+class SSHTemplateTests(unittest.TestCase):
+    def test_template_parses_and_restricts_only_deployment_accounts(self):
+        template = SERVER / "sshd.conf.example"
+        result = subprocess.run([shutil.which("sshd"), "-T", "-f", str(template), "-C", "user=dashsync_ryan,host=fixture.invalid,addr=192.0.2.10"], check=True, capture_output=True, text=True)
+        values = dict(line.split(None, 1) for line in result.stdout.splitlines())
+        self.assertEqual(values["forcecommand"], "/usr/bin/python3 -I -S /usr/local/libexec/dashsync/receiver.py")
+        for key, expected in {"disableforwarding":"yes", "permittty":"no", "permituserrc":"no", "permituserenvironment":"no", "passwordauthentication":"no", "kbdinteractiveauthentication":"no"}.items():
+            self.assertEqual(values[key], expected)
+        other = subprocess.run([shutil.which("sshd"), "-T", "-f", str(template), "-C", "user=fixture_admin,host=fixture.invalid,addr=192.0.2.10"], check=True, capture_output=True, text=True)
+        self.assertIn("forcecommand none\n", other.stdout)
 
 
 class ProtocolTests(unittest.TestCase):
