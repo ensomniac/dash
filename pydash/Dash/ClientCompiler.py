@@ -393,6 +393,7 @@ class _ClientCompiler:
                 "chrome_extension_roots",
                 "transport",
                 "sync_policy",
+                "client_sync_policy",
                 "watch"
             ]
 

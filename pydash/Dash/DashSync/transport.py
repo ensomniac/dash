@@ -71,9 +71,9 @@ def load_config(path=None):
     return config
 
 
-def bounded_process(argv, payload, timeout=60):
+def bounded_process(argv, payload, timeout=60, output_limit=MAX_RESPONSE, env=None):
     """Drain all pipes without trusting the remote host to bound its output."""
-    proc = subprocess.Popen(argv, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    proc = subprocess.Popen(argv, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
     output, error = bytearray(), bytearray()
     selector = selectors.DefaultSelector()
     pending = memoryview(payload)
@@ -103,7 +103,7 @@ def bounded_process(argv, payload, timeout=60):
                         selector.unregister(stream)
                         stream.close()
                         continue
-                    target, limit = (output, MAX_RESPONSE) if stream is proc.stdout else (error, 4096)
+                    target, limit = (output, output_limit) if stream is proc.stdout else (error, 4096)
                     target.extend(chunk)
                     if len(target) > limit:
                         raise Rejected("connection", "SSH response exceeded its limit")

@@ -178,12 +178,13 @@ class ClientTests(unittest.TestCase):
         index = target / "index.html"
         index.write_text("<head>\n<title>Fixture</title>\n</head>\n")
         package = {"asset_path": "fixture", "display_name": "Fixture", "transport": object(),
-                   "watch": ["server"], "sync_policy": {"prefixes": ["server"]}}
+                   "watch": ["server"], "sync_policy": {"prefixes": ["server"]},
+                   "client_sync_policy": {"prefixes": ["bin"]}}
         with contextlib.redirect_stdout(io.StringIO()):
             instance.update_publish_index_source(package, str(index), str(target) + "/")
         result = index.read_text()
         self.assertIn('"asset_path"', result)
-        for name in ("transport", "watch", "sync_policy"):
+        for name in ("transport", "watch", "sync_policy", "client_sync_policy"):
             self.assertNotIn('"' + name + '"', result)
 
     def test_remote_commit_fields_are_never_executed(self):

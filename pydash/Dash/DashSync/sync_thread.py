@@ -136,9 +136,19 @@ class SyncThread:
                 if code in {"conflict", "permission", "invalid_path", "invalid_file", "too_large"}:
                     self.conflicts.add(path)
                 self.next_retry[path] = time.monotonic() + 15
-                if self.last_error.get(path) != code:
-                    print(f"[{self.Name}] {path}: {code}; unsynced change retained. Reconcile conflicts before restarting DashSync.")
-                    self.last_error[path] = code
+                detail = " ".join(str(exc).split())[:500]
+                error = (code, detail)
+                if self.last_error.get(path) != error:
+                    if code == "lint":
+                        action = "Fix the reported validation error and save again; DashSync will retry automatically."
+                    elif code == "conflict":
+                        action = "The server file changed since this watcher started. Compare the local and server versions before retrying."
+                    elif path in self.conflicts:
+                        action = "This file is blocked by the reported path or permission rule; other files continue syncing."
+                    else:
+                        action = "Your local change is retained; DashSync will retry in 15 seconds."
+                    print(f"[{self.Name}] Not synced: {path}\n  {code}: {detail}\n  {action}")
+                    self.last_error[path] = error
 
     def upload_change(self, path):
         from Dash.DashLint import DashLint
@@ -155,11 +165,11 @@ class SyncThread:
         read_local(self.repo, path)
         if Path(path).suffix.lower() in {".py", ".js"}:
             try:
-                ok, _ = DashLint.Process(is_client=False, dash_context=self.context, code_path=str(self.repo / path))
+                ok, message = DashLint.Process(is_client=False, dash_context=self.context, code_path=str(self.repo / path))
             except Exception as exc:
-                raise Rejected("lint", "Lint failed; review the local file") from exc
+                raise Rejected("lint", "Linter failed: " + type(exc).__name__ + ": " + str(exc)) from exc
             if not ok:
-                raise Rejected("lint", "Lint failed; fix the local file before retrying")
+                raise Rejected("lint", "Validation failed: " + str(message))
         body = read_local(self.repo, path)
         sha = digest(body)
         result = self.transport.request({"op": "put", "package": self.context["asset_path"],

@@ -16,6 +16,7 @@ class DashSync:
     def __init__(self):
         parser = argparse.ArgumentParser(description="Sync approved source changes through restricted SSH. Git remains local.")
         parser.add_argument("--check-config", action="store_true", help="validate local configuration without connecting or writing files")
+        parser.add_argument("--deploy-client", metavar="PACKAGE", help="publish the approved origin branch's pushed client commit once, using restricted SSH")
         args = parser.parse_args()
         try:
             config = load_config()
@@ -30,12 +31,22 @@ class DashSync:
                 except BlockingIOError as exc:
                     raise Rejected("already_running", "DashSync is already running; stop it before starting another instance") from exc
                 self.packages = SyncUtils.GetServerSyncPackages(config=config)
+                from .client_publish import PushedClientPublisher
+                self.client_publishers = [PushedClientPublisher(package) for package in self.packages if package.get("client_sync_policy")]
+                if args.deploy_client:
+                    selected = next((client for client in self.client_publishers if client.name == args.deploy_client), None)
+                    if selected is None:
+                        raise Rejected("permission", "This package has no approved client publication grant")
+                    selected.publish_once()
+                    return
                 self.sync_threads = [SyncThread(package) for package in self.packages]
                 self.add_dash_client()
                 print("DashSync SSH is running. Commits and pushes stay on this computer. Press Ctrl-C to stop.")
                 while True:
                     for watcher in self.sync_threads:
                         watcher.check()
+                    for client in self.client_publishers:
+                        client.check()
                     time.sleep(1)
             finally:
                 os.close(lock)

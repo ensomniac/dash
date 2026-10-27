@@ -1,6 +1,6 @@
 # DashSync over SSH
 
-DashSync watches approved local source files and uploads saved changes through restricted SSH. Git commits and pushes remain local developer actions. Legacy HTTP deployment and server-triggered local Git execution are retired.
+DashSync watches approved local server source files and uploads saved changes through restricted SSH. For projects with a separate static-client grant, it publishes committed client changes after a successful Git push to the approved branch. Git commits and pushes remain local developer actions. Legacy HTTP deployment and server-triggered local Git execution are retired.
 
 ## Developer setup
 
@@ -29,6 +29,24 @@ Saving an approved file uploads an addition/update. Existing local/server differ
 
 Local Dash client compilation/distribution is retained. Compiler context comes from your local configuration; SSH transport objects and deployment policies are not placed in browser JavaScript. Add generated client directories to watch roots only after the corresponding publication rules are reviewed.
 
+## Altona client changes after a Git push
+
+Existing Altona developers only need to pull the latest Dash code and restart their normal `dashsync`. The existing SSH identity and local Altona configuration are reused; no additional key, configuration entry, or dashboard login is needed.
+
+Keep DashSync running, commit your Altona changes, and push `origin 1.0.0` normally. After a successful push updates that local remote-tracking branch, DashSync publishes the changed committed static client files and prints `[altona client] Deployed pushed commit ...`. Uncommitted working files stay local. Fetching a newer pushed revision on that same approved branch can also trigger publication. A commit without a successful push/fetch does not trigger it.
+
+The client reads the current public `https://altona.io/bin/dashsync_release.json` receipt and checks its bytes against the existing pinned SSH connection. It checks that the local GitHub origin matches the receipt, that the pushed commit extends the deployed commit, and that destination hashes match before uploading any files. The public index and receipt are updated last. Changed script/style references in the index receive the commit's cache version; unrelated live index details are preserved. Reload the page to load the new client version.
+
+For a deliberate one-time retry while the normal watcher is stopped:
+
+```sh
+dashsync --deploy-client altona
+```
+
+Startup can publish previously pushed client changes that are newer than the receipt; it does not publish uncommitted startup differences. A hash conflict, deletion, rename, symlink, unsupported file type, missing Git history, or rewritten branch stops client publication for review. Other source watchers continue. Each file is atomic; a connection interruption can leave part of a release published, and the next attempt resumes by checking exact content hashes. Changes requiring an atomic multi-file switch need a separate maintenance deployment.
+
+The old dash.guide force-webhook URL remains retired. Deployment confirmation is in the DashSync terminal and the public receipt; the former webhook email is not generated.
+
 ## Administrator setup
 
 Stage the reviewed server files as root:
@@ -44,6 +62,7 @@ Before activation:
 - Privileged helpers use `-I -S`: isolated Python with automatic site initialization disabled. Their standard-library-only runtime must never load application-controlled `.pth` files or `sitecustomize`.
 - Record completed host hardening in protected gate-evidence files: independent monitoring, credential exposure review/revocation, removal of arbitrary root queues and retired deployment trust, supported OS updates, removal of root-run application dependencies, and independent source review. Gate paths are operator attestations, not automatic proof that the work happened. Do not clear gates to suppress a client error.
 - For each package, review its root, device/inode pin, approved prefixes/extensions, and protected files. Source directories and files must be root-owned and protected against application writes. Retain appropriate application-readable modes and immutable flags. Do not recursively change an entire subscription or bulk-unfreeze code. Writable ancestors outside the package root are tolerated only because the root is pinned by inode and every component is opened without following symlinks; directories inside that root must be protected.
+- Client publication needs a separate `<existing-package>_client` grant, pinned to that project's existing `client` directory. Approve only its static subdirectories, exact `index.html`, and static extensions; never add executable server extensions. Protect that exact tree and seed `bin/dashsync_release.json` with the reviewed deployed GitHub repository/branch/commit and SHA-256 hashes of the live static files. The client discovers this grant from the existing SSH manifest; root still handles only bounded bytes and never reads Git repositories or executes client code.
 - Provision dedicated `dashsync_` system accounts in group `dashsync`, with `/bin/sh` and root-owned, non-writable empty homes. Use no sudo or application groups. A nologin shell prevents the forced command from working. Record actual account UIDs and grant packages independently to each developer.
 - Install chosen public keys in protected root-owned `/etc/dashsync/authorized_keys/<account>` files, with `restrict,from="<approved CIDRs>"` options. Preserve management firewall restrictions. Review and install `sshd.conf.example` with its final `Match all`; use `sshd -t` and effective per-account configuration checks before reloading. Verify ForceCommand, no forwarding/PTY/user startup files, global `PermitUserEnvironment no`, and the root-owned key location. Retain independent administrative and console access.
 - Run `python3 -I -S /usr/local/libexec/dashsync/admin.py`. After its prerequisites pass, install the reviewed socket/service templates in `/etc/systemd/system`, validate them with `systemd-analyze verify`, and enable the socket. Test both developers against a non-public scratch target before enabling production packages individually. External hosts need their own reviewed receiver and policy.

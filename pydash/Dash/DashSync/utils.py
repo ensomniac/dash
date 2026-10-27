@@ -6,6 +6,7 @@
 
 import os
 import sys
+import subprocess
 
 from os.path import expanduser
 
@@ -66,6 +67,10 @@ class _SyncUtils:
             ):
                 raise Rejected("connection", "Invalid remote file permissions")
             context = dict(local.get("context", {}))
+            if not context.get("modified_by"):
+                author = subprocess.run(["git", "-C", local["repo"], "config", "user.email"],
+                                        capture_output=True, text=True, check=False)
+                context["modified_by"] = author.stdout.strip() if author.returncode == 0 else ""
             context.update({
                 "asset_path": asset_path,
                 "display_name": context.get("display_name") or asset_path,
@@ -74,6 +79,7 @@ class _SyncUtils:
                 "watch": local["watch"],
                 "transport": transports[local["host"]],
                 "sync_policy": policy,
+                "client_sync_policy": manifests[local["host"]].get(asset_path + "_client"),
             })
             packages.append(context)
             if not quiet:
